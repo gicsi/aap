@@ -1,0 +1,46 @@
+Description of problem: vncviewer via switch fails with sshd cipher defaults
+
+
+Version-Release number of selected component (if applicable):
+tigervnc-1.4.3-7.fc22.x86_6; openssh-server-6.8p1-8.fc22.x86_6
+
+How reproducible: Use vncviewer with the "-via" switch.
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+terminal vncviewer executed from a terminal displays:
+
+ssh_dispatch_run_fatal: no matching cipher found
+
+Expected results:
+Either a GUI popup or terminal displays prompt of:  Password:
+
+Additional info:
+vncviewer sends the password encrypted but the rest of the session is unencrypted unless the via switch initiates a ssh tunnel, or one is done manually prior to vncviewer execution.
+
+vncviewer is apparently using aes128-cbc to send the encrypted password and this is not among the cipher defaults in sshd_config. 
+
+I added aes128-cbc to the defaults (sshd -T | grep ciphers) by adding/editing  this line in sshd_config:
+ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-cbc
+
+and "systemctl reload sshd"
+
+"vncviewer -via" then works as expected/intended.
+
+Best solution may simply be to have upstream specifically state in the vncviewer man page what cipher vncviewer uses in the via switch.
+
+Obviously aes128-cbc is not among the defaults for a reason.
+I don't see this here, and the code certainly doesn't specify any particular encoding to use, it's just '/usr/bin/ssh -f -L ...'.
+
+It sounds like you have client ssh configuration specifying the encoding. Check ~/.ssh/config.
+Can not argue with closing the bug. However my observations locally remain valid. I assume "sshd -T | grep aes128-cbc" on your test machine running vncserver returns only a prompt. If no one else reports an issue, it points to me. This is not a debug forum and I have a local solution so I am good.
+
+I found a "cipher" entry on one of three machines in ssh_config. Removing it did not alter my observed behavior. I went to a Fedora 21 machine for which there are more enabled ciphers for sshd, removed aes128-cbc from the sshd ciphers, and the failure described occurs using the via switch in vncviewer. So I have three machines with this fault (two fc22, one fc21 if aes128-cbc removed).
+
+Sorry to have wasted your time. Thank you for your prompt response to this alleged bug.
+You could have a dummy /usr/bin/ssh which calls the real ssh with a -vv argument, and redirects stderr to a known location. Then you'd know exactly who asks for what and why it fails.

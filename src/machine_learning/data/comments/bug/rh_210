@@ -1,0 +1,69 @@
+Description of problem:
+I upgraded to qemu-2:2.3.0-11.fc23 (Rawhide) today and I started getting : "error: unsupported configuration: spice graphics are not supported with this QEMU" when I run "virsh start foo".
+
+Version-Release number of selected component (if applicable):
+qemu-2:2.3.0-11.fc23
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.virsh start foo
+
+Additional info:
+Dr. David Alan Gilbert asked me to run 'qemu-system-x86_64 -spice port=5555' and I got the following output:
+qemu-system-x86_64: -spice port=5555: There is no option group 'spice'
+spice is not supported by this qemu build.
+
+
+https://kojipkgs.fedoraproject.org/packages/qemu/2.3.0/13.fc23/data/logs/x86_64/build.log
+...
+spice support     no
+...
+Sorry, I have qemu-2.3.0-12.fc23
+This is caused by a failure to detect spice support, which means the configure compile test failed. So this is ultimately likely a spice bug.
+
+The QEMU spec is bad  though - it should use --enable-spice when running configure so that we can get a fatal error if spice support is broken, rather than silently building QEMU without spice.
+Yeah I broke that in spice-protocol 0.12.8 
+
+$ gcc $(pkg-config --cflags --libs spice-protocol spice-server) ./test.c
+In file included from ./test.c:1:0:
+/usr/include/spice-server/spice.h:475:5: erreur: redeclaration of enumerator ‘SPICE_IMAGE_COMPRESS_INVALID’
+     SPICE_IMAGE_COMPRESS_INVALID  = 0,
+     ^
+In file included from /usr/include/spice-1/spice/qxl_dev.h:38:0,
+                 from /usr/include/spice-server/spice.h:23,
+                 from ./test.c:1:
+/usr/include/spice-1/spice/enums.h:185:5: note: previous definition of ‘SPICE_IMAGE_COMPRESS_INVALID’ was here
+     SPICE_IMAGE_COMPRESS_INVALID,
+     ^
+Error starting domain: unsupported configuration: spice graphics are not supported with this QEMU
+
+Traceback (most recent call last):
+  File "/usr/share/virt-manager/virtManager/asyncjob.py", line 89, in cb_wrapper
+    callback(asyncjob, *args, **kwargs)
+  File "/usr/share/virt-manager/virtManager/asyncjob.py", line 125, in tmpcb
+    callback(*args, **kwargs)
+  File "/usr/share/virt-manager/virtManager/libvirtobject.py", line 83, in newfn
+    ret = fn(self, *args, **kwargs)
+  File "/usr/share/virt-manager/virtManager/domain.py", line 1433, in startup
+    self._backend.create()
+  File "/usr/lib64/python2.7/site-packages/libvirt.py", line 1029, in create
+    if ret == -1: raise libvirtError ('virDomainCreate() failed', dom=self)
+libvirtError: unsupported configuration: spice graphics are not supported with this QEMU
+
+$ rpm -q libvirt-daemon qemu
+libvirt-daemon-1.2.16-2.fc23.x86_64
+qemu-2.3.0-12.fc23.x86_64
+(In reply to Christophe Fergeau from comment #3)
+> Yeah I broke that in spice-protocol 0.12.8 
+
+I hope we will not wait a year for the next release, again.
+:)
+Rebuilding QEMU against spice-0.12.5-8.fc23 should fix this problem.
+$ qemu-kvm -version
+QEMU emulator version 2.3.0 (qemu-2.3.0-15.fc23), Copyright (c) 2003-2008 Fabrice Bellard
+
+PASSED
+
+Thanks.

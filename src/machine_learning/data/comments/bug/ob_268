@@ -1,0 +1,4 @@
+Certain http requests can crash relayd.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.6/common/006_relayd.patch.sig">
+A source code patch exists which remedies this problem.</a>

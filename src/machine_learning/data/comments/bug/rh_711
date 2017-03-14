@@ -1,0 +1,63 @@
+Created attachment 1041114
+engine-setup log
+
+Description of problem:
+with dwhd and reports on a 2nd host, engine-setup will fail, claiming it is unable to shutdown the dwhd engine
+
+Version-Release number of selected component (if applicable):
+3.5.2 upgrading to 3.5.3
+
+How reproducible:
+Every time
+
+Steps to Reproduce:
+1. yum update
+2. engine-setup
+
+
+Actual results:
+Will back out with a failure:
+
+ERROR dwhd is currently running.
+Its hostname is host2.example.com.
+Please stop it before running Setup.
+
+
+Expected results:
+Upgrade to 3.5.3 will complete
+
+Additional info:
+Manually stopped the dwhd, reports, and postgres services made no change.
+Possible duplicate of https://bugzilla.redhat.com/show_bug.cgi?id=1167801
+Please provide dwhd logs.
+
+Can you try restarting dwhd before running setup, and making sure it's ok? That is, managed to stop and start without errors in its logs?
+
+Thanks!
+Also, you can use the workaround in the doc text of bug 1167801 which you linked at, which suggests to run on engine db:
+
+UPDATE dwh_history_timekeeping SET var_value = 0 WHERE var_name = "DwhCurrentlyRunning";
+
+This will most probably work for you.
+(In reply to Yedidyah Bar David from comment #3)
+> Also, you can use the workaround in the doc text of bug 1167801 which you
+> linked at, which suggests to run on engine db:
+> 
+> UPDATE dwh_history_timekeeping SET var_value = 0 WHERE var_name =
+> "DwhCurrentlyRunning";
+> 
+> This will most probably work for you.
+
+Sorry, that should be with single quotes:
+
+UPDATE dwh_history_timekeeping SET var_value = 0 WHERE var_name = 'DwhCurrentlyRunning';
+A restart of dwhd and reportsd was enough to make the upgrade go through. No need to update that table. Maybe the error message can suggest a restart, or have logic to ssh in and do the restart for the user? Thanks for the help!
+We have bug 1150402 for ssh to the dwh machine, which turned out to be a bit more complex than expected and postponed for now.
+
+I added some text to the wiki [1], which will hopefully be picked up by search engines soon, and be enough for other similar cases.
+
+[1] http://www.ovirt.org/Features/Separate-DWH-Host#dwhd_is_currently_running
+
+I am now closing this bug. Please reopen if relevant.
+
+Thanks for the report!

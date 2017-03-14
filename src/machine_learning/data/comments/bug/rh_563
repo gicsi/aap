@@ -1,0 +1,11 @@
+perl-Cache-Mmap-0.11-20.fc23 fails to build in F23 because tests fail because the package does not declare build-time dependency on `perl(open)':
+
+t/02entries.t .. ok
+Can't locate open.pm in @INC (you may need to install the open module) (@INC contains: /builddir/build/BUILD/Cache-Mmap-0.11/blib/lib /builddir/build/BUILD/Cache-Mmap-0.11/blib/arch /usr/local/lib/perl5 /usr/local/share/perl5 /usr/lib/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib/perl5 /usr/share/perl5 .) at t/03corrupt.t line 14.
+BEGIN failed--compilation aborted at t/03corrupt.t line 17.
+# Looks like you planned 26 tests but ran 1.
+# Looks like your test exited with 2 just after 1.
+t/03corrupt.t .. 
+Dubious, test returned 2 (wstat 512, 0x200)
+Failed 25/26 subtests
+Indeed, this package is in a sorry state.  I'll rewrite it.

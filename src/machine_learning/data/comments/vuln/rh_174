@@ -1,0 +1,24 @@
+Description of problem:
+According to our previous discussion, oc volumn  is planned to be experimental in 3.0 due to limited testing time.
+This command now is not prefixed with ex, it does not claim it's an experimental tool, so shall we update the help page or prefix it with ex?
+
+Version-Release number of selected component (if applicable):
+openshift v3.0.0.0
+kubernetes v0.17.1-804-g496be63
+
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. oc volume -h
+2. openshift ex
+
+
+Actual results:
+The command does not claim itself as experimental
+
+Expected results:
+The command should claim itself as experimental
+
+Additional info:

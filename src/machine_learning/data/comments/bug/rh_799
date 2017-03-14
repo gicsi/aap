@@ -1,0 +1,74 @@
+Version-Release number of selected component:
+blueman-2.0-6.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+cmdline:        python /usr/bin/blueman-applet
+executable:     /usr/bin/blueman-applet
+kernel:         4.0.4-202.fc21.x86_64
+runlevel:       N 5
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+Functions.py:285:get_lockfile:OSError: [Errno 17] File exists: '/home/ssabchev/.cache'
+
+Traceback (most recent call last):
+  File "/usr/bin/blueman-applet", line 120, in <module>
+    BluemanApplet()
+  File "/usr/bin/blueman-applet", line 55, in __init__
+    check_single_instance("blueman-applet")
+  File "/usr/lib/python2.7/site-packages/blueman/Functions.py", line 311, in check_single_instance
+    lockfile = get_lockfile(name)
+  File "/usr/lib/python2.7/site-packages/blueman/Functions.py", line 285, in get_lockfile
+    os.mkdir(cachedir)
+OSError: [Errno 17] File exists: '/home/ssabchev/.cache'
+
+Local variables in innermost frame:
+cachedir: '/home/ssabchev/.cache'
+name: u'blueman-applet'
+Created attachment 1040506
+File: backtrace
+Created attachment 1040507
+File: environ
+Is this reproducible?
+
+The relevant code is:
+
+cachedir = GLib.get_user_cache_dir()
+if not os.path.exists(cachedir):
+    os.mkdir(cachedir)
+
+Assuming that os.path.exists works as expected and that the directory really existed when os.mkdir got called, this means it got created between the execution of those two line...
+Yes.
+Also directory is there, and GLib.get_user_cache_dir show this:
+
+In [38]: GLib.get_user_cache_dir()
+Out[38]: '/home/ssabchev/.cache'
+Just for clarification:
+
+Is the "yes" in comment 4 the answer to the question from comment 3? If so, how to reproduce the problem?
+
+[...]
+
+Considering that $HOME/.cache is a global directory which may be created by other programs, it's subject to race conditions and would benefit from OSError (errno.EEXIST) exception handling.
+About clarification: The "yes" is the answer for the question in comment 3.
+
+About .cache - it is a symlink to /tmp/${USERNAME}_cache, may be the problem is somewhere else...
+ URL=https://bugzilla.redhat.com/show_bug.cgi?id=1228488
+ URL=https://bugzilla.redhat.com/show_bug.cgi?id=1229147
+The bluetooth service was stopped, and mask, so after starting it - all is OK.
+(In reply to Michael Schwendt (Fedora Packager Sponsors Group) from comment #6)
+> Considering that $HOME/.cache is a global directory which may be created by
+> other programs, it's subject to race conditions and would benefit from
+> OSError (errno.EEXIST) exception handling.
+
+Thanks, I added that upstream. :)
+blueman-2.0-9.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/blueman-2.0-9.fc22
+blueman-2.0-9.fc20 has been submitted as an update for Fedora 20.
+https://admin.fedoraproject.org/updates/blueman-2.0-9.fc20
+blueman-2.0-9.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/blueman-2.0-9.fc21
+blueman-2.0-9.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.
+blueman-2.0-9.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

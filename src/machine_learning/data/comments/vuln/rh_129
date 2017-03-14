@@ -1,0 +1,48 @@
+Created attachment 1041954
+net isolation
+
+Description of problem:
+I'm trying to deploy overcloud by using the unified cli and passing the network isolation environment file by using the -e argument but apparently the env file isn't loaded. 
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Add environment file to /etc/tripleo/extra_config.d/
+2. openstack overcloud deploy --plan-uuid 53f03dd3-4458-493d-a586-6da6999c2e71  --control-scale 1 --compute-scale 1 --ceph-storage-scale 0 --block-storage-scale 0 --swift-storage-scale 0 -e /etc/tripleo/extra_config.d/
+
+Actual results:
+Deployment doesn't get the network configuration passed in environment file applied. 
+
+Expected results:
+Deployment should load the /etc/tripleo/extra_config.d/network_env.yaml file
+
+Additional info:
+I'm attaching the detailed output of the commands.
+This is a documentation bug. This is the actual function that pulls in the extra configuration:
+
+https://github.com/rdo-management/python-rdomanager-oscplugin/blob/master/rdomanager_oscplugin/v1/overcloud_deploy.py#L426-L432
+
+    def _get_extra_config(self, extra_dir):
+        """Gather any extra environment files for customizations."""
+
+        extra_registries = glob.glob(extra_dir + '/*/*registry*yaml')
+        extra_envs = glob.glob(extra_dir + '/*/*environment*yaml')
+        return extra_registries + extra_envs
+
+So we just need to document the expectation here. That being that extra configuration is put in its own subdirectory of /etc/tripleo/extra_config.d and that the files have either "registry" or "environment" in them.
+
+This was needed to be able to drop in the rhel registration stuff as is from t-h-t, as it includes files that we do not want to explicitly load.
+
+https://github.com/rdo-management/tripleo-heat-templates/tree/mgt-master/extraconfig/post_deploy/rhel-registration
+This makes sense. However, if this is the general way we are going to load Heat registry and environment files, shouldn't the function be in a library so that all our other users (I assume Tuskar, CloudForms, RHCI, tuskar-UI) can use it? Or am I talking nonsense?
+adding needinfo to answer comment 4
+@Hugh,
+
+That is a good point. I am pretty sure this is a naive implementation on my part and should not be used as a reference on how to do it in other places. I think it would have been better to just directly pass -e <env.yaml> directly to heat instead of this drop directory approach, however it seems a bit late in the game to rewrite it.
+
+If the other tools mentioned use a heatclient instance already, I think that would be the way to go there as well.
+We're changing the way the -e option works as part of but 1235000 which makes this bug no longer relevant. Closing

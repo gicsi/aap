@@ -1,0 +1,6 @@
+More stringent checking should be done in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=copy&sektion=9">copy(9)</a>
+functions to prevent their misuse.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/amd64/012_copy.patch">
+A source code patch exists which remedies this problem.</a>

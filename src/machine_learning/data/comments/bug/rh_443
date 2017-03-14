@@ -1,0 +1,30 @@
+zip should require unzip package due to option "-T" for check of integrity of zip archive, because zip call unzip for checking it.
+
+Reproduce:
+1. remove unzip
+2. try check some archive
+$ zip -T archive
+
+Output:
+<snip>
+sh: unzip: command not found
+	zip warning: failed to get information from UnZip
+sh: unzip: command not found
+test of nsp.zip FAILED
+
+zip error: Zip file invalid, could not spawn unzip, or wrong unzip (original files unmodified)
+zip-3.0-14.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/zip-3.0-14.fc22
+zip-3.0-14.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/zip-3.0-14.fc21
+Package zip-3.0-14.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing zip-3.0-14.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10801/zip-3.0-14.fc21
+then log in and leave karma (feedback).
+zip-3.0-14.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

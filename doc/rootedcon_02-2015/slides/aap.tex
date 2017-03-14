@@ -1,0 +1,513 @@
+\documentclass{beamer}
+\usepackage{beamerthemeshadow}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\title{Herramienta para el Análisis\\ Automático de Parches}
+
+\author{
+	\scriptsize{
+		AAP v0.1b\\
+		- \url{https://github.com/gicsi/aap}
+		\\
+	}
+	\vspace{5mm}
+	\tiny{
+		Antonio Castro Lechtaler$^{\ast,1,2}$, Julio César Liporace$^{\dagger,1}$, Marcelo Cipriano$^{\ast,1}$, Edith García$^{\dagger,1}$, Ariel Maiorano$^{\dagger,1}$, Eduardo Malvacio$^{\dagger,1}$, Néstor Tapia$^{\dagger,1}$
+		\\
+		\texttt{$^{\ast}$\{acastro,marcelocipriano\}@iese.edu.ar}
+		\\
+		\texttt{$^{\dagger}$\{edithxgarcia,jcliporace,maiorano,edumalvacio,tapianestor87\}@gmail.com}
+		\\
+		$^1$Grupo de Investigación en Criptografía y Seguridad Informática \\(GICSI) - Instituto Universitario del Ejército, Argentina
+		\\
+		$^2$FCE - Universidad de Buenos Aires, Argentina
+	}
+}
+
+\date{\scriptsize{CFR Criptored/RootedCON 2015}}
+
+\frame{\titlepage}
+
+\frame{\frametitle{Presentación}\tableofcontents}
+
+\renewcommand\refname{Referencias}
+
+
+\section{Análisis de código fuente}
+
+	\subsection{Calidad del software}
+	\frame{\frametitle{Calidad del software}
+		\begin{itemize}
+			\item Buena práctica: análisis y revisión de código fuente en busca de mejorar la calidad.
+			\item Métrica de calidad: cantidad de \textit{bugs} o defectos. * No único indicador, pero válido para el control y mejora de procesos.
+			\item Objetivo: reducir el costo de calidad, encontrando y corrigiendo defectos de manera temprana y a un costo menor.
+		\end{itemize}
+	}
+
+	\subsection{Revisiones generales de código fuente}
+	\frame{\frametitle{Revisiones generales de código fuente}
+		\begin{itemize}
+			\item Estudios académicos (ingeniería del software) acerca del costo de la calidad del software, revisión y corrección de defectos:
+			\begin{itemize}
+				\item Demostrado \cite{Kem1} que la calidad depende de los mecanismos de control de calidad empleados como parte integral de los procesos.
+				\item Máximo recomendado de 200 líneas de código por hora \cite{Kem1}.
+				\item Tasa óptima de 125 líneas por hora \cite{Buck1}.
+				\item  \textit{"... it is almost one of the laws of nature about inspections, i.e., the faster an inspection, the fewer defects removed"} \cite{Rad1}.
+			\end{itemize}
+		\end{itemize}
+	}
+
+	\subsection{Revisiones de seguridad de código fuente}
+	\frame{\frametitle{Revisiones de seguridad de código fuente}
+		\begin{itemize}
+			\item Revisiones en la búsqueda de vulnerabilidades y sistematización, según NIST y SEI/CERT:
+			\begin{itemize}
+				\item Las herramientas de aseguramiento de calidad son actualmente un recurso fundamental para la mejora de las aplicaciones de software, según una publicación del NIST, donde ya se proponen especificaciones mínimas de funcionalidad para lo que sería un software analizador de código fuente en busca de vulnerabilidades \cite{nist1}.
+				\item Valerse únicamente de la implementación de políticas, estándares y buenas prácticas de desarrollo de software para el aseguramiento de la calidad sería inadecuado según un estudio del SEI/CERT \cite{sei1}.
+			\end{itemize}
+			\item Disponibilidad de herramientas \textit{open source} para la revisión/audtoría de código fuente; listados del SIE, NIST y OWASP \cite{sei2, nist2, owa1}.
+		\end{itemize}
+	}
+
+	\frame{\frametitle{Revisiones de seguridad de código fuente (cont.)}
+		\begin{itemize}
+			\item Problemas en implementaciones de funcionalidad criptográfica:
+			\begin{itemize}
+				\item Estudio publicado para la plataforma Android que indica que, de 269 vulnerabilidades reportadas desde enero de 2011 hasta mayo de 2014, sólo el 17\% correspondió a defectos en librerías criprográficas, y el 83\% restante a usos incorrectos de estas librerías por aplicaciones \cite{Lazar}.
+				\item También en \cite{Egele} se estudiaron aplicaciones Android; 10327 de un total de 11748 aplicaciones (88\%) cometieron al menos un error en su implementación.
+				\begin{itemize}
+					\item Este último trabajo presentó una herramienta para la detección automática de estos problemas, pero no se ha distribuido libremente \cite{Mujic}.
+				\end{itemize}
+			\end{itemize}
+		\end{itemize}
+	}
+
+
+\section{¿Por qué revisar parches?}
+
+	\subsection{Código fuente de Parches}
+	\frame{\frametitle{Código fuente de Parches}
+		\begin{itemize}\Large{
+			\item Parches o \textit{patches}: actualizaciones de código fuente de software, típicamente en la forma de un detalle de diferencias en el código.
+			\\
+			\begin{itemize}\Large{
+				\item No todos los parches corrigen defectos.
+				\item No todos los defectos son vulnerabilidades.
+			}\end{itemize}
+		}\end{itemize}
+	}
+
+	\subsection{Parches: Mejoras, defectos y vulnerabilidades}
+	\frame{\frametitle{Parches: Mejoras, defectos y vulnerabilidades}
+		\begin{exampleblock}{Mejoras, nuevas funcionalidades, ...}
+			Nuevo código fuente. Prestaciones adicionales del software; nuevo módulos, opciones, ... Prioridad relativa baja o media en los procesos de "emparche" o \textit{patching}.
+		\end{exampleblock}
+		\pause
+		\begin{block}{Defectos}
+			Correcciones específicas de código fuente. Errores en el software, defectos o \textit{bugs} que podrían generar problemas al utilizarlo. Prioridad media.
+		\end{block}
+		\pause
+		\begin{alertblock}{Vulnerabilidades}
+			Subconjunto de los defectos generales; aquellos que, de explotarse, implicarían un compromiso de seguridad. Prioridad máxima, crítica.
+		\end{alertblock}
+	} 
+
+	\subsection{Vulnerabilidades descubiertas a partir de parches}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches}
+		\begin{itemize}
+			\item Errores en la clasificación de defectos como vulnerabilidades.
+			\item Se publica un parche desconociendo al momento que el problema que corrige representaba una vulnerabilidad.
+		\end{itemize}
+	}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches (cont.)}
+		\begin{itemize}
+			\item \textit{Hidden impact bugs}, o defectos de impacto oculto
+			\begin{itemize}
+				\item Trabajos de Jason Wright
+				\begin{itemize}
+					\item Trabajó en el \textit{framework} criptográfico del sistema operativo OpenBSD \cite{Jason0}; publicó recientemente su tesis de maestría \cite{Jason1}, que revisa y extiende trabajos anteriores \cite{Jason2, Jason3, Jason4}.
+					\item Introduce el concepto de \textit{hidden impact bugs}, o defectos de impacto oculto (ya en \cite{Arnold}, con otro nombre): vulnerabilidades que fueron en primera instancia reportadas (y \textit{patcheads}) como \textit{bugs} o defectos sin impacto de seguridad.
+					\item Retraso de impacto, o \textit{impact delay}: tiempo transcurrido desde la publicación del defecto -en la forma de parche-, y el momento en que se asignó un CVE al \textit{bug}.
+					\item Estudios sobre el \textit{Kernel} de Linux: de un total de 185 defectos de impacto oculto, 73 de ellos (el 39\%) tuvieron un retraso de impacto de al menos 2 semanas.
+					\item Sobre MySQL: el total de defectos de impacto oculto fue de 29, y de ellos, 19 (65\%) tuvo retraso de impacto de al menos 2 semanas.
+				\end{itemize}
+			\end{itemize}
+		\end{itemize}
+	}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches (cont.)}
+		\begin{itemize}
+			\item Problemas ya corregidos en la versión \textit{devel} de NTP
+			\begin{itemize}
+				\item Vulnerabilidades críticas descubiertas en diciembre de 2014.
+				\item Algunos de estos defectos ya habían sido corregidos en la versión de desarrollo o \textit{devel}, años atrás \cite{ntpSecNot}.
+				\item De acuerdo a su \textit{Bugzilla}, esta información estuvo públicamente accesible recién el día 20/12/2014.
+				\item En los mensajes correspondientes al \textit{bug} 2665 \cite{ntpBug1} en relación a una llave criptográfica débil por defecto, se comenta que la vulnerabilidad ya había sido "corregida" en la versión de desarrollo anterior del proyecto, ntp-dev (4.2.7p11) del 2010/01/28.
+				\item Otro ejemplo: en el \textit{bug} 2666 \cite{ntpBug2}, relativo a al generador de números aleatorios, que aunque luego volvió a emparcharse antes del \textit{release} de la versión 4.2.8, se comentó que en la versión de desarrollo 4.2.7p230 (del primero de noviembre de 2011) el problema ya había sido corregido.
+			\end{itemize}
+		\end{itemize}
+	}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches (cont.)}
+		\begin{itemize}
+			\item Más de un parche para vulnerabilidades \textit{shellshock}
+			\begin{itemize}
+				\item Descubiertas también recientemente, en el \textit{shell} de sistemas UNIX bash.
+				\item El aviso público de Red Hat \cite{rh1} y los paquetes actualizados, son del día 24 de septiembre de 2014.
+				\item Sin embargo, luego y durante el lapso de unos pocos días, otros problemas relacionados fueron descubiertos, para los cuales Red Hat no proveyó paquetes actualizados sino hasta el día 26 de septiembre de 2014 \cite{rh2}.
+			\end{itemize}
+		\end{itemize}
+	}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches (cont.)}
+		\begin{itemize}
+			\item Descubrimiento simultáneo de vulnerabilidad \textit{Heartbleed}
+			\begin{itemize}
+				\item Problema en librería de código abierto OpenSSL; Medio millón de sitios afectados indicó Bruce Schneier, calificando el problema como "catastrófico" \cite{SchneierHB}.
+				\item Según un representante de Red Hat Security \cite{cox1}, la coincidencia de dos hallazgos del mismo problema, al mismo tiempo, incrementa el riesgo de mantener por mayor tiempo esta vulnerabilidad sin publicar los parches que para su corrección.
+				\item Dado el apuro, los encargados de la "dvulgación responsable" no pudieron coordinar como hubiera sido óptimo la disponibilidad de parches y paquetes de actualización para todas las distribuciones de Linux.
+			\end{itemize}
+		\end{itemize}
+	}
+	\frame{\frametitle{Vulnerabilidades descubiertas a partir de parches (cont.)}
+		\begin{itemize}
+			\item Vulnerabilidad en OpenBSD luego de parche mal categorizado
+			\begin{itemize}
+				\item En el año 2007 fue publicada una vulnerabilidad descubierta en la implementación de IPv6 del \textit{kernel} del sistema operativo OpenBSD \cite{openbsd1}.
+				\item La vulnerabilidad fue descubierta al analizar, e intentar reproducir, el problema corregido por un parche no categorizado como vulnerabilidad, sino como un \textit{Reliability fix}, o parche de fiabilidad \cite{openbsd2}..
+			\end{itemize}
+		\end{itemize}
+	}
+
+
+\section{Herramienta AAP vesión 0.1 beta} 
+
+	\subsection{Presentación del proyecto}
+	\frame{\frametitle{Presentación del proyecto}
+		\small{
+		\textbf{La herramienta} intentaría sistematizar y automatizar al menos los primeros pasos en la revisión de actualizaciones de código fuente para alertar, temprana y automáticamente, acerca de posibles vulnerabilidades, o acerca de código que debería revisarse especialmente.
+		\\
+		\textbf{Objetivo} Se pretende que podría servir de ayuda a personas o a equipos que deban realizar estos análisis de forma repetida y continua, e intenta proveer un entorno que facilite el trabajo colaborativo entre los usuarios analistas.
+		}
+		\begin{itemize}
+			\item Aplicación Web, desarrollada en lenguaje Python, utilizando el \textit{framework} Web Django.
+			\item Depende de Git para el manejo del código fuente de los proyectos a analizar.
+		\end{itemize}
+	} 
+
+	\subsection{Funcionalidad actualmente implementada}
+	\frame{\frametitle{Funcionalidad actualmente implementada}
+		\begin{itemize}
+			\item Revisión y alerta, parametrizadas en la forma de plugins, de parches dentro de una misma rama o \textit{branch}, o de diferencias de código fuente entre ellas, accediendo a sus repositorios Git:
+			\begin{itemize}
+				\item Actualizaciones por parte de usuarios específicos.
+				\item Actualizaciones a archivos y/o directorios específicos.
+				\item Patrones en código fuente reemplazado y/o reemplazante.
+				\item Patrones en comentarios de código fuente.
+				\item Ejecución de herramienta externa Flawfinder \cite{Flawfinder} para el análisis estático de código fuente.
+				\item Identificación simple de código fuente que implementa criptografía.
+			\end{itemize}
+		\end{itemize}
+	} 
+
+	\subsection{Funcionalidad planeada y en desarrollo}
+	\frame{\frametitle{Funcionalidad planeada y en desarrollo}
+	\begin{itemize}
+		\item Actualmente en desarrollo:
+			\begin{itemize}
+				\item Integración con técnicas de \textit{text-mining} y \textit{machine learning} para la clasificación de código fuente actualizado o diferente que deba generar alertas.
+			\end{itemize}
+		\item Planes, trabajo a futuro, \textit{TODOs}:
+			\begin{itemize}
+				\item Mejoramiento de implementaciones actuales de reglas/pluings de análisis.
+				\item Desarrollo de nuevos plugins; integración con nuevas herramientas externas.
+				\item Integración con una bases de datos de reportes de vulnerabilidades o \textit{advisories}.
+				\item Integración con herramientas de comunicación utilizadas por los desarrolladores (foros, Bugzilla, ...)
+				\item Continuación con la investigación y desarrollo para la aplicación de técnicas de inteligencia artificial.
+			\end{itemize}
+	\end{itemize} 	
+	}
+
+	\subsection{Capturas de pantalla}
+	\frame{\frametitle{Capturas de pantalla}
+		Control de acceso para usuarios analistas, administradores y super-administradores
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/login.png}
+	}
+	\frame{\frametitle{Capturas de pantalla}
+		Ejemplo de detalle de datos de usuario del sistema
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/usuario_analista.png}
+	}
+	\frame{\frametitle{Capturas de pantalla}
+		Ejemplo de detalles de un proyecto cargado junto a datos iniciales
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/proyecto.png}
+	}
+	\frame{\frametitle{Capturas de pantalla}
+		Ejemplo de detalles de un repositorio del proyecto
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/repositorio.png}
+	}
+	\frame{\frametitle{Capturas de pantalla}
+		Ejemplo de detalles de una rama o \textit{branch} del repositorio
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/rama.png}
+	}
+	\frame{\frametitle{Capturas de pantalla}
+		Listado de reglas/plugins de análisis en datos iniciales
+		\\
+		\includegraphics[width=1\textwidth]{/root/aap.git/aap/doc/screenshots/reglas_analisis.png}
+	}
+
+
+\frame{\frametitle{FIN DE PRESENTACIÓN}
+\LARGE{MUCHAS GRACIAS}
+}
+
+
+\section{Referencias}
+	\subsection{Referencias generales}
+	\begin{thebibliography}{99}
+
+	\setbeamertemplate{bibliography item}[text]
+
+	\bibitem{Arnold}
+	J. Arnold, T. Abbott, W. Daher, G. Price, N. Elhage, G. Thomas, A. Kaseorg
+	\emph{Security Impact Ratings Considered Harmful}.
+	Proceedings 12th Conference on Hot Topics in Operating Systems. USENIX.
+	Mayo de 2009.
+	[en línea: \url{http://www.inl.gov/technicalpublications/Documents/5588153.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{nist1}
+	P. Black, M. Kass, M. Koo, M. Fong.
+	\emph{Source Code Security Analysis Tool Functional Specification Version 1.1}.
+	NIST Special Publication 500-268 v1.1.
+	Febrero de 2011. 
+	[en línea: \url{http://samate.nist.gov/docs/source_code_security_analysis_spec_SP500-268_v1.1.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Buck1}
+	F. Buck.
+	\emph{Indicators of Quality Inspections}.
+	IBM Technical Report TR21.802, Systems Comm.
+	Diciembre de 1981.
+	
+	\bibitem{sei2}
+	CERT Division - Secure Coding
+	\emph{Secure Coding Tools}.
+	CERT, Software Engineering Institute (SEI), Carnegie Mellon University.
+	[en línea: \url{http://www.cert.org/secure-coding/tools/index.cfm} - accedido el 29/12/2014].
+	
+	\bibitem{si1}
+	C. Corley, L. Etzkorn, N. Kraft, S. Lukins.
+	\emph{Recovering Traceability Links between Source Code	and Fixed Bugs via Patch Analysis}.
+	University of Alabama. 2008.
+	[en línea: \url{http://www.cs.wm.edu/semeru/tefse2011/papers/p31-corley.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{cox1}
+	M. Cox
+	\emph{Heartbleed}.
+	Mark J. Cox Google+.
+	[en línea: \url{https://plus.google.com/+MarkJCox/posts/TmCbp3BhJma} - accedido el 29/12/2014].
+	
+	\bibitem{Django}
+	Django Framework.
+	\emph{Django overview}.
+	Django Software Foundation.
+	[en línea: \url{https://www.djangoproject.com/start/overview/} - accedido el 29/12/2014].
+	
+	\bibitem{Egele}
+	M. Egele, D. Brumley, Y. Fratantonio, C. Kruegel.
+	\emph{An empirical study of cryptographic misuse in android applications}.
+	CCS '13 Proceedings of the 2013 ACM SIGSAC conference on Computer \& communications security. Pages 73-84.
+	2013. EE.UU.
+	[en línea: \url{http://www.cs.ucsb.edu/~chris/research/doc/ccs13_cryptolint.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Kem1}
+	C. Kemerer, M. Paulk.
+	\emph{The Impact of Design and Code Reviews on Software Quality: An Empirical Study Based on PSP Data}.
+	IEEE TRANSACTIONS ON SOFTWARE ENGINEERING, VOL. 35, NO. XX
+	Abril de 2009. 
+	[en línea: \url{http://www.pitt.edu/~ckemerer/PSP_Data.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Git}
+	Git SCM.
+	\emph{About Git}.
+	Git - Software Freedom Cnonservancy.
+	[en línea: \url{http://git-scm.com/about} - accedido el 2912/2014].
+	
+	\bibitem{cuckoo}
+	C. Guarnieri
+	\emph{One Flew Over the Cuckoo’s Nest}.
+	Hack In The Box 2012.
+	Mayo de 2012. Hollanda.
+	[en línea: \url{http://sebug.net/paper/Meeting-Documents/hitbsecconf2012ams/D1T1%20-%20Claudio%20Guarnieri%20-%20One%20Flew%20Over%20the%20Cuckoos%20Nest.pdf} - accedido el 29/12/2014].
+		
+	\bibitem{Gerr}
+	Gerrit Website
+	\emph{Gerrit Code Review}.
+	Google Inc.
+	[en línea: \url{https://code.google.com/p/gerrit/} - accedido el 2912/2014].
+	
+	\bibitem{Jason0}
+	A. Keromytis, J. Wright, T. de Raadt.
+	\emph{The Design of the OpenBSD Cryptographic Framework}.
+	International Conference on Human System Interactions (HSI).
+	Junio de 2012. Australia.
+	[en línea: \url{http://www.thought.net/papers/ocf.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Lazar}
+	D. Lazar, H. Chen, X. Wang, N. Zeldovich.
+	\emph{Why does cryptographic software fail?: a case study and open problems}.
+	Proceedings of 5th Asia-Pacific Workshop on Systems Article No. 7.
+	2014. EE.UU.
+	[en línea: \url{http://pdos.csail.mit.edu/papers/cryptobugs:apsys14.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Mujic}
+	A. Mujic.
+	\emph{Reimplementation of CryptoLint tool}.
+	Blog for and by my students.
+	Diciembre de 2013.
+	[en línea: \url{http://sgros-students.blogspot.com.ar/2013/12/reimplementation-of-cryptolint-tool.html} - accedido el 29/12/2014].
+	
+	\bibitem{ntpSecNot}
+	Network Time Protocol project.
+	\emph{NTP Security Notice}.
+	NTP support website. Network Time Foundation.
+	[en línea: \url{http://support.ntp.org/bin/view/Main/WebHome} - accedido el 29/12/2014].
+	
+	\bibitem{ntpBug1}
+	Network Time Protocol project.
+	\emph{Bug 2665 - Weak default key}.
+	NTP Bugzilla. Network Time Foundation.
+	[en línea: \url{http://bugs.ntp.org/show_bug.cgi?id=2665} - accedido el 29/12/2014].
+	
+	\bibitem{ntpBug2}
+	Network Time Protocol project.
+	\emph{Bug 2666 - non-cryptographic random number generator with weak seed}.
+	NTP Bugzilla. Network Time Foundation.
+	[en línea: \url{http://bugs.ntp.org/show_bug.cgi?id=2666} - accedido el 29/12/2014].
+	
+	\bibitem{nist2}
+	NIST
+	\emph{Source Code Security Analyzers}.
+	SAMATE - NIST.
+	[en línea: \url{http://samate.nist.gov/index.php/Source_Code_Security_Analyzers.html} - accedido el 29/12/2014].
+	
+	\bibitem{openbsd2}
+	A. Ortega
+	\emph{OpenBSD Remote Exploit}.
+	Core Security. 
+	Julio de 2007. 
+	[en línea: \url{https://www.blackhat.com/presentations/bh-usa-07/Ortega/Whitepaper/bh-usa-07-ortega-WP.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{openbsd1}
+	A. Ortega, G. Richarte.
+	\emph{OpenBSD Remote Exploit}.
+	Core Security. 
+	Abril de 2007. 
+	[en línea: \url{https://www.blackhat.com/presentations/bh-usa-07/Ortega/Whitepaper/bh-usa-07-ortega-WP.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{owa1}
+	OWASP Wiki.
+	\emph{Source Code Analysis Tools}.
+	The Open Web Application Security Project (OWASP).
+	Últ. mod. 29/10/2014. 
+	[en línea: \url{https://www.owasp.org/index.php/Source_Code_Analysis_Tools} - accedido el 29/12/2014].
+	
+	\bibitem{Phab}
+	Phabricator Website.
+	\emph{Phabricator, an open source, software engineering platform.}.
+	Phacility, Inc.
+	[en línea: \url{http://phabricator.org/} - accedido el 29/12/2014].
+	
+	\bibitem{Python}
+	Python Website.
+	\emph{About Python}.
+	Python Software Foundation.
+	[en línea: \url{https://www.python.org/about/} - accedido el 29/12/2014].
+	
+	\bibitem{Rad1}
+	R. Radice.
+	\emph{High Quality Low Cost Software Inspections}.
+	Paradoxicon Publishing.
+	2002.
+	
+	\bibitem{rh1}
+	Red Hat. Seguridad. Base de datos de CVE.
+	\emph{CVE-2014-6271}.
+	Red Hat Customer portal.
+	24 de Septiembre de 2014.
+	[en línea: \url{https://access.redhat.com/security/cve/CVE-2014-6271} - accedido el 29/12/2014].
+	
+	\bibitem{rh2}
+	Red Hat. Seguridad. Base de datos de CVE.
+	\emph{CVE-2014-7169}.
+	Red Hat Customer portal.
+	24 de Septiembre de 2014.
+	[en línea: \url{https://access.redhat.com/security/cve/CVE-2014-7169} - accedido el 29/12/2014].
+	
+	\bibitem{elreg1}
+	The Register. J. Leyden.
+	\emph{Patch Bash NOW: 'Shellshock' bug blasts OS X, Linux systems wide open}.
+	The Register online tech publication.
+	24 de Septiembre de 2014.
+	[en línea: \url{http://www.theregister.co.uk/2014/09/24/bash_shell_vuln/} - accedido el 29/12/2014].
+	
+	\bibitem{SchneierHB}
+	B. Schneier.
+	\emph{Heartbleed}.
+	Schneier on Security, Blog.
+	Abril de 2014.
+	[en línea: \url{https://www.schneier.com/blog/archives/2014/04/heartbleed.html} - accedido el 29/12/2014].
+	
+	\bibitem{sei1}
+	R. Seacord, W. Dormann, J. McCurley, P. Miller, R. Stoddard, D. Svoboda, J. Welch
+	\emph{Source Code Analysis Laboratory (SCALe)}.
+	CERT, Software Engineering Institute (SEI), Carnegie Mellon University.
+	Abril de 2012.
+	[en línea: \url{https://resources.sei.cmu.edu/asset_files/TechnicalNote/2012_004_001_15440.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{si2}
+	W. Weimer.
+	\emph{Patches as Better Bug Reports}.
+	University of Virginia. 2006.
+	[en línea: \url{https://www.cs.virginia.edu/~weimer/p/p181-weimer.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Flawfinder}
+	D. Wheeler.
+	\emph{Flawfinder}.
+	David A. Wheeler’s Personal Home Page - Flawfinder Home Page.
+	[en línea: \url{http://www.dwheeler.com/flawfinder/} - accedido el 29/12/2014].
+	
+	\bibitem{Jason4}
+	D. Wijayasekara, M. Manic, J. Wright, M. McQueen.
+	\emph{Mining Bug Databases for Unidentified Software Vulnerabilities}.
+	Proceedings International Conference on Human System Interactions (HSI).
+	Junio de 2012, Perth, Australia.
+	[en línea: \url{http://www.inl.gov/technicalpublications/Documents/5588153.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Jason1}
+	J. Wright.
+	\emph{Software Vulnerabilities: Lifespans, Metrics, And Case Study}.
+	Master of Science Thesis. University of Idaho.
+	Mayo de 2014.
+	[en línea: \url{http://www.thought.net/papers/thesis.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Jason2}
+	J. Wright, J. Larsen, M. McQueen.
+	\emph{Estimating Software Vulnerabilities: A Case Study Based on the Misclassification of Bugs in MySQL Server}.
+	Proceedings International Conference of Availability, Reliability, and Security (ARES).
+	Septiembre de 2013. pp. 72-81. Regensburg, Alemania.
+	[en línea: \url{http://www.inl.gov/technicalpublications/Documents/5842499.pdf} - accedido el 29/12/2014].
+	
+	\bibitem{Jason3}
+	J. Wright, M. McQueen, L. Wellman.
+	\emph{Analyses of Two End-User Software Vulnerability Exposure Metrics (Extended Version)}.
+	Information Security Technical Report, 17(4), Elsevier.
+	Abril de 2013. pp. 44-55.
+	[en línea: \url{http://www.thought.net/papers/INL-JOU-12-27465-preprint.pdf} - accedido el 29/12/2014].
+	
+	\end{thebibliography}
+
+
+\end{document}

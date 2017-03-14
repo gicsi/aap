@@ -1,0 +1,86 @@
+Description of problem:
+
+policycoreutils-2.2.5-15.el7.x86_64, 
+selinux-policy-3.13.1-23.el7.noarch
+
+While running the test suite I am getting:
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: [   LOG    ] :: Test
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+:: [  BEGIN   ] :: Running unit test as root :: actually running 'python /tmp/tmp.b6gePNPyDW/test_sandbox.py -v'
+test_cant_kill (__main__.SandboxTests)
+Verify that we cannot send kill signal in the sandbox ... ok
+test_cant_list_homedir (__main__.SandboxTests)
+Verify that we can't list homedir within the sandbox ... ok
+test_cant_mkdir (__main__.SandboxTests)
+Verify that we can't mkdir within the sandbox ... ok
+test_cant_ping (__main__.SandboxTests)
+Verify that we can't ping within the sandbox ... ok
+test_cant_send_mail (__main__.SandboxTests)
+Verify that we can't send mail within the sandbox ... FAIL
+test_cant_sudo (__main__.SandboxTests)
+Verify that we can't run sudo within the sandbox ... ok
+test_homedir (__main__.SandboxTests)
+Verify that we set homedir a file system ... ok
+test_mount (__main__.SandboxTests)
+Verify that we mount a file system ... ok
+test_set_level (__main__.SandboxTests)
+Verify that we set level a file system ... ok
+test_simple_success (__main__.SandboxTests)
+Verify that we can read file descriptors handed to sandbox ... ok
+test_tmpdir (__main__.SandboxTests)
+Verify that we set tmpdir a file system ... ok
+
+======================================================================
+FAIL: test_cant_send_mail (__main__.SandboxTests)
+Verify that we can't send mail within the sandbox
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/tmp.b6gePNPyDW/test_sandbox.py", line 57, in test_cant_send_mail
+    self.assertDenied(err)
+  File "/tmp/tmp.b6gePNPyDW/test_sandbox.py", line 8, in assertDenied
+    '"Permission denied" not found in %r' % err)
+AssertionError: "Permission denied" not found in '/usr/bin/sandbox: \nsandbox [-h] [-c] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-W windowmanager ] [ -w windowsize ] [[-i file ] ...] [ -t type ] command\n\nsandbox [-h] [-c] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-W windowmanager ] [ -w windowsize ] [[-i file ] ...] [ -t type ] -S\n\nPolicy defines the following types for use with the -t:\n\tsandbox_x_t\n\tsandbox_min_t\n\tsandbox_net_t\n\tsandbox_web_t\n\n\nmail is not an executable\n'
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.424s
+
+FAILED (failures=1)
+
+
+There are multiple AVCs in the audit.log:
+
+# ausearch -m avc -ts recent
+----
+time->Thu Jun 18 09:37:05 2015
+type=SYSCALL msg=audit(1434634625.790:292): arch=c000003e syscall=126 success=no exit=-13 a0=7f51616fa044 a1=7f51616fa04c a2=1 a3=7fffe6f426e0 items=0 ppid=1616 pid=1617 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="ping" exe="/usr/bin/ping" subj=unconfined_u:unconfined_r:sandbox_t:s0:c81,c176 key=(null)
+type=AVC msg=audit(1434634625.790:292): avc:  denied  { setcap } for  pid=1617 comm="ping" scontext=unconfined_u:unconfined_r:sandbox_t:s0:c81,c176 tcontext=unconfined_u:unconfined_r:sandbox_t:s0:c81,c176 tclass=process
+----
+time->Thu Jun 18 09:37:06 2015
+type=SYSCALL msg=audit(1434634626.048:293): arch=c000003e syscall=2 success=no exit=-13 a0=7f00cb1e9d8a a1=80000 a2=1b6 a3=0 items=0 ppid=1619 pid=1620 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" subj=unconfined_u:unconfined_r:sandbox_t:s0:c156,c485 key=(null)
+type=AVC msg=audit(1434634626.048:293): avc:  denied  { open } for  pid=1620 comm="sudo" path="/etc/passwd" dev="dm-1" ino=27457 scontext=unconfined_u:unconfined_r:sandbox_t:s0:c156,c485 tcontext=system_u:object_r:passwd_file_t:s0 tclass=file
+----
+time->Thu Jun 18 09:37:06 2015
+type=SYSCALL msg=audit(1434634626.049:294): arch=c000003e syscall=2 success=no exit=-13 a0=7f00d2133c3e a1=80000 a2=7f00d2133c2f a3=7f00d355d700 items=0 ppid=1619 pid=1620 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" subj=unconfined_u:unconfined_r:sandbox_t:s0:c156,c485 key=(null)
+type=AVC msg=audit(1434634626.049:294): avc:  denied  { open } for  pid=1620 comm="sudo" path="/run/utmp" dev="tmpfs" ino=12491 scontext=unconfined_u:unconfined_r:sandbox_t:s0:c156,c485 tcontext=system_u:object_r:initrc_var_run_t:s0 tclass=file
+----
+etc.
+
+
+# ausearch -m avc -ts recent | audit2allow 
+
+
+#============= sandbox_t ==============
+allow sandbox_t initrc_var_run_t:file open;
+allow sandbox_t passwd_file_t:file open;
+allow sandbox_t self:process setcap;
+The sandbox policy module is usually disabled. If you want the TC to pass, you need to enable the policy module:
+
+# semodule -e sandbox
+#
+Karel,
+
+the tests needs mail utility installed, 'yum install mailx' could help.
+thanks a lot Petr

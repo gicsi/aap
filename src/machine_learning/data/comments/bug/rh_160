@@ -1,0 +1,15 @@
+Your package hfsplusutils failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10095930
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046995
+build.log
+Created attachment 1046996
+root.log
+Created attachment 1046997
+state.log
+Taking. This package suffers from c11 compatibility issues.
+
+I am going to apply a patch to compile it with -std=gnu89.
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10297839

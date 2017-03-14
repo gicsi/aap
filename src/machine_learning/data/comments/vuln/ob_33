@@ -1,0 +1,4 @@
+In cron(8), make sure argv[] is NULL terminated in the fake popen() and
+run sendmail as the user, not as root.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/012_cron.patch">
+A source code patch exists which remedies this problem.</a>

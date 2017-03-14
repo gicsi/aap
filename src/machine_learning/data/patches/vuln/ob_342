@@ -1,0 +1,36 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_nginx.patch
+
+And then rebuild and install nginx:
+	cd usr.sbin/nginx/
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper 
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/nginx/src/http/ngx_http_parse.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/nginx/src/http/ngx_http_parse.c,v
+retrieving revision 1.6
+retrieving revision 1.6.2.1
+diff -u -r1.6 -r1.6.2.1
+--- usr.sbin/nginx/src/http/ngx_http_parse.c	1 Jun 2013 16:12:54 -0000	1.6
++++ usr.sbin/nginx/src/http/ngx_http_parse.c	21 Nov 2013 14:12:05 -0000	1.6.2.1
+@@ -614,6 +614,7 @@
+             default:
+                 r->space_in_uri = 1;
+                 state = sw_check_uri;
++		p--;
+                 break;
+             }
+             break;
+@@ -667,6 +668,7 @@
+             default:
+                 r->space_in_uri = 1;
+                 state = sw_uri;
++		p--;
+                 break;
+             }
+             break;
+

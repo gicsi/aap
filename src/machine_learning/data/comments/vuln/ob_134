@@ -1,0 +1,5 @@
+OpenSSL is vulnerable to an extension of the ``Bleichenbacher'' attack designed
+by Czech researchers Klima, Pokorny and Rosa.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/025_kpr.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,32 @@
+Description of problem:
+BVT: Crash seen in marker while running BVT
+
+Version-Release number of selected component (if applicable):
+glusterfs-3.7.1-6.el6rhs.x86_64
+
+How reproducible:
+Once
+
+Steps to Reproduce:
+1. Run bvt on build - glusterfs-3.7.1-6.el6rhs.x86_64
+2. Seen a crash
+
+Backtrace of the core:
+
+(gdb) bt
+#0  0x00007f73c07b8f73 in mq_remove_contri () from /usr/lib64/glusterfs/3.7.1/xlator/features/marker.so
+#1  0x00007f73c07b9a3c in mq_reduce_parent_size_task () from /usr/lib64/glusterfs/3.7.1/xlator/features/marker.so
+#2  0x00007f73d04be1f2 in synctask_wrap () from /usr/lib64/libglusterfs.so.0
+#3  0x00007f73cee268f0 in ?? () from /lib64/libc.so.6
+#4  0x0000000000000000 in ?? ()
+
+
+Actual results: Seen a crash for marker
+
+Expected results: No crashes
+
+Additional info:
+BVT job link : https://beaker.engineering.redhat.com/jobs/999046
+
+Core and sosreports: http://rhsqe-repo.lab.eng.blr.redhat.com/sosreports/1236563/
+Re-ran the BVT on glusterfs-3.7.1-7 build and did not see the crash, hence closing.

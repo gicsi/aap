@@ -1,0 +1,239 @@
+Spec URL: https://raw.githubusercontent.com/mizdebsk/newpkg/bd7110a02adfb810cb44f51342f1e2e306341c96/openid4java-team.spec
+SRPM URL: https://copr-be.cloud.fedoraproject.org/results/mizdebsk/newpkg/fedora-rawhide-x86_64/openid4java-team-1.0-1.fc23/openid4java-team-1.0-1.fc23.src.rpm
+Description: This package provides team extension for openid4java.
+Fedora Account System Username: mizdebsk
+hi
+have time for this https://bugzilla.redhat.com/show_bug.cgi?id=1228503 ?
+(In reply to gil cattaneo from comment #1)
+> hi
+> have time for this https://bugzilla.redhat.com/show_bug.cgi?id=1228503 ?
+
+Sorry, not at this moment - I'm quite busy with other work.
+ackage Review
+==============
+
+Legend:
+[x] = Pass, [!] = Fail, [-] = Not applicable, [?] = Not evaluated
+[ ] = Manual review needed
+
+
+
+===== MUST items =====
+
+Generic:
+[x]: Package is licensed with an open-source compatible license and meets
+     other legal requirements as defined in the legal section of Packaging
+     Guidelines.
+[x]: License field in the package spec file matches the actual license.
+     Note: Checking patched sources after %prep for licenses. Licenses
+     found: "Unknown or generated". 4 files have unknown license. Detailed
+     output of licensecheck in /home/gil/1236224-openid4java-
+     team/licensecheck.txt
+[x]: License file installed when any subpackage combination is installed.
+[x]: Package requires other packages for directories it uses.
+     Note: No known owner of /usr/share/licenses, /usr/share/maven-metadata
+[x]: Package must own all directories that it creates.
+     Note: Directories without known owners: /usr/share/licenses,
+     /usr/share/maven-metadata
+[x]: Package contains no bundled libraries without FPC exception.
+[x]: Changelog in prescribed format.
+[x]: Sources contain only permissible code or content.
+[-]: Package contains desktop file if it is a GUI application.
+[-]: Development files must be in a -devel package
+[x]: Package uses nothing in %doc for runtime.
+[x]: Package consistently uses macros (instead of hard-coded directory
+     names).
+[x]: Package is named according to the Package Naming Guidelines.
+[x]: Package does not generate any conflict.
+[x]: Package obeys FHS, except libexecdir and /usr/target.
+[-]: If the package is a rename of another package, proper Obsoletes and
+     Provides are present.
+[x]: Requires correct, justified where necessary.
+[x]: Spec file is legible and written in American English.
+[-]: Package contains systemd file(s) if in need.
+[x]: Package is not known to require an ExcludeArch tag.
+[x]: Package complies to the Packaging Guidelines
+[x]: Package successfully compiles and builds into binary rpms on at least
+     one supported primary architecture.
+[x]: Package installs properly.
+[x]: Rpmlint is run on all rpms the build produces.
+     Note: There are rpmlint messages (see attachment).
+[x]: If (and only if) the source package includes the text of the
+     license(s) in its own file, then that file, containing the text of the
+     license(s) for the package is included in %license.
+[x]: Package does not own files or directories owned by other packages.
+[x]: All build dependencies are listed in BuildRequires, except for any
+     that are listed in the exceptions section of Packaging Guidelines.
+[x]: Package uses either %{buildroot} or $RPM_BUILD_ROOT
+[x]: Package does not run rm -rf %{buildroot} (or $RPM_BUILD_ROOT) at the
+     beginning of %install.
+[x]: Macros in Summary, %description expandable at SRPM build time.
+[x]: Dist tag is present.
+[x]: Package does not contain duplicates in %files.
+[x]: Permissions on files are set properly.
+[x]: Package use %makeinstall only when make install DESTDIR=... doesn't
+     work.
+[x]: Package is named using only allowed ASCII characters.
+[x]: Package does not use a name that already exists.
+[x]: Package is not relocatable.
+[x]: Sources used to build the package match the upstream source, as
+     provided in the spec URL.
+[x]: Spec file name must match the spec package %{name}, in the format
+     %{name}.spec.
+[x]: File names are valid UTF-8.
+[x]: Large documentation must go in a -doc subpackage. Large could be size
+     (~1MB) or number of files.
+     Note: Documentation size is 0 bytes in 0 files.
+[x]: Packages must not store files under /srv, /opt or /usr/local
+
+Java:
+[x]: Bundled jar/class files should be removed before build
+[x]: Packages have proper BuildRequires/Requires on jpackage-utils
+     Note: Maven packages do not need to (Build)Require jpackage-utils. It
+     is pulled in by maven-local
+[x]: Javadoc documentation files are generated and included in -javadoc
+     subpackage
+[x]: Javadoc subpackages should not have Requires: jpackage-utils
+[x]: Javadocs are placed in %{_javadocdir}/%{name} (no -%{version} symlink)
+
+Maven:
+[x]: If package contains pom.xml files install it (including metadata) even
+     when building with ant
+[x]: POM files have correct Maven mapping
+[x]: Maven packages should use new style packaging
+[x]: Old add_to_maven_depmap macro is not being used
+[x]: Packages DO NOT have Requires(post) and Requires(postun) on jpackage-
+     utils for %update_maven_depmap macro
+[x]: Package DOES NOT use %update_maven_depmap in %post/%postun
+[x]: Packages use .mfiles file list instead of %{_datadir}/maven2/poms
+
+===== SHOULD items =====
+
+Generic:
+[!]: If the source package does not include license text(s) as a separate
+     file from upstream, the packager SHOULD query upstream to include it.
+[x]: Final provides and requires are sane (see attachments).
+[-]: Fully versioned dependency in subpackages if applicable.
+     Note: No Requires: %{name}%{?_isa} = %{version}-%{release} in
+     openid4java-team-javadoc
+[x]: Package functions as described.
+[x]: Latest version is packaged.
+[!]: Package does not include license text files separate from upstream.
+[x]: Description and summary sections in the package spec file contains
+     translations for supported Non-English languages, if available.
+[x]: Package should compile and build into binary rpms on all supported
+     architectures.
+[x]: %check is present and all tests pass.
+[x]: Packages should try to preserve timestamps of original installed
+     files.
+[x]: Packager, Vendor, PreReq, Copyright tags should not be in spec file
+[x]: Sources can be downloaded from URI in Source: tag
+[x]: Reviewer should test that the package builds in mock.
+[x]: Buildroot is not present
+[x]: Package has no %clean section with rm -rf %{buildroot} (or
+     $RPM_BUILD_ROOT)
+[x]: No file requires outside of /etc, /bin, /sbin, /usr/bin, /usr/sbin.
+[x]: SourceX is a working URL.
+[x]: Spec use %global instead of %define unless justified.
+
+Java:
+[x]: Package uses upstream build method (ant/maven/etc.)
+[x]: Packages are noarch unless they use JNI
+
+===== EXTRA items =====
+
+Generic:
+[x]: Rpmlint is run on all installed packages.
+     Note: There are rpmlint messages (see attachment).
+[x]: Spec file according to URL is the same as in SRPM.
+
+
+Rpmlint
+-------
+Checking: openid4java-team-1.0-1.fc23.noarch.rpm
+          openid4java-team-javadoc-1.0-1.fc23.noarch.rpm
+          openid4java-team-1.0-1.fc23.src.rpm
+openid4java-team.noarch: W: no-documentation
+3 packages and 0 specfiles checked; 0 errors, 1 warnings.
+
+
+
+
+Rpmlint (installed packages)
+----------------------------
+INFO: mock.py version 1.2.10 starting (python version = 2.7.5)...
+Start: init plugins
+INFO: selinux enabled
+Finish: init plugins
+Start: run
+Start: chroot init
+INFO: calling preinit hooks
+INFO: enabled root cache
+INFO: enabled dnf cache
+Start: cleaning dnf metadata
+Finish: cleaning dnf metadata
+INFO: enabled ccache
+Mock Version: 1.2.10
+INFO: Mock Version: 1.2.10
+Finish: chroot init
+INFO: installing package(s): rpmlint
+ERROR: Command failed. See logs for output.
+ # /usr/bin/dnf --installroot /var/lib/mock/fedora-rawhide-i386/root/ --releasever 23 install rpmlint --setopt=tsflags=nocontexts
+
+
+
+Requires
+--------
+openid4java-team (rpmlib, GLIBC filtered):
+    java-headless
+    jpackage-utils
+    mvn(org.openid4java:openid4java-nodeps)
+
+openid4java-team-javadoc (rpmlib, GLIBC filtered):
+    jpackage-utils
+
+
+
+Provides
+--------
+openid4java-team:
+    mvn(com.cloudbees:openid4java-team-extension)
+    mvn(com.cloudbees:openid4java-team-extension:pom:)
+    openid4java-team
+
+openid4java-team-javadoc:
+    openid4java-team-javadoc
+
+
+
+Source checksums
+----------------
+https://github.com/cloudbees/openid4java-team-extension/archive/openid4java-team-extension-1.0.tar.gz :
+  CHECKSUM(SHA256) this package     : 08192a1362ec03e87ded3d277f867d9e613ed1bfce92724e79c70a6fb57cfdf9
+  CHECKSUM(SHA256) upstream package : 08192a1362ec03e87ded3d277f867d9e613ed1bfce92724e79c70a6fb57cfdf9
+
+
+Generated by fedora-review 0.5.3 (bcf15e3) last change: 2015-05-04
+Command line :/usr/bin/fedora-review -b 1236224 --plugins Java -m fedora-rawhide-i386
+Buildroot used: fedora-rawhide-i386
+Active plugins: Generic, Shell-api, Java
+Disabled plugins: C/C++, Python, fonts, SugarActivity, Ocaml, Perl, Haskell, R, PHP, Ruby
+Disabled flags: EXARCH, DISTTAG, EPEL5, BATCH, EPEL6
+NON blocking issues:
+[!]: If the source package does not include license text(s) as a separate
+     file from upstream, the packager SHOULD query upstream to include it.
+[!]: Package does not include license text files separate from upstream.
+
+Please, contact upstream to include copy of license.
+
+Approved.
+New Package SCM Request
+=======================
+Package Name: openid4java-team
+Short Description: Team extension for openid4java
+Owners: mizdebsk msimacek msrb
+Branches: f22
+InitialCC: java-sig
+Git done (by process-git-requests).
+Built for rawhide. Closing.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=665807

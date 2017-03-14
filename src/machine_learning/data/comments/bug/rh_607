@@ -1,0 +1,2 @@
+The Emacs add-on packging guidelines no longer stipulate that elisp source files be shipped in a separate sub-package. The -el subpackage should be removed, and the elisp source files should be packaged in the main package. See http://fedoraproject.org/wiki/Packaging:Emacs for more detail, and please take note of the Obsoletes/Provides concern noted there.
+Thanks.

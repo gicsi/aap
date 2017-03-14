@@ -1,0 +1,11 @@
+Your package rubygem-activeresource failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10149414
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047967
+build.log
+Created attachment 1047968
+root.log
+Created attachment 1047969
+state.log

@@ -1,0 +1,4 @@
+A race condition exists in the kernel <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=execve&amp;sektion=2&amp;format=html">execve(2)</a> implementation that opens a small window of vulnerability for a non-privileged user to <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ptrace&amp;sektion=2&amp;format=html">ptrace(2)</a> attach to a suid/sgid process.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/007_kernexec.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,13 @@
+This change made it into 7.2 kernel: http://git.kernel.org/cgit/linux/kernel/git/shemminger/iproute2.git/commit/ip/ipaddress.c?id=ccdcbf35f120c754660b3b3f48fa67cc950a6407
+
+However, the change breaks NetworkManager test suite and possibly anything else that scrapes the ip output.
+
+Please investigate the possibility of coping with the kernel change and retaining the format from ip without change.
+The @NONE output should be fixed in the kernel. I filed bug 1238672 for that.
+
+We now return iface@link for more interfaces than before, though. That's a correct behavior and anything scraping ip output needs to be aware of this format. The format is not new, it's just returned for more interfaces now; one example is veth interfaces.
+When we talked on IRC, I assumed we are talking about a regression in the iproute package. If the regression is in kernel, and as jbenc says it should be fixed in the kernel, should we even consider it for iproute? Is upstream considering it at all?
+I don't think so.
+I wasn't sure if this was getting fixed in kernel at the time I reported this.
+Feel free to close this.
+Thanks for your feedback!

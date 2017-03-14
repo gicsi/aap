@@ -1,0 +1,54 @@
+Description of problem:
+
+Setup: 2 Monitors/Screens Nvidia GT640 with RPMFusion nvidia drivers
+CPU: AMD FX-8350 4 GHZ 8 GB RAM
+
+Since I upgraded  from F20 to F21 3 days ago, if i move a window from 
+the one monitor to the other monitor, the cpu load for gnome-shell increase heavyly to a point, where the entire move operation seems to standstill, than it "jumps" to the actual mouse position. The Jump takes app. 1 sec.
+To be precise, the mouse pointer moves normally, it's the window that does not follow on spot and than jumps after the mounse pointer. When the jump happend, it moves normally.
+
+As far as i move it inside a monitor, it's fine. But it starts, when the mouse pointer crosses the border! If the window border crosses the monitor border while just moving aroun inside one monitor, nothing bad happens at all. 
+
+If the mouse crosses the border, but is not dragging a window, nothing bad  happens. The mouse just moves around uninterrupted.
+
+Version-Release number of selected component (if applicable):
+
+gnome-shell.x86_64                                        3.14.4-2.fc21  
+
+Steps to Reproduce:
+1. two monitors
+2. one window
+3. move it from left to right or vice versa.
+
+Additional info:
+
+it looks like the switch from one side to another side of the monitor/screen border takes so much cpu time, that it's visible.
+UPDATE: 
+
+After rebooting, problems have gone. 
+
+[marius@eve ~]$ lscpu
+Architektur:           x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte-Reihenfolge:      Little Endian
+CPU(s):                8
+On-line CPU(s) list:   0-7
+Thread(s) pro Kern:    2
+Kern(e) pro Socket:    4
+Socket(s):             1
+NUMA-Knoten:           1
+Anbieterkennung:       AuthenticAMD
+Prozessorfamilie:      21
+Modell:                2
+Modellname:            AMD FX(tm)-8350 Eight-Core Processor
+Stepping:              0
+CPU MHz:               1400.000
+Maximale Taktfrequenz der CPU:4000,0000
+Minimale Taktfrequenz der CPU:1400,0000
+BogoMIPS:              8026.32
+Virtualisierung:       AMD-V
+L1d Cache:             16K
+L1i Cache:             64K
+L2 Cache:              2048K
+L3 Cache:              8192K
+NUMA-Knoten0 CPU(s):   0-7

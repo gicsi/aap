@@ -1,0 +1,38 @@
+Created attachment 1045633
+screenshot of problem
+
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+control-center-3.16.2-1.fc22.x86_64
+NetworkManager-bluetooth-1.0.4-0.1.git20160624.f245b49a.fc22.x86_64
+bluez-libs-5.29-2.fc22.x86_64
+bluez-5.29-2.fc22.x86_64
+pulseaudio-module-bluetooth-6.0-4.fc22.x86_64
+gnome-bluetooth-libs-3.16.1-1.fc22.x86_64
+gnome-bluetooth-3.16.1-1.fc22.x86_64
+bluez-cups-5.29-2.fc22.x86_64
+
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1. Open control center, click on Bluetooth icon
+2.
+3.
+
+Actual results:
+
+Blank, see screenshot
+
+Expected results:
+
+I should be able to do something in here, like browse for bluetooth devices and configure them to use with GNOME.
+
+Additional info:
+
+When I first enter the panel, it's completely blank, unlike the attached screen shot. As soon as I click another window (Terminal, to take the screen shot), then the words "Devices" and "Visible as "Foobar"" appear, but I still can't do anything in here at all.
+No point in tracking the same bug in two different places, closing.

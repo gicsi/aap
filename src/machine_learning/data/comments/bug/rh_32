@@ -1,0 +1,6 @@
+perl-Perl-Critic is available from EPEL5 and EPEL6: please provide a build for EPEL7 too..
+
+Thanks
+
+Jarek
+perl-Perl-Critic-1.118-5.el7 is available in RHEL-7 and CentOS 7, so is not needed (and indeed not allowed) in EPEL-7.

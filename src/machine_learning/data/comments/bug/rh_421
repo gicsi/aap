@@ -1,0 +1,59 @@
+Description of problem:
+Update a login status.
+
+Version-Release number of selected component:
+pgadmin3-1.20.0-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/bin/pgadmin3
+crash_function: g_malloc
+executable:     /usr/bin/pgadmin3
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Mon 2015-06-22 23:21:57 CDT, end at Fri 2015-06-26 11:41:29 CDT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #6 g_malloc at gmem.c:104
+ #7 g_malloc_n at gmem.c:345
+ #8 miRegionCopy at gdkregion-generic.c:632
+ #9 wxRegion::DoUnionWithRegion at src/gtk/region.cpp:193
+ #10 Union at include/wx/region.h:132
+ #11 wxWindowDC::DoSetClippingRegionAsRegion at src/gtk/dcclient.cpp:2301
+ #12 SetClippingRegion at include/wx/dc.h:419
+ #13 wxWindow::GtkSendPaintEvents at src/gtk/window.cpp:3859
+ #14 gtk_window_expose_callback at src/gtk/window.cpp:543
+ #15 _gtk_marshal_BOOLEAN__BOXED at gtkmarshalers.c:86
+Created attachment 1043605
+File: backtrace
+Created attachment 1043606
+File: cgroup
+Created attachment 1043607
+File: core_backtrace
+Created attachment 1043608
+File: dso_list
+Created attachment 1043609
+File: environ
+Created attachment 1043610
+File: limits
+Created attachment 1043611
+File: maps
+Created attachment 1043612
+File: open_fds
+Created attachment 1043613
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

@@ -1,0 +1,165 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 020_procfs.patch
+
+And then rebuild your kernel.
+
+Index: sys/miscfs/procfs/procfs_cmdline.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_cmdline.c,v
+retrieving revision 1.3
+retrieving revision 1.3.10.1
+diff -u -p -r1.3 -r1.3.10.1
+--- sys/miscfs/procfs/procfs_cmdline.c	6 Nov 2001 19:53:20 -0000	1.3
++++ sys/miscfs/procfs/procfs_cmdline.c	13 May 2004 03:08:31 -0000	1.3.10.1
+@@ -83,11 +83,10 @@ procfs_docmdline(curp, p, pfs, uio)
+ 	 */
+ 	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+                 len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
+-                xlen = len - uio->uio_offset;
+-                if (xlen <= 0) 
++                if (uio->uio_offset >= (off_t)len)
+                         error = 0;
+                 else
+-                        error = uiomove(arg, xlen, uio);
++                        error = uiomove(arg, len - uio->uio_offset, uio);
+ 		
+                 free(arg, M_TEMP);
+                 return (error);	
+Index: sys/miscfs/procfs/procfs_fpregs.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_fpregs.c,v
+retrieving revision 1.6
+retrieving revision 1.6.2.1
+diff -u -p -r1.6 -r1.6.2.1
+--- sys/miscfs/procfs/procfs_fpregs.c	2 Jun 2003 23:28:11 -0000	1.6
++++ sys/miscfs/procfs/procfs_fpregs.c	13 May 2004 03:08:31 -0000	1.6.2.1
+@@ -63,7 +63,7 @@ procfs_dofpregs(curp, p, pfs, uio)
+ 		return (error);
+ 
+ 	kl = sizeof(r);
+-	kv = (char *) &r;
++	kv = (char *)&r;
+ 
+ 	kv += uio->uio_offset;
+ 	kl -= uio->uio_offset;
+@@ -72,7 +72,7 @@ procfs_dofpregs(curp, p, pfs, uio)
+ 
+ 	PHOLD(p);
+ 
+-	if (kl < 0)
++	if (uio->uio_offset > (off_t)sizeof(r))
+ 		error = EINVAL;
+ 	else
+ 		error = process_read_fpregs(p, &r);
+Index: sys/miscfs/procfs/procfs_linux.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_linux.c,v
+retrieving revision 1.4
+retrieving revision 1.4.10.1
+diff -u -p -r1.4 -r1.4.10.1
+--- sys/miscfs/procfs/procfs_linux.c	6 Nov 2001 19:53:20 -0000	1.4
++++ sys/miscfs/procfs/procfs_linux.c	13 May 2004 03:08:31 -0000	1.4.10.1
+@@ -89,16 +89,13 @@ procfs_domeminfo(struct proc *curp, stru
+ 		PGTOKB(uvmexp.swpages),
+ 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
+ 
+-	if (len == 0)
++	if (len == 0 || len <= uio->uio_offset || uio->uio_resid == 0)
+ 		return 0;
+ 
+ 	len -= uio->uio_offset;
+ 	cp = buf + uio->uio_offset;
+ 	len = imin(len, uio->uio_resid);
+-	if (len <= 0)
+-		error = 0;
+-	else
+-		error = uiomove(cp, len, uio);
++	error = uiomove(cp, len, uio);
+ 	return error;
+ }
+ 
+@@ -113,7 +110,7 @@ procfs_docpuinfo(struct proc *curp, stru
+ 	if (procfs_getcpuinfstr(buf, &len) < 0)
+ 		return EIO;
+ 
+-	if (len == 0)
++	if (len == 0 || uio->uio_offset > sizeof(buf))
+ 		return 0;
+ 
+ 	len -= uio->uio_offset;
+Index: sys/miscfs/procfs/procfs_regs.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_regs.c,v
+retrieving revision 1.7
+retrieving revision 1.7.2.1
+diff -u -p -r1.7 -r1.7.2.1
+--- sys/miscfs/procfs/procfs_regs.c	2 Jun 2003 23:28:11 -0000	1.7
++++ sys/miscfs/procfs/procfs_regs.c	13 May 2004 03:08:31 -0000	1.7.2.1
+@@ -62,7 +62,7 @@ procfs_doregs(curp, p, pfs, uio)
+ 		return (error);
+ 
+ 	kl = sizeof(r);
+-	kv = (char *) &r;
++	kv = (char *)&r;
+ 
+ 	kv += uio->uio_offset;
+ 	kl -= uio->uio_offset;
+@@ -71,7 +71,7 @@ procfs_doregs(curp, p, pfs, uio)
+ 
+ 	PHOLD(p);
+ 
+-	if (kl < 0)
++	if (uio->uio_offset > (off_t)sizeof(r))
+ 		error = EINVAL;
+ 	else
+ 		error = process_read_regs(p, &r);
+Index: sys/miscfs/procfs/procfs_status.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_status.c,v
+retrieving revision 1.6
+retrieving revision 1.6.2.1
+diff -u -p -r1.6 -r1.6.2.1
+--- sys/miscfs/procfs/procfs_status.c	2 Jun 2003 23:28:11 -0000	1.6
++++ sys/miscfs/procfs/procfs_status.c	13 May 2004 03:08:31 -0000	1.6.2.1
+@@ -164,16 +164,16 @@ procfs_dostatus(curp, p, pfs, uio)
+ 
+ 	len = procfs_stat_gen(p, NULL, 0);
+ 	ps = malloc(len, M_TEMP, M_WAITOK);
+-	(void) procfs_stat_gen(p, ps, len);
++	len = procfs_stat_gen(p, ps, len);
+ 
+-	len -= uio->uio_offset;
+-	len = imin(len, uio->uio_resid);
+-	if (len <= 0)
++	if (len <= uio->uio_offset)
+ 		error = 0;
+-	else
++	else {
++		len -= uio->uio_offset;
++		len = imin(len, uio->uio_resid);
+ 		error = uiomove(ps + uio->uio_offset, len, uio);
++	}
+ 
+ 	free(ps, M_TEMP);
+ 	return (error);
+ }
+-
+Index: sys/miscfs/procfs/procfs_subr.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_subr.c,v
+retrieving revision 1.20
+retrieving revision 1.20.2.1
+diff -u -p -r1.20 -r1.20.2.1
+--- sys/miscfs/procfs/procfs_subr.c	11 Aug 2003 10:08:04 -0000	1.20
++++ sys/miscfs/procfs/procfs_subr.c	13 May 2004 03:08:31 -0000	1.20.2.1
+@@ -214,6 +214,8 @@ procfs_rw(v)
+ 	/* Do not permit games to be played with init(8) */
+ 	if (p->p_pid == 1 && securelevel > 0 && uio->uio_rw == UIO_WRITE)
+ 		return (EPERM);
++	if (uio->uio_offset < 0)
++		return (EINVAL);
+ 
+ 	switch (pfs->pfs_type) {
+ 	case Pnote:
+

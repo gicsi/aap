@@ -1,0 +1,55 @@
+Description of problem: A high percentage of my glance image uploads are failing with internal server errors from Glance.  It appears to be a problem saving the image in Swift.
+
+
+Version-Release number of selected component (if applicable):
+6-29 puddle
+python-glance-2015.1.0-6.el7ost.noarch
+python-glance-store-0.4.0-1.el7ost.noarch
+python-glanceclient-0.17.0-2.el7ost.noarch
+openstack-glance-2015.1.0-6.el7ost.noarch
+openstack-swift-object-2.3.0-1.el7ost.noarch
+python-swiftclient-2.4.0-1.el7ost.noarch
+openstack-swift-2.3.0-1.el7ost.noarch
+openstack-swift-container-2.3.0-1.el7ost.noarch
+openstack-swift-account-2.3.0-1.el7ost.noarch
+openstack-swift-proxy-2.3.0-1.el7ost.noarch
+openstack-swift-plugin-swift3-1.7-3.el7ost.noarch
+
+How reproducible: About half of the time.
+
+
+Steps to Reproduce:
+1. Deploy cloud with OSP director
+2. Upload image to glance
+3.
+
+Actual results: 500 internal server error from Glance
+
+
+Expected results: Image upload completes successfully
+
+
+Additional info: Traceback in the Glance log:
+
+2015-07-02 14:01:13.730 31724 ERROR glance_store._drivers.swift.store [req-753e741c-56fa-40bd-b706-9752d26fc3ac 3008f65179534bed96626bdfe8b51f44 89ca80db1cfd49f6a4a87a738f7948fd - - -] Failed to add object to Swift.
+Got error from Swift: put_object('glance', 'b163cce9-bc2e-4d8b-9677-5dc2dabe3727', ...) failure and no ability to reset contents for reupload..
+2015-07-02 14:01:13.731 31724 ERROR glance.api.v1.upload_utils [req-753e741c-56fa-40bd-b706-9752d26fc3ac 3008f65179534bed96626bdfe8b51f44 89ca80db1cfd49f6a4a87a738f7948fd - - -] Failed to upload image b163cce9-bc2e-4d8b-9677-5dc2dabe3727
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils Traceback (most recent call last):
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils   File "/usr/lib/python2.7/site-packages/glance/api/v1/upload_utils.py", line 113, in upload_data_to_store
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils     context=req.context)
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils   File "/usr/lib/python2.7/site-packages/glance_store/backend.py", line 339, in store_add_to_backend
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils     context=context)
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils   File "/usr/lib/python2.7/site-packages/glance_store/capabilities.py", line 226, in op_checker
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils     return store_op_fun(store, *args, **kwargs)
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils   File "/usr/lib/python2.7/site-packages/glance_store/_drivers/swift/store.py", line 612, in add
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils     raise glance_store.BackendException(msg)
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils BackendException: Failed to add object to Swift.
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils Got error from Swift: put_object('glance', 'b163cce9-bc2e-4d8b-9677-5dc2dabe3727', ...) failure and no ability to reset contents for reupload..
+2015-07-02 14:01:13.731 31724 TRACE glance.api.v1.upload_utils
+
+
+Which is probably caused by the following error in Swift:
+
+Jul  2 14:00:58 localhost proxy-server: ERROR with Object server 9.1.1.21:6000/d1 re: Trying to write to /v1/AUTH_06b6629702c64ccd8bf56b562d6ba96f/glance/b163cce9-bc2e-4d8b-9677-5dc2dabe3727: ChunkWriteTimeout (10s)
+Can you reproduce this in any other env? I'm curious if this is hw specific.
+I haven't noticed this anywhere else, but I also haven't uploaded images this large to any other environments.  I'll try that in a virt environment and see if it reproduces.

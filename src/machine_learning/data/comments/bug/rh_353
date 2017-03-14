@@ -1,0 +1,21 @@
+Security researcher Holger Fuhrmannek used the Address Sanitizer tool to discover an out-of-bound read while computing an oscillator rendering range in Web Audio. This could allow an attacker to infer the contents of four bytes of memory. 
+
+
+External Reference:
+
+http://www.mozilla.org/security/announce/2015/mfsa2015-62.html
+
+
+Acknowledgements:
+
+Red Hat would like to thank the Mozilla project for reporting this issue. Upstream acknowledges Holger Fuhrmannek as the original reporter.
+This issue has been addressed in the following products:
+
+  Red Hat Enterprise Linux 7
+  Red Hat Enterprise Linux 6
+  Red Hat Enterprise Linux 5
+
+Via RHSA-2015:1207 https://rhn.redhat.com/errata/RHSA-2015-1207.html
+Statement:
+
+This issue does not affect the version of thunderbird package, as shipped with Red Hat Enterprise Linux 5, 6 and 7.

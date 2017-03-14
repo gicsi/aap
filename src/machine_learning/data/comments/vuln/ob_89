@@ -1,0 +1,4 @@
+OpenBSD 2.8's ftpd contains a one-byte overflow in the replydirname() function.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/005_ftpd.patch">
+A source code patch exists which remedies this problem.</a>
+You can view the <a href="advisories/ftpd_replydirname.txt">OpenBSD Advisory</a> here.

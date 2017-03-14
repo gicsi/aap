@@ -1,0 +1,322 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N931CONa3Rep7IsqK0x8/o5LJou3kfXmvowPYqjSiZsKvrcB2jyLssTopiAdrOsPuO+BweIGzb9yHwSafmoYgkEAQ=
+
+OpenBSD 5.5 errata 25, Apr 19, 2015
+
+Incorrect logic in smtpd(8) can lead to unexpected client disconnect, invalid
+certificate in SNI negotiation or server crash.
+
+Apply by doing:
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 025_smtpd.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+And then rebuild and install smtpd:
+    cd /usr/src/usr.sbin/smtpd
+    make clean
+    make obj
+    make
+    make install
+
+Index: usr.sbin/smtpd/smtp_session.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/smtp_session.c,v
+retrieving revision 1.196
+diff -u -p -r1.196 smtp_session.c
+--- usr.sbin/smtpd/smtp_session.c	17 Feb 2014 11:06:54 -0000	1.196
++++ usr.sbin/smtpd/smtp_session.c	16 Apr 2015 21:53:25 -0000
+@@ -181,6 +181,7 @@ static uint8_t dsn_notify_str_to_uint8(c
+ static void smtp_auth_failure_pause(struct smtp_session *);
+ static void smtp_auth_failure_resume(int, short, void *);
+ static int smtp_sni_callback(SSL *, int *, void *);
++static const char *smtp_sni_get_servername(struct smtp_session *);
+ 
+ static struct { int code; const char *cmd; } commands[] = {
+ 	{ CMD_HELO,		"HELO" },
+@@ -607,7 +608,7 @@ smtp_session_imsg(struct mproc *p, struc
+ 		ssl = ssl_smtp_init(ssl_ctx,
+ 		    resp_ca_cert->cert, resp_ca_cert->cert_len,
+ 		    resp_ca_cert->key, resp_ca_cert->key_len,
+-		    smtp_sni_callback, s);
++		    smtp_sni_callback);
+ 		io_set_read(&s->io);
+ 		io_start_tls(&s->io, ssl);
+ 
+@@ -787,6 +788,7 @@ smtp_io(struct io *io, int evt)
+ {
+ 	struct ca_cert_req_msg	req_ca_cert;
+ 	struct smtp_session    *s = io->arg;
++	const char	       *sn;
+ 	char		       *line;
+ 	size_t			len, i;
+ 	X509		       *x;
+@@ -804,6 +806,14 @@ smtp_io(struct io *io, int evt)
+ 		s->kickcount = 0;
+ 		s->phase = PHASE_INIT;
+ 
++		sn = smtp_sni_get_servername(s);
++		if (sn) {
++			if (strlcpy(s->sni, sn, sizeof s->sni) >= sizeof s->sni) {
++				smtp_free(s, "client SNI exceeds max hostname length");
++				return;
++			}
++		}
++
+ 		if (smtp_verify_certificate(s)) {
+ 			io_pause(&s->io, IO_PAUSE_IN);
+ 			break;
+@@ -1901,25 +1911,24 @@ smtp_auth_failure_pause(struct smtp_sess
+ 	evtimer_add(&s->pause, &tv);
+ }
+ 
++static const char *
++smtp_sni_get_servername(struct smtp_session *s)
++{
++	return SSL_get_servername(s->io.ssl, TLSEXT_NAMETYPE_host_name);
++}
++
+ static int
+ smtp_sni_callback(SSL *ssl, int *ad, void *arg)
+ {
+ 	const char		*sn;
+-	struct smtp_session	*s = arg;
+ 	void			*ssl_ctx;
+ 
+ 	sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+ 	if (sn == NULL)
+ 		return SSL_TLSEXT_ERR_NOACK;
+-	if (strlcpy(s->sni, sn, sizeof s->sni) >= sizeof s->sni) {
+-		log_warnx("warn: client SNI exceeds max hostname length");
+-		return SSL_TLSEXT_ERR_NOACK;
+-	}
+ 	ssl_ctx = dict_get(env->sc_ssl_dict, sn);
+-	if (ssl_ctx == NULL) {
+-		log_warnx("warn: SNI name not found in PKI");
++	if (ssl_ctx == NULL)
+ 		return SSL_TLSEXT_ERR_NOACK;
+-	}
+ 	SSL_set_SSL_CTX(ssl, ssl_ctx);
+ 	return SSL_TLSEXT_ERR_OK;
+ }
+Index: usr.sbin/smtpd/smtpd.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/smtpd.h,v
+retrieving revision 1.450
+diff -u -p -r1.450 smtpd.h
+--- usr.sbin/smtpd/smtpd.h	17 Feb 2014 13:33:56 -0000	1.450
++++ usr.sbin/smtpd/smtpd.h	16 Apr 2015 21:53:25 -0000
+@@ -1307,7 +1307,7 @@ const char *imsg_to_str(int);
+ 
+ /* ssl_smtpd.c */
+ void   *ssl_mta_init(char *, off_t, char *, off_t);
+-void   *ssl_smtp_init(void *, char *, off_t, char *, off_t, void *, void *);
++void   *ssl_smtp_init(void *, char *, off_t, char *, off_t, void *);
+ 
+ 
+ /* stat_backend.c */
+Index: usr.sbin/smtpd/ssl_smtpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/ssl_smtpd.c,v
+retrieving revision 1.4
+diff -u -p -r1.4 ssl_smtpd.c
+--- usr.sbin/smtpd/ssl_smtpd.c	4 Feb 2014 13:44:41 -0000	1.4
++++ usr.sbin/smtpd/ssl_smtpd.c	16 Apr 2015 21:53:26 -0000
+@@ -90,7 +90,7 @@ dummy_verify(int ok, X509_STORE_CTX *sto
+ }
+ 
+ void *
+-ssl_smtp_init(void *ssl_ctx, char *cert, off_t cert_len, char *key, off_t key_len, void *sni, void *arg)
++ssl_smtp_init(void *ssl_ctx, char *cert, off_t cert_len, char *key, off_t key_len, void *sni)
+ {
+ 	SSL	*ssl = NULL;
+ 	int	(*cb)(SSL *,int *,void *) = sni;
+@@ -105,10 +105,8 @@ ssl_smtp_init(void *ssl_ctx, char *cert,
+ 
+ 	SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, dummy_verify);
+ 
+-	if (cb) {
++	if (cb)
+ 		SSL_CTX_set_tlsext_servername_callback(ssl_ctx, cb);
+-		SSL_CTX_set_tlsext_servername_arg(ssl_ctx, arg);
+-	}
+ 
+ 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+ 		goto err;
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhktKtv2CaNBbjF9NkKJJdBLhW0hFdL8yus9REd6O8iiLzM8I6fL0NCx4ZXeflMC7babQmG7qvx8TLxf/YMtsGwA=
+
+OpenBSD 5.6 errata 1, Sep 5, 2014:  Incorrect RX ring computation
+leads to panics under load with bge(4), em(4) and ix(4).
+
+Apply patch using:
+    
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 001_rxr.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install a new kernel:
+
+Index: sys/dev/pci/if_bge.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_bge.c,v
+retrieving revision 1.358
+diff -u -p -r1.358 if_bge.c
+--- sys/dev/pci/if_bge.c	22 Jul 2014 13:12:11 -0000	1.358
++++ sys/dev/pci/if_bge.c	28 Aug 2014 10:51:57 -0000
+@@ -1301,12 +1301,11 @@ bge_fill_rx_ring_std(struct bge_softc *s
+ 		if (bge_newbuf(sc, i) != 0)
+ 			break;
+ 
++		sc->bge_std = i;
+ 		post = 1;
+ 	}
+ 	if_rxr_put(&sc->bge_std_ring, slots);
+ 
+-	sc->bge_std = i;
+-
+ 	if (post)
+ 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+ 
+@@ -1406,11 +1405,10 @@ bge_fill_rx_ring_jumbo(struct bge_softc 
+ 		if (bge_newbuf_jumbo(sc, i) != 0)
+ 			break;
+ 
++		sc->bge_jumbo = i;
+ 		post = 1;
+ 	}
+ 	if_rxr_put(&sc->bge_jumbo_ring, slots);
+-
+-	sc->bge_jumbo = i;
+ 
+ 	if (post)
+ 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
+Index: sys/dev/pci/if_em.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_em.c,v
+retrieving revision 1.287
+diff -u -p -r1.287 if_em.c
+--- sys/dev/pci/if_em.c	13 Jul 2014 23:10:23 -0000	1.287
++++ sys/dev/pci/if_em.c	28 Aug 2014 10:51:57 -0000
+@@ -2817,17 +2817,17 @@ em_rxfill(struct em_softc *sc)
+ 	i = sc->last_rx_desc_filled;
+ 
+ 	for (slots = if_rxr_get(&sc->rx_ring, sc->num_rx_desc);
+-	    slots > 0; slots--) { 
++	    slots > 0; slots--) {
+ 		if (++i == sc->num_rx_desc)
+ 			i = 0;
+ 
+ 		if (em_get_buf(sc, i) != 0)
+ 			break;
+ 
++		sc->last_rx_desc_filled = i;
+ 		post = 1;
+ 	}
+ 
+-	sc->last_rx_desc_filled = i;
+ 	if_rxr_put(&sc->rx_ring, slots);
+ 
+ 	return (post);
+Index: sys/dev/pci/if_ix.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_ix.c,v
+retrieving revision 1.96
+diff -u -p -r1.96 if_ix.c
+--- sys/dev/pci/if_ix.c	13 Jul 2014 23:10:23 -0000	1.96
++++ sys/dev/pci/if_ix.c	28 Aug 2014 10:51:59 -0000
+@@ -2564,11 +2564,11 @@ ixgbe_rxfill(struct rx_ring *rxr)
+ 		if (ixgbe_get_buf(rxr, i) != 0)
+ 			break;
+ 
++		rxr->last_desc_filled = i;
+ 		post = 1;
+ 	}
+-	if_rxr_put(&rxr->rx_ring, slots);
+ 
+-	rxr->last_desc_filled = i;
++	if_rxr_put(&rxr->rx_ring, slots);
+ 
+ 	return (post);
+ }
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhsr9jS8BgHhwsAYDH7hRTPEunrGAZJdzabwpNNlCMaRCqqsBZR4mdw7nABwj+qfibDasRWE1dTBZg9Rtbhrftg0=
+
+OpenBSD 5.6 errata 2, Oct 1, 2014: Redundant IPv6 autoconf addresses.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 002_nd6.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/netinet6/nd6_rtr.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/nd6_rtr.c,v
+retrieving revision 1.83
+retrieving revision 1.83.4.1
+diff -u -p -r1.83 -r1.83.4.1
+--- sys/netinet6/nd6_rtr.c	12 Jul 2014 18:44:23 -0000	1.83
++++ sys/netinet6/nd6_rtr.c	8 Sep 2014 14:42:40 -0000	1.83.4.1
+@@ -1296,13 +1296,51 @@ void
+ nd6_addr_add(void *prptr, void *arg2)
+ {
+ 	struct nd_prefix *pr = (struct nd_prefix *)prptr;
+-	struct in6_ifaddr *ia6 = NULL;
+-	int autoconf, privacy, s;
++	struct in6_ifaddr *ia6;
++	struct ifaddr *ifa;
++	int ifa_plen, autoconf, privacy, s;
+ 
+ 	s = splsoftnet();
+ 
+ 	autoconf = 1;
+ 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
++
++	/* 
++	 * Check again if a non-deprecated address has already
++	 * been autoconfigured for this prefix.
++	 */
++	TAILQ_FOREACH(ifa, &pr->ndpr_ifp->if_addrlist, ifa_list) {
++		if (ifa->ifa_addr->sa_family != AF_INET6)
++			continue;
++
++		ia6 = ifatoia6(ifa);
++
++		/*
++		 * Spec is not clear here, but I believe we should concentrate
++		 * on unicast (i.e. not anycast) addresses.
++		 * XXX: other ia6_flags? detached or duplicated?
++		 */
++		if ((ia6->ia6_flags & IN6_IFF_ANYCAST) != 0)
++			continue;
++
++		if ((ia6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
++			continue;
++
++		if ((ia6->ia6_flags & IN6_IFF_DEPRECATED) != 0)
++			continue;
++
++		ifa_plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
++		if (ifa_plen == pr->ndpr_plen &&
++		    in6_are_prefix_equal(&ia6->ia_addr.sin6_addr,
++		    &pr->ndpr_prefix.sin6_addr, ifa_plen)) {
++			if ((ia6->ia6_flags & IN6_IFF_PRIVACY) == 0)
++				autoconf = 0;
++			else
++				privacy = 0;
++			if (!autoconf && !privacy)
++				break;
++		}
++	}
+ 
+ 	if (autoconf && (ia6 = in6_ifadd(pr, 0)) != NULL) {
+ 		ia6->ia6_ndpr = pr;
+

@@ -1,0 +1,59 @@
+Version-Release number of selected component:
+gimagereader-gtk-3.1-1.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        gimagereader-gtk
+crash_function: _Alloc_hider
+executable:     /usr/bin/gimagereader-gtk
+global_pid:     3725
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at mar 2015-06-16 17:37:13 CEST, end at mar 2015-06-16 18:52:44 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 _Alloc_hider at /usr/include/c++/5.1.1/bits/basic_string.h:2668
+ #1 basic_string at /usr/include/c++/5.1.1/bits/basic_string.h:2837
+ #2 signalHandler at /usr/src/debug/gimagereader-3.1/gtk/src/MainWindow.cc:56
+ #4 gobj at ../gtkmm/toggletoolbutton.h:99
+ #5 Gtk::ToggleToolButton::get_active at toggletoolbutton.cc:218
+ #6 Displayer::resizeEvent at /usr/src/debug/gimagereader-3.1/gtk/src/Displayer.cc:366
+ #7 operator() at /usr/include/sigc++-2.0/sigc++/functors/slot.h:515
+ #8 (anonymous namespace)::Widget_signal_size_allocate_callback at widget.cc:833
+ #13 gtk_widget_size_allocate_with_baseline at gtkwidget.c:6093
+ #14 gtk_widget_size_allocate at gtkwidget.c:6162
+Created attachment 1040332
+File: backtrace
+Created attachment 1040333
+File: cgroup
+Created attachment 1040334
+File: core_backtrace
+Created attachment 1040335
+File: dso_list
+Created attachment 1040336
+File: environ
+Created attachment 1040337
+File: limits
+Created attachment 1040338
+File: maps
+Created attachment 1040339
+File: mountinfo
+Created attachment 1040340
+File: namespaces
+Created attachment 1040341
+File: open_fds
+Created attachment 1040342
+File: proc_pid_status
+Do you remember the circumstances when this happened?
+(In reply to Sandro Mani from comment #12)
+> Do you remember the circumstances when this happened?
+
+Unfortunately I don't remember.
+Uhm, seems like a crash a number of people have encountered [1]. I'll need to investigate. If this ever happens again to you, any additional info would certainly be welcome.
+
+[1] https://retrace.fedoraproject.org/faf/reports/667214/
+I'm afraid I really need to have at least some pointer at when this happens, it looks like some kind of memory corruption, but is really hard to debug this without knowing where to look - it might even be a bug deeper down in gtk. I'm closing this with INSUFFICIENT_DATA, but please do reopen if you ever manage to reproduce this again.

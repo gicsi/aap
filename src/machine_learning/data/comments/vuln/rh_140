@@ -1,0 +1,60 @@
+Description of problem:
+Cannot startup gnome-shell on ppc64 with autologin enabled
+
+Version-Release number of selected component (if applicable):
+gnome-shell-3.14.4-9.el7.ppc64
+gnome-session-3.14.0-3.el7.ppc64
+gdm-3.14.2-2.el7.ppc64
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Provision a ppc64 machine
+2. Setup autologin in /etc/gdm/custom.conf
+3. Start gdm service
+
+Actual results:
+Gnome-shell fails to start:
+
+journalctl output:
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com /etc/gdm/Xsession[32617]: gnome-session-is-accelerated: llvmpipe detected.
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: gnome-session[32617]: WARNING: Could not get session id for session. Check that logind is properly installed and pam_systemd is getting used at login.
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: WARNING: Could not get session id for session. Check that logind is properly installed and pam_systemd is getting used at login.
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GNOME_KEYRING_CONTROL=/home/test/.cache/keyring-NILK0X
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GPG_AGENT_INFO=/home/test/.cache/keyring-NILK0X/gpg:0:1
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GNOME_KEYRING_CONTROL=/home/test/.cache/keyring-NILK0X
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GPG_AGENT_INFO=/home/test/.cache/keyring-NILK0X/gpg:0:1
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GNOME_KEYRING_CONTROL=/home/test/.cache/keyring-NILK0X
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GPG_AGENT_INFO=/home/test/.cache/keyring-NILK0X/gpg:0:1
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GNOME_KEYRING_CONTROL=/home/test/.cache/keyring-NILK0X
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: GPG_AGENT_INFO=/home/test/.cache/keyring-NILK0X/gpg:0:1
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: SSH_AUTH_SOCK=/home/test/.cache/keyring-NILK0X/ssh
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: (gnome-settings-daemon:359): rfkill-plugin-WARNING **: Could not open RFKILL control device, please verify your installation
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com pulseaudio[376]: [pulseaudio] pid.c: Stale PID file, overwriting.
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: (gnome-settings-daemon:359): media-keys-plugin-WARNING **: Unable to inhibit keypresses: GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: Permission denied
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gdm-session-worker[32611]: <7>AccountsService: ActUserManager: tracked user /org/freedesktop/Accounts/User0 removed from accounts service
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gdm-session-worker[32611]: <7>AccountsService: ActUserManager: no longer tracking user 'root' (with object path /org/freedesktop/Accounts/User0)
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gdm-session-worker[32611]: <7>AccountsService: ActUserManager: loaded, so emitting user-removed signal
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gdm-session-worker[32611]: <7>AccountsService: ActUserManager: user test changed
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: (gnome-shell:419): Gjs-WARNING **: JS ERROR: Error: Argument 'string' (type utf8) may not be null
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _pack_variant@resource:///org/gnome/gjs/modules/overrides/GLib.js:104
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _pack_variant@resource:///org/gnome/gjs/modules/overrides/GLib.js:151
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: @resource:///org/gnome/gjs/modules/overrides/GLib.js:261
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _proxyInvoker@resource:///org/gnome/gjs/modules/overrides/Gio.js:78
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _makeProxyMethod/<@resource:///org/gnome/gjs/modules/overrides/Gio.js:124
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: LoginManagerSystemd<.getCurrentSessionProxy@resource:///org/gnome/shell/misc/loginManager.js:120
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: ScreenShield<._init@resource:///org/gnome/shell/ui/screenShield.js:559
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _Base.prototype._construct@resource:///org/gnome/gjs/modules/lang.js:110
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: Class.prototype._construct/newClass@resource:///org/gnome/gjs/modules/lang.js:204
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: _initializeUI@resource:///org/gnome/shell/ui/main.js:150
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: start@resource:///org/gnome/shell/ui/main.js:112
+Jun 19 12:03:04 ibm-p740-01-lp3.rhts.eng.bos.redhat.com gnome-session[32617]: @<main>:1
+
+Expected results:
+Shell starts up
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1230255 ***

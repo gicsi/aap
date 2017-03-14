@@ -1,0 +1,9 @@
+An off-by-one error in the inflate function in Zlib.xs in the
+Compress::Raw::Zlib perl module before 2.017 (<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-1391">CVE-2009-1391</a>),
+as used in AMaViS, SpamAssassin, and possibly other products,
+allows context-dependent attackers to cause a denial of service
+(hang or crash) via a crafted zlib compressed stream that
+triggers a heap-based buffer overflow.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.5/common/006_perl_zlib.patch">
+A source code patch exists which remedies this problem.</a>

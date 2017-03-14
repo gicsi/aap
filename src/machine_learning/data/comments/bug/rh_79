@@ -1,0 +1,48 @@
+Description of problem:
+rhsmcertd service fails to update cert
+
+Version-Release number of selected component (if applicable):
+subscription-manager-1.15.2-1.git.90.3c43eb8.el7.x86_64
+python-rhsm: 1.15.2-1.git.12.e61eaee.el7
+subscription management server: 2.0.3-1
+subscription management rules: 5.16
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+
+[root@dhcp35-155 ~]# service rhsmcertd restart
+Redirecting to /bin/systemctl restart  rhsmcertd.service
+
+
+
+[root@dhcp35-155 ~]# tail -f /var/log/rhsm/rhsm.log
+    from subscription_manager.ga import GObject as ga_GObject
+ImportError: No module named ga
+
+2015-07-06 15:31:06,405 [DEBUG] subscription-manager-gui:16234 @connection.py:528 - Response: status=200, requestUuid=ff3d7edf-41b8-4d8b-b25c-1aadc469116c
+2015-07-06 15:31:06,409 [DEBUG] subscription-manager-gui:16234 @widgets.py:82 - loading gui file /usr/share/rhsm/subscription_manager/gui/data/ui/repositories.ui
+2015-07-06 15:31:31,240 [ERROR] rhsmd:16284 @rhsmd:62 - Unhandled rhsmd exception caught by the logging excepthook: Traceback (most recent call last):
+  File "/usr/libexec/rhsmd", line 68, in <module>
+    from subscription_manager.ga import GObject as ga_GObject
+ImportError: No module named ga
+
+
+
+[root@dhcp35-155 ~]# /usr/libexec/rhsmcertd-worker
+Traceback (most recent call last):
+  File "/usr/libexec/rhsmcertd-worker", line 26, in <module>
+    from subscription_manager import ga
+ImportError: cannot import name ga
+
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1241247 ***

@@ -1,0 +1,5 @@
+A security problem in the shared library linker <strong>ld.so</strong>
+requires that you replace it with a new binary.  The following binary
+will work on both pmax and arc machines.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/pmax/ld.so">
+The replacement binary is here</a>.

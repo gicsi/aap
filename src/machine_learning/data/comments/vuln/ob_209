@@ -1,0 +1,10 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">httpd(8)</a>
+'s mod_include module fails to properly validate the length of
+user supplied tag strings prior to copying them to a local buffer,
+causing a buffer overflow.
+<br>
+This would require enabling the XBitHack directive or server-side
+includes and making use of a malicious document.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/026_httpd3.patch">
+A source code patch exists which remedies this problem.</a>

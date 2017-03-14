@@ -1,0 +1,10 @@
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+Closing bug as Marcello found out, the issue was caused due to manifest issue.
+
+I was able to double check my account that was using another employee sku.
+
+It seemed that even though the Satellite allows the ability to tick the subscriptions, it needs to be double checked through the manifest certificate.
+
+Closing this case and creating a kcs to help future cases.
+==> https://access.redhat.com/solutions/1491723

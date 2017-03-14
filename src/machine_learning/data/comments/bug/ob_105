@@ -1,0 +1,8 @@
+A user with write permission to <tt>httpd.conf</tt> or a <tt>.htaccess</tt>
+file can crash
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&amp;sektion=8">httpd(8)</a>
+or potentially run arbitrary code as the user <tt>www</tt> (although it
+is believed that ProPolice will prevent code execution).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/009_httpd.patch">
+A source code patch exists which remedies this problem.</a>

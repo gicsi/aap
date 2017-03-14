@@ -1,0 +1,6 @@
+A BDF font file containing a longer than expected string could overflow
+a buffer on the stack in the X server.
+This issue was assigned CVE-2013-6462.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/013_libXfont.patch">
+A source code patch exists which remedies this problem.</a>

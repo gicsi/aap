@@ -1,0 +1,5 @@
+The cryptographic weaknesses in the Kerberos v4 protocol can be exploited
+on Kerberos v5 as well.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/013_kerberos.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,32 @@
+Description of problem: It takes X seconds to respond to a request (where X = ProxyTimeout) when the response code is a 404 (or maybe any 4xx).
+
+
+Version-Release number of selected component (if applicable): 3.0
+
+
+How reproducible: Always.
+
+
+Steps to Reproduce:
+1. Add the following configuration to your Apache:
+   ProxyPass /sample/ http://localhost:8080/sample/
+   ProxyPassReverse /sample/ http://localhost:8080/sample/
+   ProxyErrorOverride On
+   ProxyTimeout 10
+
+2. Deploy the sample application in EAP. (I used EAP 6.4 and deployed https://tomcat.apache.org/tomcat-7.0-doc/appdev/sample/sample.war) 
+
+3. Try to load a URL that will cause 404 from backend. I used http://jws3/sample/hellonothing.jsp to reproduce.
+
+Actual results:
+When you navigate to URL that triggers 404, you must wait for 10 seconds to go by before seeing 404 page. (10 seconds because that is what ProxyTimeout is set to)
+
+
+Expected results: I would expect an immediate return of 404 page because the proxy is responding very quickly with a 404. 
+
+
+Additional info:
+I used the same setup as described in Reproduction section but used JBoss EWS 2.1. I did not see the issue in 2.1.
+JWS 3 product issues are no longer tracked in BugZilla.
+
+Please, follow: https://issues.jboss.org/browse/JWS-183

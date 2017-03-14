@@ -1,0 +1,61 @@
+Description of problem:
+
+When using the autopart command option --fstype, anaconda fails with "no such option"
+
+This is supported by the ks failing validation when using ksvalidator.
+
+Documentation here:
+https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html-single/Installation_Guide/index.html#sect-kickstart-commands
+
+Version-Release number of selected component (if applicable):
+anaconda 19.31.123-1
+pykickstart-1.99.43.17-1
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Create new kickstart script
+2. include autopart --fstype=<any valid>
+3. kickstart new machine
+
+Actual results:
+
+anaconda fails, installation dies
+
+Expected results:
+
+anaconda automatically partitions using the specified fstype
+
+Additional info:
+
+While not blocking as fstype works when manually partitioning, it is a documented option that simply does not work.
+Please attach the logs from /tmp/*log to this bug as individual text/plain attachments. 'autopart --fstype=ext4' works just fine in my tests.
+Created attachment 1050431
+kickstart file
+Created attachment 1050432
+storage log
+Created attachment 1050433
+program log
+Created attachment 1050434
+anaconda log
+I think I've narrowed the problem.
+
+When running ksvalidator the default in RHEL7.0 uses the F20 validation (the same as 'ksvalidate -v F20 /source/ks.cfg' which produces this error:
+
+
+The following problem occurred on line 20 of the kickstart file:
+
+no such option: --fstype
+
+but if I force it to use RHEL7 validation (ksvalidate -v RHEL7 /source/ks.cfg), it works fine and produces no error.
+
+However, the installation using the ks file fails because of the error in the validation.
+
+Attached are all logs requested, a screenshot, and the ks.cfg I used to test.
+I think I see the problem now, you're using RHEL7.0 which is anaconda-19.31.79-1 and autopart --fstype was added in RHEL7.1 in anaconda-19.31.81-1 so you need to use 7.1 or later.
+Perhaps the correct action then should be to add a note to the documentation that the --fstype option requires RHEL7.1 ?
+
+Certainly it might be the easiest/most straightforward.
+Development Management has reviewed and declined this request.
+You may appeal this decision by reopening this request.

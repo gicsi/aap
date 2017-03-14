@@ -1,0 +1,69 @@
+Description of problem:
+
+Failure to update.
+
+Version-Release number of selected component (if applicable):
+
+Version     : 4.4.10
+Release     : 1.el7
+
+
+How reproducible:
+
+sudo yum update
+
+
+Actual results:
+
+$ LC_ALL=C sudo yum update
+Loaded plugins: amazon-id, rhui-lb
+Resolving Dependencies
+--> Running transaction check
+---> Package php.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-cli.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php-cli.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-common.x86_64 0:5.4.16-23.el7_0.3 will be updated
+--> Processing Dependency: php-common(x86-64) = 5.4.16-23.el7_0.3 for package: php-bcmath-5.4.16-23.el7_0.3.x86_64
+--> Processing Dependency: php-common(x86-64) = 5.4.16-23.el7_0.3 for package: php-mbstring-5.4.16-23.el7_0.3.x86_64
+---> Package php-common.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-gd.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php-gd.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-mysql.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php-mysql.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-pdo.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php-pdo.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package php-xml.x86_64 0:5.4.16-23.el7_0.3 will be updated
+---> Package php-xml.x86_64 0:5.4.16-36.el7_1 will be an update
+---> Package phpMyAdmin.noarch 0:4.4.9-1.el7 will be updated
+---> Package phpMyAdmin.noarch 0:4.4.10-1.el7 will be an update
+--> Finished Dependency Resolution
+Error: Package: php-mbstring-5.4.16-23.el7_0.3.x86_64 (@rhui-REGION-rhel-server-optional)
+           Requires: php-common(x86-64) = 5.4.16-23.el7_0.3                                                           
+           Removing: php-common-5.4.16-23.el7_0.3.x86_64 (@rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0.3
+           Updated By: php-common-5.4.16-36.el7_1.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-36.el7_1
+           Available: php-common-5.4.16-21.el7.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-21.el7
+           Available: php-common-5.4.16-23.el7_0.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0
+           Available: php-common-5.4.16-23.el7_0.1.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0.1
+Error: Package: php-bcmath-5.4.16-23.el7_0.3.x86_64 (@rhui-REGION-rhel-server-optional)
+           Requires: php-common(x86-64) = 5.4.16-23.el7_0.3
+           Removing: php-common-5.4.16-23.el7_0.3.x86_64 (@rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0.3
+           Updated By: php-common-5.4.16-36.el7_1.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-36.el7_1
+           Available: php-common-5.4.16-21.el7.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-21.el7
+           Available: php-common-5.4.16-23.el7_0.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0
+           Available: php-common-5.4.16-23.el7_0.1.x86_64 (rhui-REGION-rhel-server-releases)
+               php-common(x86-64) = 5.4.16-23.el7_0.1
+ You could try using --skip-broken to work around the problem
+ You could try running: rpm -Va --nofiles --nodigest
+Thank you for your report. Howvever, this is not a phpMyAdmin issue, but a
+RHEL one (or caused due to the cloud stuff). Please contact the GSS (global 
+support services) of Red Hat.

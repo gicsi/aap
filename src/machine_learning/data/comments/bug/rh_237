@@ -1,0 +1,59 @@
+Description of problem:
+blnsvr service didn't work for win2012R2 and win200832
+
+Version-Release number of selected component (if applicable):
+kernel-3.10.0-276.el7.x86_64
+qemu-kvm-rhev-2.3.0-6.el7.x86_64
+How reproducible:
+3 times
+
+Steps to Reproduce:
+1.boot up guest with the following CLI
+  /usr/libexec/qemu-kvm -name 1052012R2 -enable-kvm -m 8G -smp 4 -uuid 5c497c73-a29a-4623-a953-ee46e15e31cd -nfig -nodefaults -chardev socket,id=charmonitor,path=/tmp/1052012,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=localtime,driftfix=slew -boot order=cd,menu=on -device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2 -drive file=win2012R2.raw,if=none,id=drive-ide0-0-0,format=raw,serial=mike_cao,cache=none -device ide-drive,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 -drive file=en_windows_server_2012_r2_x64_dvd_2707946.iso,if=none,media=cdrom,id=drive-ide0-1-0,readonly=on,format=raw -device ide-drive,bus=ide.1,unit=0,drive=drive-ide0-1-0,id=ide0-1-0 -netdev tap,script=/etc/qemu-ifup,downscript=no,id=hostnet0 -device rtl8139,netdev=hostnet0,id=net0,mac=00:52:2f:78:39:11,bus=pci.0,addr=0x3 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=isa_serial0 -device usb-tablet,id=input0 -vnc 0.0.0.0:1 -vga cirrus -monitor stdio -qmp tcp:0:5555,server,nowait
+
+2.install balloon driver 
+
+3.install "blnsvr -i" in cmd
+
+4.checking from HMP
+
+  { "execute": "qom-get","arguments": { "path":
+"/machine/peripheral/balloon0","property": "guest-stats" } }
+  *output is following as below,
+ {"return": {"stats": {"stat-swap-out": -1, "stat-free-memory": -1, "stat-minor-faults": -1, "stat-major-faults": -1, "stat-total-memory": -1, "stat-swap-in": -1}, "last-update": 1435906432}}
+
+5.uninstall "blnsvr -s" in cmd
+
+  { "execute": "qom-get","arguments": { "path":
+"/machine/peripheral/balloon0","property": "guest-stats" } }
+ *{"return": {"stats": {"stat-swap-out": -1, "stat-free-memory": -1, "stat-minor-faults": -1, "stat-major-faults": -1, "stat-total-memory": -1, "stat-swap-in": -1}, "last-update": 1435906474}}
+
+
+Actual results,
+Their feedbacks are same so the service should not work.If i'm wrong please notice me.
+
+Expected results:
+For example,
+
+service is running
+
+a.{"return": {"stats": {"stat-swap-out": 0, "stat-free-memory": 1848496128,
+"stat-minor-faults": 0, "stat-major-faults": 0, "stat-total-memory":
+2146951168, "stat-swap-in": 0}, "last-update": 1411970609}}
+
+service stops
+
+b.{"return": {"stats": {"stat-swap-out": -1, "stat-free-memory": -1, "stat-
+minor-faults": -1, "stat-major-faults": -1, "stat-total-memory": -1, "stat-
+swap-in": -1}, "last-update": 1411975216}}
+
+Additional info:
+Did you enable polling before step4?
+{"execute":"qmp_capabilities"} {"execute": "qom-set","arguments": { "path": "/machine/peripheral/balloon0","property": "guest-stats-polling-interval", "value": 2 } }
+(In reply to lijin from comment #2)
+> Did you enable polling before step4?
+> {"execute":"qmp_capabilities"} {"execute": "qom-set","arguments": { "path":
+> "/machine/peripheral/balloon0","property": "guest-stats-polling-interval",
+> "value": 2 } }
+
+ It could give correct info if enabled polling beforehand and will update  related scenario steps,thanks!

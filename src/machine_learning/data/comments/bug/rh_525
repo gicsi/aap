@@ -1,0 +1,21 @@
+Description of problem:
+
+My Wi-fi card doesn't show up on the last kernel release 4.0.5-300.fc22.x86_64 under /sys/class/net/
+
+I can't have a network connection because of that.
+
+However, it shows up and everything works fine with version 4.0.4-303.fc22.x86_64
+
+lspci
+...
+02:00.0 Network controller: Broadcom Corporation BCM4360 802.11ac Wireless Network Adapter (rev 03)
+...
+*** Bug 1235094 has been marked as a duplicate of this bug. ***
+Please attach the output of dmesg from a fresh boot of both the working and non-working kernels.
+Created attachment 1042781
+Working kernel
+Created attachment 1042782
+Non-working kernel
+[   11.401603] wl: module license 'MIXED/Proprietary' taints kernel.
+
+You're using the proprietary wl driver.  Fedora does not provide or support proprietary drivers.  You will need to take this issue up with whomever you received this driver from.

@@ -1,0 +1,12 @@
+Your package freetennis failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10089533
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046857
+build.log
+Created attachment 1046858
+root.log
+Created attachment 1046859
+state.log
+This obe was failing because of ocaml conflicts that have since been resolved. Trying the build again was successful.

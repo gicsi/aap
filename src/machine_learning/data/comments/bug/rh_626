@@ -1,0 +1,88 @@
++++ This bug was initially created as a clone of Bug #1211600 +++
+
+Description of problem:
+
+When chrony is configured, it is possible to specify list of server entries that the daemon should use.
+
+It'd be nice if the daemon could be configured to (also) consult DNS, using the _ntp._udp SRV records.
+
+Ideally, adding something like
+
+   server _srv_
+
+would do the DNS query during startup and insert the list of addresses to the server list, and then rerun the DNS query from time to time (after TTL expires, possible with low and high limits that could be configured) and update the list of servers with the new list.
+
+Version-Release number of selected component (if applicable):
+
+chrony-1.29.1-1.el7.x86_64
+
+How reproducible:
+
+Deterministic.
+
+Steps to Reproduce:
+1. Attempt to configure chrony do only use SRV records for its server list, or to also include servers as identified by SRV records in its server list.
+
+Actual results:
+
+Currently not possible.
+
+Expected results:
+
+It is possible.
+
+Additional info:
+
+The actual use case is ipa-client-install which enables ntpd (will do chronyd in the future) and does the initial NTP sync using SRV records. It would be nice if it could then also configure chrony to continue using SRV records.
+
+It does not matter much if the resolution of the SRV records is done by the daemon server or some external helper (cron job), just that the changes in DNS get propagated.
+
+--- Additional comment from Miroslav Lichvar on 2015-06-18 08:44:31 EDT ---
+
+The chrony-helper script was extended to allow using servers from DNS SRV records. The dig utility is used to make DNS lookups and periodic updates are implemented with systemd timers. The systemctl calls that enable/disable them are wrapped in chrony-helper to make it easier to use and not break compatibility with scripts in case the SRV lookup functionality will be implemented in chronyd some day.
+
+Example of use:
+
+# chronyc -n sources
+210 Number of sources = 0
+MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+
+# /usr/libexec/chrony-helper enable-dnssrv _ntp._udp.example.com
+Created symlink from /etc/systemd/system/timers.target.wants/chrony-dnssrv@_ntp._udp.example.com.timer to /usr/lib/systemd/system/chrony-dnssrv@.timer.
+
+# /usr/libexec/chrony-helper list-dnssrv
+_ntp._udp.example.com
+
+# chronyc -n sources
+210 Number of sources = 3
+MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+^? 192.168.100.3                 0   7     0   10y     +0ns[   +0ns] +/-    0ns
+^? 192.168.100.2                 0   7     0   10y     +0ns[   +0ns] +/-    0ns
+^? 192.168.100.1                 0   7     0   10y     +0ns[   +0ns] +/-    0ns
+
+# /usr/libexec/chrony-helper disable-dnssrv _ntp._udp.example.com
+Removed symlink /etc/systemd/system/timers.target.wants/chrony-dnssrv@_ntp._udp.example.com.timer.
+
+# chronyc -n sources
+210 Number of sources = 0
+MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+
+# /usr/libexec/chrony-helper list-dnssrv
+
+#
+chrony-2.1-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/chrony-2.1-1.fc22
+Package chrony-2.1.1-1.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing chrony-2.1.1-1.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10615/chrony-2.1.1-1.fc22
+then log in and leave karma (feedback).
+chrony-2.1.1-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

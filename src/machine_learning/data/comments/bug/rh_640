@@ -1,0 +1,21 @@
+Description of problem:
+
+I booted my machine up this morning and several log files seem to have rolled, however processes are still writing to the old version of the file. (Similar to Bug 917560).
+
+I have an empty /var/log/messages, but lots of info in /var/log/messages-20150622, which lsof shows is still in use:
+
+# lsof | fgrep messages
+lsof: WARNING: can't stat() fuse.gvfsd-fuse file system /run/user/1000/gvfs
+      Output information may be incomplete.
+rsyslogd    935          root    3w      REG              253,0  58066589    1981473 /var/log/messages-20150622
+in:imjour   935   964    root    3w      REG              253,0  58066589    1981473 /var/log/messages-20150622
+rs:main     935   965    root    3w      REG              253,0  58066589    1981473 /var/log/messages-20150622
+
+Shouldn't those processes have been sent a SIGHUP when the log rolled, so they write to /var/log/messages instead?
+
+
+Version-Release number of selected component (if applicable):
+
+logrotate-3.8.8-1.fc22.x86_64
+rsyslog-8.8.0-2.fc22.x86_64
+*** This bug has been marked as a duplicate of bug 1224972 ***

@@ -1,0 +1,38 @@
+Description of problem:
+
+If you edit /etc/dnf/plugins/local.conf to set 'enabled = false' in the
+[createrepo] section, dnf will constantly complain:
+
+   Failed to synchronize cache for repo '_local' from 'file:///var/lib/dnf/plugins/local': Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried, disabling.
+
+It should be silent about this since this is a valid configuration.
+As the comments in local.conf say, this is useful if you just want
+to keep a copy of all packages you've updated to and so on (so that,
+for example, you can roll back to previous package updates even though
+Fedora has removed them from the repos, as Fedora does).
+
+Version-Release number of selected component (if applicable):
+
+python-dnf-plugins-extras-local-0.0.8-1.fc22.noarch
+dnf-1.0.1-2.fc22.noarch
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. 'dnf install python-dnf-plugins-extras-local'
+2. immediately edit /etc/dnf/plugins/local.conf to set 'enabled = false'
+   in the [createrepo] section
+3. do any dnf operation, eg 'dnf check-update'. Watch the complaints.
+
+Actual results:
+
+Dnf complains with the error message above.
+
+Expected results:
+
+No complaints.
+I believe that this is not specific to the "enabled = false" setting. In that case, it's a duplicate of the bug 1209862 in the plugin.
+
+*** This bug has been marked as a duplicate of bug 1209862 ***

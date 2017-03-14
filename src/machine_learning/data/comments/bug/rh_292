@@ -1,0 +1,56 @@
+remctl-3.9-7.fc23 fails to build in F23:
+
+Processing files: remctl-3.9-8.fc23.x86_64
++ cd remctl-3.9
++ exit 0
+error: File must begin with "/": %{_unitdir}/remctld.service
+error: File must begin with "/": %{_unitdir}/remctld.socket
+Executing(%doc): /bin/sh -e /var/tmp/rpm-tmp.qlqUOx
++ umask 022
++ cd /builddir/build/BUILD
++ cd remctl-3.9
++ DOCDIR=/builddir/build/BUILDROOT/remctl-3.9-8.fc23.x86_64/usr/share/doc/remctl
++ export DOCDIR
++ /usr/bin/mkdir -p /builddir/build/BUILDROOT/remctl-3.9-8.fc23.x86_64/usr/share/doc/remctl
++ cp -pr README /builddir/build/BUILDROOT/remctl-3.9-8.fc23.x86_64/usr/share/doc/remctl
++ cp -pr NEWS /builddir/build/BUILDROOT/remctl-3.9-8.fc23.x86_64/usr/share/doc/remctl
++ cp -pr TODO /builddir/build/BUILDROOT/remctl-3.9-8.fc23.x86_64/usr/share/doc/remctl
++ exit 0
+RPM build errors:
+    File must begin with "/": %{_unitdir}/remctld.service
+    File must begin with "/": %{_unitdir}/remctld.socket
+
+Difference between forking and failing build root:
+
+        systemd-devel 	220-3.fc23 	> 	220-5.fc23
+	systemd-compat-libs 	220-3.fc23 	> 	220-5.fc23
+	systemd-libs 	220-3.fc23 	> 	220-5.fc23
+	systemd 	220-3.fc23 	< 	
+	libxkbcommon 	0.5.0-1.fc23 	< 	
+	libnetfilter_conntrack 	1.0.4-4.fc22 	< 	
+	dbus 	1:1.9.16-1.fc23 	< 	
+	cryptsetup-libs 	1.6.7-1.fc23 	< 	
+	libnfnetlink 	1.0.1-6.fc22 	< 	
+	libmnl 	1.0.3-9.fc22 	< 	
+	kmod-libs 	20-1.fc23 	< 	
+	device-mapper 	1.02.97-1.fc23 	< 	
+	xkeyboard-config 	2.15-1.fc23 	< 	
+	qrencode-libs 	3.4.2-4.fc22 	< 	
+	libseccomp 	2.2.1-0.fc23 	< 	
+	device-mapper-libs 	1.02.97-1.fc23 	< 	
+	acl 	2.2.52-8.fc23 	< 	
+	iptables 	1.4.21-14.fc22 	< 	
+	kmod 	20-1.fc23 	<
+remctl.spec had "BuildRequires: systemd-devel", and for a long time that package pulled in "systemd", which gave us the %{_unitdir} macro.
+
+Recently the systemd-devel package had this change:
+
+* Sat May 30 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 220-4
+- systemd-devel should require systemd-libs, not the main package (#1226301)
+
+which means that we have to explicitly "BuildRequires: systemd" now to maintain the macro definition in the build root.
+
+The Fedora packaging guidelines [1] specify that we should do this anyway, so this change brings remctl into line with those guidelines.
+
+[1] https://fedoraproject.org/wiki/Packaging:Systemd
+fix committed to dist-git: http://pkgs.fedoraproject.org/cgit/remctl.git/commit/?id=726ffac1f0fe767ab4a129873655e226d3d918a9

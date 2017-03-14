@@ -1,0 +1,14 @@
+Several problems have been found in OpenSSL. While parsing certain invalid ASN.1
+structures an error condition is mishandled, possibly resulting in an infinite
+loop. A buffer overflow exists in the SSL_get_shared_ciphers function. A NULL
+pointer may be dereferenced in the SSL version 2 client code. In addition, many
+applications using OpenSSL do not perform any validation of the lengths of
+public keys being used.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-2937">CVE-2006-2937</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-3738">CVE-2006-3738</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-4343">CVE-2006-4343</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-2940">CVE-2006-2940</a>
+<br>
+
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/002_openssl.patch">
+A source code patch exists which remedies this problem.</a>

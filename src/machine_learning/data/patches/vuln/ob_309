@@ -1,0 +1,26 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 008_bind.patch
+
+And then rebuild and install bind:
+        cd usr.sbin/bind
+        make -f Makefile.bsd-wrapper 
+        make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/bind/lib/dns/openssldsa_link.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bind/lib/dns/openssldsa_link.c,v
+retrieving revision 1.1.1.3
+diff -u -r1.1.1.3 openssldsa_link.c
+--- usr.sbin/bind/lib/dns/openssldsa_link.c	9 Dec 2007 12:34:20 -0000	1.1.1.3
++++ usr.sbin/bind/lib/dns/openssldsa_link.c	11 Jan 2009 02:22:57 -0000
+@@ -133,7 +133,7 @@
+ 
+ 	status = DSA_do_verify(digest, ISC_SHA1_DIGESTLENGTH, dsasig, dsa);
+ 	DSA_SIG_free(dsasig);
+-	if (status == 0)
++	if (status <= 0)
+ 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
+ 
+ 	return (ISC_R_SUCCESS);
+

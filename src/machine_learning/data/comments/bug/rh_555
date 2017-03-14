@@ -1,0 +1,43 @@
+Description of problem:
+See Steps to Reproduce and Actual results.
+
+
+Version-Release number of selected component (if applicable):
+gnome-shell-3.16.2-1.fc22.x86_64
+emacs-24.5-2.fc22.x86_64
+
+
+Steps to Reproduce:
+1. Install Fedora 22 Workstation and emacs
+2. Start emacs (either from Activities or even command line)
+3. Go to Activities and observe
+   - or -
+   Press Alt-tab and observe
+
+Actual results:
+In both cases, the icon caption says "Emacs Client" when in fact I'm running just emacs.
+
+
+Expected results:
+Icon is correctly captioned as "Emacs".
+
+
+Additional info:
+It seems like gnome-shell is confused about the fact that there are both emacs.desktop and emacsclient.desktop present in /usr/share/applications/, and they both have Icon=emacs.
+(In reply to Jan Synacek from comment #0)
+> Additional info:
+> It seems like gnome-shell is confused about the fact that there are both
+> emacs.desktop and emacsclient.desktop present in /usr/share/applications/,
+> and they both have Icon=emacs.
+
+No, we don't look at the icon to figure out the corresponding application. The most important bit is the WM_CLASS set on the window, what does running "xprop | grep WM_CLASS" in a terminal print out?
+$ xprop | grep WM_CLASS
+WM_CLASS(STRING) = "emacs", "Emacs"
+
+$ xprop | grep Emacs
+WM_CLASS(STRING) = "emacs", "Emacs"
+
+No sign of "Emacs Client" here.
+OK, so I figured out the culprit: One of the first steps we do when trying to match a window to an application is to look for a .desktop file that contains a StartupWMClass that matches the window's WM_CLASS. In this case, this is true for both emacs.desktop and emacsclient.desktop and we end up picking a "random" one. I've filed an upstream bug with a patch, let's track the issue there.
+If you want to apply a workaround until the issue is properly fixed, you can copy emacsclient.desktop into $HOME/.local/share/applications and change the StartupWMClass key to something else (for instance 'EmacsClient').
+That was quick, thank you!

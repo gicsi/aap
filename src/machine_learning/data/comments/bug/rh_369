@@ -1,0 +1,25 @@
+Description of problem:
+When doing bulk introspection, the user sees messages about sending all nodes to introspection, waiting for introspection to complete, and the user gets feedback that everything worked (or not).
+
+On the other hand, when introspecting a single node, the command doesn't print anything and just exits immediately. How do I know if it succeeded?
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-13.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. For example: openstack baremetal introspection start ef554f96-4cb9-47a8-a138-c2e082905b80
+
+
+Actual results:
+Nothing is shown
+
+
+Expected results:
+Same feedback as you would get from doing a bulk introspection
+*** This bug has been marked as a duplicate of bug 1195801 ***

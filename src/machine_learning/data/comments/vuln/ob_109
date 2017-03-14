@@ -1,0 +1,5 @@
+An attacker can bypass the restrictions imposed by sendmail's restricted shell,
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=smrsh&amp;sektion=8">smrsh(8)</a>,
+and execute arbitrary commands with the privileges of his own account.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/034_smrsh.patch">
+A source code patch exists which remedies this problem.</a>

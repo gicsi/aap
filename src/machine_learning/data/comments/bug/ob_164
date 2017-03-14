@@ -1,0 +1,5 @@
+Under some circumstances, processing an ICMP6 echo request would cause
+the kernel to enter an infinite loop.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/008_icmp6.patch">
+A source code patch exists which remedies this problem.</a>

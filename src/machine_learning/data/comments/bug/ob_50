@@ -1,0 +1,11 @@
+As originally shipped, the pmax port would fail to install due to
+<b>/kern/msgbuf</b> bugs.<br>
+The necessary fixes have been merged,
+and the binaries needed re-released on the FTP site.<br>
+However, the 2.7 <b>srcsys.tar.gz</b> file has not been updated.<br>
+If you recompile a kernel, you should use either the
+<a href=stable.html>stable release source tree</a> or apply the
+provided patch to a 2.7 source tree.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/pmax/020_pmax_msgbuf.patch">
+A source code patch exists which remedies this problem.</a>

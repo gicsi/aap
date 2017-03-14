@@ -1,0 +1,81 @@
+From 12982d6662db62566196221a0dcb46ec86afb631 Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Mon, 22 Jun 2015 18:15:39 -0400
+Subject: [PATCH] Fix native MANIFEST.MF
+
+---
+ NATIVE-MANIFEST.MF | 11 +++++++++++
+ jffi.spec          | 10 +++++++++-
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+ create mode 100644 NATIVE-MANIFEST.MF
+
+diff --git a/NATIVE-MANIFEST.MF b/NATIVE-MANIFEST.MF
+new file mode 100644
+index 0000000..12c026a
+--- /dev/null
++++ b/NATIVE-MANIFEST.MF
+@@ -0,0 +1,11 @@
++Manifest-Version: 1.0
++JavaPackages-Classifier: native
++Archiver-Version: Plexus Archiver
++JavaPackages-Version: @VERSION
++Fragment-Host: com.kenai.jffi
++Bundle-ClassPath: .,jni
++JavaPackages-ArtifactId: jffi
++JavaPackages-GroupId: com.github.jnr
++Created-By: Apache Maven 3.3.3
++Build-Jdk: 1.8.0_60
++
+diff --git a/jffi.spec b/jffi.spec
+index 3686804..d0eb122 100644
+--- a/jffi.spec
++++ b/jffi.spec
+@@ -3,13 +3,14 @@
+ 
+ Name:           jffi
+ Version:        1.2.9
+-Release:        3%{?dist}
++Release:        4%{?dist}
+ Summary:        Java Foreign Function Interface
+ 
+ License:        LGPLv3+ or ASL 2.0
+ URL:            http://github.com/jnr/jffi
+ Source0:        https://github.com/%{cluster}/%{name}/archive/%{version}.zip
+ Source1:	MANIFEST.MF
++Source2:	NATIVE-MANIFEST.MF
+ Patch0:         jffi-fix-dependencies-in-build-xml.patch
+ Patch1:         jffi-add-built-jar-to-test-classpath.patch
+ Patch2:         jffi-fix-compilation-flags.patch
+@@ -39,7 +40,9 @@ This package contains the API documentation for %{name}.
+ %prep
+ %setup -q
+ cp %{SOURCE1} .
++cp %{SOURCE2} .
+ sed -i -e's/@VERSION/%{version}/g' MANIFEST.MF
++sed -i -e's/@VERSION/%{version}/g' NATIVE-MANIFEST.MF
+ %patch0
+ %patch1
+ %patch2
+@@ -80,6 +83,8 @@ cp -rp target/jni/* %{buildroot}%{_libdir}/%{name}/
+ sofile=`find %{buildroot}%{_libdir}/%{name} -name lib%{name}-%{sover}.so`
+ ln -sr ${sofile} `dirname ${sofile}`/lib%{name}.so
+ 
++jar umf NATIVE-MANIFEST.MF %{buildroot}%{_jnidir}/%{name}/%{name}-native.jar
++
+ %check
+ # skip tests on s390 until https://bugzilla.redhat.com/show_bug.cgi?id=1084914 is resolved
+ %ifnarch s390
+@@ -99,6 +104,9 @@ ant -Duse.system.libffi=1 test
+ %doc COPYING.GPL COPYING.LESSER LICENSE
+ 
+ %changelog
++* Mon Jun 22 2015 Jeff Johnston <jjohnstn@redhat.com> 1.2.9-4
++- Fix native MANIFEST.MF
++
+ * Thu Jun 18 2015 Jeff Johnston <jjohnstn@redhat.com> 1.2.9-3
+ - Add MANIFEST.MF.
+ 
+-- 
+1.9.3
+
+

@@ -1,0 +1,6 @@
+Created attachment 1045345
+cwe lost vendor and make
+
+CWE didn't list vendor and make in cert entry while bz has these info stored.
+https://hardware.redhat.com/show.cgi?id=227006
+Corrected the data.

@@ -1,0 +1,43 @@
+--- synaptic-0.57.2/common/rpackagelister.cc.format	2015-07-07 16:37:28.672566157 +0900
++++ synaptic-0.57.2/common/rpackagelister.cc	2015-07-07 16:52:26.841424096 +0900
+@@ -1381,7 +1381,7 @@ bool RPackageLister::commitChanges(pkgAc
+ 
+          serverError = getServerErrorMessage(errm);
+ 
+-         _error->Warning(tmp.str().c_str());
++         _error->Warning("%s", tmp.str().c_str());
+          Failed = true;
+       }
+ 
+--- synaptic-0.57.2/gtk/gsynaptic.cc.format	2015-07-07 16:37:28.678566919 +0900
++++ synaptic-0.57.2/gtk/gsynaptic.cc	2015-07-07 17:32:55.735836566 +0900
+@@ -340,7 +340,7 @@ void check_and_aquire_lock()
+       if(msg != NULL) {
+ 	 dia = gtk_message_dialog_new_with_markup(NULL, GTK_DIALOG_MODAL,
+ 						  GTK_MESSAGE_ERROR, 
+-						  GTK_BUTTONS_CLOSE, msg);
++						  GTK_BUTTONS_CLOSE, "%s", msg);
+ 	 gtk_dialog_run(GTK_DIALOG(dia));
+ 	 gtk_widget_destroy(dia);
+ 	 g_free(msg);
+@@ -364,7 +364,7 @@ void check_and_aquire_lock()
+ 			      "application first."));
+       dia = gtk_message_dialog_new_with_markup(NULL, GTK_DIALOG_MODAL,
+ 					       GTK_MESSAGE_ERROR, 
+-					       GTK_BUTTONS_CLOSE, msg);
++					       GTK_BUTTONS_CLOSE, "%s", msg);
+       gtk_dialog_run(GTK_DIALOG(dia));
+       g_free(msg);
+       exit(0);
+--- synaptic-0.57.2/gtk/rgmainwindow.cc.format	2015-07-07 16:37:28.669565777 +0900
++++ synaptic-0.57.2/gtk/rgmainwindow.cc	2015-07-07 17:34:55.181941159 +0900
+@@ -2185,7 +2185,7 @@ void RGMainWindow::cbShowSourcesWindow(G
+ 			"take effect");
+ #if GTK_CHECK_VERSION(2,6,0)
+       gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+-					       msgstr);
++					       "%s", msgstr);
+ #else
+       gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(dialog), msgstr);
+ #endif
+

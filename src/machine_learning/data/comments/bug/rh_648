@@ -1,0 +1,14 @@
+Description of problem:
+
+Please put following line to selinux-policy spec file:
+
+    Obsoletes: openscap-selinux
+
+We have dropped openscap-selinux as a resulution of bug 1209969. However we cannot easily put the upper mentioned line to the openscap.spec. That is because
+OpenSCAP base package is arch and as such it cannot easily obsolete noarch package. (See bug 1028706 for more info).
+I think you could add obsoletes to the openscap-scanner. This package is not multilib so there should be no dependency conflict.
+Ok, you are right. I have put the 'Obsoletes:' and rebuild the package as openscap-1.2.5-1.
+
+I will mark this as a dupe to bug 1209969.
+
+*** This bug has been marked as a duplicate of bug 1209969 ***

@@ -1,0 +1,46 @@
+Description of problem:
+Choose to create app using code, input code repo, such as :https://github.com/openshift/nodejs-ex, clicke "Next", then click on images "nodejs:0.10", it shows "403" forbidden info.
+
+Version-Release number of selected component (if applicable):
+devenv_fedora_1886
+oc v1.0.0-140-gdf0e58f
+kubernetes v0.17.1-804-g496be63
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.Create image stream in project.
+2.Login web console, in the project create app using code, input code repo:https://github.com/openshift/nodejs-ex, click "Next", then click on image "nodejs:0.10", 
+3.
+
+Actual results:
+2.It shows "403" forbidden info:
+https://54.204.178.249:8443/project/pro1/create/fromimage?imageName=nodejs&imageTag=0.10&namespace=pro1&sourceURL=https%3A%2F%2Fgithub.com%2Fopenshift%2Fnodejs-ex
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "User \"system:anonymous\" cannot \"get\" on \"/project/pro1/create/fromimage\"",
+  "reason": "Forbidden",
+  "details": {},
+  "code": 403
+}
+
+Expected results:
+2.Should have right to create app.
+
+Additional info:
+Could create app in cli :
+$  oc new-app https://github.com/openshift/nodejs-ex -n pro2
+imagestreams/nodejs-ex
+buildconfigs/nodejs-ex
+deploymentconfigs/nodejs-ex
+services/nodejs-ex
+A build was created - you can run `oc start-build nodejs-ex` to start it.
+Service "nodejs-ex" created at 172.30.189.55 with port mappings 8080.
+I can reproduce.
+URL is missing the `console` path segment.
+https://github.com/openshift/origin/pull/3478
+Checked on devenv_fedora_1896, the issue has been fixed. Creating app from source code using image succeeds. So move it to Verified.

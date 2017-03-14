@@ -1,0 +1,47 @@
+Created attachment 1041246
+trivial fix
+
+Description of problem: Scripts in ~/.config/plasma-workspace/shutdown/ and /etc/kde/shutdown/ are not executed on logout.
+
+Version-Release number of selected component (if applicable):
+plasma-workspace-5.3.1-2.fc22.x86_64
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. $ printf "#/bin/bash\ntouch /tmp/oops\n" > ~/.config/plasma-workspace/shutdown/oops.sh
+2. $ chmod +x ~/.config/plasma-workspace/shutdown/oops.sh
+3. logout from the kde session
+
+Actual results:
+There is no /tmp/oops file, because the script was not executed.
+
+Expected results:
+Existing /tmp/oops file.
+
+Additional info:
+Patch attached.
+/etc/kde/shutdown isn't used anymore regardless.
+
+Use
+/etc/xdg/plasma-workspace/shutdown
+instead
+
+but otherwise, the patch looks like the right approach, I'll take a closer look today.
+http://pkgs.fedoraproject.org/cgit/plasma-workspace.git/commit/?id=45024c737943303f13abaf009130a3c5d01b8ab3
+fix pushed upstream too,
+http://quickgit.kde.org/?p=plasma-workspace.git&a=commit&h=96fdec6734087e54c5eee7c073b6328b6d602b8e
+plasma-workspace-5.3.1-5.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/FEDORA-2015-10382/plasma-workspace-5.3.1-5.fc22
+Package plasma-workspace-5.3.1-5.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing plasma-workspace-5.3.1-5.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10382/plasma-workspace-5.3.1-4.fc22
+then log in and leave karma (feedback).
+plasma-workspace-5.3.1-5.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

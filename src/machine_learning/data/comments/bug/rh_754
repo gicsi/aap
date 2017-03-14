@@ -1,0 +1,46 @@
++++ This bug was initially created as a clone of Bug #1233158 +++
+
++++ This bug was initially created as a clone of Bug #1233139 +++
+
+Description of problem:
+
+        if (gf_uuid_compare (stbuf.ia_gfid, tmp_loc.inode->gfid)) {
+		gf_msg (this->name, GF_LOG_ERROR, 0,
+                        DHT_MSG_GFID_MISMATCH,
+		        "%s: gfid different on the target file on %s",
+                        tmp_loc.path, dst_node->name);
+                ret = -1;
+		local->op_errno = EIO;
+                goto out;
+	}
+
+        dst_node = dht_subvol_get_cached (this, tmp_loc.inode);
+
+dst_node->name is accessed in the log, but dst_node is assigned later on.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+--- Additional comment from Anand Avati on 2015-06-18 06:57:18 EDT ---
+
+REVIEW: http://review.gluster.org/11313 (cluster/dht: Fix Null pointer dereference while logging) posted (#1) for review on master by Raghavendra G (rgowdapp@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-19 01:20:38 EDT ---
+
+REVIEW: http://review.gluster.org/11314 (cluster/dht: Fix Null pointer dereference while logging) posted (#2) for review on release-3.7 by Raghavendra G (rgowdapp@redhat.com)

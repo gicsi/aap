@@ -1,0 +1,25 @@
+Description of problem:
+All the geo rep config options are resetted when user tries to reset one option.
+
+Version-Release number of selected component (if applicable):
+rhsc-3.1.0-0.60.el6.noarch
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Create a geo rep session.
+2. Click master volume subtab-> Geo Replication-> Options.
+3. Change few config options and click ok.
+4. Open Options window and reset only one option.
+4. Verify the option which is been resetted gets updated in CLI.
+
+Actual results:
+All the config options are reset back to default value in CLI.
+
+Expected results:
+Only the option which is been resetted should be updated in CLI.
+
+Additional info:
+Removing blocker flag as this bug was not reproducible
+Please reopen if you hit this issue again

@@ -1,0 +1,54 @@
+Description of problem:
+
+[2015-07-06 12:57:46,571] DEBUG    keystoneclient.auth.identity.v2 Making authentication request to http://192.0.2.1:5000/v2.0/tokens
+[2015-07-06 12:57:46,639] DEBUG    requests.packages.urllib3.connectionpool "POST /v2.0/tokens HTTP/1.1" 200 3493
+[2015-07-06 12:57:46,641] ERROR    openstack argument --use-tripleo-heat-templates: conflicting option string(s): --use-tripleo-heat-templates
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cliff/app.py", line 293, in run_subcommand
+    cmd_parser = cmd.get_parser(full_name)
+  File "/usr/lib/python2.7/site-packages/rdomanager_oscplugin/v1/overcloud_deploy.py", line 664, in get_parser
+    dest='use_tht', action='store_true')
+  File "/usr/lib64/python2.7/argparse.py", line 1295, in add_argument
+    return self._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1669, in _add_action
+    self._optionals._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1496, in _add_action
+    action = super(_ArgumentGroup, self)._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1309, in _add_action
+    self._check_conflict(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1447, in _check_conflict
+    conflict_handler(action, confl_optionals)
+  File "/usr/lib64/python2.7/argparse.py", line 1454, in _handle_conflict_error
+    raise ArgumentError(action, message % conflict_string)
+ArgumentError: argument --use-tripleo-heat-templates: conflicting option string(s): --use-tripleo-heat-templates
+[2015-07-06 12:57:46,642] DEBUG    openstackclient.shell clean_up DeployOvercloud
+[2015-07-06 12:57:46,642] DEBUG    openstackclient.shell got an error: argument --use-tripleo-heat-templates: conflicting option string(s): --use-tripleo-heat-templates
+[2015-07-06 12:57:46,643] ERROR    openstackclient.shell Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/openstackclient/shell.py", line 176, in run
+    return super(OpenStackShell, self).run(argv)
+  File "/usr/lib/python2.7/site-packages/cliff/app.py", line 230, in run
+    result = self.run_subcommand(remainder)
+  File "/usr/lib/python2.7/site-packages/cliff/app.py", line 293, in run_subcommand
+    cmd_parser = cmd.get_parser(full_name)
+  File "/usr/lib/python2.7/site-packages/rdomanager_oscplugin/v1/overcloud_deploy.py", line 664, in get_parser
+    dest='use_tht', action='store_true')
+  File "/usr/lib64/python2.7/argparse.py", line 1295, in add_argument
+    return self._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1669, in _add_action
+    self._optionals._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1496, in _add_action
+    action = super(_ArgumentGroup, self)._add_action(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1309, in _add_action
+    self._check_conflict(action)
+  File "/usr/lib64/python2.7/argparse.py", line 1447, in _check_conflict
+    conflict_handler(action, confl_optionals)
+  File "/usr/lib64/python2.7/argparse.py", line 1454, in _handle_conflict_error
+    raise ArgumentError(action, message % conflict_string)
+ArgumentError: argument --use-tripleo-heat-templates: conflicting option string(s): --use-tripleo-heat-templates
+command used for deploy
+
+source /home/stack/stackrc; openstack overcloud deploy --debug --log-file overcloud_deployment.log --plan-uuid 90345340-1f80-4e33-bf27-a7a61d071bdb --neutron-network-type vxlan --neutron-tunnel-types vxlan --control-scale 1 --compute-scale 1 --ceph-storage-scale 1 &> overcloud_deployment_console.log
+01:01:37.405
+This was due to a bad backport related to bug 1231214.  The fixed patches are being covered in that bug now.
+
+*** This bug has been marked as a duplicate of bug 1231214 ***

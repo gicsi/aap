@@ -1,0 +1,10 @@
+X Font Service Protocol & Font metadata file handling issues in libXfont
+<ul>
+<li>CVE-2014-0209: integer overflow of allocations in font metadata file parsing
+<li>CVE-2014-0210: unvalidated length fields when parsing xfs protocol replies
+<li>CVE-2014-0211: integer overflows calculating memory needs for xfs replies
+</ul>
+Please see <a href="http://lists.x.org/archives/xorg-announce/2014-May/002431.html">the advisory</a> for more information.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/006_libXfont.patch.sig">
+A source code patch exists which remedies this problem.</a>

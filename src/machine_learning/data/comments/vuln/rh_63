@@ -1,0 +1,26 @@
+Description of problem:
+ceph storage post deployment fails and causes the entire overcloud deployment to fail with OSPD (CREATE_FAILED)
+
+Version-Release number of selected component (if applicable):
+openstack-puppet-modules-2015.1.7-5.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+puppet-3.6.2-2.el7.noarch
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1. install on a virt environment with a single ceph node
+2.deploy the overcloud
+
+Actual results:
+ceph post installation fails
+
+
+Additional info:
+| resource_status_reason | ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource CREATE failed: ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource CREATE failed: Error: Deployment to server failed: deploy_status_code : Deployment exited with non-zero status code: 6"" |
+| resource_type          | OS::TripleO::CephStoragePostDeployment
+I think this is a duplicate with bug 1236167.  If not, please reopen
+
+*** This bug has been marked as a duplicate of bug 1236167 ***

@@ -1,0 +1,61 @@
+Description of problem:
+When installing fedora-upgrade, I automatically get rpmfusion-nonfree keys installed.
+While I can agree to rpmfusion-free (reluctantly), I'm not sure -nonfree keys should be in here, as I think Fedora is not supposed to facilitate downloading nonfree software.
+
+
+Version-Release number of selected component (if applicable):
+fedora-upgrade-22.2-1.fc21
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Install fedora-upgrade
+2. rpm -ql fedora-upgrade
+
+Actual results:
+/usr/sbin/fedora-upgrade
+/usr/share/doc/fedora-upgrade
+/usr/share/doc/fedora-upgrade/LICENSE
+/usr/share/doc/fedora-upgrade/README.md
+/usr/share/fedora-upgrade
+/usr/share/fedora-upgrade/keys
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-19-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-20-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-21-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-22-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-free-fedora-19
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-free-fedora-20
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-free-fedora-21
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-19
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-20
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-21
+/usr/share/man/man8/fedora-upgrade.8.gz
+
+
+Expected results:
+/usr/sbin/fedora-upgrade
+/usr/share/doc/fedora-upgrade
+/usr/share/doc/fedora-upgrade/LICENSE
+/usr/share/doc/fedora-upgrade/README.md
+/usr/share/fedora-upgrade
+/usr/share/fedora-upgrade/keys
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-19-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-20-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-21-primary
+/usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-22-primary
+/usr/share/man/man8/fedora-upgrade.8.gz
+
+
+Additional info:
+Note the missing rpmfusion keys in my expected results.
+> I'm not sure -nonfree keys should be in here
+
+Why?
+That is just GPG keys. They alone are not covered by any license, patents. That is free data.
+
+Fedora already facilitate usage of nonfree data/sw: see lpf, autodownloader.
+It just not include it directly in main distribution.
+
+IMHO it is NOTABUG, but I'm open to discussion.
+In this specific case, the inclusion of these GPG keys was determined to not be a legal issue. Leaving the bug CLOSED->NOTABUG.

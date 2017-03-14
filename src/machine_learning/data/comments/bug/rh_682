@@ -1,0 +1,64 @@
+Description of problem:
+SELinux is preventing /usr/sbin/logrotate from 'read' accesses on the directory /.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that logrotate should be allowed read access on the  directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep logrotate /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:logrotate_t:s0-s0:c0.c1023
+Target Context                system_u:object_r:samba_share_t:s0
+Target Objects                / [ dir ]
+Source                        logrotate
+Source Path                   /usr/sbin/logrotate
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           logrotate-3.8.8-1.fc22.x86_64
+Target RPM Packages           filesystem-3.2-32.fc22.x86_64
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-303.fc22.x86_64 #1 SMP Thu
+                              May 28 12:37:06 UTC 2015 x86_64 x86_64
+Alert Count                   10
+First Seen                    2015-06-12 08:34:02 EEST
+Last Seen                     2015-06-21 10:25:01 EEST
+Local ID                      72958b87-3f64-42ca-93ab-bad4da7f6d04
+
+Raw Audit Messages
+type=AVC msg=audit(1434871501.670:1271): avc:  denied  { read } for  pid=6881 comm="logrotate" name="/" dev="dm-1" ino=2 scontext=system_u:system_r:logrotate_t:s0-s0:c0.c1023 tcontext=system_u:object_r:samba_share_t:s0 tclass=dir permissive=1
+
+
+type=SYSCALL msg=audit(1434871501.670:1271): arch=x86_64 syscall=open success=yes exit=EINTR a0=40d2ab a1=0 a2=7ffce8b39dc0 a3=7f0c73f74140 items=0 ppid=6879 pid=6881 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=logrotate exe=/usr/sbin/logrotate subj=system_u:system_r:logrotate_t:s0-s0:c0.c1023 key=(null)
+
+Hash: logrotate,logrotate_t,samba_share_t,dir,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.5.1
+hashmarkername: setroubleshoot
+kernel:         4.0.4-303.fc22.x86_64
+type:           libreport
+Looks like you relabeled your entire system ad samba_share_t?   not a good idea.  If you wanted to share your system via samba, you need to turn on a boolean.
+samba_export_all_ro --> off
+samba_export_all_rw --> off
+
+
+setsebool -P samba_export_all_ro 1
+
+Would do it.
+
+# semanage fcontext -d '(/.*)?'
+# restorecon -R -v /
+
+Should fix your systems labels.

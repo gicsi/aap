@@ -1,0 +1,23 @@
+Description of problem:
+In the tripleo-heat-templates, we are assigning a value to tripleo::redis_notification::haproxy_monitor_ip in the puppet hieradata. 
+
+Version-Release number of selected component (if applicable):
+puddle-2015-06-24.1
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy overcloud
+2.
+3.
+
+Actual results:
+tripleo::redis_notification::haproxy_monitor_ip is pointing at the control plane VIP
+
+Expected results:
+tripleo::redis_notification::haproxy_monitor_ip should be pointing at the redis_vip.
+
+Additional info:
+I submitted patch https://review.openstack.org/195357 upstream to address this bug.
+Per Giulio Fidente the monitor IP should actually be pointing at the controller virtual IP and not the redis_vip. Also, this isn't used when pacemaker is enabled, so it doesn't affect us.

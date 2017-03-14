@@ -1,0 +1,98 @@
+Description of problem:
+Using several clients to register and attach (occurs with activation keys as well) to Satellite 6.1 for up to 5000 times to measure performance of system registrations. Anything more than 200 systems registered will cause wsgi:pulp to prevent future registrations until the ulimit is raised.
+
+
+Version-Release number of selected component (if applicable):
+Satellite 6.1 SNAP 8 on RHEL 6.6
+pulp-server-2.6.0.11-1.el6_6sat.noarch
+candlepin-0.9.49.3-1.el6.noarch
+katello-2.2.0.11-1.el6_6sat.noarch
+foreman-1.7.2.28-1.el6_6sat.noarch
+
+
+How reproducible:
+Reproducible for either subscription by activation-key or subscription by register and attach.
+
+
+Steps to Reproduce:
+1.Subscribe clients to Satellite 6 hosts for 5000 times.
+
+
+Actual results:
+There was an issue with the backend service pulp: Pulp message bus connection issue.
+(note: after around 200 iterations)
+
+
+Expected results:
+Successfully attached a subscription for: Red Hat Enterprise Linux Server, Premium (Physical or Virtual Nodes).
+
+
+Additional info:
+1.wsgi:pulp process appears to be consuming a large number of file descriptors near the ulimit -n (1024). Raising the ulimit and restarting katello-service allows the 5000 system registration test to complete.
+
+# ps aux | grep "wsgi:pulp"
+root     19937  0.0  0.0 103252   820 pts/2    S+   14:36   0:00 grep wsgi:pulp
+apache   22133  3.5  0.6 4589172 110300 ?      Sl   13:47   1:42 (wsgi:pulp)
+# ls /proc/22133/fd/ | wc -l
+1022
+
+2.Error in /var/log/messages:
+Jun 29 09:42:16 vtopt pulp: celery.worker.job:INFO: Task pulp.server.async.tasks._release_resource[30a6e38c-0e99-4fdb-87f9-6c07565ec7ba] succeeded in 0.0133468159765s: None
+Jun 29 09:42:18 vtopt pulp: kombu.transport.qpid:INFO: Connected to qpid with SASL mechanism PLAIN
+Jun 29 09:42:18 vtopt pulp: kombu.transport.qpid:INFO: Connected to qpid with SASL mechanism PLAIN
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: Unhandled Exception
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664) [Errno 24] Too many open files
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664) Traceback (most recent call last):
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/middleware/exception.py", line 44, in __call__
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/middleware/postponed.py", line 42, in __call__
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 279, in wsgi
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 29, in _handle_with_processors
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 566, in processor
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in <lambda>
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 581, in processor
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in <lambda>
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 28, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 230, in handle
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 422, in _delegate
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 430, in <lambda>
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 455, in _delegate_sub_application
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 29, in _handle_with_processors
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 566, in processor
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in <lambda>
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 581, in processor
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 26, in <lambda>
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/application.py", line 28, in process
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 230, in handle
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 405, in _delegate
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/web/application.py", line 396, in handle_class
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/controllers/decorators.py", line 203, in _auth_decorator
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/webservices/controllers/consumers.py", line 87, in POST
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/managers/consumer/cud.py", line 97, in register
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/managers/auth/cert/cert_generator.py", line 73, in make_cert
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib/python2.6/site-packages/pulp/server/managers/auth/cert/cert_generator.py", line 228, in _make_priv_key
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib64/python2.6/subprocess.py", line 635, in __init__
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664)   File "/usr/lib64/python2.6/subprocess.py", line 1081, in _get_handles
+Jun 29 09:42:18 vtopt pulp: pulp.server.webservices.middleware.exception:ERROR: (15083-81664) OSError: [Errno 24] Too many open files
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+I ran through the tests with Chongrui and watched the number of file descriptors on the wsgi:pulp process.  It grew 10 fds each successive subscription.  For clarity on how we accomplished a large number of subscriptions we used the following:  (We can scale this on 1-10 vms depending on the level of concurrency of subscriptions we intend on testing)
+
+1. subscription-manager clean
+2. subscription-manager register --org="Default_Organization" --activationkey=ak-1
+3. Repeat above x 5000
+
+At 1023 file descriptors the process actually seg faulted and left the following in /var/log/messages
+
+Jun 29 15:47:14 vtopt kernel: httpd[10828]: segfault at a8 ip 00007f6278afbcde sp 00007f625abfcc28 error 4 in libapr-1.so.0.3.9[7f6278ae4000+2b000]
+
+In the past we witnessed it stalled at 1023 and all subscriptions were blocked until that process was restarted.
+
+Blocked clients see the following:
+
+# subscription-manager register --org="Default_Organization" --activationkey=ak-1
+There was an issue with the backend service pulp: Pulp message bus connection issue.
+*** This bug has been marked as a duplicate of bug 1236096 ***

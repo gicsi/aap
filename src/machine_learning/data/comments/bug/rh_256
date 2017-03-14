@@ -1,0 +1,18 @@
+Created attachment 1045529
+use of pkg-config to get opencv CFLAGS and LIBS
+
+Description of problem:
+We are trying to compile dependent packages with OpenCV 3.0.0 (See #1230078). The compilation of simarrange failed with following error message:
+
+/usr/bin/ld: /tmp/ccSDJuLu.o: undefined reference to symbol 'cvSaveImage'
+/usr/lib64/libopencv_imgcodecs.so.3.0: error adding symbols: DSO missing from command line
+
+In attachment is patch which should fix this issue. I would like to ask you for review of that patch.
+
+I have created an COPR repository for testing of the package:
+https://copr.fedoraproject.org/coprs/jmlich/opencv3/build/102202/
+
+It seems, fedora is using downstream script to compile this package. I have asked upstream to modify their build scripts accordingly. 
+https://github.com/kliment/simarrange/issues/9
+Thanks for the patch. I'll wait a bit for the upstream to accept your changes (as it seems likely) and use that instead.
+OK, applying the patch. Will take changes from upstream later, when available.

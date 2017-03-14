@@ -1,0 +1,35 @@
+From 0ee3ae9427bbc875a23424c4fdf1e2a1caa1ee6a Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Mon, 22 Jun 2015 01:36:01 +0000
+Subject: [PATCH] Update to 4.0.4 (#1234191)
+
+---
+ libtiff.spec | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libtiff.spec b/libtiff.spec
+index d88976d..7770bf2 100644
+--- a/libtiff.spec
++++ b/libtiff.spec
+@@ -1,6 +1,6 @@
+ Summary:       Library of functions for manipulating TIFF format image files
+ Name:          libtiff
+-Version:       4.0.4beta
++Version:       4.0.4
+ Release:       1%{?dist}
+ License:       libtiff
+ Group:         System Environment/Libraries
+@@ -167,6 +167,9 @@ find html -name 'Makefile*' | xargs rm
+ %{_mandir}/man1/*
+ 
+ %changelog
++* Mon Jun 22 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 4.0.4-1
++- Update to 4.0.4 (#1234191)
++
+ * Fri Jun 19 2015 Petr Hracek <phracek@redhat.com> - 4.0.4beta-1
+ - New upstream version libtiff-4.0.4beta (#1186219)
+ 
+-- 
+1.8.3.1
+
+

@@ -1,0 +1,37 @@
+Description of problem: using a script to take a screenshot (worked 6/28) no longer works on 6/30 after 6/29/2015 updates to fedora 22
+
+
+Version-Release number of selected component (if applicable): fedora vmlinuz-4.0.6-300.fc22.x86_64, screenshot??
+
+
+How reproducible: 100%
+
+
+Steps to Reproduce:
+1. see attached shell script, run
+2. abort (^C) output goes to your default screenshot place (Pictures) not std. out.
+3. output to stdandard out is worthless and results in errors if you try to load
+
+Actual results: real screenshot went to Pictures directory
+
+
+Expected results: shell script was making output go where I wanted (trying to document another bug which required me to do things to capture)
+
+
+Additional info:
+[ray@rainbow ~]$ more bin/screenshots 
+#!/bin/bash -
+cd /tmp
+while true
+  do 
+    NOW=`date "+%H%S"`
+    gnome-screenshot > pic$NOW.png
+    sleep 5
+  done
+gray area appears for each screenshot as script runs - see bug 1237128
+This didn't change in the stable release (i.e gnome-screenshot 3.16.x) so you probably had an older gnome-screenshot version from an older fedora.
+
+In general there's no guarantee that CLIs for gnome tools are kept compatible (expect during a stable release, e.g. from 3.16.0 to 3.16.2).
+
+In this case, you should now use gnome-screenshot -f pic$NOW.png to achieve what you had before.
+That worked, maybe the first time I used "-f" as it worked. I made a script out of it in case I needed it again. Sorry, my bad.

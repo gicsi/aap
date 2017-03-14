@@ -1,0 +1,24 @@
+Description of problem:
+I guess this is a spelling mistake.
+
+Version-Release number of selected component (if applicable):
+xorg-x11-server-Xorg-1.17.1-14.fc22.x86_64
+
+Steps to Reproduce:
+1. man Xwrapper.config
+
+Actual results:
+"and auto to letter the wrapper auto-detect."
+
+Expected results:
+"and auto to let the wrapper auto-detect."
+
+Additional info:
+There is no 'xorg-x11-server-Xorg' package in the component list. Hence I am using the component 'xorg-x11-server'.
+Hi,
+
+Thanks for the bug report, I've send a patch upstream fixing this. For Fedora I believe it is best to wait for the fix to trickle down from upstream.
+
+Regards,
+
+Hans

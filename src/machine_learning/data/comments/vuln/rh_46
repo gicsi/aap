@@ -1,0 +1,27 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.0/html/User_Guide/sect-Disaster_Recovery.html
+
+Section Number and Name: 
+16.2. Disaster Recovery
+⁠16.2.1. Red Hat Satellite Backup Procedure
+
+Describe the issue:
+There are official backup and restore scripts in the Katello GitHub repo which are reviewed and compared to the official RedHat recommendations for Satellite 6.0
+
+Scripts:
+
+https://github.com/Katello/katello/blob/master/script/backup.sh
+https://github.com/Katello/katello/blob/master/script/restore.sh
+
+RedHat Backup Guide:
+
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.0/html/User_Guide/sect-Disaster_Recovery.html
+
+The only difference in the scripts is that RedHat says to backup a directory called /etc/gofer but instead, the script backs up /etc/grinder
+
+Would you be able to confirm why this is the case and if it is OK to use these scripts? 
+
+Suggestions for improvement: 
+
+Backup directory name should be .etc.grinder instead /etc/gofer/
+Additional information:

@@ -1,0 +1,48 @@
+From 2e822ba289f8b2d4695967294ac09621d59484d3 Mon Sep 17 00:00:00 2001
+From: Jozef Mlich <jmlich@redhat.com>
+Date: Thu, 2 Jul 2015 16:26:31 +0200
+Subject: [PATCH] use pkg-config to determine opencv CFLAGS and LIBS instead of
+ hardcoded values
+
+---
+ simarrange.spec | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/simarrange.spec b/simarrange.spec
+index 30e3c7b..795cedc 100644
+--- a/simarrange.spec
++++ b/simarrange.spec
+@@ -4,7 +4,7 @@
+ %global relstring %{datestamp}git%{shortcommit}
+ Name:           simarrange
+ Version:        0.0
+-Release:        6.%{relstring}%{?dist}
++Release:        7.%{relstring}%{?dist}
+ Summary:        STL 2D plate packer with collision simulation
+ License:        AGPLv3+
+ URL:            https://github.com/kliment/%{name}
+@@ -29,8 +29,8 @@ rm admesh -rf
+ 
+ %build
+ # the build script is one line and would need patching, so just skip it
+-gcc %{optflags} simarrange.c -o ./%{name} -lm -lopencv_imgproc -lopencv_core \
+-    -lopencv_highgui -ladmesh -largtable2 -fopenmp -DPARALLEL
++gcc %{optflags} simarrange.c -o ./%{name} -lm `pkg-config --cflags --libs opencv` \
++    -ladmesh -largtable2 -fopenmp -DPARALLEL
+ 
+ %install
+ install -Dpm0755 ./%{name} %{buildroot}%{_bindir}/%{name}
+@@ -42,6 +42,9 @@ install -Dpm0644 ./%{name}.1 %{buildroot}%{_mandir}/man1/%{name}.1
+ %{_mandir}/man1/%{name}.*
+ 
+ %changelog
++* Thu Jul 02 2015 Jozef Mlich <jmlich@redhat.com> - 0.0-7.20140729git9500190
++- use pkg-config to determine opencv CFLAGS and LIBS instead of hardcoded values
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.0-6.20140729git9500190
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+2.4.3
+
+

@@ -1,0 +1,63 @@
+To apply:
+    cd /usr/src/sys/kern
+    patch -p0 < uio.patch
+
+readv/writev with iov_len == 0 is legal
+
+Index: uipc_syscalls.c
+===================================================================
+RCS file: /cvs/src/sys/kern/uipc_syscalls.c,v
+retrieving revision 1.14
+diff -u -r1.14 uipc_syscalls.c
+--- uipc_syscalls.c	1999/02/11 05:33:09	1.14
++++ uipc_syscalls.c	1999/02/14 18:37:13
+@@ -439,8 +439,8 @@
+ 	iov = mp->msg_iov;
+ 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
+ 		/* Don't allow sum > SSIZE_MAX */
+-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0 &&
+-		    (iov->iov_base != 0 || iov->iov_len != 0))
++		if (iov->iov_len > SSIZE_MAX ||
++		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX)
+ 			return (EINVAL);
+ 	}
+ 	if (mp->msg_name) {
+@@ -630,8 +630,8 @@
+ 	iov = mp->msg_iov;
+ 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
+ 		/* Don't allow sum > SSIZE_MAX */
+-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0 &&
+-		    (iov->iov_base != 0 || iov->iov_len != 0))
++		if (iov->iov_len > SSIZE_MAX ||
++		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX)
+ 			return (EINVAL);
+ 	}
+ #ifdef KTRACE
+Index: sys_generic.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sys_generic.c,v
+retrieving revision 1.15
+diff -u -r1.15 sys_generic.c
+--- sys_generic.c	1998/07/28 22:36:42	1.15
++++ sys_generic.c	1999/02/14 18:30:39
+@@ -182,7 +182,8 @@
+ 	auio.uio_resid = 0;
+ 	for (i = 0; i < SCARG(uap, iovcnt); i++, iov++) {
+ 		/* Don't allow sum > SSIZE_MAX */
+-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0) {
++		if (iov->iov_len > SSIZE_MAX ||
++		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX) {
+ 			error = EINVAL;
+ 			goto done;
+ 		}
+@@ -336,7 +337,8 @@
+ 	auio.uio_resid = 0;
+ 	for (i = 0; i < SCARG(uap, iovcnt); i++, iov++) {
+ 		/* Don't allow sum > SSIZE_MAX */
+-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0) {
++		if (iov->iov_len > SSIZE_MAX ||
++		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX) {
+ 			error = EINVAL;
+ 			goto done;
+ 		}
+

@@ -1,0 +1,16 @@
+perl-Tree-DAG_Node-1.26-3.fc23 fails to build in F23 because tests fail because build-time dependency on `perl(open)' is not declared:
+
++ make test
+PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
+Can't locate open.pm in @INC (you may need to install the open module) (@INC contains: /builddir/build/BUILD/Tree-DAG_Node-1.26/blib/lib /builddir/build/BUILD/Tree-DAG_Node-1.26/blib/arch /usr/local/lib64/perl5 /usr/local/share/perl5 /usr/lib64/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib64/perl5 /usr/share/perl5 .) at /builddir/build/BUILD/Tree-DAG_Node-1.26/blib/lib/Tree/DAG_Node.pm line 6.
+BEGIN failed--compilation aborted at /builddir/build/BUILD/Tree-DAG_Node-1.26/blib/lib/Tree/DAG_Node.pm line 6.
+Compilation failed in require at t/about.perl.t line 9.
+BEGIN failed--compilation aborted at t/about.perl.t line 9.
+# Looks like your test exited with 2 before it could output anything.
+t/about.perl.t .............. 
+Dubious, test returned 2 (wstat 512, 0x200)
+Failed 2/2 subtests
+Updated buildreqs accordingly:
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10177631
+Thanks.

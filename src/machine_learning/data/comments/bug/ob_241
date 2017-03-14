@@ -1,0 +1,6 @@
+A local denial of service is possible by an unprivileged user if the
+SIOCSIFADDR ioctl is performed upon an AF_INET6 socket with a specially
+crafted parameter.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/005_in6.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,110 @@
+Description of problem:
+
+See this file:
+
+cat sortbug.txt 
+NetworkManager-1.0.0-5.fc22
+NetworkManager-0.9.10.0-8.git20140704.fc22
+NetworkManager-1.0.0-8.fc22
+NetworkManager-1.0.0-9.fc22
+NetworkManager-1.0.4-0.1.git20150618.8cffaf3bf5.fc22
+NetworkManager-0.9.10.0-10.git20140704.fc22
+NetworkManager-1.0.0-7.fc22
+NetworkManager-0.9.10.0-14.git20140704.fc22
+NetworkManager-0.9.10.0-13.git20140704.fc22
+NetworkManager-1.0.2-1.fc22
+NetworkManager-1.0.0-1.fc22
+NetworkManager-1.0.4-0.1.git20160624.f245b49a.fc22
+NetworkManager-1.0.0-4.fc22
+NetworkManager-1.0.0-6.fc22
+NetworkManager-1.0.0-3.fc22
+NetworkManager-0.9.10.0-11.git20140704.fc22
+NetworkManager-0.9.10.0-6.git20140704.fc22
+NetworkManager-0.9.10.0-12.git20140704.fc22
+
+Sorted this:
+
+sort -rV sortbug.txt 
+NetworkManager-1.0.4-0.1.git20150618.8cffaf3bf5.fc22
+NetworkManager-1.0.4-0.1.git20160624.f245b49a.fc22
+NetworkManager-1.0.2-1.fc22
+NetworkManager-1.0.0-9.fc22
+NetworkManager-1.0.0-8.fc22
+NetworkManager-1.0.0-7.fc22
+NetworkManager-1.0.0-6.fc22
+NetworkManager-1.0.0-5.fc22
+NetworkManager-1.0.0-4.fc22
+NetworkManager-1.0.0-3.fc22
+NetworkManager-1.0.0-1.fc22
+NetworkManager-0.9.10.0-14.git20140704.fc22
+NetworkManager-0.9.10.0-13.git20140704.fc22
+NetworkManager-0.9.10.0-12.git20140704.fc22
+NetworkManager-0.9.10.0-11.git20140704.fc22
+NetworkManager-0.9.10.0-10.git20140704.fc22
+NetworkManager-0.9.10.0-8.git20140704.fc22
+NetworkManager-0.9.10.0-6.git20140704.fc22
+
+OK, check out date is too new :), but second row is newer then first row.
+
+
+Version-Release number of selected component (if applicable):
+
+rpm -qf `which sort`
+coreutils-8.23-10.fc22.x86_64
+
+
+Actual results:
+
+First and second row changed.
+
+
+Expected results:
+
+Correct order.
+Thanks for report, confirmed even with LC_ALL=C. rpmdev-vercmp (which ls -V is trying to emulate) compares versions correctly, so this is likely a bug in sort.
+This is due to the suffix matching, and the caveat is mentioned at:
+http://www.gnu.org/software/coreutils/manual/html_node/Details-about-version-sort.html#Details-about-version-sort
+
+Specifically the .8... is causing that portion not to be treated as a suffix.
+
+  suffix() { grep -E --only '(\.[A-Za-z~][A-Za-z0-9~]*)*$'; }
+
+  $ echo "NetworkManager-1.0.4-0.1.git20150618.8cffaf3bf5.fc22" | suffix
+  .fc22
+
+  $ echo "NetworkManager-1.0.4-0.1.git20160624.f245b49a.fc22" | suffix
+  .git20160624.f245b49a.fc22
+
+Hmm, I wonder should be relax the matching so that .[0-9].... is allowed
+if we've already seen .[a-z]... ?
+Given version sorting has lots of (previously considered) corner cases,
+and that the rpm versioning above is not following guidelines:
+https://fedoraproject.org/wiki/Packaging:NamingGuidelines#Release_Tag
+I'm inclined to close this with the suggestion to modify the
+list to a supported versioning format, by first passing through:
+
+  sed 's/git\([0-9]*\)/\1git/; s/git\.\([0-9a-f]*\)\./git\1./'
+Yes, behaviour matches the coreutils info documentation, so NOTABUG is technically correct - and this naming doesn't follow the Fedora guidelines - so should be fixed in the package - however there are more such builds in Fedora. 
+
+It is probably worth at least filing bugs against these packages. List of 19 packages using exactly this wrong format is here (additional ~230 uses .git<hash> - which is non-sortable suffix anyway):
+2048-cli-0.9-5.git20141214.723738c.fc23
+NetworkManager-1.0.4-0.1.git20160624.f245b49a.fc23
+SLOF-0.1.git20150313-2.fc23
+avgtime-0-0.15.git20141110.fc23
+clinfo-0.1-0.7.git20150215.94fdb47.fc23
+imgbased-0.1-0.9.git20140721.71b82f3.fc23
+jbrout-0.4-0.14.git20140930reva7c8fb8.fc23
+mate-user-guide-1.10.1-0.1.git20150618.61aec06.fc23
+mingw-qt5-qt3d-5.0.0-0.13.git20140525.bdb98ba.fc23
+mingw-qt5-qtsystems-5.0.0-0.16.git20140323.44f70d9.fc23
+network-manager-applet-1.0.4-0.1.git20160615.28a0e28.fc23
+ngrep-1.45-17.git20131221.16ba99a.fc22
+ocl-icd-2.2.7-2.git20150606.ebbc4c1.fc23
+polymake-2.13-22.git20141013.fc23
+pyelftools-0.22-0.6.git20130619.a1d9681.fc23
+rapidjson-0.12-0.3.git20140801.67143c2.fc23
+shogun-3.2.0.1-0.33.git20141224.d71e19a.fc22
+shogun-data-0.9.1-0.5.git20150619.7e6bd50.fc23
+stichwort-0.0.3-0.5.git20131001.818fd25.fc23 
+
+I'll ask fedora-devel and fedora-packaging lists if they consider this issue worth of mass filing bugzillas.

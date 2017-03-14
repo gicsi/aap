@@ -1,0 +1,44 @@
+Apply by doing:
+        cd /usr/src/sbin/isakmpd
+        patch -p0 < 017_isakmpd.patch
+
+Rebuild and install isakmpd:
+        make cleandir
+        make obj
+        make depend
+        make && make install
+
+Restart isakmpd:
+        kill `cat /var/run/isakmpd.pid`
+	/sbin/isakmpd
+
+Index: message.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/message.c,v
+retrieving revision 1.45
+diff -u -u -r1.45 message.c
+--- message.c	1 Jul 2001 20:43:39 -0000	1.45
++++ message.c	26 Mar 2002 17:54:43 -0000
+@@ -880,9 +880,6 @@
+   struct proto tmp_proto;
+   struct sa tmp_sa;
+ 
+-  /* Possibly dump a raw hex image of the message to the log channel.  */
+-  message_dump_raw ("message_recv", msg, LOG_MESSAGE);
+-
+   /* Messages shorter than an ISAKMP header are bad.  */
+   if (sz < ISAKMP_HDR_SZ || sz != GET_ISAKMP_HDR_LENGTH (buf))
+     {
+@@ -890,6 +887,11 @@
+       message_drop (msg, ISAKMP_NOTIFY_UNEQUAL_PAYLOAD_LENGTHS, 0, 1, 1);
+       return -1;
+     }
++
++#ifdef USE_DEBUG
++  /* Possibly dump a raw hex image of the message to the log channel.  */
++  message_dump_raw ("message_recv", msg, LOG_MESSAGE);
++#endif
+ 
+   /*
+    * If the responder cookie is zero, this is a request to setup an ISAKMP SA.
+

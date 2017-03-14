@@ -1,0 +1,58 @@
+Description of problem:
+It was a few minutes after I added my email account so it was downloading all the emails.
+
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: message_list_get_parent
+executable:     /usr/bin/evolution
+global_pid:     29249
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 message_list_get_parent at message-list.c:2989
+ #1 et_table_rows_deleted at e-tree.c:1528
+ #2 ffi_call_unix64 at ../src/x86/unix64.S:76
+ #3 ffi_call at ../src/x86/ffi64.c:525
+ #4 g_cclosure_marshal_generic at gclosure.c:1448
+ #9 update_node at e-tree-table-adapter.c:519
+ #10 tree_table_adapter_source_model_node_changed_cb at e-tree-table-adapter.c:585
+ #15 e_tree_model_node_changed at e-tree-model.c:145
+ #16 message_list_tree_model_thaw at message-list.c:602
+ #17 build_tree at message-list.c:4133
+Created attachment 1049156
+File: backtrace
+Created attachment 1049157
+File: cgroup
+Created attachment 1049158
+File: core_backtrace
+Created attachment 1049160
+File: dso_list
+Created attachment 1049161
+File: environ
+Created attachment 1049162
+File: limits
+Created attachment 1049163
+File: maps
+Created attachment 1049164
+File: mountinfo
+Created attachment 1049165
+File: namespaces
+Created attachment 1049166
+File: open_fds
+Created attachment 1049167
+File: proc_pid_status
+Created attachment 1049168
+File: var_log_messages
+Thanks for a bug report. From what I understand from the backtrace, the crash happened after a change in the currently selected folder was propagated into the UI. Some mails were removed from the view, when an incorrect pointer was used, which caused the crash. Why the pointer was incorrect I do not see from the backtrace.
+I tried to reproduce this, with added debugging into the related sources, thus I saw the code in question was called, and it didn't crash for me. One option to invoke this was to collapse a thread in the threading view with the cursor inside the collapsed subtree.
+
+I'm afraid there is nothing to be done, unless a reproducer is found.

@@ -1,0 +1,52 @@
+Description of problem:
+At launching BAT
+
+Version-Release number of selected component:
+bacula-console-bat-7.0.5-7.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/sbin/bat -c /etc/bacula/bat.conf
+crash_function: QHashNode
+executable:     /usr/sbin/bat
+kernel:         4.0.4-202.fc21.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Sat 2014-03-15 23:04:36 CET, end at Sun 2015-07-05 09:20:07 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 QHashNode at /usr/include/QtCore/qhash.h:253
+ #1 QHash<int, DirComm*>::duplicateNode at /usr/include/QtCore/qhash.h:532
+ #2 QHashData::detach_helper2 at tools/qhash.cpp:239
+ #3 QHash<int, DirComm*>::detach_helper at /usr/include/QtCore/qhash.h:584
+ #4 detach at /usr/include/QtCore/qhash.h:303
+ #5 remove at /usr/include/QtCore/qhash.h:788
+ #6 Console::newDirComm at console/console.cpp:914
+ #7 Console::getDirComm at console/console.cpp:860
+ #8 Pages::consoleCommand at pages.cpp:297
+ #10 Console::messages at console/console.cpp:560
+
+Potential duplicate: bug 894278
+Created attachment 1046144
+File: backtrace
+Created attachment 1046145
+File: cgroup
+Created attachment 1046146
+File: core_backtrace
+Created attachment 1046147
+File: dso_list
+Created attachment 1046148
+File: environ
+Created attachment 1046149
+File: exploitable
+Created attachment 1046150
+File: limits
+Created attachment 1046151
+File: maps
+Created attachment 1046152
+File: open_fds
+Created attachment 1046153
+File: proc_pid_status

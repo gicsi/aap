@@ -1,0 +1,13 @@
+The original package review request for tcllib can not be found. This bug serves
+as a placeholder for CVS admin requests for tcllib.
+Package Change Request
+======================
+Package Name: tcllib
+New Branches: el6 epel7
+Owners: krege
+
+El6 branch was orphaned, epel7 never existed.
+Git done (by process-git-requests).
+Just as an FYI - all these operations can now be done via pkgdb:
+https://admin.fedoraproject.org/pkgdb/package/tcllib/
+Thank you. I'l try that next time.

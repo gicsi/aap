@@ -1,0 +1,24 @@
+Description of problem:
+Booted the 20150617 Live Workstation x86_64 image in preparation of trying to install Rawhide. ABRT listed this crash.
+
+Version-Release number of selected component:
+anaconda-core-23.10-1.fc23
+
+
+Additional info:
+cmdline:        /usr/bin/python3 /sbin/anaconda --liveinst --method=livecd:///dev/mapper/live-base
+executable:     /sbin/anaconda
+kernel:         4.1.0-0.rc8.git0.1.fc23.x86_64
+runlevel:       N 5
+type:           Python3
+uid:            0
+Created attachment 1040431
+File: environ
+Created attachment 1040432
+File: os_info
+In the future, please attach the logs from /tmp to anaconda bugs, in particular the /tmp/anaconda-tb* file containing the full traceback data. The files you attached contain no useful information.
+
+But I'm pretty sure this the bug fixed in https://github.com/rhinstaller/anaconda/commit/905d0d8a0eb68c1cd98ceab151a31e0e227d256e. It will be in the next rawhide build.
+> The files you attached contain no useful information.
+
+ABRT did that, not me. It may be an idea to talk to the ABRT developers.

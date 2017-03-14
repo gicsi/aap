@@ -1,0 +1,101 @@
+Description of problem:
+Set org.gnome.desktop.interface font-name to an empty string with dconf-editor, then try to load a web page. Upstream bug incoming....
+
+Version-Release number of selected component:
+webkitgtk4-2.8.3-3.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        /usr/libexec/webkit2gtk-4.0/WebKitWebProcess 20
+crash_function: rawHash
+executable:     /usr/libexec/webkit2gtk-4.0/WebKitWebProcess
+global_pid:     27183
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Tue 2015-05-19 11:54:49 CDT, end at Tue 2015-06-23 15:35:58 CDT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 rawHash at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/text/StringImpl.h:500
+ #1 hasHash at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/text/StringImpl.h:506
+ #2 hash at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/text/StringImpl.h:517
+ #5 hash<std::pair<WTF::String, bool> > at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashMap.h:171
+ #6 add<WTF::HashMapTranslator<WTF::HashMap<std::pair<WTF::String, bool>, WTF::RefPtr<WebCore::CSSPrimitiveValue> >::KeyValuePairTraits, WTF::PairHash<WTF::String, bool> >, std::pair<WTF::String, bool>, std::nullptr_t> at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:807
+ #7 inlineAdd<std::pair<WTF::String, bool>, std::nullptr_t> at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashMap.h:296
+ #8 WTF::HashMap<std::pair<WTF::String, bool>, WTF::RefPtr<WebCore::CSSPrimitiveValue>, WTF::PairHash<WTF::String, bool>, WTF::HashTraits<std::pair<WTF::String, bool> >, WTF::HashTraits<WTF::RefPtr<WebCore::CSSPrimitiveValue> > >::add<decltype(nullptr)>(std::pair<WTF::String, bool>&&, decltype(nullptr)&&) at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashMap.h:331
+ #9 WebCore::CSSValuePool::createFontFamilyValue at /usr/src/debug/webkitgtk-2.8.3/Source/WebCore/css/CSSValuePool.cpp:130
+ #10 WebCore::CSSParser::parseSystemFont at /usr/src/debug/webkitgtk-2.8.3/Source/WebCore/css/CSSParser.cpp:6356
+ #11 WebCore::CSSParser::parseValue at /usr/src/debug/webkitgtk-2.8.3/Source/WebCore/css/CSSParser.cpp:2932
+
+Potential duplicate: bug 1186561
+Created attachment 1042493
+File: backtrace
+Created attachment 1042494
+File: cgroup
+Created attachment 1042495
+File: core_backtrace
+Created attachment 1042496
+File: dso_list
+Created attachment 1042497
+File: environ
+Created attachment 1042498
+File: limits
+Created attachment 1042499
+File: maps
+Created attachment 1042500
+File: mountinfo
+Created attachment 1042501
+File: namespaces
+Created attachment 1042502
+File: open_fds
+Created attachment 1042503
+File: proc_pid_status
+Another user experienced a similar problem:
+
+1. Open "duckduckgo.com".
+2. Right click anywhere in the page, then choose "Inspect element".
+3. With the "Web Inspector" still opened, click the reload button.
+
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/webkit2gtk-4.0/WebKitWebProcess 23
+crash_function: rawHash
+executable:     /usr/libexec/webkit2gtk-4.0/WebKitWebProcess
+global_pid:     11619
+kernel:         4.0.6-300.fc22.x86_64
+package:        webkitgtk4-2.8.3-2.fc22
+reason:         WebKitWebProcess killed by SIGSEGV
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+Created attachment 1046106
+Screencast of the steps previously mentioned. Always happen. Not happen with "google.com" page, btw.
+
+ABRT lead me to here. I don't know what to do :P
+
+Not sure if really a duplicate.
+
+In the worst case scenario, this new information should serve as a test case to the upstream bug, I think.
+(In reply to Diogo Campos from comment #12)
+> Another user experienced a similar problem:
+> 
+> 1. Open "duckduckgo.com".
+> 2. Right click anywhere in the page, then choose "Inspect element".
+> 3. With the "Web Inspector" still opened, click the reload button.
+
+Strange, I can't reproduce this.
+
+Surely it is a different bug and ABRT got this wrong.
+I checked a bit more: seems weirdly specific.
+
+- It needs to be in the search results page. (tested exactly with "https://duckduckgo.com/?q=how+to+make+this+thing+work&t=epiphany").
+
+*AND*
+
+- The "region switch" needs to be turned on. (tested to happen with "Brazil", "Argentina", "Spain", "United Kingdom"; but *doesn't* happen with "United States").
+
+So: make sure this two conditions are met in "Step 1", then do "Step 2" and "Step 3".
+OK, now I can reproduce it. Thanks; that is a weirdly-specific indeed. And the UI process does not recover the web view properly after the crash; it just remains white forever.

@@ -1,0 +1,4 @@
+In /etc/rc, use mktemp(1) for motd re-writing, and change the find(1)
+to use -execdir.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/008_rc.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,85 @@
+Description of problem:
+Running "openstack baremetal import --json instackenv.json" causes an error to occur.
+
+Version-Release number of selected component (if applicable):
+rhel-osp-director-puddle-2015-06-17-2
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Install undercloud
+2. Register nodes
+3. run "openstack baremetal import --json instackenv.json"
+
+Actual results:
+[stack@host01 ~]$ openstack baremetal import --json instackenv.json
+/usr/lib/python2.7/site-packages/novaclient/v1_1/__init__.py:30: UserWarning: Module novaclient.v1_1 is deprecated (taken as a basis for novaclient.v2). The preferable way to get client class or object you can find in novaclient.client module.
+  warnings.warn("Module novaclient.v1_1 is deprecated (taken as a basis for "
+ERROR: openstack 'cpu'
+[stack@host01 ~]$ echo $?
+1
+
+
+Expected results:
+This command should succeed
+
+Additional info:
+Here is my instackenv.json:
+
+
+{
+  "nodes": [
+    {
+      "pm_password": "calvin",
+      "pm_type": "pxe_ipmitool",
+      "mac": [
+        "a0:2b:b8:1f:be:40"
+      ],
+      "pm_user": "root",
+      "pm_addr": "10.9.10.109"
+    },
+    {
+      "pm_password": "calvin",
+      "pm_type": "pxe_ipmitool",
+      "mac": [
+        "a0:2b:b8:1f:c0:fc"
+      ],
+      "pm_user": "root",
+      "pm_addr": "10.9.10.110"
+    },
+    {
+      "pm_password": "calvin",
+      "pm_type": "pxe_ipmitool",
+      "mac": [
+        "a0:2b:b8:1f:c0:34"
+      ],
+      "pm_user": "root",
+      "pm_addr": "10.9.10.111"
+    },
+    {
+      "pm_password": "calvin",
+      "pm_type": "pxe_ipmitool",
+      "mac": [
+        "a0:2b:b8:1f:ba:dc"
+      ],
+      "pm_user": "root",
+      "pm_addr": "10.9.10.112"
+    }
+  ]
+}
+When I added this to each stanza, the command worked:
+
+"cpu":"2",
+"memory":"4096",
+"disk":"40",
+"arch":"x86_64",
+
+I didn't think these values were actually required any more, but perhaps they are. The error message could be much better, and not only because of the deprecation error. ERROR: 'cpu' doesn't tell me that I need to specify the minimum number of cpus.
+We are using os-cloud-config to actually do the heavy lifting here[1], and it requires these keys in the json[2]. I think it would be good to make them optional, but that is not the current state of things.
+
+As far as the error, it certainly could and should be improved. I think this error is also bubbling up from os-cloud-config.
+
+[1] https://github.com/rdo-management/python-rdomanager-oscplugin/blob/master/rdomanager_oscplugin/v1/baremetal.py#L93-L97
+[2] https://github.com/openstack/os-cloud-config/blob/master/os_cloud_config/nodes.py#L108-L112
+*** This bug has been marked as a duplicate of bug 1232906 ***

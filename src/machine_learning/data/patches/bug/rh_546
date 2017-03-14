@@ -1,0 +1,42 @@
+From a96f4c088a47918b20007ae511325d43b46bda6d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ville=20Skytt=C3=A4?= <ville.skytta@iki.fi>
+Date: Tue, 23 Jun 2015 16:23:22 +0300
+Subject: [PATCH] Own the /var/lib/samba dir
+
+---
+ samba.spec | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/samba.spec b/samba.spec
+index 9b1be87..6133940 100644
+--- a/samba.spec
++++ b/samba.spec
+@@ -71,7 +71,7 @@
+ 
+ Name:           samba
+ Version:        %{samba_version}
+-Release:        %{samba_release}.2
++Release:        %{samba_release}.3
+ 
+ %if 0%{?rhel}
+ Epoch:          0
+@@ -1291,6 +1291,7 @@ rm -rf %{buildroot}
+ %attr(0700,root,root) %dir /var/log/samba/old
+ %ghost %dir /var/run/samba
+ %ghost %dir /var/run/winbindd
++%dir /var/lib/samba
+ %attr(700,root,root) %dir /var/lib/samba/private
+ %attr(755,root,root) %dir %{_sysconfdir}/samba
+ %config(noreplace) %{_sysconfdir}/samba/smb.conf
+@@ -1935,6 +1936,9 @@ rm -rf %{buildroot}
+ %endif # with_clustering_support
+ 
+ %changelog
++* Tue Jun 23 2015 Ville Skyttä <ville.skytta@iki.fi> - 2:4.2.2-0.3
++- Own the /var/lib/samba dir
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2:4.2.2-0.2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+2.4.3

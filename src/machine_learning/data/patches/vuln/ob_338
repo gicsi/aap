@@ -1,0 +1,27 @@
+Apply by doing:
+	cd /usr/xenocara
+	patch -p0 -E < 013_libXfont.patch
+
+and the rebuild and reinstall libXfont:
+	cd lib/libXfont
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper build
+
+Index: lib/libXfont/src/bitmap/bdfread.c
+===================================================================
+RCS file: /cvs/xenocara/lib/libXfont/src/bitmap/bdfread.c,v
+retrieving revision 1.7
+retrieving revision 1.7.4.1
+diff -u -p -r1.7 -r1.7.4.1
+--- lib/libXfont/src/bitmap/bdfread.c	4 Mar 2012 18:13:47 -0000	1.7
++++ lib/libXfont/src/bitmap/bdfread.c	10 Jan 2014 20:44:39 -0000	1.7.4.1
+@@ -338,7 +338,7 @@ bdfReadCharacters(FontFilePtr file, Font
+ 	char        charName[100];
+ 	int         ignore;
+ 
+-	if (sscanf((char *) line, "STARTCHAR %s", charName) != 1) {
++	if (sscanf((char *) line, "STARTCHAR %99s", charName) != 1) {
+ 	    bdfError("bad character name in BDF file\n");
+ 	    goto BAILOUT;	/* bottom of function, free and return error */
+ 	}
+

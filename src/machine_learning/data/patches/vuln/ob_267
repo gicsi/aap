@@ -1,0 +1,44 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 011_openssl.patch
+
+And then rebuild and install OpenSSL:
+	cd lib/libssl
+	make obj
+	make depend
+	make
+	make install
+
+Index: lib/libssl/src/crypto/rsa/rsa_sign.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/rsa/rsa_sign.c,v
+retrieving revision 1.7
+retrieving revision 1.7.4.1
+diff -u -p -r1.7 -r1.7.4.1
+--- lib/libssl/src/crypto/rsa/rsa_sign.c	29 Apr 2005 05:39:26 -0000	1.7
++++ lib/libssl/src/crypto/rsa/rsa_sign.c	9 Sep 2006 01:23:16 -0000	1.7.4.1
+@@ -185,6 +185,23 @@ int RSA_verify(int dtype, const unsigned
+ 		sig=d2i_X509_SIG(NULL,&p,(long)i);
+ 
+ 		if (sig == NULL) goto err;
++
++		/* Excess data can be used to create forgeries */
++		if(p != s+i)
++			{
++			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
++			goto err;
++			}
++
++		/* Parameters to the signature algorithm can also be used to
++		   create forgeries */
++		if(sig->algor->parameter
++		   && ASN1_TYPE_get(sig->algor->parameter) != V_ASN1_NULL)
++			{
++			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
++			goto err;
++			}
++
+ 		sigtype=OBJ_obj2nid(sig->algor->algorithm);
+ 
+ 
+

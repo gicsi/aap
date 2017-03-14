@@ -1,0 +1,31 @@
+Description of problem:
+After installing the undercloud, the Tuskar UI is only listening on the br-ctlplane interface. This interface isn't accessible from outside the provisioning network, so the UI can't be reached.
+
+Version-Release number of selected component (if applicable):
+openstack-tuskar-ui.noarch        0.3.0-2.el7ost
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. openstack undercloud install
+2. sudo systemctl restart httpd
+3. sudo iptables -A INPUT -p tcp -m tcp --dport 8080 -j ACCEPT
+
+Actual results:
+The Tuskar UI is only reachable on the provisioning interface. Even if the provisioning interface is on a network that is reachable from outside the cloud, the default route is on a different interface, so the UI is unreachable.
+
+Expected results:
+The Tuskar UI should be available on the public-facing interface on the undercloud.
+
+Additional info:
+Realistically, we don't know which IP will be the one where the operator wants to have the Tuskar UI. We should probably make this configurable, but perhaps we could default to having Apache bind to all interfaces.
+In case it isn't clear, this renders the Tuskar UI essentially ususable on bare metal installations.
+Is this just on Baremetal? I tried to reproduce it on my virtual install, but here Apache and Horizon connects to all interfaces, so for me that worked.
+(In reply to Lennart Regebro from comment #4)
+> Is this just on Baremetal? I tried to reproduce it on my virtual install,
+> but here Apache and Horizon connects to all interfaces, so for me that
+> worked.
+
+Yes, on baremetal. I suspect the problem would show up if you altered your virt environment such that VMs had multiple interfaces.
+Tested on latest poodle (2015-06-23.14), and I'm seeing Horizon listening on all interfaces. I'm going to close this as NOTABUG, and assume that something went wrong with my previous environment.

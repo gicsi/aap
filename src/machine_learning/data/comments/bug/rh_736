@@ -1,0 +1,27 @@
+Description of problem:
+When installing happy with `yum install happy`:
+Requires: ghc(base-4.6.0.1-8aa5d403c45ea59dcd2c39f123e27d57)
+Available: ghc-base-4.6.0.1-26.fc21.x86_64 (fedora)
+
+Version-Release number of selected component (if applicable): 1.18.10-36.fc21
+
+
+How reproducible:
+Install happy with install haskell-platform
+
+Steps to Reproduce:
+1. yum install haskell-platform
+2. yum install happy
+
+Actual results:
+Error message, no happy
+
+Expected results:
+Successful install, happy in system
+Can you please include the full yum output?
+I am not able to reproduce this.
+Unfortunately problem isn't reproducable... now yum performs well.
+Okay, thanks.
+
+If you or anyone sees this again, please reopen
+with more details, thanks.

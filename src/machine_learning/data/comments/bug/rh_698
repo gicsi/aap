@@ -1,0 +1,58 @@
+Description of problem:
+Using gftp to upload text file.
+
+Version-Release number of selected component:
+gftp-2.0.19-10.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/bin/gftp-gtk
+crash_function: gftp_free_getline_buffer
+executable:     /usr/bin/gftp-gtk
+kernel:         3.19.8-100.fc20.i686
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Wed 2015-02-25 16:56:40 EST, end at Sat 2015-06-20 16:27:21 EDT. --
+
+Truncated backtrace:
+Thread no. 1 (9 frames)
+ #7 gftp_free_getline_buffer at sockutils.c:147
+ #8 gftp_get_line at sockutils.c:118
+ #9 rfc959_read_response at rfc959.c:115
+ #10 rfc959_send_command at rfc959.c:188
+ #11 rfc959_generate_and_send_command at rfc959.c:235
+ #12 rfc959_chdir at rfc959.c:433
+ #13 gftpui_common_run_chdir at gftpuicallbacks.c:49
+ #14 _gftpui_common_thread_callback at gftpui.c:50
+ #15 _gftpui_gtk_thread_func at gtkui.c:218
+Created attachment 1041254
+File: backtrace
+Created attachment 1041255
+File: cgroup
+Created attachment 1041256
+File: core_backtrace
+Created attachment 1041257
+File: dso_list
+Created attachment 1041258
+File: environ
+Created attachment 1041259
+File: limits
+Created attachment 1041260
+File: maps
+Created attachment 1041261
+File: open_fds
+Created attachment 1041262
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

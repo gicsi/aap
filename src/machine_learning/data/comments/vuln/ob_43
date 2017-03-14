@@ -1,0 +1,6 @@
+Systems running with procfs enabled and mounted are vulnerable
+to having the stderr output of setuid processes directed onto
+a pre-seeked descriptor onto the stack in their own procfs memory.<br>
+Note that procfs is not mounted by default in OpenBSD.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/018_procfs.patch">
+A source code patch exists which remedies this problem.</a>

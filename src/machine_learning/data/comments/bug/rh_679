@@ -1,0 +1,60 @@
+Version-Release number of selected component:
+jpilot-1.8.1-7.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        jpilot
+crash_function: usb_control_msg
+executable:     /usr/bin/jpilot
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Fri 2014-02-21 12:35:33 PST, end at Sun 2015-06-21 08:19:06 PDT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 usb_control_msg at core.c:845
+ #1 USB_configure_generic at usb.c:1038
+ #2 USB_configure_device at usb.c:958
+ #3 USB_poll at libusb.c:150
+ #4 u_wait_for_device at libusb.c:421
+ #5 pi_usb_accept at usb.c:400
+ #6 pi_accept_to at socket.c:1141
+ #7 pi_accept at socket.c:1122
+ #8 jp_pilot_connect at sync.c:423
+ #9 jp_sync at sync.c:3088
+
+Potential duplicate: bug 709098
+Created attachment 1041427
+File: backtrace
+Created attachment 1041428
+File: cgroup
+Created attachment 1041429
+File: core_backtrace
+Created attachment 1041430
+File: dso_list
+Created attachment 1041431
+File: environ
+Created attachment 1041432
+File: exploitable
+Created attachment 1041433
+File: limits
+Created attachment 1041434
+File: maps
+Created attachment 1041435
+File: open_fds
+Created attachment 1041436
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

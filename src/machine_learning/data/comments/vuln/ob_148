@@ -1,0 +1,5 @@
+A race condition exists in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pppd&amp;sektion=8">pppd(8)</a>
+daemon which may cause it to alter the file permissions of an arbitrary file.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/011_pppd.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,7 @@
+A reference counting bug exists in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=shmat&amp;apropos=0&amp;sektion=2&amp;manpath=OpenBSD+Current&amp;format=html">shmat(2)</a>
+system call that could be used by an attacker to write to kernel memory
+under certain circumstances.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/010_sysvshm.patch">
+A source code patch exists which remedies this problem.</a>

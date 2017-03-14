@@ -1,0 +1,5 @@
+Several bugs in virtio(4) can lead to hangs with virtio devices,
+like vio(4) and vioblk(4).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/018_virtio.patch.sig">
+A source code patch exists which remedies this problem.</a>

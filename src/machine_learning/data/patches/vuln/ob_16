@@ -1,0 +1,18 @@
+Index: res_query.c
+===================================================================
+RCS file: /cvs/src/lib/libc/net/res_query.c,v
+retrieving revision 1.11
+retrieving revision 1.12
+diff -u -r1.11 -r1.12
+--- res_query.c	1998/03/16 05:07:02	1.11
++++ res_query.c	1998/08/31 18:15:29	1.12
+@@ -320,7 +320,7 @@
+ 	u_char *answer;		/* buffer to put answer */
+ 	int anslen;		/* size of answer */
+ {
+-	char nbuf[MAXDNAME];
++	char nbuf[MAXDNAME*2+1];
+ 	const char *longname = nbuf;
+ 	int n;
+ 
+

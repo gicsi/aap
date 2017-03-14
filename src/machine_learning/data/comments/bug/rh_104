@@ -1,0 +1,13 @@
+Your package scrot failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10152726
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048309
+build.log
+Created attachment 1048310
+root.log
+Created attachment 1048311
+state.log
+Seems like some temporary glitch in the generated Makefile.
+I can't reproduce the issue; package built in Rawhide now.

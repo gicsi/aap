@@ -1,0 +1,38 @@
+From 12c12b780ded470a67b62cd34090f3fb1884f44b Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 18 Jun 2015 12:21:00 +0000
+Subject: [PATCH] Update to 1.0.1 (#1233198)
+
+---
+ coccinelle.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/coccinelle.spec b/coccinelle.spec
+index 8462eb4..ba998bf 100644
+--- a/coccinelle.spec
++++ b/coccinelle.spec
+@@ -1,8 +1,8 @@
+ %global opt %(test -x %{_bindir}/ocamlopt && echo 1 || echo 0)
+ 
+ Name:           coccinelle
+-Version:        1.0.0
+-Release:        4%{?dist}
++Version:        1.0.1
++Release:        1%{?dist}
+ Summary:        Semantic patching for Linux (spatch)
+ 
+ Group:          Development/Libraries
+@@ -145,6 +145,9 @@ $RPM_BUILD_ROOT%{_bindir}/spatch -sp_file demos/simple.cocci demos/simple.c
+ 
+ 
+ %changelog
++* Thu Jun 18 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.0.1-1
++- Update to 1.0.1 (#1233198)
++
+ * Wed Jun 17 2015 Richard W.M. Jones <rjones@redhat.com> - 1.0.0-4
+ - ocaml-4.02.2 rebuild.
+ 
+-- 
+1.8.3.1
+
+

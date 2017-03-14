@@ -1,0 +1,18 @@
+Description of problem/feature request:
+
+Now during the VM Migration, the connection to the destination Host (in order to prepare the VM Disk Images) is around 3 minutes.
+
+In case Storage is slow or we have many images per VM or many simultaneous migrations, the "3 minute" timeout will not be enough
+
+in a Case it needed 33seconds to prepare one Image:
+
+    Thread-12090::INFO::2015-07-03 13:42:04,798::logUtils::44::dispatcher::(wrapper) Run and protect: prepareImage(sdUUID='22d20bb8-c291-418d-a49f-2e59087f0cd7', spUUID='bc1ae46f-fb69-48c6-8416-d45f6bc91501', imgUUID='e524f784-f28b-442c-b202-4ca67c57df1c', leafUUID='49e74b88-2c35-467d-a4ac-15ecda006cb6')
+    ...33sec
+    Thread-12090::INFO::2015-07-03 13:42:39,681::logUtils::47::dispatcher::(wrapper) Run and protect: prepareImage, Return response: {'info':...
+Version-Release number of selected component (if applicable):
+
+
+Feature request: Increased timeout or changeable from vdsm.conf (?)
+destination preparation is using a 30s base timeout (migration_listener_timeout in vdsm.conf), which is doubled per every 5 VMs started from 0. e.g. for 12 VMs it's 90s, for 0 VMs it's 30s.
+
+You may change the base timeout parameter

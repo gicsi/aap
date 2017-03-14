@@ -1,0 +1,28 @@
+Description of problem:
+
+When doing "dnf install wine" on a x86_64 system, most arch dependent packages are included in their 64 and 32 bit versions, but not wine-alsa which is only supplied as 64 bit.
+
+You need wine-alsa.i686 when running a windows music application that depends on MIDI - most of those I know are 32 bit (admittedly, not many of the wine users may need MIDI).
+
+I had a hard time trying to make Band-in-a-Box 2013 find a soft synth (fluidsynth) as MIDI output device until, after a lot of googling, I found a hint to wine-alsa being a missing prerequisite for MIDI support:
+https://forum.winehq.org/viewtopic.php?p=37671
+(the op of this 5 years old thread was indeed me which I really had forgotten ...) 
+
+Version-Release number of selected component (if applicable):
+wine.x86_64 1.7.45-1.fc22
+wine-1.7.46-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/wine-1.7.46-1.fc22
+wine-1.7.46-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/wine-1.7.46-1.fc21
+Package wine-1.7.46-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing wine-1.7.46-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10934/wine-1.7.46-1.fc21
+then log in and leave karma (feedback).
+wine-1.7.46-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+The problem is solved with update to wine-1.7.46-1.fc22, thanks!

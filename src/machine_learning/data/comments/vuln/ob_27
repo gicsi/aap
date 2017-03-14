@@ -1,0 +1,3 @@
+TCP/IP RST handling was too sloppy.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/rst.patch">
+A source code patch exists which remedies this problem.</a>

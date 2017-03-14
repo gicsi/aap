@@ -1,0 +1,5 @@
+A race condition exists where an attacker could fill the file descriptor
+table and defeat the kernel's protection of fd slots 0, 1, and 2 for a
+setuid or setgid process.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/003_fdalloc2.patch">
+A source code patch exists which remedies this problem.</a>

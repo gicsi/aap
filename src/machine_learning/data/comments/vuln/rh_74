@@ -1,0 +1,60 @@
+Description of problem:
+I have a Anker USB3 Ethernet Adapter + HUB with Realtek r8153 chip.
+When I connect this device on my computer with Fedora 22, the network doesn't work with "Link is not ready" on DMESG.
+But this device work perfectly with Fedora 20, Ubuntu 14,4 and OpenSUSE Thumbleweed.
+
+Version-Release number of selected component (if applicable):
+Fedora 20 (kernel 3.13) : working.
+Fedora 21 (kernel 3.18 and 3.19) : not working.
+Fedora 22 (kernel 4.0, kernel 4.1 vanilla and kernel 4.2 rawhide) : not working.
+Ubuntu 14.4 with kernel 3.13 and 3.16 : working.
+Ubuntu 14.4 with kernel 3.19 : not working.
+OpenSuSE Tumbleweed with kernel 4.0 : working.
+
+How reproducible:
+Connect a device with r8153 chip.
+
+Steps to Reproduce:
+1. Connect the device
+
+Actual results:
+Device not working. Link not detected.
+
+Expected results:
+Device working with operational network.
+
+Additional info:
+
+1. Fedora 22 DMESG when device is connected :
+[  177.182241] usb 2-1: new SuperSpeed USB device number 4 using xhci_hcd
+[  177.240984] usb 1-1: new high-speed USB device number 6 using xhci_hcd
+[  177.408265] usb 1-1: New USB device found, idVendor=2109, idProduct=2812
+[  177.408269] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  177.408271] usb 1-1: Product: USB2.0 Hub             
+[  177.408272] usb 1-1: Manufacturer: VIA Labs, Inc.         
+[  177.409658] hub 1-1:1.0: USB hub found
+[  177.409873] hub 1-1:1.0: 4 ports detected
+[  177.425748] usb 2-1: New USB device found, idVendor=2109, idProduct=0812
+[  177.425751] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  177.425753] usb 2-1: Product: USB3.0 Hub             
+[  177.425754] usb 2-1: Manufacturer: VIA Labs, Inc.         
+[  177.426864] hub 2-1:1.0: USB hub found
+[  177.426966] hub 2-1:1.0: 4 ports detected
+[  177.792839] usb 2-1.3: new SuperSpeed USB device number 5 using xhci_hcd
+[  177.803976] usb 2-1.3: New USB device found, idVendor=0bda, idProduct=8153
+[  177.803981] usb 2-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[  177.803985] usb 2-1.3: Product: USB 10/100/1000 LAN
+[  177.803988] usb 2-1.3: Manufacturer: Realtek
+[  177.803990] usb 2-1.3: SerialNumber: 00E01*****74
+[  177.936584] usbcore: registered new interface driver r8152
+[  177.952610] usbcore: registered new interface driver cdc_ether
+[  178.001397] usb 2-1.3: reset SuperSpeed USB device number 5 using xhci_hcd
+[  178.036014] r8152 2-1.3:1.0 eth0: v1.08.0 (2015/01/13)
+[  178.983263] r8152 2-1.3:1.0 enp0s20u1u3: renamed from eth0
+[  178.999187] IPv6: ADDRCONF(NETDEV_UP): enp0s20u1u3: link is not ready
+[  179.042640] IPv6: ADDRCONF(NETDEV_UP): enp0s20u1u3: link is not ready
+This issue was caused by tlp and the USB autosuspend feature.
+With USB_BLACKLIST="0bda:8153" in /etc/default/tlp the device works very well under Fedora 22.
+
+
+Sorry ...

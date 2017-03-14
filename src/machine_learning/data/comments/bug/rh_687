@@ -1,0 +1,27 @@
+Latest upstream release: 5.20150620
+Current version/release in rawhide: 5.20150520-4.fc23
+URL: http://search.cpan.org/dist/Module-CoreList/
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1041413
+[patch] Update to 5.20150620 (#1234112)
+Scratch build succeeded http://koji.fedoraproject.org/koji/taskinfo?taskID=10173688
+ppisar's perl-Module-CoreList-5.20150620-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=664202
+Suitable for Fedora ≥ 22.
+perl-Module-CoreList-5.20150620-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/perl-Module-CoreList-5.20150620-1.fc22
+Package perl-Module-CoreList-5.20150620-1.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing perl-Module-CoreList-5.20150620-1.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10551/perl-Module-CoreList-5.20150620-1.fc22
+then log in and leave karma (feedback).
+perl-Module-CoreList-5.20150620-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

@@ -1,0 +1,57 @@
+Version-Release number of selected component:
+epiphany-runtime-3.16.1-1.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        epiphany
+crash_function: size
+executable:     /usr/bin/epiphany
+global_pid:     15229
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 size at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/Vector.h:651
+ #2 WebKit::WebTextCheckerClient::guessesForWord at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/UIProcess/WebTextCheckerClient.cpp:160
+ #3 WebKit::TextChecker::getGuessesForWord at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/UIProcess/gtk/TextCheckerGtk.cpp:128
+ #4 WebKit::WebPageProxy::getGuessesForWord at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/UIProcess/WebPageProxy.cpp:4255
+ #5 callMemberFunctionImpl<WebKit::WebPageProxy, void (WebKit::WebPageProxy::*)(WTF::String const&, WTF::String const&, WTF::Vector<WTF::String>&), std::tuple<WTF::String, WTF::String>, 0ul, 1ul, std::tuple<WTF::Vector<WTF::String, 0ul, WTF::CrashOnOverflow> >, 0ul> at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/HandleMessage.h:30
+ #6 callMemberFunction<WebKit::WebPageProxy, void (WebKit::WebPageProxy::*)(WTF::String const&, WTF::String const&, WTF::Vector<WTF::String>&), std::tuple<WTF::String, WTF::String>, std::make_index_sequence<2ul>, std::tuple<WTF::Vector<WTF::String, 0ul, WTF::CrashOnOverflow> >, std::make_index_sequence<1ul> > at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/HandleMessage.h:36
+ #7 handleMessage<Messages::WebPageProxy::GetGuessesForWord, WebKit::WebPageProxy, void (WebKit::WebPageProxy::*)(WTF::String const&, WTF::String const&, WTF::Vector<WTF::String>&)> at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/HandleMessage.h:105
+ #8 WebKit::WebPageProxy::didReceiveSyncMessage at /usr/src/debug/webkitgtk-2.8.3/x86_64-redhat-linux-gnu/DerivedSources/WebKit2/WebPageProxyMessageReceiver.cpp:1283
+ #9 IPC::MessageReceiverMap::dispatchSyncMessage at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/MessageReceiverMap.cpp:104
+ #10 WebKit::ChildProcessProxy::dispatchSyncMessage at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Shared/ChildProcessProxy.cpp:129
+Created attachment 1042001
+File: backtrace
+Created attachment 1042002
+File: cgroup
+Created attachment 1042003
+File: core_backtrace
+Created attachment 1042004
+File: dso_list
+Created attachment 1042005
+File: environ
+Created attachment 1042006
+File: limits
+Created attachment 1042007
+File: maps
+Created attachment 1042008
+File: mountinfo
+Created attachment 1042009
+File: namespaces
+Created attachment 1042010
+File: open_fds
+Created attachment 1042011
+File: proc_pid_status
+Created attachment 1042012
+File: var_log_messages
+To reproduce, type into any text field:
+
+grey.smile.co.uk
+
+And right click on it.
+Thanks for reporting. This will be fixed in Fedora 23. The code has changed too much recently to make fixing it in Fedora 22 worthwhile.

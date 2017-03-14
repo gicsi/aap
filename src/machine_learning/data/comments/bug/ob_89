@@ -1,0 +1,6 @@
+The 3.0 CD2 was created with an error which means that the instructions
+for booting this architecture will not work.  Instead, to boot the
+CD, press Option-Command-O-F during power up to get into OpenFirmware
+and then type:
+<br>
+<code>boot cd:,OFWBOOT /3.0/macppc/bsd.rd</code>

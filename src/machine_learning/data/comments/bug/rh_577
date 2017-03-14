@@ -1,0 +1,13 @@
+Latest upstream release: 478
+Current version/release in rawhide: 471-5.fc23
+URL: http://www.greenwoodsoftware.com/less/download.html
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1042045
+[patch] Update to 478 (#1234663)
+Scratch build failed http://koji.fedoraproject.org/koji/taskinfo?taskID=10184894
+jmlich's less-478-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=664750

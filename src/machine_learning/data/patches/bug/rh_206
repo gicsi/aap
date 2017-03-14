@@ -1,0 +1,36 @@
+From 0844442e04d0f6ae5ef81b0bcd0e9c4f04de5244 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 4 Jul 2015 00:25:05 +0000
+Subject: [PATCH] Update to 1.3140 (#1239179)
+
+---
+ perl-Dancer.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-Dancer.spec b/perl-Dancer.spec
+index 6280a63..6a3446c 100644
+--- a/perl-Dancer.spec
++++ b/perl-Dancer.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-Dancer
+-Version:        1.3138
+-Release:        2%{?dist}
++Version:        1.3140
++Release:        1%{?dist}
+ Summary:        Lightweight yet powerful web application framework
+ License:        GPL+ or Artistic
+ Group:          Development/Libraries
+@@ -124,6 +124,9 @@ make test
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Sat Jul 04 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.3140-1
++- Update to 1.3140 (#1239179)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.3138-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

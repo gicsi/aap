@@ -1,0 +1,3 @@
+Fix possible heap overflow in file(1), aka CVE-2007-1536.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/015_file.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,7 @@
+Multiple remote vulnerabilities have been found in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=cvs&amp;apropos=0&amp;sektion=1&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">cvs(1)</a>
+server that allow an attacker to crash the server or possibly execute arbitrary
+code with the same privileges as the CVS server program.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/023_cvs3.patch">
+A source code patch exists which remedies this problem.</a>

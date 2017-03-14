@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1.0', {'packages':['corechart']});
+      google.setOnLoadCallback(drawCharts);
+      function drawCharts() {
+        var data1 = new google.visualization.DataTable();
+        var data2 = new google.visualization.DataTable();
+        var data3 = new google.visualization.DataTable();
+        data1.addColumn('string', '{{ chart1_col_name }}');
+        data1.addColumn('number', '{{ chart1_col_data }}');
+        data1.addRows([ {{ chart1_data|safe }} ]);
+        data2.addColumn('string', '{{ chart2_col_name }}');
+        data2.addColumn('number', '{{ chart2_col_data }}');
+        data2.addRows([ {{ chart2_data|safe }} ]);
+        data3.addColumn('string', '{{ chart3_col_name }}');
+        data3.addColumn('number', '{{ chart3_col_data }}');
+        data3.addRows([ {{ chart3_data|safe }} ]);
+        var options1 = {'title':'{{ chart1_title }}', 'width':300, 'height':200};
+        var options2 = {'title':'{{ chart2_title }}', 'width':300, 'height':200};
+        var options3 = {'title':'{{ chart3_title }}', 'width':300, 'height':200};
+        var chart1 = new google.visualization.PieChart(document.getElementById('chart1_div'));
+        chart1.draw(data1, options1);
+        var chart2 = new google.visualization.BarChart(document.getElementById('chart2_div'));
+        chart2.draw(data2, options2);
+        var chart3 = new google.visualization.ColumnChart(document.getElementById('chart3_div'));
+        chart3.draw(data3, options3);
+      }
+    </script>
+  </head>
+
+  <body>
+    <div style="display: block; width: 100%;">
+      <div style="float: left;">
+        <div id="chart1_div"></div>
+      </div>
+      <div style="float: left;">
+        <div id="chart2_div"></div>
+      </div>
+      <div style="float: left;">
+        <div id="chart3_div"></div>
+      </div>
+    </div>
+  </body>
+</html>

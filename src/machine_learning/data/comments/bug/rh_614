@@ -1,0 +1,64 @@
+Version-Release number of selected component:
+libreoffice-core-4.4.3.2-6.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/lib64/libreoffice/program/soffice.bin --calc '/home/ralmeida/Mis Documentos/davila/equipos/ESPECIFICACIONES-2014-012-SUBASTA-MOD.ods' --splash-pipe=5
+crash_function: __normal_iterator
+executable:     /usr/lib64/libreoffice/program/soffice.bin
+global_pid:     12388
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            0
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 __normal_iterator at /usr/include/c++/5.1.1/bits/stl_iterator.h:741
+ #1 begin at /usr/include/c++/5.1.1/bits/stl_vector.h:548
+ #2 SfxItemPool::Put at /usr/src/debug/libreoffice-4.4.3.2/svl/source/items/itempool.cxx:702
+ #3 SfxItemSet::Put at /usr/src/debug/libreoffice-4.4.3.2/svl/source/items/itemset.cxx:560
+ #4 Put at /usr/src/debug/libreoffice-4.4.3.2/include/svl/itemset.hxx:112
+ #5 setSvxBrushItemAsFillAttributesToTargetSet at /usr/src/debug/libreoffice-4.4.3.2/svx/source/unodraw/unobrushitemhelper.cxx:148
+ #6 SvxPageDescPage::ResetBackground_Impl at /usr/src/debug/libreoffice-4.4.3.2/cui/source/tabpages/page.cxx:1301
+ #7 SvxPageDescPage::Reset at /usr/src/debug/libreoffice-4.4.3.2/cui/source/tabpages/page.cxx:612
+ #8 SfxTabDialog::ActivatePageHdl at /usr/src/debug/libreoffice-4.4.3.2/sfx2/source/dialog/tabdlg.cxx:1159
+ #9 SfxTabDialog::Start_Impl at /usr/src/debug/libreoffice-4.4.3.2/sfx2/source/dialog/tabdlg.cxx:583
+Created attachment 1041913
+File: backtrace
+Created attachment 1041914
+File: cgroup
+Created attachment 1041915
+File: core_backtrace
+Created attachment 1041916
+File: dso_list
+Created attachment 1041917
+File: environ
+Created attachment 1041918
+File: limits
+Created attachment 1041919
+File: maps
+Created attachment 1041920
+File: mountinfo
+Created attachment 1041921
+File: namespaces
+Created attachment 1041922
+File: open_fds
+Created attachment 1041923
+File: proc_pid_status
+Created attachment 1041924
+File: var_log_messages
+libreoffice-4.4.4.2-3.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/libreoffice-4.4.4.2-3.fc22
+Package libreoffice-4.4.4.2-3.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing libreoffice-4.4.4.2-3.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10721/libreoffice-4.4.4.2-3.fc22
+then log in and leave karma (feedback).
+libreoffice-4.4.4.2-3.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

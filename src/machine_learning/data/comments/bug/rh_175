@@ -1,0 +1,13 @@
+Your package airsched failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10077084
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046419
+build.log
+Created attachment 1046420
+root.log
+Created attachment 1046421
+state.log
+This package has changed ownership in the Fedora Package Database.  Reassigning to the new owner of this component.
+That package (https://admin.fedoraproject.org/pkgdb/package/airsched/) has been obsoleted by airtsp (https://admin.fedoraproject.org/pkgdb/package/airtsp/)

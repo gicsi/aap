@@ -1,0 +1,29 @@
+Using the `fedora:22` docker image, installing `dpkg-dev` doesn't install tar or find. Thus, running dpkg-scanpackages fails.
+so we need add 
+
+BuildRequires: /usr/bin/tar /usr/bin/find 
+
+on package dpkg-dev ? 
+
+That is what you asking for ? 
+
+what dpkg are you using dpkg-1.17.25 or dpkg-1.16.16   ?
+The packaging guidelines indicate that find and tar should not be included in dependencies as they are bound to be available on any fedora distro.
+
+Docker is not a distro it is something you build by yourself, so you will need to add those packages to your docker setup.
+I've also tested using the official docker image (https://getfedora.org/en/cloud/download/docker.html) as a base image, which doesn't have find or tar.
+Could you reassign this bug report to docker please , I'm short of time, right now .
+
+Thanks,
+Hi, Docker Maintainers 
+
+(In reply to Andrew Colin Kissa from comment #2)
+> The packaging guidelines indicate that find and tar should not be included
+> in dependencies as they are bound to be available on any fedora distro.
+> 
+> Docker is not a distro it is something you build by yourself, so you will
+> need to add those packages to your docker setup.
+
+Should docker setup added find or tar ?
+This is not really a docker package issue, but a docker fedora image.
+Hi Tom, please ping fedora rel-eng or file a ticket on their trac for issues with the fedora image

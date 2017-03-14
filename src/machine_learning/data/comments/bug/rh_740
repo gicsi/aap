@@ -1,0 +1,28 @@
+Latest upstream release: 1.23.2
+Current version/release in rawhide: 1.22.2-2.fc23
+URL: http://download.gnome.org/sources/clutter/*/
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+cmd:  spectool -g /var/tmp/thn-yYpPYu/clutter.spec
+return code:  22
+stdout:
+Getting http://download.gnome.org/sources/clutter/1.22/clutter-1.23.2.tar.xz to ./clutter-1.23.2.tar.xz
+
+stderr:
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0   338    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (22) The requested URL returned error: 404 Not Found
+kalev's clutter-1.23.2-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=665741
+kalev's clutter-1.23.2-2.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=666092

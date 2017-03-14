@@ -1,0 +1,12 @@
+Your package perl-Method-Signatures failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10129252
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047643
+build.log
+Created attachment 1047644
+root.log
+Created attachment 1047645
+state.log
+*** This bug has been marked as a duplicate of bug 1231894 ***

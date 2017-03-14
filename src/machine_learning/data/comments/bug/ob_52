@@ -1,0 +1,7 @@
+The <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=xl&amp;sektion=4">xl(4)</a>
+driver supporting various 3com cards, had a bug which prevented the multicast
+filter from working correctly on the 3c905B, thus preventing many IPv6 things
+from working.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/i386/016_xlhash.patch">
+A source code patch exists which remedies this problem.</a>

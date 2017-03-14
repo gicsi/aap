@@ -1,0 +1,30 @@
+Thank you for the report, Martin.
+
+We are aware of this problem, but to be honest it doesn't seem to be direct scap-security-guide's fault. I need to be more verbose to clarify.
+
+The main problem is in the oscap tool. It's described in this upstream ticket:
+  [1] https://fedorahosted.org/openscap/ticket/457
+
+Long story short / conclusion from that [1] ticket being that when oscap tool is run on system with not enough memory, in order to evaluate that rule, it tries to collect all the items, matching the required regular expression pattern.
+
+But when on such a system (with not enough memory) there isn't enough space where to store more collected items (matching that OVAL pattern), the oscap's child file probe process is terminated by OOM killer (it's the process consuming the most memory), therefore the main oscap process receives message, the child was not able to collect the information about OVAL objects, it requires. Since the child test returns failure, the main test returns 'error' - this is behaviour requested by the SCAP specification (when the child probe was unable to retrieve the data e.g. to evaluate some variable, and that variable is subsequently used as input in some further OVAL object / OVAL state, the expected return value is 'error').
+
+This is what is actually happening in this case too - without that 'audit_rules_privileged_commands' OVAL check we need to scan whole system to find all SUID / SGID binaries, present on that system. In the second phase of that OVAL check we are checking if the /etc/audit/audit.rules file contains audit rule definition for each of those SUID / SGID binaries, found on the system. This works when the underlying system has enough (virtual) memory where to store the information about collected OVAL objects. But in case it hasn't enough memory, the information it's collected till allowed (till file probe isn't killed by OOM killer). When it happens, child file probe process returns information to main oscap process, that it was unable to collect information about all the SUID / SGID binaries present on the system. And therefore it's not possible to perform the second phase of the OVAL check (the actual check if each SUID / SGID binary has it's own audit rule definition present in /etc/audit/audit.rules configuration file).
+
+This problem itself can't be solved at the side of scap-security-guide RPM package (the only thing we can do is to restrict more the input regular expression it not to be that greeedy, and therefore collect less objects, hopefully the 'scan whole system for present SUID / SGID binaries' not to terminate by error (not to be killed by OOM killer). But this is just workaround for the real issue. The true fix should be performed in the openscap package. Basically the upstream fix for:
+  [1] https://fedorahosted.org/openscap/ticket/457
+
+issue should be backported also into the openscap RPM package version, as shipped within Red Hat Enterprise Linux 6.
+
+As such, moving the affected component to 'openscap' (as said in scap-security-guide we can only workaround it, without being sure despite doing that it will still work in all possible configurations).
+
+P.S.: Btw. if you try to run that test on machine with enough (virtual) memory, it should finish correctly and report real state.
+It is not clear from the report what caused the error.
+
+It is not clear from the report what command is the reproducer.
+
+It is not clear from the report whether the problem is deterministic.
+
+I cannot do better than just close it.
+
+Please re-open with further information if the problem persists.

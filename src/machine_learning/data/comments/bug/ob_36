@@ -1,0 +1,3 @@
+A minor problem in the logging support for the adduser(8) command.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/013_addusery2k.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,13 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html/Installation_Guide/sect-Red_Hat_Satellite-Installation_Guide-Managing_Hypervisors_and_Virtual_Guest_Subscriptions-Setting_up_a_Libvirt_KVM_Hypervisor.html
+
+Section Number and Name: 
+Step 4
+
+
+Additional information: 
+
+Using the currently provided details, virt-who will not even start.
+This is in section 5.4 and step 4.
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.

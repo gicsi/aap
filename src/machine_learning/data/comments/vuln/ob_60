@@ -1,0 +1,7 @@
+A format string vulnerability exists in xlock. As a workaround which disables
+its functionality, do
+<pre>
+# chmod u-s /usr/X11R6/bin/xlock
+</pre>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/023_xlock.patch">
+A source code patch exists which remedies this problem.</a>

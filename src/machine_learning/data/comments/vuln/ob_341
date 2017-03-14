@@ -1,0 +1,9 @@
+A memory corruption vulnerability exists in the post-authentication sshd process
+when an AES-GCM cipher (aes128-gcm@openssh.com or aes256-gcm@openssh.com) is
+selected during kex exchange.
+Review the <a href="http://www.openssh.com/txt/gcmrekey.adv">gcmrekey advisory</a>
+for a mitigation.
+
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.4/common/002_sshgcm.patch">
+A source code patch exists which remedies this problem.</a>

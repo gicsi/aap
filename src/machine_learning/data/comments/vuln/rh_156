@@ -1,0 +1,53 @@
+Description of problem:
+CBFlib-devel does not require hdf5-devel
+
+Version-Release number of selected component (if applicable):
+rawhide
+
+How reproducible:
+Install CBFlib-devel via dnf or rpm.
+
+
+Steps to Reproduce:
+1. dnf install CBFlib-devel
+
+Actual results:
+CBFlib-devel installed along with CBFlib.
+
+Expected results:
+CBFlib-devel will be install with CBFlib AND with hdf5-devel.
+
+
+Additional info:
+1. Any package required CBFlib can't be build as cbflib headers require hdf5 headers.
+2. There is mass rebuild in rawhide at this moment.
+Taking as obvious. I'll add "R: hdf5-devel" to CBFlib-devel
+Fixed in rawhide: http://koji.fedoraproject.org/koji/taskinfo?taskID=10177145
+
+However, AFAIS, this problem also affects older Fedoras, where it 
+also should be fixed - Timm?
+(In reply to Ralf Corsepius from comment #1)
+> Taking as obvious. I'll add "R: hdf5-devel" to CBFlib-devel
+
+Not SO obvious. In older Fedora CBFlib-devel does require hdf5-devel. Somehow.
+
+Anyway, thanks.
+(In reply to Dmitrij S. Kryzhevich from comment #3)
+> (In reply to Ralf Corsepius from comment #1)
+> > Taking as obvious. I'll add "R: hdf5-devel" to CBFlib-devel
+> 
+> Not SO obvious. In older Fedora CBFlib-devel does require hdf5-devel.
+
+I disagree - VERY obvious:
+
+- CBFlib-devel includes /usr/include/hdf5.h:
+  cbf_hdf5.h:#include <hdf5.h>
+
+- libcbf.so is linked against libhdf5.so:
+  # ldd usr/lib64/libcbf.so
+    ...
+	libhdf5.so.10 => not found
+    ...
+
+- There are packages, which FTBFS due to this missing dep in the recent mass rebuilt.
+Resolved.

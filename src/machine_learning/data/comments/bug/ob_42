@@ -1,0 +1,3 @@
+The sparc kernel can be crashed by a user.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/sparc/004_locore.patch">
+A source code patch exists which remedies this problem.</a>

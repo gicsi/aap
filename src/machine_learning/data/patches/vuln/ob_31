@@ -1,0 +1,33 @@
+Apply by doing:
+	cd /usr/src/sys/arch/i386/i386
+	patch < tsstrap.patch
+
+build a new kernel, ie.
+	cd /usr/src/sys/arch/i386/conf
+	config GENERIC
+	cd ../compile/GENERIC
+	make
+	mv /bsd /bsd.1
+	cp bsd /bsd
+	reboot
+
+===================================================================
+RCS file: /usr/OpenBSD/cvs/src/sys/arch/i386/i386/trap.c,v
+retrieving revision 1.30
+retrieving revision 1.31
+diff -u -r1.30 -r1.31
+--- src/sys/arch/i386/i386/trap.c	1999/02/26 04:42:14	1.30
++++ src/sys/arch/i386/i386/trap.c	1999/03/21 03:30:01	1.31
+@@ -324,6 +324,11 @@
+ #endif
+ 		sv.sival_int = rcr2();
+ 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
++		goto out;
++
++	case T_TSSFLT|T_USER:
++		sv.sival_int = frame.tf_eip;
++		trapsignal(p, SIGBUS, vftype, BUS_OBJERR, sv);
+ 		goto out;
+ 
+ 	case T_SEGNPFLT|T_USER:
+

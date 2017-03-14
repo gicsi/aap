@@ -1,0 +1,4 @@
+Malformed binaries could trigger kernel panics or view kernel memory.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.7/common/006_elf.patch.sig">
+A source code patch exists which remedies this problem.</a>

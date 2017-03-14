@@ -1,0 +1,12 @@
+Your package scl-utils failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10152630
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048306
+build.log
+Created attachment 1048307
+root.log
+Created attachment 1048308
+state.log
+Fixed: http://koji.fedoraproject.org/koji/buildinfo?buildID=667315

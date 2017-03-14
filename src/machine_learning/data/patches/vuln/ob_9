@@ -1,0 +1,62 @@
+Apply by doing
+	cd /usr/src/sbin/mountd
+	patch -p0 < mountd.patch
+
+And then to rebuild and install
+	make && make install
+
+Index: mountd.c
+===================================================================
+RCS file: /cvs/src/sbin/mountd/mountd.c,v
+retrieving revision 1.22
+retrieving revision 1.24
+diff -u -r1.22 -r1.24
+--- mountd.c	1997/09/29 19:31:05	1.22
++++ mountd.c	1998/03/01 20:06:30	1.24
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: mountd.c,v 1.22 1997/09/29 19:31:05 millert Exp $	*/
++/*	$OpenBSD: mountd.c,v 1.24 1998/03/01 20:06:30 millert Exp $	*/
+ /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
+ 
+ /*
+@@ -228,7 +228,6 @@
+ #define	OP_ALLDIRS	0x40
+ 
+ int debug = 0;
+-void	SYSLOG __P((int, const char *, ...));
+ 
+ /*
+  * Mountd server for NFS mount protocol as described in:
+@@ -304,6 +303,7 @@
+ 	}
+ 	signal(SIGHUP, (void (*) __P((int))) new_exportlist);
+ 	signal(SIGTERM, (void (*) __P((int))) send_umntall);
++	signal(SIGSYS, SIG_IGN);
+ 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
+ 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
+ 		syslog(LOG_ERR, "Can't create socket");
+@@ -406,6 +406,12 @@
+ 			/* Get the file handle */
+ 			memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
+ 			if (getfh(dirpath, (fhandle_t *)&fhr.fhr_fh) < 0) {
++				if (errno == ENOSYS) {
++					syslog(LOG_ERR,
++					    "Kernel does not support NFS exporting, "
++					    "mountd aborting..");
++					_exit(1);
++				}
+ 				bad = errno;
+ 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
+ 				if (!svc_sendreply(transp, xdr_long,
+@@ -879,6 +885,10 @@
+ 			cp = endcp;
+ 			nextfield(&cp, &endcp);
+ 			len = endcp - cp;
++		}
++		if (has_host == FALSE && tgrp->gr_type == GT_NULL)  {
++			getexp_err(ep, tgrp);
++			goto nextline;
+ 		}
+ 		if (check_options(dirhead)) {
+ 			getexp_err(ep, tgrp);
+

@@ -1,0 +1,189 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_getsockopt.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet/ip_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_output.c,v
+retrieving revision 1.194
+diff -u -p -r1.194 ip_output.c
+--- sys/netinet/ip_output.c	5 Jun 2009 00:05:22 -0000	1.194
++++ sys/netinet/ip_output.c	28 Oct 2009 20:10:44 -0000
+@@ -1505,6 +1505,7 @@ ip_ctloutput(op, so, level, optname, mp)
+ 		case IP_ESP_TRANS_LEVEL:
+ 		case IP_ESP_NETWORK_LEVEL:
+ 		case IP_IPCOMP_LEVEL:
++			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 			m->m_len = sizeof(int);
+ 			*mtod(m, int *) = IPSEC_LEVEL_NONE;
+Index: sys/netinet6/ip6_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/ip6_output.c,v
+retrieving revision 1.106
+diff -u -p -r1.106 ip6_output.c
+--- sys/netinet6/ip6_output.c	22 Oct 2008 14:36:08 -0000	1.106
++++ sys/netinet6/ip6_output.c	28 Oct 2009 21:09:05 -0000
+@@ -1892,6 +1892,7 @@ do { \
+ 			case IPV6_ESP_TRANS_LEVEL:
+ 			case IPV6_ESP_NETWORK_LEVEL:
+ 			case IPV6_IPCOMP_LEVEL:
++				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 				m->m_len = sizeof(int);
+ 				*mtod(m, int *) = IPSEC_LEVEL_NONE;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_xmm.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/i386/i386/trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/trap.c,v
+retrieving revision 1.87
+retrieving revision 1.87.8.1
+diff -u -p -r1.87 -r1.87.8.1
+--- sys/arch/i386/i386/trap.c	9 Apr 2008 16:49:17 -0000	1.87
++++ sys/arch/i386/i386/trap.c	5 Oct 2009 00:37:54 -0000	1.87.8.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trap.c,v 1.87 2008/04/09 16:49:17 thib Exp $	*/
++/*	$OpenBSD: trap.c,v 1.87.8.1 2009/10/05 00:37:54 sthen Exp $	*/
+ /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
+ 
+ /*-
+@@ -426,6 +426,10 @@ trap(struct trapframe frame)
+ 		KERNEL_PROC_LOCK(p);
+ 		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, sv);
+ 		KERNEL_PROC_UNLOCK(p);
++		goto out;
++
++	case T_XFTRAP|T_USER:
++		npxtrap(&frame);
+ 		goto out;
+ 
+ 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+Index: sys/arch/i386/include/npx.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/npx.h,v
+retrieving revision 1.10
+retrieving revision 1.10.14.1
+diff -u -p -r1.10 -r1.10.14.1
+--- sys/arch/i386/include/npx.h	1 Oct 2006 18:07:56 -0000	1.10
++++ sys/arch/i386/include/npx.h	5 Oct 2009 00:37:54 -0000	1.10.14.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.h,v 1.10 2006/10/01 18:07:56 kettenis Exp $	*/
++/*	$OpenBSD: npx.h,v 1.10.14.1 2009/10/05 00:37:54 sthen Exp $	*/
+ /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
+ 
+ /*-
+@@ -161,8 +161,11 @@ struct	emcsts {
+ 
+ void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
+ void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
++
+ struct cpu_info;
++struct trapframe;
+ 
+ void	npxinit(struct cpu_info *);
++void	npxtrap(struct trapframe *);
+ 
+ #endif /* !_I386_NPX_H_ */
+Index: sys/arch/i386/isa/npx.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/isa/npx.c,v
+retrieving revision 1.44
+retrieving revision 1.44.6.1
+diff -u -p -r1.44 -r1.44.6.1
+--- sys/arch/i386/isa/npx.c	4 Dec 2008 15:48:19 -0000	1.44
++++ sys/arch/i386/isa/npx.c	5 Oct 2009 00:37:54 -0000	1.44.6.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.c,v 1.44 2008/12/04 15:48:19 weingart Exp $	*/
++/*	$OpenBSD: npx.c,v 1.44.6.1 2009/10/05 00:37:54 sthen Exp $	*/
+ /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
+ 
+ #if 0
+@@ -134,8 +134,9 @@ extern int i386_fpu_present;
+ extern int i386_fpu_exception;
+ extern int i386_fpu_fdivbug;
+ 
+-#define        fxsave(addr)            __asm("fxsave %0" : "=m" (*addr))
+-#define        fxrstor(addr)           __asm("fxrstor %0" : : "m" (*addr))
++#define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
++#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
++#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
+ 
+ static __inline void
+ fpu_save(union savefpu *addr)
+@@ -533,6 +534,38 @@ npxintr(void *arg)
+ 	}
+ 
+ 	return (1);
++}
++
++void
++npxtrap(struct trapframe *frame)
++{
++	struct proc *p = curcpu()->ci_fpcurproc;
++	union savefpu *addr = &p->p_addr->u_pcb.pcb_savefpu;
++	u_int32_t mxcsr, statbits;
++	int code;
++	union sigval sv;
++
++#ifdef DIAGNOSTIC
++	/*
++	 * At this point, fpcurproc should be curproc.  If it wasn't, the TS
++	 * bit should be set, and we should have gotten a DNA exception.
++	 */
++	if (p != curproc)
++		panic("npxtrap: wrong process");
++#endif
++
++	fxsave(&addr->sv_xmm);
++	mxcsr = addr->sv_xmm.sv_env.en_mxcsr;
++	statbits = mxcsr;
++	mxcsr &= ~0x3f;
++	ldmxcsr(&mxcsr);
++	addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
++	addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
++	code = x86fpflags_to_siginfo (statbits);
++	sv.sival_int = frame->tf_eip;
++	KERNEL_PROC_LOCK(p);
++	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
++	KERNEL_PROC_UNLOCK(p);
+ }
+ 
+ static int
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_bind.patch
+
+And then rebuild and install bind:
+	cd usr.sbin/bind
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/bind/bin/named/update.c
+===================================================================
+--- usr.sbin/bind/bin/named/update.c	(revision 1875)
++++ usr.sbin/bind/bin/named/update.c	(working copy)
+@@ -861,7 +861,11 @@
+ 			if (type == dns_rdatatype_rrsig ||
+ 			    type == dns_rdatatype_sig)
+ 				covers = dns_rdata_covers(&t->rdata);
+-			else
++			else if (type == dns_rdatatype_any) {
++				dns_db_detachnode(db, &node);
++				dns_diff_clear(&trash);
++				return (DNS_R_NXRRSET);
++			} else
+ 				covers = 0;
+ 
+ 			/*
+

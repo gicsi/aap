@@ -1,0 +1,4 @@
+Certain routing table modifications by the superuser could cause a system panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/004_route.patch">
+A source code patch exists which remedies this problem.</a>

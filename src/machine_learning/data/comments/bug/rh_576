@@ -1,0 +1,214 @@
+Created attachment 1042066
+Screen shot of failing GtkTreeSortable tests
+
+Description of problem:
+Test failure of lsb 4.1 tests - GtkTreeSortable fails 4 out of 20 tests.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Happens every time.  100%
+
+Steps to Reproduce:
+1.Install the following lsb test packages from the lsb 4.1 test suite:
+
+lsb-setup-4.1.0-1.noarch
+lsb-tet3-lite-3.7-27.lsb5.x86_64
+lsb-python-2.4.6-7.lsb4.x86_64
+lsb-test-core-4.1.15-1.x86_64
+lsb-dist-checker-4.1.0.12-1.x86_64
+lsb-test-desktop-4.1.9-1.x86_64
+lsb-cmdchk-4.1.4-5.x86_64
+lsb-xvfb-1.2.0-22.x86_64
+
+From this web site:
+http://ftp.linuxfoundation.org/pub/lsb/repositories/rpm/lsb-4.1/repo-x86_64
+
+2. From a full desktop environment in a terminal, su root
+3. cd /opt/lsb/test/desktop/gtkvts/tests/functions/GtkTreeSortable
+4. rm -f tet_xres
+5. export TET_ROOT=/opt/lsb/test/desktop/
+6. ./GtkTreeSortable
+
+Actual results:
+You will see the errors as shown in the screenshot.
+
+Expected results:
+All tests pass.
+
+Additional info:
+
+Fails in Fedora 21 also.
+Fails in ppc64 arch also.
+Adding Karel Srot to CC, Karel did the testing of LSB compliance and there were several false failures. I'm not sure if these are one of these. Karel, do you remember such failures or these seem to be brand new?
+During the LSB testing I have encountered following errors in
+
+/tests/functions/GtkTreeSortable/GtkTreeSortable 
+
+Message from the test:
+
+test case: /opt/lsb/test/desktop/gtkvts/tet_tmp_dir/20955aa/tests/functions/GtkTreeSortable/GtkTreeSortable, TP number: 15 
+GtkTreeSortable.c, line 1106: 
+1: converted_path_str = '2:3', should be '0:3'
+GtkTreeSortable.c, line 1122: 
+2: converted_path_str = '2:1', should be '4:1'
+GtkTreeSortable.c, line 1139: 
+3: converted_path_str = '0:0', should be '3:0'
+GtkTreeSortable.c, line 1155: 
+4: converted_path_str = '4:4', should be '1:4'
+
+These turned out to be bugs in the LSB test suite, see
+https://lsbbugs.linuxfoundation.org/show_bug.cgi?id=3238#c4
+
+But I can't tell whether this is the same problem as described above.
+It would be great to have more details from the reporter (at least some more descriptive test log).
+I re-run Desktop tests from LSB4.1 on the most recent RHEL-7.1 and the only GtkTreeSortable failures I am getting are the one mentioned above.
+
+# rpm -q lsb-setup lsb-dist-checker lsb-test-desktop lsb-xvfb
+lsb-setup-4.1.0-1.noarch
+lsb-dist-checker-4.1.0.12-1.x86_64
+lsb-test-desktop-4.1.9-1.x86_64
+lsb-xvfb-1.2.0-22.x86_64
+Corey, can you please provide more detailed log of the failures? It looks like the issues might be connected to the known issues in LSB testsuite, but without more data, we can't confirm this.
+Yes, these are the failures reported in #c0.
+In
+https://lsbbugs.linuxfoundation.org/show_bug.cgi?id=3238#c5
+Jeff says that even after fixing the compare function the test doesn't pass. 
+Probably there is another issue, either with gtk or the test suite itself.
+
+# ./GtkTreeSortable 
+Function tests for GtkTreeSortable ....%....*....%....
+(.:14023): Gtk-CRITICAL **: gtk_tree_model_sort_sort: assertion 'tree_model_sort->default_sort_func != NULL' failed
+#
+(.:14023): Gtk-CRITICAL **: gtk_tree_model_sort_sort: assertion 'tree_model_sort->default_sort_func != NULL' failed
+.
+(.:14023): Gtk-CRITICAL **: gtk_tree_model_sort_sort: assertion 'tree_model_sort->default_sort_func != NULL' failed
+.
+(.:14023): Gtk-CRITICAL **: gtk_tree_model_sort_sort: assertion 'tree_model_sort->default_sort_func != NULL' failed
+.. 20 passed 4 FAILED
+
+# cat tet_xres 
+15|0 3.7-lite 1|TCM Start
+400|0 1 24 16:12:25|IC Start
+200|0 1 16:12:25|TP Start
+520|0 1 00014023 1 1|test case: ./GtkTreeSortable, TP number: 1 
+220|0 1 0 16:12:25|PASS
+200|0 2 16:12:25|TP Start
+520|0 2 00014023 1 1|test case: ./GtkTreeSortable, TP number: 2 
+220|0 2 0 16:12:25|PASS
+200|0 3 16:12:25|TP Start
+520|0 3 00014023 1 1|test case: ./GtkTreeSortable, TP number: 3 
+220|0 3 0 16:12:25|PASS
+200|0 4 16:12:25|TP Start
+520|0 4 00014023 1 1|test case: ./GtkTreeSortable, TP number: 4 
+220|0 4 0 16:12:25|PASS
+200|0 5 16:12:25|TP Start
+520|0 5 00014023 1 1|test case: ./GtkTreeSortable, TP number: 5 
+220|0 5 0 16:12:25|PASS
+200|0 6 16:12:25|TP Start
+520|0 6 00014023 1 1|test case: ./GtkTreeSortable, TP number: 6 
+220|0 6 0 16:12:25|PASS
+200|0 7 16:12:25|TP Start
+520|0 7 00014023 1 1|test case: ./GtkTreeSortable, TP number: 7 
+220|0 7 0 16:12:25|PASS
+200|0 8 16:12:25|TP Start
+520|0 8 00014023 1 1|test case: ./GtkTreeSortable, TP number: 8 
+220|0 8 0 16:12:25|PASS
+200|0 9 16:12:25|TP Start
+520|0 9 00014023 1 1|test case: ./GtkTreeSortable, TP number: 9 
+220|0 9 0 16:12:25|PASS
+200|0 10 16:12:25|TP Start
+520|0 10 00014023 1 1|test case: ./GtkTreeSortable, TP number: 10 
+220|0 10 0 16:12:25|PASS
+200|0 11 16:12:25|TP Start
+520|0 11 00014023 1 1|test case: ./GtkTreeSortable, TP number: 11 
+220|0 11 0 16:12:25|PASS
+200|0 12 16:12:25|TP Start
+520|0 12 00014023 1 1|test case: ./GtkTreeSortable, TP number: 12 
+220|0 12 0 16:12:25|PASS
+200|0 13 16:12:25|TP Start
+520|0 13 00014023 1 1|test case: ./GtkTreeSortable, TP number: 13 
+220|0 13 0 16:12:25|PASS
+200|0 14 16:12:25|TP Start
+520|0 14 00014023 1 1|test case: ./GtkTreeSortable, TP number: 14 
+220|0 14 0 16:12:25|PASS
+200|0 15 16:12:25|TP Start
+520|0 15 00014023 1 1|test case: ./GtkTreeSortable, TP number: 15 
+520|0 15 00014023 1 2|GtkTreeSortable.c, line 1106: 
+520|0 15 00014023 1 3|1: converted_path_str = '2:3', should be '0:3'
+520|0 15 00014023 1 4|GtkTreeSortable.c, line 1122: 
+520|0 15 00014023 1 5|2: converted_path_str = '2:1', should be '4:1'
+520|0 15 00014023 1 6|GtkTreeSortable.c, line 1139: 
+520|0 15 00014023 1 7|3: converted_path_str = '0:0', should be '3:0'
+520|0 15 00014023 1 8|GtkTreeSortable.c, line 1155: 
+520|0 15 00014023 1 9|4: converted_path_str = '4:4', should be '1:4'
+220|0 15 1 16:12:26|FAIL
+200|0 16 16:12:26|TP Start
+520|0 16 00014023 1 1|test case: ./GtkTreeSortable, TP number: 16 
+520|0 16 00014023 1 2|GtkTreeSortable.c, line 1280: 
+520|0 16 00014023 1 3|1: converted_path_str = '1:2', should be '2:2'
+520|0 16 00014023 1 4|GtkTreeSortable.c, line 1296: 
+520|0 16 00014023 1 5|2: converted_path_str = '3:2', should be '2:2'
+520|0 16 00014023 1 6|GtkTreeSortable.c, line 1313: 
+520|0 16 00014023 1 7|3: converted_path_str = '2:1', should be '0:1'
+520|0 16 00014023 1 8|GtkTreeSortable.c, line 1329: 
+520|0 16 00014023 1 9|4: converted_path_str = '2:3', should be '4:3'
+220|0 16 1 16:12:26|FAIL
+200|0 17 16:12:26|TP Start
+520|0 17 00014023 1 1|test case: ./GtkTreeSortable, TP number: 17 
+520|0 17 00014023 1 2|GtkTreeSortable.c, line 1454: 
+520|0 17 00014023 1 3|1: converted_path_str = '3:4', should be '4:1'
+520|0 17 00014023 1 4|GtkTreeSortable.c, line 1470: 
+520|0 17 00014023 1 5|2: converted_path_str = '1:0', should be '0:3'
+520|0 17 00014023 1 6|GtkTreeSortable.c, line 1487: 
+520|0 17 00014023 1 7|3: converted_path_str = '4:4', should be '1:3'
+520|0 17 00014023 1 8|GtkTreeSortable.c, line 1503: 
+520|0 17 00014023 1 9|4: converted_path_str = '0:0', should be '3:1'
+220|0 17 1 16:12:26|FAIL
+200|0 18 16:12:26|TP Start
+520|0 18 00014023 1 1|test case: ./GtkTreeSortable, TP number: 18 
+520|0 18 00014023 1 2|GtkTreeSortable.c, line 1628: 
+520|0 18 00014023 1 3|1: converted_path_str = '2:0', should be '0:4'
+520|0 18 00014023 1 4|GtkTreeSortable.c, line 1644: 
+520|0 18 00014023 1 5|2: converted_path_str = '2:4', should be '4:0'
+520|0 18 00014023 1 6|GtkTreeSortable.c, line 1661: 
+520|0 18 00014023 1 7|3: converted_path_str = '0:2', should be '3:4'
+520|0 18 00014023 1 8|GtkTreeSortable.c, line 1677: 
+520|0 18 00014023 1 9|4: converted_path_str = '4:2', should be '1:0'
+220|0 18 1 16:12:26|FAIL
+200|0 19 16:12:26|TP Start
+520|0 19 00014023 1 1|test case: ./GtkTreeSortable, TP number: 19 
+220|0 19 0 16:12:27|PASS
+200|0 20 16:12:27|TP Start
+520|0 20 00014023 1 1|test case: ./GtkTreeSortable, TP number: 20 
+220|0 20 0 16:12:27|PASS
+200|0 21 16:12:27|TP Start
+520|0 21 00014023 1 1|test case: ./GtkTreeSortable, TP number: 21 
+220|0 21 0 16:12:27|PASS
+200|0 22 16:12:27|TP Start
+520|0 22 00014023 1 1|test case: ./GtkTreeSortable, TP number: 22 
+220|0 22 0 16:12:27|PASS
+200|0 23 16:12:27|TP Start
+520|0 23 00014023 1 1|test case: ./GtkTreeSortable, TP number: 23 
+220|0 23 0 16:12:27|PASS
+200|0 24 16:12:27|TP Start
+520|0 24 00014023 1 1|test case: ./GtkTreeSortable, TP number: 24 
+220|0 24 0 16:12:27|PASS
+410|0 1 24 16:12:27|IC End
+> These turned out to be bugs in the LSB test suite, see
+> https://lsbbugs.linuxfoundation.org/show_bug.cgi?id=3238#c4
+> 
+
+I think this statement says it all.  Thank you for looking into this, and sorry
+for neglecting to post the log file initially.
+
+The lsb test suite development appears to be stagnant, with the last update in 2011.  So I am guessing that we should treat these as expected failures.
+
+If you folks are OK with this, I am open to closing this bug as CLOSED NOTABUG.
+Closing NOTABUG for now, thanks a lot for reporting this.
+(In reply to Corey Ashford from comment #6)
+> The lsb test suite development appears to be stagnant, with the last update
+> in 2011.  So I am guessing that we should treat these as expected failures.
+
+Last 1-2 years the development was rather focusing on LSB 5.0 which has been released recently. Though, I agree that LF doesn't have the capacity to investigate and resolve all reported issues.

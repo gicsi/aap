@@ -1,0 +1,83 @@
+Description of problem:
+Choosing the "Copy Host CPU" configuration option in Virt-Manager, virtual machines don't boot up and a window pops up with the following exception below. The host is a Lenovo T440s laptop with Core i7 cpu.
+-----------------Error-------------------------
+Error starting domain: unsupported configuration: host doesn't support invariant TSC
+
+Traceback (most recent call last):
+  File "/usr/share/virt-manager/virtManager/asyncjob.py", line 89, in cb_wrapper
+    callback(asyncjob, *args, **kwargs)
+  File "/usr/share/virt-manager/virtManager/asyncjob.py", line 125, in tmpcb
+    callback(*args, **kwargs)
+  File "/usr/share/virt-manager/virtManager/domain.py", line 1393, in startup
+    self._backend.create()
+  File "/usr/lib64/python2.7/site-packages/libvirt.py", line 966, in create
+    if ret == -1: raise libvirtError ('virDomainCreate() failed', dom=self)
+libvirtError: unsupported configuration: host doesn't support invariant TSC
+
+/proc/cpuinfo' on the host. Showing only one of the 4 cpus since they are all the same:
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 69
+model name	: Intel(R) Core(TM) i7-4600U CPU @ 2.10GHz
+stepping	: 1
+microcode	: 0x1c
+cpu MHz		: 953.015
+cache size	: 4096 KB
+physical id	: 0
+siblings	: 4
+core id		: 1
+cpu cores	: 2
+apicid		: 3
+initial apicid	: 3
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid
+bogomips	: 5387.86
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+
+Removing the line <feature policy='require' name='invtsc'/> from the VM's xml definition files and booting the vm (using 'Run' in VirtManager) resulted in a kernel panic in the VM.
+
+After this, ps -aux shows
+[root@T440-USER ~]# ps -aux | grep VRHEL
+qemu      7503  126  0.5 5316284 60624 ?       Sl   15:02   0:50 /usr/libexec/qemu-kvm -name VRHEL6-N1 -S -machine pc-i440fx-rhel7.0.0,accel=tcg,usb=off -cpu SandyBridge,+invpcid,+erms,+bmi2,+smep,+avx2,+bmi1,+fsgsbase,+abm,+pdpe1gb,+rdrand,+f16c,+osxsave,+movbe,+pcid,+pdcm,+xtpr,+fma,+tm2,+est,+smx,+vmx,+ds_cpl,+monitor,+dtes64,+pbe,+tm,+ht,+ss,+acpi,+ds,+vme -m 3076 -realtime mlock=off -smp 2,sockets=2,cores=1,threads=1 -uuid e1fa6501-66cc-4bfc-9f78-f787b78c06b8 -no-user-config -nodefaults -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/VRHEL6-N1.monitor,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=utc -no-shutdown -boot strict=on -device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2 -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x5 -drive file=/home/guillaume/.virt-manager/images/VRHEL6_N1.img,if=none,id=drive-ide0-0-0,format=raw,cache=none -device ide-hd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0,bootindex=1 -netdev tap,fd=23,id=hostnet0 -device rtl8139,netdev=hostnet0,id=net0,mac=52:54:00:b9:1f:87,bus=pci.0,addr=0x3 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=serial0 -chardev spicevmc,id=charchannel0,name=vdagent -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 -device usb-tablet,id=input0 -spice port=5900,addr=127.0.0.1,disable-ticketing,seamless-migration=on -vga qxl -global qxl-vga.ram_size=67108864 -global qxl-vga.vram_size=67108864 -global qxl-vga.vgamem_mb=16 -device intel-hda,id=sound0,bus=pci.0,addr=0x4 -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x6 -msg timestamp=on
+root      7637  0.0  0.0 112640   964 pts/6    S+   15:03   0:00 grep --color=auto VRHEL
+
+
+Customer is currently using the "Hypervisor default" cpu options for all VMs as a workaround.libvirt-1.2.8-16.el7_1.3.x86_64 
+
+
+Version-Release number of selected component (if applicable):
+RHEL 7.1
+qemu-img-1.5.3-86.el7_1.2.x86_64
+qemu-kvm-1.5.3-86.el7_1.2.x86_64
+virt-manager-1.1.0-12.el7.noarch
+virt-manager-common-1.1.0-12.el7.noarch
+
+Actual results:
+Error seen in the Description
+
+Expected results:
+VM starts without issue, or 
+
+Additional info:
+May be related to these bugs
+
+https://bugzilla.redhat.com/show_bug.cgi?id=1133155
+https://bugzilla.redhat.com/show_bug.cgi?id=1138221
+
+This posting shows that this was fixed in the upstream in some capacity:
+
+https://www.redhat.com/archives/virt-tools-list/2015-April/msg00032.html
+indeed, that should work for 7.2.  virt-manager was already rebased.
+I think this bug is duplicate with bug 1229163 which has been fixed on rhel7.2.
+Close this bug as duplicate with bug 1229163.
+
+*** This bug has been marked as a duplicate of bug 1229163 ***

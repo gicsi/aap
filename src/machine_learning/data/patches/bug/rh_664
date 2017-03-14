@@ -1,0 +1,38 @@
+From 8cfb1d1960fd4cf8255a1f2ca744dfd1e733e08e Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Mon, 22 Jun 2015 00:32:53 +0000
+Subject: [PATCH] Update to 0.25 (#1234185)
+
+---
+ exiv2.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/exiv2.spec b/exiv2.spec
+index dc5a79b..c5bcfe0 100644
+--- a/exiv2.spec
++++ b/exiv2.spec
+@@ -5,8 +5,8 @@
+ 
+ Summary: Exif and Iptc metadata manipulation library
+ Name:	 exiv2
+-Version: 0.24
+-Release: 7%{?dist}
++Version: 0.25
++Release: 1%{?dist}
+ 
+ License: GPLv2+
+ URL: 	 http://www.exiv2.org/
+@@ -148,6 +148,9 @@ test -x %{buildroot}%{_libdir}/libexiv2.so
+ 
+ 
+ %changelog
++* Mon Jun 22 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.25-1
++- Update to 0.25 (#1234185)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.24-7
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

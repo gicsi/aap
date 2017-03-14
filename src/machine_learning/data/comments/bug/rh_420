@@ -1,0 +1,40 @@
+Description of problem:
+I'm Taking screenshots for the local italian community while testing ABRT.
+Please disregard.
+
+Version-Release number of selected component:
+procps-ng-3.3.10-5.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        top
+crash_function: __pselect
+executable:     /usr/bin/top
+global_pid:     3253
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (2 frames)
+ #0 __pselect at ../sysdeps/unix/sysv/linux/pselect.c:71
+ #1 ioa at top.c:966
+Another user experienced a similar problem:
+
+I'm Taking screenshots for the local italian community while testing ABRT.
+Please disregard.
+
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        top
+crash_function: __pselect
+executable:     /usr/bin/top
+global_pid:     3253
+kernel:         4.0.4-303.fc22.x86_64
+package:        procps-ng-3.3.10-5.fc22
+reason:         top killed by SIGSEGV
+runlevel:       N 5
+type:           CCpp
+uid:            1000

@@ -1,0 +1,65 @@
+From 4b81b7f9eb972584023ba48bbfa8c783e8eecc9a Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 13:18:41 -0400
+Subject: [PATCH] Add org.bouncycastle.pkix.jcaje to exported packages.
+
+---
+ bouncycastle-pkix-OSGi.bnd | 4 +++-
+ bouncycastle-pkix.spec     | 6 +++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/bouncycastle-pkix-OSGi.bnd b/bouncycastle-pkix-OSGi.bnd
+index a1adc8d..3b924cc 100644
+--- a/bouncycastle-pkix-OSGi.bnd
++++ b/bouncycastle-pkix-OSGi.bnd
+@@ -83,6 +83,8 @@ Export-Package: \
+  org.bouncycastle.pkcs;version="@VERSION@", \
+  org.bouncycastle.pkcs.bc;version="@VERSION@", \
+  org.bouncycastle.pkcs.jcajce;version="@VERSION@", \
++ org.bouncycastle.pkix;version="@VERSION@", \
++ org.bouncycastle.pkix.jcajce;version="@VERSION@", \
+  org.bouncycastle.tsp;version="@VERSION@", \
+  org.bouncycastle.tsp.cms;version="@VERSION@", \
+  org.bouncycastle.voms;version="@VERSION@"
+@@ -105,4 +107,4 @@ Application-Library-Allowable-Codebase: *
+ Caller-Allowable-Codebase: *
+ Codebase: *
+ Permissions: all-permissions
+-Trusted-Library: true
+\ No newline at end of file
++Trusted-Library: true
+diff --git a/bouncycastle-pkix.spec b/bouncycastle-pkix.spec
+index e650d6e..b27fb0f 100644
+--- a/bouncycastle-pkix.spec
++++ b/bouncycastle-pkix.spec
+@@ -2,7 +2,7 @@
+ %global archivever  jdk15on-%(echo %{version}|sed 's|\\\.||')
+ Name:          bouncycastle-pkix
+ Version:       1.52
+-Release:       2%{?dist}
++Release:       3%{?dist}
+ Summary:       Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs
+ License:       MIT
+ URL:           http://www.bouncycastle.org/
+@@ -40,6 +40,7 @@ This package contains javadoc for %{name}.
+ 
+ %prep
+ %setup -q -n bcpkix-%{archivever}
++
+ # Remove provided binaries and apidocs
+ find . -type f -name "*.class" -print -delete
+ find . -type f -name "*.jar" -print -delete
+@@ -137,6 +138,9 @@ install -pm 644 %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-bcpkix.pom
+ %license LICENSE.html
+ 
+ %changelog
++* Thu Jun 18 2015 Jeff Johnston <jjohnstn@redhat.com> 1.52-3
++- Add org.bouncycastle.pkix.jcaje to exported packages.
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.52-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.9.3
+
+

@@ -1,0 +1,15 @@
+Your package NLopt failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10075798
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046356
+build.log
+Created attachment 1046357
+root.log
+Created attachment 1046358
+state.log
+Build for fc23 succeeded [1] after a small patch.
+
+
+[1]  https://koji.fedoraproject.org/koji/buildinfo?buildID=667250

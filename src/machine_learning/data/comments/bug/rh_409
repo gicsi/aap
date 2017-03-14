@@ -1,0 +1,16 @@
+...for -debuginfo sanity; 2.0.12-1 did not have this issue.
+'git am'able fix attached, let me know if you'd like me to push and
+build this for devel.
+Created attachment 1043895
+Don't strip binaries too early
+Hi Ville,
+
+is see. Thanks for noticing that. Running 'go tool 6l' gives explanation of -s option:
+...
+-s	disable symbol table
+...
+http://pkgs.fedoraproject.org/cgit/etcd.git/commit/?id=8364111261a56ecbb10c0976919f88768589e454
+etcd-2.0.13-2.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/etcd-2.0.13-2.fc22
+etcd-2.0.13-2.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/etcd-2.0.13-2.fc21

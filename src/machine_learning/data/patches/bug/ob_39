@@ -1,0 +1,582 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_fts.patch
+
+And then rebuild and install libc.  However, this will not
+affect statically linked binaries that use fts(3) such as
+chmod, cp, ls, pax, rm, and dump.
+
+Index: lib/libc/gen/fts.c
+===================================================================
+RCS file: /cvs/src/lib/libc/gen/fts.c,v
+retrieving revision 1.18
+retrieving revision 1.19
+diff -u -r1.18 -r1.19
+--- lib/libc/gen/fts.c	1998/08/15 08:10:15	1.18
++++ lib/libc/gen/fts.c	1999/05/17 02:32:31	1.19
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: fts.c,v 1.18 1998/08/15 08:10:15 deraadt Exp $	*/
++/*	$OpenBSD: fts.c,v 1.19 1999/05/17 02:32:31 millert Exp $	*/
+ 
+ /*-
+  * Copyright (c) 1990, 1993, 1994
+@@ -37,7 +37,7 @@
+ #if 0
+ static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
+ #else
+-static char rcsid[] = "$OpenBSD: fts.c,v 1.18 1998/08/15 08:10:15 deraadt Exp $";
++static char rcsid[] = "$OpenBSD: fts.c,v 1.19 1999/05/17 02:32:31 millert Exp $";
+ #endif
+ #endif /* LIBC_SCCS and not lint */
+ 
+@@ -57,7 +57,7 @@
+ static void	 fts_lfree __P((FTSENT *));
+ static void	 fts_load __P((FTS *, FTSENT *));
+ static size_t	 fts_maxarglen __P((char * const *));
+-static void	 fts_padjust __P((FTS *, void *));
++static void	 fts_padjust __P((FTS *, FTSENT *));
+ static int	 fts_palloc __P((FTS *, size_t));
+ static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
+ static u_short	 fts_stat __P((FTS *, FTSENT *, int));
+@@ -428,7 +428,7 @@
+ 		return (sp->fts_cur = NULL);
+ 	}
+ 
+-	/* Nul terminate the pathname. */
++	/* NUL terminate the pathname. */
+ 	sp->fts_path[p->fts_pathlen] = '\0';
+ 
+ 	/*
+@@ -581,9 +581,9 @@
+ 	register int nitems;
+ 	FTSENT *cur, *tail;
+ 	DIR *dirp;
+-	void *adjaddr;
++	void *oldaddr;
+ 	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno,
+-	    nostat;
++	    nostat, doadjust;
+ 	char *cp;
+ 
+ 	/* Set current node pointer. */
+@@ -679,7 +679,7 @@
+ 	level = cur->fts_level + 1;
+ 
+ 	/* Read the directory, attaching each entry to the `link' pointer. */
+-	adjaddr = NULL;
++	doadjust = 0;
+ 	for (head = tail = NULL, nitems = 0; dirp && (dp = readdir(dirp));) {
+ 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
+ 			continue;
+@@ -687,6 +687,7 @@
+ 		if ((p = fts_alloc(sp, dp->d_name, (int)dp->d_namlen)) == NULL)
+ 			goto mem1;
+ 		if (dp->d_namlen > maxlen) {
++			oldaddr = sp->fts_path;
+ 			if (fts_palloc(sp, (size_t)dp->d_namlen)) {
+ 				/*
+ 				 * No more memory for path or structures.  Save
+@@ -703,7 +704,9 @@
+ 				SET(FTS_STOP);
+ 				return (NULL);
+ 			}
+-			adjaddr = sp->fts_path;
++			/* Did realloc() change the pointer? */
++			if (oldaddr != sp->fts_path)
++				doadjust = 1;
+ 			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
+ 		}
+ 
+@@ -762,11 +765,11 @@
+ 		(void)closedir(dirp);
+ 
+ 	/*
+-	 * If had to realloc the path, adjust the addresses for the rest
+-	 * of the tree.
++	 * If realloc() changed the address of the path, adjust the
++	 * addresses for the rest of the tree and the dir list.
+ 	 */
+-	if (adjaddr)
+-		fts_padjust(sp, adjaddr);
++	if (doadjust)
++		fts_padjust(sp, head);
+ 
+ 	/*
+ 	 * If not changing directories, reset the path back to original
+@@ -950,7 +953,7 @@
+ 	if ((p = malloc(len)) == NULL)
+ 		return (NULL);
+ 
+-	/* Copy the name and guarantee NULL termination. */
++	/* Copy the name and guarantee NUL termination. */
+ 	memmove(p->fts_name, name, namelen);
+ 	p->fts_name[namelen] = '\0';
+ 
+@@ -1009,15 +1012,18 @@
+  * already returned.
+  */
+ static void
+-fts_padjust(sp, addr)
++fts_padjust(sp, head)
+ 	FTS *sp;
+-	void *addr;
++	FTSENT *head;
+ {
+ 	FTSENT *p;
++	void *addr = sp->fts_path;
+ 
+ #define	ADJUST(p) {							\
+-	(p)->fts_accpath =						\
+-	    (char *)addr + ((p)->fts_accpath - (p)->fts_path);		\
++	if ((p)->fts_accpath != (p)->fts_name) {			\
++		(p)->fts_accpath =					\
++		    (char *)addr + ((p)->fts_accpath - (p)->fts_path);	\
++	}								\
+ 	(p)->fts_path = addr;						\
+ }
+ 	/* Adjust the current set of children. */
+@@ -1028,6 +1034,12 @@
+ 	for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
+ 		ADJUST(p);
+ 		p = p->fts_link ? p->fts_link : p->fts_parent;
++	}
++
++	/* Adjust entries in the dir list as needed */
++	for (p = head; p; p = p->fts_link) {
++		if (p->fts_path != addr)
++			ADJUST(p);
+ 	}
+ }
+ 
+
+Apply by doing:
+        cd /usr/src/sys
+        patch -p0 < 004_tcpsack.patch
+
+And then rebuild your kernel.
+
+Index: netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.33
+retrieving revision 1.34
+diff -u -r1.33 -r1.34
+--- src/sys/netinet/tcp_input.c	1999/03/27 21:04:20	1.33
++++ src/sys/netinet/tcp_input.c	1999/04/21 21:38:58	1.34
+@@ -875,6 +875,14 @@
+ 				tcpstat.tcps_rcvackbyte += acked;
+ 				sbdrop(&so->so_snd, acked);
+ 				tp->snd_una = th->th_ack;
++#if defined(TCP_SACK) || defined(TCP_NEWRENO)
++				/* 
++				 * We want snd_last to track snd_una so
++				 * as to avoid sequence wraparound problems
++				 * for very large transfers.
++				 */
++				tp->snd_last = tp->snd_una;
++#endif /* TCP_SACK or TCP_NEWRENO */
+ #if defined(TCP_SACK) && defined(TCP_FACK)
+ 				tp->snd_fack = tp->snd_una;
+ 				tp->retran_data = 0;
+@@ -2978,7 +2986,11 @@
+ 		tp->t_timer[TCPT_REXMT] = 0;
+ 		tp->t_rtt = 0;
+ 		tp->snd_nxt = th->th_ack;
+-		tp->snd_cwnd = tp->t_maxseg;
++		/* 
++		 * Set snd_cwnd to one segment beyond acknowledged offset
++		 * (tp->snd_una not yet updated when this function is called)
++		 */ 
++		tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
+ 		(void) tcp_output(tp);
+ 		tp->snd_cwnd = ocwnd;
+ 		if (SEQ_GT(onxt, tp->snd_nxt))
+Index: netinet/tcp_timer.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_timer.c,v
+retrieving revision 1.11
+retrieving revision 1.12
+diff -u -r1.11 -r1.12
+--- src/sys/netinet/tcp_timer.c	1999/01/27 16:47:29	1.11
++++ src/sys/netinet/tcp_timer.c	1999/04/21 21:38:58	1.12
+@@ -247,6 +247,13 @@
+ 			tp->t_srtt = 0;
+ 		}
+ 		tp->snd_nxt = tp->snd_una;
++#if defined(TCP_SACK) || defined(TCP_NEWRENO)
++		/*
++		 * Note:  We overload snd_last to function also as the
++		 * snd_last variable described in RFC 2582
++		 */
++		tp->snd_last = tp->snd_max;
++#endif /* TCP_SACK or TCP_NEWRENO */
+ 		/*
+ 		 * If timing a segment in this window, stop the timer.
+ 		 */
+
+Apply by doing:
+        cd /usr/src/sys
+        patch -p0 < 003_espdata.patch
+
+And then rebuild your kernel.
+
+--- netinet/ip_esp_new.c:1.40	Sun May  9 18:06:31 1999
++++ netinet/ip_esp_new.c	Wed May 12 23:11:42 1999
+@@ -781,7 +781,7 @@
+     struct ip *ip, ipo;
+     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
+     struct esp_new espo;
+-    struct mbuf *mi, *mo;
++    struct mbuf *mi, *mo = (struct mbuf *) NULL;
+     u_char *pad, *idat, *odat, *ivp;
+     u_char iv[ESP_MAX_IVS], blk[ESP_MAX_BLKS], auth[AH_ALEN_MAX], opts[40];
+     union {
+@@ -799,6 +799,39 @@
+       alen = 0;
+ 
+     espstat.esps_output++;
++
++    /*
++     * Loop through mbuf chain; if we find an M_EXT mbuf with
++     * more than one reference, replace the rest of the chain. 
++     */
++    mi = m;
++    while (mi != NULL && 
++	   (!(mi->m_flags & M_EXT) || 
++	    mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1))
++    {
++        mo = mi;
++        mi = mi->m_next;
++    }
++     
++    if (mi != NULL)
++    {
++        /* Replace the rest of the mbuf chain. */
++        struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
++      
++        if (n == NULL)
++        {
++	    espstat.esps_hdrops++;
++	    m_freem(m);
++	    return ENOBUFS;
++        }
++
++        if (mo != NULL)
++	  mo->m_next = n;
++        else
++	  m = n;
++
++        m_freem(mi);
++    }
+ 
+     m = m_pullup(m, sizeof (struct ip));   /* Get IP header in one mbuf */
+     if (m == NULL)
+--- netinet/ip_esp_old.c:1.31	Sun May  9 20:14:50 1999
++++ netinet/ip_esp_old.c	Wed May 12 23:11:42 1999
+@@ -505,7 +505,7 @@
+     struct ip *ip, ipo;
+     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
+     u_int32_t spi;
+-    struct mbuf *mi, *mo;
++    struct mbuf *mi, *mo = (struct mbuf *) NULL;
+     u_char *pad, *idat, *odat, *ivp;
+     u_char iv[ESP_3DES_IVS], blk[ESP_3DES_IVS], opts[40];
+     int iphlen, blks;
+@@ -513,6 +513,39 @@
+     blks = espx->blocksize;
+ 
+     espstat.esps_output++;
++
++    /*
++     * Loop through mbuf chain; if we find an M_EXT mbuf with 
++     * more than one reference, replace the rest of the chain. 
++     */
++    mi = m;
++    while (mi != NULL && 
++	   (!(mi->m_flags & M_EXT) || 
++	    mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1))
++    {
++        mo = mi;
++        mi = mi->m_next;
++    }
++     
++    if (mi != NULL)
++    {
++        /* Replace the rest of the mbuf chain. */
++        struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
++      
++        if (n == NULL)
++        {
++	    espstat.esps_hdrops++;
++	    m_freem(m);
++	    return ENOBUFS;
++        }
++
++        if (mo != NULL)
++	  mo->m_next = n;
++        else
++	  m = n;
++
++        m_freem(mi);
++    }
+ 
+     m = m_pullup(m, sizeof(struct ip));
+     if (m == NULL)
+
+Apply by doing:
+	cd /usr/src/sys
+	patch -p0 < 002_bmap.patch
+
+And then rebuild your kernel.
+
+Index: ufs/ext2fs/ext2fs_bmap.c
+===================================================================
+RCS file: /cvs/src/sys/ufs/ext2fs/ext2fs_bmap.c,v
+retrieving revision 1.3
+retrieving revision 1.4
+diff -u -r1.3 -r1.4
+--- ufs/ext2fs/ext2fs_bmap.c	1997/06/12 21:09:31	1.3
++++ ufs/ext2fs/ext2fs_bmap.c	1999/04/25 00:36:46	1.4
+@@ -120,7 +120,7 @@
+ 	struct ufsmount *ump;
+ 	struct mount *mp;
+ 	struct vnode *devvp;
+-	struct indir a[NIADDR], *xap;
++	struct indir a[NIADDR+1], *xap;
+ 	daddr_t daddr;
+ 	long metalbn;
+ 	int error, maxrun = 0, num;
+Index: ufs/ufs/ufs_bmap.c
+===================================================================
+RCS file: /cvs/src/sys/ufs/ufs/ufs_bmap.c,v
+retrieving revision 1.4
+retrieving revision 1.5
+diff -u -r1.4 -r1.5
+--- ufs/ufs/ufs_bmap.c	1997/05/30 08:35:02	1.4
++++ ufs/ufs/ufs_bmap.c	1999/04/25 00:36:47	1.5
+@@ -114,7 +114,7 @@
+ 	struct ufsmount *ump;
+ 	struct mount *mp;
+ 	struct vnode *devvp;
+-	struct indir a[NIADDR], *xap;
++	struct indir a[NIADDR+1], *xap;
+ 	daddr_t daddr;
+ 	long metalbn;
+ #ifdef	TRACE
+
+Apply by doing:
+        cd /usr
+        patch -p0 < 001_pfkey.patch
+
+And then rebuild your kernel.
+
+Index: src/sys/net/pfkey.c
+diff -u src/sys/net/pfkey.c:1.4 src/sys/net/pfkey.c:1.5
+--- src/sys/net/pfkey.c:1.4	Sun Apr 11 13:41:35 1999
++++ src/sys/net/pfkey.c	Mon May  3 16:30:27 1999
+@@ -117,22 +117,36 @@
+ pfkey_output(struct mbuf *mbuf, struct socket *socket)
+ {
+   void *message;
++  int error = 0;
+ 
+ #if DIAGNOSTIC
+-  if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) 
+-    return EINVAL;
++  if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) {
++    error = EINVAL;
++    goto ret;
++  }
+ #endif /* DIAGNOSTIC */
+ 
+-  if (mbuf->m_pkthdr.len > PFKEY_MSG_MAXSZ)
+-    return EMSGSIZE;
++  if (mbuf->m_pkthdr.len > PFKEY_MSG_MAXSZ) {
++    error = EMSGSIZE;
++    goto ret;
++  }
+ 
+   if (!(message = malloc((unsigned long) mbuf->m_pkthdr.len, M_TEMP,
+-			 M_DONTWAIT)))
+-    return ENOMEM;
++			 M_DONTWAIT))) {
++    error = ENOMEM;
++    goto ret;
++  }
+ 
+   m_copydata(mbuf, 0, mbuf->m_pkthdr.len, message);
+ 
+-  return pfkey_versions[socket->so_proto->pr_protocol]->send(socket, message, mbuf->m_pkthdr.len);
++  error =
++    pfkey_versions[socket->so_proto->pr_protocol]->send(socket, message,
++							mbuf->m_pkthdr.len);
++
++ ret:
++  if (mbuf)
++    m_freem (mbuf);
++  return error;
+ }
+ 
+ static int
+
+Apply by doing:
+	cd /usr/src/sys
+	patch -p0 < 014_y2k.patch
+
+--- arch/i386/isa/clock.c.orig	Thu Mar 25 00:03:36 1999
++++ arch/i386/isa/clock.c	Thu Dec 23 11:07:46 1999
+@@ -449,7 +449,7 @@
+ {
+ 	mc_todregs rtclk;
+ 	time_t n;
+-	int sec, min, hr, dom, mon, yr;
++	int sec, min, hr, dom, mon, yr, cent;
+ 	int i, days = 0;
+ 	int s;
+ 
+@@ -481,7 +481,18 @@
+ 	dom = hexdectodec(rtclk[MC_DOM]);
+ 	mon = hexdectodec(rtclk[MC_MONTH]);
+ 	yr = hexdectodec(rtclk[MC_YEAR]);
+-	yr = (yr < 70) ? yr+100 : yr;
++	switch ( cent = hexdectodec(mc146818_read(NULL, NVRAM_CENTURY)) ) {
++	case 19:
++		/* FALLTHROUGH */
++	case 20:
++		yr += cent * 100;
++		break;
++
++	default:
++		(void)printf("WARNING: Your NVRAM doesn't seem to hold "
++			     "century\n");
++		yr += ((yr < 70) ? 2000 : 1900);
++	}
+ 
+ 	n = sec + 60 * min + 3600 * hr;
+ 	n += (dom - 1) * 3600 * 24;
+@@ -491,7 +502,7 @@
+ 	for (i = mon - 2; i >= 0; i--)
+ 		days += month[i];
+ 	month[1] = 28;
+-	for (i = 70; i < yr; i++)
++	for (i = 1970; i < yr; i++)
+ 		days += yeartoday(i);
+ 	n += days * 3600 * 24;
+ 
+@@ -557,7 +568,10 @@
+ 	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
+ 		n -= i;
+ 
+-	rtclk[MC_YEAR] = dectohexdec(j - 1900);
++	rtclk[MC_YEAR] = dectohexdec((j - 1900) % 100);
++
++	/* update century byte */
++	mc146818_write(NULL, NVRAM_CENTURY, dectohexdec(j / 100));
+ 
+ 	if (i == 366)
+ 		month[1] = 29;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_brooktree.patch
+
+And then rebuild your kernel.
+
+Index: sys/dev/pci/brooktree848.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/brooktree848.c,v
+retrieving revision 1.7
+diff -u -r1.7 brooktree848.c
+--- sys/dev/pci/brooktree848.c	1999/02/19 02:54:38	1.7
++++ sys/dev/pci/brooktree848.c	1999/11/14 01:59:56
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: brooktree848.c,v 1.7 1999/02/19 02:54:38 deraadt Exp $	*/
++/* $OpenBSD: brooktree848.c,v 1.12 1999/10/31 20:50:04 deraadt Exp $ */
+ /* $FreeBSD: brooktree848.c,v 1.64 1999/01/28 17:47:47 roger Exp $ */
+ /* BT848 Driver for Brooktree's Bt848, Bt849, Bt878 and Bt 879 based cards.
+    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
+@@ -1939,14 +1939,15 @@
+ 	int		unit;
+ 
+ 	unit = UNIT( minor(dev) );
+-	if (unit >= NBKTR)			/* unit out of range */
++	if (unit >= NBKTR || unit > bktr_cd.cd_ndevs)	/* unit out of range */
+ 		return( ENXIO );
+ 
+-#if defined(__NetBSD__) || defined(__OpenBSD__)
++	if (bktr_cd.cd_devs == NULL)
++		return( ENXIO );
++
+ 	bktr = bktr_cd.cd_devs[unit];
+-#else
+-	bktr = &(brooktree[ unit ]);
+-#endif
++	if (bktr == NULL)
++		return ( ENXIO );
+ 
+ 	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+ 		return( ENXIO );	
+
+Apply by doing:
+	cd /usr/src/sys/arch/powerpc/powerpc
+	patch < 001_trap.patch
+
+build a new kernel, ie.
+	cd /usr/src/sys/arch/powerpc/conf
+	config GENERIC
+	cd ../compile/GENERIC
+	make
+	mv /bsd /bsd.1
+	cp bsd /bsd
+	reboot
+
+Index: trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/powerpc/trap.c,v
+retrieving revision 1.13
+retrieving revision 1.14
+diff -u -r1.13 -r1.14
+--- trap.c	1999/03/13 01:49:07	1.13
++++ trap.c	1999/04/22 06:08:06	1.14
+@@ -133,7 +133,7 @@
+ 				ftype = VM_PROT_READ;
+ 			if (vm_fault(map, trunc_page(va), ftype, FALSE)
+ 			    == KERN_SUCCESS)
+-				break;
++				return;
+ 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+ 				p->p_addr->u_pcb.pcb_onfault = 0;
+ 				frame->srr0 = fb->pc;		/* PC */
+@@ -465,8 +465,10 @@
+ 	faultbuf env;
+ 	u_int32_t v;
+ 
+-	if (setfault(env))
++	if (setfault(env)) {
++		curpcb->pcb_onfault = 0;
+ 		return EACCES;
++	}
+ 	switch(len) {
+ 	case 4:
+ 		v = *((volatile u_int32_t *)addr);
+@@ -492,8 +494,10 @@
+ 	size_t l;
+ 	faultbuf env;
+ 
+-	if (setfault(env))
++	if (setfault(env)) {
++		curpcb->pcb_onfault = 0;
+ 		return EACCES;
++	}
+ 	while (len > 0) {
+ 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
+ 		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+@@ -520,6 +524,7 @@
+ 	faultbuf env;
+ 
+ 	if (setfault(env)) {
++		curpcb->pcb_onfault = 0;
+ 		return EACCES;
+ 	}
+ 	while (len > 0) {
+

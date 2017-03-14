@@ -1,0 +1,10 @@
+Due to a bug in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=lynx&sektion=1">lynx(1)</a>
+it is possible for pages such as
+<a href="http://lcamtuf.coredump.cx/mangleme/gallery/lynx_die1.html">this</a>
+to cause
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=lynx&sektion=1">lynx(1)</a>
+to exhaust memory and then crash when parsing such pages.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/004_lynx.patch">
+A source code patch exists which remedies this problem.</a>

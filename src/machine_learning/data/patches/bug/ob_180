@@ -1,0 +1,72 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_sem.patch
+And then rebuild your kernel.
+
+Index: sys/kern/sysv_sem.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sysv_sem.c,v
+retrieving revision 1.16.2.2
+retrieving revision 1.16.2.3
+diff -u -r1.16.2.2 -r1.16.2.3
+--- sys/kern/sysv_sem.c	2003/09/10 15:38:01	1.16.2.2
++++ sys/kern/sysv_sem.c	2003/11/20 23:36:49	1.16.2.3
+@@ -283,7 +283,7 @@
+ 	DPRINTF(("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg));
+ 
+ 	semid = IPCID_TO_IX(semid);
+-	if (semid < 0 || semid >= seminfo.semmsl)
++	if (semid < 0 || semid >= seminfo.semmni)
+ 		return (EINVAL);
+ 
+ 	if ((semaptr = sema[semid]) == NULL ||
+@@ -540,7 +540,7 @@
+ 
+ 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
+ 
+-	if (semid < 0 || semid >= seminfo.semmsl)
++	if (semid < 0 || semid >= seminfo.semmni)
+ 		return (EINVAL);
+ 
+ 	if ((semaptr = sema[semid]) == NULL ||
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 012_uvm.patch
+And then rebuild your kernel.
+
+Index: sys/uvm/uvm_glue.c
+===================================================================
+RCS file: /cvs/src/sys/uvm/uvm_glue.c,v
+retrieving revision 1.34
+retrieving revision 1.34.2.1
+diff -u -r1.34 -r1.34.2.1
+--- sys/uvm/uvm_glue.c	2003/01/29 22:57:10	1.34
++++ sys/uvm/uvm_glue.c	2003/11/20 22:43:16	1.34.2.1
+@@ -223,6 +223,8 @@
+ 	map = &p->p_vmspace->vm_map;
+ 	start = trunc_page((vaddr_t)addr);
+ 	end = round_page((vaddr_t)addr + len);
++	if (end <= start)
++		return (EINVAL);
+ 
+ 	rv = uvm_fault_wire(map, start, end, access_type);
+ 
+@@ -242,8 +244,14 @@
+ 	caddr_t	addr;
+ 	size_t	len;
+ {
+-	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
+-		round_page((vaddr_t)addr + len));
++	vaddr_t start, end;
++
++	start = trunc_page((vaddr_t)addr);
++	end = round_page((vaddr_t)addr + len);
++	if (end <= start)
++		return;
++
++	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
+ }
+ 
+ /*
+

@@ -1,0 +1,12 @@
+Your package hunspell failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10096440
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047025
+build.log
+Created attachment 1047026
+root.log
+Created attachment 1047027
+state.log
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65434

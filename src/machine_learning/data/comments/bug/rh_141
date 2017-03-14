@@ -1,0 +1,15 @@
+Your package pdf2djvu failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10123008
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047607
+build.log
+Created attachment 1047608
+root.log
+Created attachment 1047609
+state.log
+Fixed, thank you.
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10309308
+pdf2djvu-0.7.21-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/pdf2djvu-0.7.21-1.fc22

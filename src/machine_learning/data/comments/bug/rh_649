@@ -1,0 +1,3 @@
+The labels of some node states are incorrect in pie chart.
+Fixed by https://github.com/rdo-management/tuskar-ui/commit/ade568033e58a57519262f34c62893c364616f44
+*** This bug has been marked as a duplicate of bug 1231945 ***

@@ -1,0 +1,4 @@
+A local user can gain super-user privileges due to an off-by-one check
+in the channel forwarding code of OpenSSH.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/014_openssh.patch">
+A source code patch exists which remedies this problem.</a>

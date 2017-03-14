@@ -1,0 +1,39 @@
+Description of problem:
+If you look in /etc/libvirt/libvirtd.conf on all the compute nodes you see the following action item:
+
+###################################################################
+# UUID of the host:
+# Provide the UUID of the host here in case the command
+# 'dmidecode -s system-uuid' does not provide a valid uuid. In case
+# 'dmidecode' does not provide a valid UUID and none is provided here, a
+# temporary UUID will be generated.
+# Keep the format of the example UUID below. UUID must not have all digits
+# be the same.
+
+# NB This default all-zeros UUID will not work. Replace
+# it with the output of the 'uuidgen' command and then
+# uncomment this entry
+#host_uuid = "00000000-0000-0000-0000-000000000000"
+
+###################################################################
+
+
+There might be problems with live migration if all hosts have the same uuid, as nova returns an error about "local migration".
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Deploy the overcloud
+2. Look in /etc/libvirt/libvirtd.conf of any of the computes
+
+
+Actual results:
+host_uuid is not configured
+
+
+Expected results:
+Each host should have a unique host_uuid that was generated with the command 'uuidgen'
+*** This bug has been marked as a duplicate of bug 1240261 ***

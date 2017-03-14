@@ -1,0 +1,7 @@
+The kill(2) system call previously would permit a large set of signals to
+be delivered to setuid or setgid processes.  If such processes were using
+those signals in dubious ways, this could have resulted in security
+problems of various kinds.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/kill.patch">
+The fourth revision of a source code patch which solves the problem is
+available.</a>

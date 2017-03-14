@@ -1,0 +1,7 @@
+A rare condition during session startup may cause bgpd to replace
+an active session leading to unknown consequences.  Bug found by
+inspection (we do not know how to reproduce it, consider that a challenge).
+
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/001_bgpd.patch">
+A source code patch exists which remedies this problem.</a>

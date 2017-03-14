@@ -1,0 +1,29 @@
+Created attachment 1045654
+non-free kickstart for spin
+
+Description of problem:
+similar to Bug 1204444. Repos used for building the kickstart ISO are not being put properly in /etc/yum.repos.d/. I noticed this when fixing a Tor bug I had where I pulled it from fedora-updates instead of the torproject repos.Half of my repos are missing that I used for the install.
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+not sure. Just noticed this.Didnt seem to happen before.
+
+Steps to Reproduce:
+1. spin fedora
+2. look at /etc/yum.repos.d/
+3. compare to kickstart file
+
+Actual results:
+some .repo files are missing.
+
+Expected results:
+The repo files should be there.Not getting 404 or other errors which would be preventing this.Install otherwise proceeds as normal.
+
+Additional info:
+files have been properly relocated for 22 but Im using 21.
+see attached
+Created attachment 1045655
+visual explanation of the problem
+Only the default repos or repo packages you explicitly include from 3rd parties will be on the live image. The repo lines from the ks are not installed by livecd-creator.

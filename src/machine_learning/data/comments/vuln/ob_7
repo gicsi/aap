@@ -1,0 +1,8 @@
+A combination localhost+remote host security problem exists if a
+local user running a setuid binary causes a non-existent root .rhosts
+file to be created via a symbolic link with a specific kind of corefile,
+and then subsequently uses rsh/rlogin to enter the machine from remote.
+A similar exploit might also be possible using sshd which lacks any code
+for checking for deviations from the expected format in the .rhosts or
+.shosts files, but we have not confirmed this yet.  The following two
+fixes are recommended:

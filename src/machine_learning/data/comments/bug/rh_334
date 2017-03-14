@@ -1,0 +1,18 @@
+Description of problem:
+This package does not include a dist tag (e.g. '.fc23') in its release field, even though it is mandatory according the packaging guidelines:
+https://fedoraproject.org/wiki/Packaging:DistTag
+
+Our automated testing efforts are beginning to rely on having a dist tag in RPM file names:
+https://lists.fedoraproject.org/pipermail/packaging/2015-June/thread.html#10693
+
+Please adjust the package spec file and add '%{?dist}' at the end of the release field. Do this for all supported Fedora releases.
+
+It is not necessary to build a new package version immediately, but it should be prepared in the spec file so that a new package build in the future will contain the dist tag.
+
+Thank you.
+
+
+Version-Release number of selected component (if applicable):
+csmash-0:0.6.6-31.x86_64
+Taking.
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10258958

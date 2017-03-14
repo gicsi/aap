@@ -1,0 +1,7 @@
+A security vulnerability has been found in the X.Org server --
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-1526">CVE-2006-1526</a>.
+Clients authorized to connect to the X server are able to crash it and to execute
+malicious code within the X server.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/002_xorg.patch">
+A source code patch exists which remedies this problem.</a>

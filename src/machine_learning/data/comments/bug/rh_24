@@ -1,0 +1,18 @@
+I'm looking at lvm2 git, not sure if this is in even rawhide yet...
+
+In the "tag config" section of the lvm.conf manpage, it defines the order that configuration values are searched-for. lvmlocal.conf should be added to this list. I'm assuming it's searched before lvm.conf, but it's not intuitive what the ordering of lvmlocal.conf vs lvm_<tag>.conf might be, for example.
+Yes.
+
+The template file supplied states:
+
+# The lvmlocal.conf file is normally expected to contain only the
+# "local" section which contains settings that should not be shared or
+# repeated among different hosts.  (But if other sections are present,
+# they *will* get processed.  Settings in this file override equivalent
+# ones in lvm.conf and are in turn overridden by ones in any enabled
+# lvm_<tag>.conf files.)
+thanks, I updated lvm.conf accordingly, closing.
+lvm.conf manpage, I meant.
+pychecker-0.8.19-6.el7 has been submitted as an update for Fedora EPEL 7.
+https://admin.fedoraproject.org/updates/pychecker-0.8.19-6.el7
+oops, disregard. I told bodhi the wrong bug for something else...

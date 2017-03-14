@@ -1,0 +1,62 @@
+Description of problem:
+I can't unlock a locked session on mate.
+
+Version-Release number of selected component (if applicable):
+mate-screensaver-1.10.1-2.fc23.i686
+
+How reproducible:
+Happens everytime I try to reproduce it
+
+
+Steps to Reproduce:
+1. Install 20150704 Nightly Rawhide (Mate i686 spin) inside a qemu-kvm guest
+2. Log in as user in a graphical session
+3. Press the button 'Lock Screen', from the menu 'System'
+4. Type the correct password inside the dialog
+5. Press the appropriate button to unlock
+
+Actual results:
+The screen remains locked
+
+Expected results:
+The screen should be unlocked, since the password is correct.
+
+Additional info:
+Is it an issue related to virtualization?
+I don't know.
+Please use stable releases and not rawhide a month after f22 release.
+Sorry, i'm the only mate maintainer in fedora and i don't start to work on rawhide reports before f23 beta :)
+I'm not a redhat employee and all i do for mate in fedora is in my free time.
+closed because of fake email address
+Sorry, I didn't understand.
+
+Which email address are you talking about?
+(In reply to Giulio 'juliuxpigface' from comment #0)
+
+> Additional info:
+> Is it an issue related to virtualization?
+
+Run
+
+killall mate-screensaver
+mate-screensaver --debug
+
+reproduce the issue and post the terminal error here, you may need to kill the screensaver from another VT to get back in.
+Also post .xsession-errors
+@All: I've just found that abrt catches the issue ("mate-screensaver-dialog killed by SIGSEGV") and so it might provide interesting information. I'm sorry I haven't noticed it before. Here's the link of the retrace: https://retrace.fedoraproject.org/faf/reports/bthash/77b7d2e726e67e7a33746771875f67144b49e454
+
+I'm posting some attachments, but feel free to ask me further.
+
+@Leigh: thank you for your comment, I'll provide the requested bits in a while.
+
+@Wolfgang: I'm just doing release validation testing for Fedora QA. Nobody forces you to fix this bug promptly, because Mate is not a release blocking desktop. But I'd suggest not to close this report, otherwise we'll probably forget about the issue before F23 beta reaches the light.
+Created attachment 1050392
+abrt_backtrace
+Created attachment 1050393
+abrt_core_backtrace
+Created attachment 1050394
+.xsession-errors
+Created attachment 1050395
+mate-screensaver --debug
+Created attachment 1050397
+output of killall mate-screensaver

@@ -1,0 +1,7 @@
+A vulnerability has been found in BIND's named server
+(<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-4313">CVE-2011-4313</a>).
+An unidentified network event caused BIND 9 resolvers to cache an invalid record, subsequent
+queries for which could crash the resolvers with an assertion failure.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.0/common/001_bind.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,140 @@
+Created attachment 1045570
+full production log is provided
+
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+Version: 5.3.4.2 (with hot fixes provided by CFME engineering)
+
+
+How reproducible: After applying hot fix associated with Bug 1204108 (provided as attachment) customer reports the following fatal error while trying to view VMs from CFME console.
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results: View of target VM fails to be presented and instead the standard error panel is provided.
+
+
+Expected results: standard CFME VM panel.
+
+
+Additional info:
+extract from first reported failing instance in the production log follows:
+=====
+[----] I, [2015-07-02T12:35:56.289003 #2198:622014]  INFO -- : Started POST "/vm_infra/tree_select/?id=v-12r1167" for 152.144.219.191 at 2015-07-02 08:35:56 -0400
+[----] I, [2015-07-02T12:35:56.295129 #2198:622014]  INFO -- : Processing by VmInfraController#tree_select as JS
+[----] I, [2015-07-02T12:35:56.295245 #2198:622014]  INFO -- :   Parameters: {"id"=>"v-12r1167"}
+[----] F, [2015-07-02T12:35:56.688765 #2198:622014] FATAL -- : Error caught: [NoMethodError] undefined method `cores_per_socket' for #<VmVmware:0x000000094274e0>
+/opt/rh/ruby193/root/usr/share/gems/gems/activemodel-3.2.17/lib/active_model/attribute_methods.rb:407:in `method_missing'
+/opt/rh/ruby193/root/usr/share/gems/gems/activerecord-3.2.17/lib/active_record/attribute_methods.rb:149:in `method_missing'
+/var/www/miq/vmdb/app/controllers/application_controller.rb:1644:in `set_config'
+/var/www/miq/vmdb/app/controllers/mixins/vm_show_mixin.rb:126:in `show_record'
+/var/www/miq/vmdb/app/controllers/vm_common.rb:1597:in `get_node_info'
+/var/www/miq/vmdb/app/controllers/vm_common.rb:1680:in `replace_right_cell'
+/var/www/miq/vmdb/app/controllers/vm_common.rb:1454:in `tree_select'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/implicit_render.rb:4:in `send_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/abstract_controller/base.rb:167:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/rendering.rb:10:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/abstract_controller/callbacks.rb:18:in `block in process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:513:in `_run__898747440857666114__process_action__4162395956097342094__callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:405:in `__run_callback'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:385:in `_run_process_action_callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:81:in `run_callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/abstract_controller/callbacks.rb:17:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/rescue.rb:29:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/instrumentation.rb:30:in `block in process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/notifications.rb:123:in `block in instrument'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/notifications/instrumenter.rb:20:in `instrument'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/notifications.rb:123:in `instrument'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/instrumentation.rb:29:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/params_wrapper.rb:207:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/activerecord-3.2.17/lib/active_record/railties/controller_runtime.rb:18:in `process_action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/abstract_controller/base.rb:121:in `process'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/abstract_controller/rendering.rb:45:in `process'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal.rb:203:in `dispatch'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal/rack_delegation.rb:14:in `dispatch'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_controller/metal.rb:246:in `block in action'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/routing/route_set.rb:73:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/routing/route_set.rb:73:in `dispatch'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/routing/route_set.rb:36:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/journey-1.0.4/lib/journey/router.rb:68:in `block in call'
+/opt/rh/ruby193/root/usr/share/gems/gems/journey-1.0.4/lib/journey/router.rb:56:in `each'
+/opt/rh/ruby193/root/usr/share/gems/gems/journey-1.0.4/lib/journey/router.rb:56:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/routing/route_set.rb:608:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-cache-1.2/lib/rack/cache/context.rb:136:in `forward'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-cache-1.2/lib/rack/cache/context.rb:143:in `pass'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-cache-1.2/lib/rack/cache/context.rb:155:in `invalidate'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-cache-1.2/lib/rack/cache/context.rb:71:in `call!'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-cache-1.2/lib/rack/cache/context.rb:51:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/best_standards_support.rb:17:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/etag.rb:23:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/conditionalget.rb:35:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/head.rb:14:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/params_parser.rb:21:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/flash.rb:242:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/session/abstract/id.rb:210:in `context'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/session/abstract/id.rb:205:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/cookies.rb:341:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/activerecord-3.2.17/lib/active_record/query_cache.rb:64:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/activerecord-3.2.17/lib/active_record/connection_adapters/abstract/connection_pool.rb:479:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/callbacks.rb:28:in `block in call'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:405:in `_run__4537386542561500064__call__723566547720183896__callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:405:in `__run_callback'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:385:in `_run_call_callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/callbacks.rb:81:in `run_callbacks'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/callbacks.rb:27:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/remote_ip.rb:31:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/debug_exceptions.rb:16:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/show_exceptions.rb:56:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/rack/logger.rb:32:in `call_app'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/rack/logger.rb:18:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/request_id.rb:22:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/methodoverride.rb:21:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/runtime.rb:17:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/activesupport-3.2.17/lib/active_support/cache/strategy/local_cache.rb:72:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/lock.rb:15:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/actionpack-3.2.17/lib/action_dispatch/middleware/static.rb:63:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/engine.rb:484:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/application.rb:231:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/content_length.rb:14:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/rack/log_tailer.rb:17:in `call'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/connection.rb:80:in `block in pre_process'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/connection.rb:78:in `catch'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/connection.rb:78:in `pre_process'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/connection.rb:53:in `process'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/connection.rb:38:in `receive_data'
+/opt/rh/ruby193/root/usr/share/gems/gems/eventmachine-1.0.0/lib/eventmachine.rb:187:in `run_machine'
+/opt/rh/ruby193/root/usr/share/gems/gems/eventmachine-1.0.0/lib/eventmachine.rb:187:in `run'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/backends/base.rb:61:in `start'
+/opt/rh/ruby193/root/usr/share/gems/gems/thin-1.3.1/lib/thin/server.rb:159:in `start'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/handler/thin.rb:13:in `run'
+/opt/rh/ruby193/root/usr/share/gems/gems/rack-1.4.5/lib/rack/server.rb:268:in `start'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/commands/server.rb:70:in `start'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/commands.rb:55:in `block in <top (required)>'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/commands.rb:50:in `tap'
+/opt/rh/ruby193/root/usr/share/gems/gems/railties-3.2.17/lib/rails/commands.rb:50:in `<top (required)>'
+script/rails:6:in `require'
+script/rails:6:in `<main>'
+[----] I, [2015-07-02T12:35:56.971378 #2198:622014]  INFO -- :   Rendered layouts/_exception_contents.html.erb (1.4ms)
+[----] I, [2015-07-02T12:35:56.972739 #2198:622014]  INFO -- : Completed 200 OK in 677.3ms (Views: 282.3ms | ActiveRecord: 48.1ms) 
+=====
+Created attachment 1045571
+Hot Fixes provided by engineering for Pitney Bowes that are active on appliances encountering this issue after fixes are applied
+Customer response regarding the number of regions impacted:
+=====
+Hi Tom
+
+The hotfix was applied to 2 US EVM regions on all appliances in each of those EVM reggions (Troy (one you have logs for) and Danbury)
+
+Both Troy and Danbury are suffering the same error since applying the hot fix.
+All other regions without the hot fix have no issue.
+
+Thanks,
+=====
+This ticket was opened against proposed changes (uncommitted code) from Bug 1204108 which is still an open active ticket.  This issue needs to be addressed on the original ticket.
+
+*** This bug has been marked as a duplicate of bug 1204108 ***

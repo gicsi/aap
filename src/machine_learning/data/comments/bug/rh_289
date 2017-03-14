@@ -1,0 +1,26 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html/Installation_Guide/sect-Red_Hat_Satellite-Installation_Guide-Prerequisites.html#form-Red_Hat_Satellite-Installation_Guide-Prerequisites-Required_Network_Ports
+
+
+Section Number and Name: 
+"Table 1.3. Required Network Ports" and possibly procedure below would need to be updated as well.
+
+
+Describe the issue:
+To make NoVNC console functional, you have to open tcp ports from 5910 to to 5930.
+
+
+Suggestions for improvement: 
+These ports are missing in the table. IMO they can be in "Optional" section.
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+Thank you Jan,
+
+I am going to close this bug as a dup of 1226727, since that one is for changes to the required network ports section... I have also added your comments there. 
+
+We should be able to get this taken care of for the next release of the docs. Please follow 1226727 for updates. 
+
+
+Regards,
+Hayley Hudgeons
+*** This bug has been marked as a duplicate of bug 1226727 ***

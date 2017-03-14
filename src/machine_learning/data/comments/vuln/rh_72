@@ -1,0 +1,73 @@
+Description of problem:
+I had 3 controllers and 1 ceph node. I tried to scale up to 3 ceph so I ran the command:
+
+openstack overcloud deploy --ceph-storage-scale 3 --plan-uuid 22e3f973-7cf9-407c-a612-32ddd5cab433
+
+The stack update failed and I saw that 2 controllers were deleted. Also the tuskar plan showed that the controllers counter went down to 1:
+
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Controller-1::count                     
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Ceph-Storage-1::count                   
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Compute-1::count                        
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Swift-Storage-1::count                  
+parameter_type=number                        
+value=0                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Cinder-Storage-1::count                 
+parameter_type=number                        
+value=0                                       
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-13.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Deploy with 3 controllers and 1 ceph
+2. Try to scale up to 3 ceph by: "openstack overcloud deploy --ceph-storage-scale 3 --plan-uuid <...>"
+
+
+Actual results:
+Controller count went down to 1
+
+
+Expected results:
+Only the ceph count should have changed. Don't rely on the user to remember to always pass the same counters of all the other roles just to keep on to what is already deployed.
+*** This bug has been marked as a duplicate of bug 1236687 ***

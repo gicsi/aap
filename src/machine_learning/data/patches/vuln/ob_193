@@ -1,0 +1,189 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 024_isakmpd3.patch
+
+Then rebuild and install isakmpd:
+        cd sbin/isakmpd
+        make clean
+        make depend
+        make
+        make install
+
+Index: sbin/isakmpd/ike_phase_1.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/ike_phase_1.c,v
+retrieving revision 1.39
+retrieving revision 1.39.2.1
+diff -u -p -r1.39 -r1.39.2.1
+--- sbin/isakmpd/ike_phase_1.c	8 Aug 2003 08:46:59 -0000	1.39
++++ sbin/isakmpd/ike_phase_1.c	11 Jun 2004 03:08:02 -0000	1.39.2.1
+@@ -1093,6 +1093,9 @@ ike_phase_1_recv_AUTH (struct message *m
+       /* XXX Log?  */
+       return -1;
+     }
++
++  /* Mark message as authenticated. */
++  msg->flags |= MSG_AUTHENTICATED;
+ 
+   return 0;
+ }
+Index: sbin/isakmpd/ike_quick_mode.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/ike_quick_mode.c,v
+retrieving revision 1.70.2.1
+retrieving revision 1.70.2.2
+diff -u -p -r1.70.2.1 -r1.70.2.2
+--- sbin/isakmpd/ike_quick_mode.c	17 Mar 2004 14:59:17 -0000	1.70.2.1
++++ sbin/isakmpd/ike_quick_mode.c	11 Jun 2004 03:08:02 -0000	1.70.2.2
+@@ -1518,6 +1518,9 @@ responder_recv_HASH_SA_NONCE (struct mes
+   free (my_hash);
+   my_hash = 0;
+ 
++  /* Mark message as authenticated. */
++  msg->flags |= MSG_AUTHENTICATED;
++
+   kep = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
+   if (kep)
+     ie->pfs = 1;
+@@ -1967,6 +1970,9 @@ responder_recv_HASH (struct message *msg
+       goto cleanup;
+     }
+   free (my_hash);
++
++  /* Mark message as authenticated. */
++  msg->flags |= MSG_AUTHENTICATED;
+ 
+   post_quick_mode (msg);
+ 
+Index: sbin/isakmpd/ipsec.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/ipsec.c,v
+retrieving revision 1.80.2.2
+retrieving revision 1.80.2.3
+diff -u -p -r1.80.2.2 -r1.80.2.3
+--- sbin/isakmpd/ipsec.c	17 Mar 2004 14:59:17 -0000	1.80.2.2
++++ sbin/isakmpd/ipsec.c	11 Jun 2004 03:08:02 -0000	1.80.2.3
+@@ -1050,7 +1050,16 @@ ipsec_responder (struct message *msg)
+ 		    "ipsec_responder: got NOTIFY of type %s",
+ 		    tag ? tag : "<unknown>"));
+ 
+-	  p->flags |= PL_MARK;
++	  switch (type)
++	    {
++	    case IPSEC_NOTIFY_INITIAL_CONTACT:
++	      /* Handled by leftover logic. */
++	      break;
++
++	    default:
++	      p->flags |= PL_MARK;
++	      break;
++	    }
+ 	}
+ 
+       /*
+@@ -1624,6 +1633,13 @@ ipsec_handle_leftover_payload (struct me
+ 	    {
+ 	      log_print ("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
+ 			 "without ISAKMP SA");
++	      return -1;
++	    }
++
++	  if ((msg->flags & MSG_AUTHENTICATED) == 0)
++	    {
++	      log_print("ipsec_handle_leftover_payload: got unauthenticated "
++			"INITIAL-CONTACT");
+ 	      return -1;
+ 	    }
+ 
+Index: sbin/isakmpd/message.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/message.c,v
+retrieving revision 1.61.2.2
+retrieving revision 1.61.2.4
+diff -u -p -r1.61.2.2 -r1.61.2.4
+--- sbin/isakmpd/message.c	17 Mar 2004 14:59:18 -0000	1.61.2.2
++++ sbin/isakmpd/message.c	11 Jun 2004 03:08:02 -0000	1.61.2.4
+@@ -458,6 +458,11 @@ message_validate_cert_req (struct messag
+ /*
+  * Validate the delete payload P in message MSG.  As a side-effect, create
+  * an exchange if we do not have one already.
++ *
++ * Note:  DELETEs are only accepted as part of an INFORMATIONAL exchange.
++ * exchange_validate() makes sure a HASH payload is present.  Due to the order
++ * of message validation functions in message_validate_payload[] we can be
++ * sure that the HASH payload has been successfully validated at this point.
+  */
+ static int
+ message_validate_delete (struct message *msg, struct payload *p)
+@@ -471,6 +476,13 @@ message_validate_delete (struct message 
+   int i;
+   char *addr;
+ 
++  /* Only accpet authenticated DELETEs. */
++  if ((msg->flags & MSG_AUTHENTICATED) == 0)
++    {
++      log_print("message_validate_delete: got unauthenticated DELETE");
++      return -1;
++    }
++
+   doi = doi_lookup (GET_ISAKMP_DELETE_DOI (p->p));
+   if (!doi)
+     {
+@@ -494,7 +506,14 @@ message_validate_delete (struct message 
+ 	  return -1;
+ 	}
+     }
+-
++  /* Only accept DELETE as part of an INFORMATIONAL exchange. */
++  if (msg->exchange->type != ISAKMP_EXCH_INFO) {
++	  log_print("message_validate_delete: delete in exchange other "
++	     "than INFO: %s", constant_name(isakmp_exch_cst,
++	     msg->exchange->type));
++	  message_free(msg);
++	  return -1;
++  }
+   if (proto != ISAKMP_PROTO_ISAKMP && doi->validate_proto (proto))
+     {
+       log_print ("message_validate_delete: protocol not supported");
+@@ -567,9 +586,10 @@ message_validate_hash (struct message *m
+   u_int8_t message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
+   size_t rest_len;
+ 
+-  if (msg->exchange)	/* active exchange validates hash payload. */
++  /* active exchanges other than INFORMATIONAL validates hash payload. */
++  if (msg->exchange && (msg->exchange->type != ISAKMP_EXCH_INFO))
+     return 0;
+-
++ 
+   if (isakmp_sa == NULL)
+     {
+       log_print ("message_validate_hash: invalid hash information");
+@@ -644,6 +664,9 @@ message_validate_hash (struct message *m
+ 
+   /* Mark the HASH as handled. */
+   hashp->flags |= PL_MARK;
++
++  /* Mark message as authenticated. */
++  msg->flags |= MSG_AUTHENTICATED;
+ 
+   return 0;
+ }
+Index: sbin/isakmpd/message.h
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/message.h,v
+retrieving revision 1.16
+retrieving revision 1.16.2.1
+diff -u -p -r1.16 -r1.16.2.1
+--- sbin/isakmpd/message.h	4 Jun 2003 07:31:17 -0000	1.16
++++ sbin/isakmpd/message.h	11 Jun 2004 03:08:03 -0000	1.16.2.1
+@@ -159,6 +159,9 @@ struct message {
+ 
+ /* This message should be kept on the prioritized sendq.  */
+ #define MSG_PRIORITIZED	8
++
++/* This message has successfully been authenticated. */
++#define MSG_AUTHENTICATED	16
+ 
+ TAILQ_HEAD(msg_head, message);
+ 
+

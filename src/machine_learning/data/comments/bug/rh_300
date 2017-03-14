@@ -1,0 +1,18 @@
+Title: Predefined Class Level Annotations
+
+Describe the issue:
+
+There is no description of the behavior @PropertyReactive exhibits.
+
+Suggestions for improvement:
+
+Give an example of how @PropertyReactive can stop infinite looping with out control facts. 
+
+Additional information:
+
+See these links for examples
+
+http://blog.athico.com/2013/07/property-reactive-ruleml-2013.html https://mojo.redhat.com/servlet/JiveServlet/download/2041-1049376/Drools_6_Deep_Dive_v3.pdf,
+Yikes, looks like I got this wrong. Closing the ticket.
+
+https://access.redhat.com/documentation/en-US/Red_Hat_JBoss_BPM_Suite/6.1/html-single/Development_Guide/index.html#Fine_Grained_Property_Change_Listeners

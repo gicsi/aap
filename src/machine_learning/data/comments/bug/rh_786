@@ -1,0 +1,110 @@
+Created attachment 1040590
+Patch to add manifest file to bouncycastle
+
+Description of problem:
+
+In order for Eclipse projects to use bouncycastle, it requires a proper MANIFEST.MF file like the one in Orbit.
+Should be better use a bnd properties files as for bouncycastle-pg and bouncycastle-pkix leaving out eclipse customization.
+(In reply to gil cattaneo from comment #1)
+> Should be better use a bnd properties files as for bouncycastle-pg and
+> bouncycastle-pkix leaving out eclipse customization.
+
+I am attaching what the bnd file would be.  The package isn't using a build.xml currently.
+Created attachment 1040637
+OSGi bnd file for bouncycastle
+
+OSGi bnd file for bouncycastle
+Created attachment 1040638
+Replacement bnd file for bouncycastler
+(In reply to Jeff Johnston from comment #2)
+> (In reply to gil cattaneo from comment #1)
+> > Should be better use a bnd properties files as for bouncycastle-pg and
+> > bouncycastle-pkix leaving out eclipse customization.
+> 
+> I am attaching what the bnd file would be.  The package isn't using a
+> build.xml currently.
+
+should be used:
+
+%java -jar $(build-classpath aqute-bnd) wrap -properties bnd.properties bcprov.jar
+
+install -pm 644 bcprov.bar \
+  $RPM_BUILD_ROOT%{_javadir}/bcprov.jar
+Created attachment 1040666
+modified bnd file for bouncycastle
+
+remove some unused export (org.bouncycastle.apache.bzip2)
+Thanks both. Should be fixed in rawhide when the build finishes: https://koji.fedoraproject.org/koji/buildinfo?buildID=660515
+Note: 
+Superfluous export-package instructions: [org.bouncycastle.apache.bzip2, org.bouncycastle.asn1.cryptopro=1.52]
+org.bouncycastle.apache.bzip2 is part of bouncycastle-pg package
+
+@ http://koji.fedoraproject.org/koji/taskinfo?taskID=10148629
+We seem to be missing the following bundles from the Export-Package list : https://rgrunber.fedorapeople.org/missing_bcprov_exports.png . I noticed that these bundles are present in .bnd file, but when the jar is built, they end up under Private-Package. I've tried overriding Private-Package in the .bnd file with things like '!*' or just setting some value but nothing seems to work.
+Also there another typo at http://pkgs.fedoraproject.org/cgit/bouncycastle.git/tree/bouncycastle-OSGi.bnd#n19 (should say 'org.bouncycastle.asn1.cryptopro;version="@VERSION@", \' ) that could probably be fixed along with the above issue.
+(In reply to Roland Grunberg from comment #10)
+> Also there another typo at
+> http://pkgs.fedoraproject.org/cgit/bouncycastle.git/tree/bouncycastle-OSGi.
+> bnd#n19 (should say 'org.bouncycastle.asn1.cryptopro;version="@VERSION@", \'
+> ) that could probably be fixed along with the above issue.
+
+The only solution at the moment is use the following template:
+
+# BND/OSGI Properties by ...
+Application-Name: Bouncy Castle Provider
+Bundle-Name: bcprov
+Bundle-RequiredExecutionEnvironment: J2SE-1.5, JavaSE-1.6, JavaSE-1.7
+Bundle-SymbolicName: bcprov
+Bundle-Version: @VERSION@
+Built-By: ${user.name}
+Created-By: ${java.version} (${java.vendor})
+Extension-Name: org.bouncycastle.bcprovider
+Implementation-Vendor: BouncyCastle.org
+Implementation-Vendor-Id: org.bouncycastle
+Implementation-Version: @VERSION@.0
+Originally-Created-By: ${java.version} (${java.vendor})
+Specification-Vendor: BouncyCastle.org
+Specification-Version: 1.1
+Application-Library-Allowable-Codebase: *
+Caller-Allowable-Codebase: *
+Codebase: *
+Permissions: all-permissions
+Trusted-Library: true
+
+Because the instruction Export-Package export only the *public* apis, even if they are listed in this task.
+I've been able to confirm this works, and exports all the necessary packages, but there's just one other issue now.
+
+The version of each export in bouncycastle would be 0.0.0 by default if not specified, which isn't ideal, but should be ok (since we generally only have one of each package in Fedora), but now bouncycastle-pkix has Import-Package on packages in bouncycastle at @VERSION@ , which won't be resolved. So we need to either remove @VERSION@ from the Import-Package statements (making them 0.0.0) in bouncycastle-pkix (and might as well do it for Export-Package for sake of consistency), or instruct the bnd task to make exports @VERSION@ by default.
+Created attachment 1042387
+Patch for bouncycastle-pkix
+
+The attached patch resolves things in bouncycastle-pkix and works as expected with bouncycastle.
+(In reply to Roland Grunberg from comment #13)
+> Created attachment 1042387 [details]
+> Patch for bouncycastle-pkix
+> 
+> The attached patch resolves things in bouncycastle-pkix and works as
+> expected with bouncycastle.
+
+the bnd properties file with Export/Import-Package statements has no more reason to exist, solving the problem if all classes are exported by bnd properties file.
+i propose to adopt for the other bouncycastle packages a bnd file with "the same items" as the bouncycastle package
+Created attachment 1042434
+Patch bouncycastle-pkix (2)
+
+As request, I've dropped the individual listings. I did need to keep 'Export-Package: *" or the build would produce an empty jar and fail. I believe this is because the 'bnd' task is used in the build.xml as opposed to wrap so likely it's doing some extra work.
+
+If this change is acceptable, I'll also apply your suggested .bnd file to the bouncycastle package.
+(In reply to Roland Grunberg from comment #15)
+> Created attachment 1042434 [details]
+> Patch bouncycastle-pkix (2)
+> 
+> As request, I've dropped the individual listings. I did need to keep
+> 'Export-Package: *" or the build would produce an empty jar and fail. I
+> believe this is because the 'bnd' task is used in the build.xml as opposed
+> to wrap so likely it's doing some extra work.
+> 
+> If this change is acceptable, I'll also apply your suggested .bnd file to
+> the bouncycastle package.
+
+Task info: http://koji.fedoraproject.org/koji/taskinfo?taskID=10192848
+Bouncycastle changed http://koji.fedoraproject.org/koji/buildinfo?buildID=664662

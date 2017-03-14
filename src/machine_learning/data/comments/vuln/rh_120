@@ -1,0 +1,18 @@
+Adobe Security Bulletin APSB15-14 for Adobe Flash Player describes a flaw that can possibly lead to code execution when Flash Player is used to play a specially crafted SWF file.
+
+Quoting from the APSB15-14:
+
+Adobe has released security updates for Adobe Flash Player for Windows, Macintosh and Linux. These updates address a critical vulnerability (CVE-2015-3113) that could potentially allow an attacker to take control of the affected system.    
+
+Adobe is aware of reports that CVE-2015-3113 is being actively exploited in the wild via limited, targeted attacks. Systems running Internet Explorer for Windows 7 and below, as well as Firefox on Windows XP, are known targets.
+
+
+External References:
+
+https://helpx.adobe.com/security/products/flash-player/apsb15-14.html
+This issue has been addressed in the following products:
+
+  Supplementary for Red Hat Enterprise Linux 6
+  Supplementary for Red Hat Enterprise Linux 5
+
+Via RHSA-2015:1184 https://rhn.redhat.com/errata/RHSA-2015-1184.html

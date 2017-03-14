@@ -1,0 +1,20 @@
+Description of problem:
+This package does not include a dist tag (e.g. '.fc23') in its release field, even though it is mandatory according the packaging guidelines:
+https://fedoraproject.org/wiki/Packaging:DistTag
+
+Our automated testing efforts are beginning to rely on having a dist tag in RPM file names:
+https://lists.fedoraproject.org/pipermail/packaging/2015-June/thread.html#10693
+
+Please adjust the package spec file and add '%{?dist}' at the end of the release field. Do this for all supported Fedora releases.
+
+It is not necessary to build a new package version immediately, but it should be prepared in the spec file so that a new package build in the future will contain the dist tag.
+
+Thank you.
+
+
+Version-Release number of selected component (if applicable):
+xhtml1-dtds-0:1.0-20020801.12.noarch
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10269549
+Thank you. Could you please also adjust the spec file for f21 and f22 branches? You don't need to create a new build, this is just to make sure it won't get forgotten once we need one.
+I don't intend to. Considering the nature of this package it's almost certain that no updates to it will be shipped to < F-23 and I don't like the suggested "just in case" stray commits myself.
+In that case I'm closing the bug again.

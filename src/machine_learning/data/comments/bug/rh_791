@@ -1,0 +1,38 @@
+Description of problem:
+I recently replaced my video card with a Sapphire Radeon R7 250.   This problem occurred over night when the system was idle.
+
+Additional info:
+reporter:       libreport-2.2.3
+WARNING: CPU: 0 PID: 1453 at drivers/gpu/drm/radeon/radeon_object.c:84 radeon_ttm_bo_destroy+0xeb/0xf0 [radeon]()
+Modules linked in: bnep bluetooth cfg80211 rfkill ip6t_rpfilter ip6t_REJECT nf_reject_ipv6 xt_conntrack ebtable_nat ebtable_broute bridge stp llc ebtable_filter ebtables ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 ip6table_mangle ip6table_security ip6table_raw ip6table_filter ip6_tables hwmon_vid iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 nf_nat nf_conntrack iptable_mangle iptable_security iptable_raw uvcvideo videobuf2_vmalloc joydev videobuf2_core videobuf2_memops v4l2_common videodev media snd_hda_codec_via snd_hda_codec_generic snd_hda_codec_hdmi snd_hda_intel snd_hda_controller snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm kvm_amd snd_timer kvm snd serio_raw shpchp soundcore k10temp edac_core edac_mce_amd sp5100_tco i2c_piix4 asus_atk0110 wmi
+acpi_cpufreq nfsd auth_rpcgss nfs_acl lockd grace sunrpc binfmt_misc ata_generic pata_acpi radeon i2c_algo_bit drm_kms_helper r8169 ttm firewire_ohci mii firewire_core pata_jmicron crc_itu_t pata_atiixp drm
+CPU: 0 PID: 1453 Comm: X Not tainted 3.19.8-100.fc20.x86_64 #1
+Hardware name: System manufacturer System Product Name/M4A87TD EVO, BIOS 2001    03/08/2011
+0000000000000000 000000005cec73bb ffff880416a53b68 ffffffff8175c199
+0000000000000000 0000000000000000 ffff880416a53ba8 ffffffff8109ad5a
+ffff880421f28728 ffff8803b6e97468 ffff8803b6e97400 0000000000002480
+Call Trace:
+[<ffffffff8175c199>] dump_stack+0x45/0x57
+[<ffffffff8109ad5a>] warn_slowpath_common+0x8a/0xc0
+[<ffffffff8109ae8a>] warn_slowpath_null+0x1a/0x20
+[<ffffffffa0133d7b>] radeon_ttm_bo_destroy+0xeb/0xf0 [radeon]
+[<ffffffffa00ad0b9>] ttm_bo_release_list+0xa9/0x180 [ttm]
+[<ffffffffa00b4070>] ? ttm_bo_man_put_node+0x40/0x50 [ttm]
+[<ffffffffa00ad445>] ttm_bo_release+0x105/0x230 [ttm]
+[<ffffffffa00ad599>] ttm_bo_unref+0x29/0x30 [ttm]
+[<ffffffffa01342a9>] radeon_bo_unref+0x39/0x70 [radeon]
+[<ffffffffa01492db>] radeon_gem_object_free+0x4b/0x70 [radeon]
+[<ffffffffa00043b7>] drm_gem_object_free+0x27/0x30 [drm]
+[<ffffffffa00049fa>] drm_gem_object_handle_unreference_unlocked+0xda/0x110 [drm]
+[<ffffffffa0004ad6>] drm_gem_handle_delete+0xa6/0x100 [drm]
+[<ffffffffa00050a5>] drm_gem_close_ioctl+0x25/0x30 [drm]
+[<ffffffffa0005acc>] drm_ioctl+0x1ec/0x660 [drm]
+[<ffffffff811cd4d2>] ? unmap_region+0xe2/0x130
+[<ffffffffa011304b>] radeon_drm_ioctl+0x4b/0x80 [radeon]
+[<ffffffff81225798>] do_vfs_ioctl+0x2f8/0x4f0
+[<ffffffff81225a11>] SyS_ioctl+0x81/0xa0
+[<ffffffff8113b526>] ? __audit_syscall_exit+0x1f6/0x2a0
+[<ffffffff81763549>] system_call_fastpath+0x12/0x17
+Created attachment 1040540
+File: dmesg
+Please update to a newer Fedora release and reopen this bug if you can recreate it there.  Fedora 20 is going EOL on Monday.

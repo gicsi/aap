@@ -1,0 +1,48 @@
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/evolution/evolution-alarm-notify
+crash_function: g_mutex_clear
+executable:     /usr/libexec/evolution/evolution-alarm-notify
+global_pid:     2517
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (6 frames)
+ #2 g_mutex_clear at gthread-posix.c:1300
+ #3 e_flag_free at e-flag.c:232
+ #4 e_client_wait_for_connected_sync at e-client.c:2015
+ #5 client_wait_for_connected_thread at e-client.c:1860
+ #6 g_task_thread_pool_thread at gtask.c:1231
+ #8 g_thread_proxy at gthread.c:764
+Created attachment 1042423
+File: backtrace
+Created attachment 1042424
+File: cgroup
+Created attachment 1042425
+File: core_backtrace
+Created attachment 1042426
+File: dso_list
+Created attachment 1042427
+File: environ
+Created attachment 1042428
+File: limits
+Created attachment 1042429
+File: maps
+Created attachment 1042430
+File: mountinfo
+Created attachment 1042431
+File: namespaces
+Created attachment 1042432
+File: open_fds
+Created attachment 1042433
+File: proc_pid_status
+Thanks for a bug report. This had been reported as bug #1227968, and yours evolution-data-server 3.16.3-2 already contains the change from the associated upstream bug report, which just means that the crash is caused by something else. I'm going to update the upstream bug accordingly.
+
+*** This bug has been marked as a duplicate of bug 1227968 ***

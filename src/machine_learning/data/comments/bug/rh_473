@@ -1,0 +1,98 @@
+### Description of problem:
+
+System properties are not expanded when passed to the <jvm-options> tag of a domain mode jvm configuration.
+
+
+### How reproducible:
+
+Anytime
+
+
+### Steps to Reproduce:
+
+1. Add the following <jvm-options> using system property ${mytest.option} inside <server-group> in domain.xml (or inside <server> in host.xml):
+
+        <server-group name="main-server-group" profile="full">
+            <jvm name="default">
+                <heap size="1000m" max-size="1000m"/>
+                <permgen max-size="256m"/>
+                <jvm-options>
+                    <option value="-verbosegc"/>
+                    <option value="-XX:+PrintGCDetails"/>
+                    <option value="-XX:+PrintGCDateStamps"/>
+                    <option value="-XX:+PrintGCTimeStamps"/>
+                    <option value="${mytest.option}"/>
+                </jvm-options>
+            </jvm>
+            <system-properties>
+                <property name="foo" value="bar"/>
+                <property name="mytest.option" value="-Xloggc:/tmp/testgc.log" boot-time="true" />
+            </system-properties>
+            <socket-binding-group ref="full-sockets"/>
+        </server-group>
+
+2. Start JBoss EAP 6 domain
+
+
+### Actual results:
+
+The server instance failed to start with the following exception:
+
+~~~
+[Host Controller] 21:15:36,239 ERROR [org.jboss.as.host.controller] (Controller Boot Thread) JBAS010907: Failed to start server (server-one): java.lang.IllegalStateException: JBAS014802: Cannot resolve expression '${mytest.option}'
+[Host Controller] 	at org.jboss.as.host.controller.ManagedServerBootCmdFactory.resolveExpressions(ManagedServerBootCmdFactory.java:145) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.ManagedServerBootCmdFactory.<init>(ManagedServerBootCmdFactory.java:93) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.ServerInventoryImpl.createBootFactory(ServerInventoryImpl.java:551) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.ServerInventoryImpl.startServer(ServerInventoryImpl.java:199) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.DomainModelControllerService$DelegatingServerInventory.startServer(DomainModelControllerService.java:839) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.operations.StartServersHandler.cleanStartServers(StartServersHandler.java:116) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.operations.StartServersHandler.access$300(StartServersHandler.java:52) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.operations.StartServersHandler$1.execute(StartServersHandler.java:101) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.AbstractOperationContext.executeStep(AbstractOperationContext.java:702) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.AbstractOperationContext.doCompleteStep(AbstractOperationContext.java:537) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.AbstractOperationContext.completeStepInternal(AbstractOperationContext.java:338) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.AbstractOperationContext.executeOperation(AbstractOperationContext.java:314) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.OperationContextImpl.executeOperation(OperationContextImpl.java:1144) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ModelControllerImpl.internalExecute(ModelControllerImpl.java:331) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ModelControllerImpl.execute(ModelControllerImpl.java:188) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.DomainModelControllerService.startServers(DomainModelControllerService.java:646) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.DomainModelControllerService.boot(DomainModelControllerService.java:542) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.AbstractControllerService$1.run(AbstractControllerService.java:263) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at java.lang.Thread.run(Thread.java:745) [rt.jar:1.7.0_79]
+[Host Controller] Caused by: org.jboss.as.controller.OperationFailedException: JBAS014802: Cannot resolve expression '${mytest.option}' [ "JBAS014802: Cannot resolve expression '${mytest.option}'" ]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.parseAndResolve(ExpressionResolverImpl.java:270) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionStringRecursively(ExpressionResolverImpl.java:130) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionsRecursively(ExpressionResolverImpl.java:72) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionsRecursively(ExpressionResolverImpl.java:82) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionsRecursively(ExpressionResolverImpl.java:76) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionsRecursively(ExpressionResolverImpl.java:76) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressionsRecursively(ExpressionResolverImpl.java:76) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.controller.ExpressionResolverImpl.resolveExpressions(ExpressionResolverImpl.java:54) [jboss-as-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	at org.jboss.as.host.controller.ManagedServerBootCmdFactory.resolveExpressions(ManagedServerBootCmdFactory.java:142) [jboss-as-host-controller-7.5.1.Final-redhat-3.jar:7.5.1.Final-redhat-3]
+[Host Controller] 	... 18 more
+[Host Controller] 
+~~~
+
+
+### Expected results:
+
+The server start successfully and the specified system property is exapanded and set to Java VM option.
+
+
+### Additional info:
+
+The same issue was tracked at the following JIRA and it was marked as resolved in EAP 6.1.0. But this issue still exists in the latest JBoss EAP (6.4.1).
+
+https://issues.jboss.org/browse/AS7-4978
+It looks like the issue bz1230980.
+Sorry for the confusion. It is not a duplicate of bz1230980. It does not work upstream as well.
+You have to use -D or edit domain.conf and pass mytest.option to the Host Controller via the command line.
+
+The system-property elements in the config files are used to control the server process, not the Host Controller process.
+
+The <option value="${mytest.option}"/> tag is actually a directive to the Host Controller, telling it what commands to use when starting a server VM. It needs to resolve any expression from its own set of system properties, not those of a server. Its system properties come from the command line.
+
+Changing this is an RFE.
+Thanks for the clarification Brian.
+
+As it might only be an RFE , closing this for CP release. Masafumi, feel free to open an RFE eventually.

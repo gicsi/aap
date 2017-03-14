@@ -1,0 +1,54 @@
+Version-Release number of selected component:
+gnome-shell-3.16.2-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/bin/gnome-shell
+crash_function: meta_workspace_get_work_area_for_monitor
+executable:     /usr/bin/gnome-shell
+global_pid:     15945
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #4 meta_workspace_get_work_area_for_monitor at core/workspace.c:1019
+ #5 get_work_area_monitor at core/window.c:6144
+ #6 meta_window_get_work_area_for_monitor at core/window.c:6195
+ #7 meta_window_recalc_features at core/window.c:5275
+ #8 g_slist_foreach at gslist.c:878
+ #9 meta_screen_foreach_window at core/screen.c:950
+ #10 on_monitors_changed at core/screen.c:2382
+ #11 ffi_call_unix64 at ../src/x86/unix64.S:76
+ #12 ffi_call at ../src/x86/ffi64.c:525
+ #13 g_cclosure_marshal_generic at gclosure.c:1448
+
+Potential duplicate: bug 1180645
+Created attachment 1041778
+File: backtrace
+Created attachment 1041779
+File: cgroup
+Created attachment 1041780
+File: core_backtrace
+Created attachment 1041781
+File: dso_list
+Created attachment 1041782
+File: environ
+Created attachment 1041783
+File: limits
+Created attachment 1041784
+File: maps
+Created attachment 1041785
+File: mountinfo
+Created attachment 1041786
+File: namespaces
+Created attachment 1041787
+File: open_fds
+Created attachment 1041788
+File: proc_pid_status
+Created attachment 1041789
+File: var_log_messages
+*** This bug has been marked as a duplicate of bug 1180645 ***

@@ -1,0 +1,34 @@
+Description of problem:
+Wildcard downgrade multiple packages worked with yum, but looks like dnf is trying to downgrade not to packages name, but it's name extended by EVR.
+It doesn't make sense to downgrade to same version, downgrade should install older version of package.
+
+Version-Release number of selected component (if applicable):
+dnf-1.0.1-2.fc22.noarch
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. install some php packages
+2. dnf downgrade php\*
+
+Actual results:
+[root@work ~]# dnf downgrade php\*                                   [1242/1290]
+SALstar.sk 22 - x86_64 - Base                   1.2 MB/s |  15 kB     00:00    
+Fedora 22 - x86_64 - Updates [UPJS]              36 MB/s | 8.7 MB     00:00    
+Last metadata expiration check performed 0:00:00 ago on Tue Jun 23 15:53:14 2015
+.
+No match for available package: php-5.6.8-1.fc22.x86_64
+No match for available package: php-Analog-1.0.0-5.git9ab4c9e.fc21.noarch
+No match for available package: php-Assetic-1.2.1-1.fc22.noarch
+No match for available package: php-EasyRdf-0.8.0-5.fc22.noarch
+No match for available package: php-EasyRdf-doc-0.8.0-5.fc22.noarch
+No match for available package: php-Faker-1.4.0-1.fc21.noarch
+No match for available package: php-IDNA_Convert-0.8.0-4.fc21.noarch
+No match for available package: php-JMSParser-1.0.0-5.fc21.noarch
+No match for available package: php-JsonSchema-1.4.1-1.fc22.noarch
+...
+
+Expected results:
+reinstalled packages
+*** This bug has been marked as a duplicate of bug 1234763 ***

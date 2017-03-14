@@ -1,0 +1,39 @@
+Created attachment 1044019
+crash report from Minecraft Launcher
+
+Description of problem: Minecraft not starting under when running wayland 
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible: Always
+
+
+Steps to Reproduce:
+1. $ java -jar ~/.minecraft/Minecraft.jar
+2. choose profile and click 'Play' in Minecraft Launcher
+
+Actual results: Minecraft crashing with report and going back to launcher
+
+
+Expected results: Minecraft starting up
+
+
+Additional info:
+It fails because "No OpenGL context found in the current thread."
+
+Does the same work under an X11 GNOME regular session?
+
+Could you please post the output of "glxinfo" under both GNOME Wayland and X11 session on your system for comparison?
+Actually, I've been able to reproduce locally.
+OK, sorry, I was wrong in comment 1, this is not an issue with OpenGL contexts but this is rather an issue with xrandr.
+
+The library lwjgl as used by Minecraft invokes "xrandr -q" (the command line) and parses the output trying to get the different modes available.
+
+Xwayland will report only one output with only one mode and apparently lwjgl is not happy with that and will report 0 mode (still not sure why it fails to parse at least the only one mode available), thus causing the "No modes available" error.
+
+Simulating as many modes as with the regular X server (for example, capture the output of "xrandr -q" as taken from a regular X session and copy it to a dummy shell script that will echo it to stdout, call that script "xrandr" and adds this first in the shell PATH) does fix the issue, lwjgl happily find several modes and Minecraft will run just fine - It won't run fullscreen though, as xrandr is only "simlated" by a shell script.
+
+So, I am really not sure it's a bug in Xwayland (definitely *not* a bug in Wayland, the protocol, as neither Java nor lwjgl have been ported to Wayland AFAIK), it looks like a bug or at least a weakness in the parsing of xrandr output in lwjgl to me.
+Closing as cantfix, lwjgl-2.x should be able to parse the output of "xrandr -q" under Xwayland even when there is only one output and one mode reported.

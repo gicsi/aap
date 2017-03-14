@@ -1,0 +1,12 @@
+Your package z88dk failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10161707
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048588
+build.log
+Created attachment 1048589
+root.log
+Created attachment 1048590
+state.log
+Looks like I finally got this to build (pending ARM).

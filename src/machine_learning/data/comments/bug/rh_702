@@ -1,0 +1,29 @@
+Why is Simple-scan only in version 3.10.3 in the repo?
+
+It is version 3.16 with bugfixes aviable since long time
+simple-scan-3.12.2-1.el7 has been submitted as an update for Fedora EPEL 7.
+https://admin.fedoraproject.org/updates/simple-scan-3.12.2-1.el7
+(In reply to Matthias31 from comment #0)
+> It is version 3.16 with bugfixes aviable since long time
+
+It is not possible to update to any version greater than 3.12, as the version of Vala in RHEL7 is too old.
+@ David King and why became vala not an update?
+(In reply to Matthias31 from comment #3)
+> @ David King and why became vala not an update?
+
+Vala is part of RHEL7, so it does not have a separate EPEL7 version. There will be a Vala update for RHEL7.2, which should be recent enough to get a more recent version of Simple Scan into EPEL7 once 7.2 is released.
+aha :-)
+so it where nice to know the release date of centos 7.2
+Package simple-scan-3.12.2-1.el7:
+* should fix your issue,
+* was pushed to the Fedora EPEL 7 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=epel-testing simple-scan-3.12.2-1.el7'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-EPEL-2015-6867/simple-scan-3.12.2-1.el7
+then log in and leave karma (feedback).
+YEEARRR vala-0.26.1-2.el7 has been builtlook at Bug https://bugzilla.redhat.com/show_bug.cgi?id=1174432 so you can release highter versions of simple-scan so i hope
+Once RHEL 7.2 has been released, yes, but not before (as that version of Vala is not yet in the buildroot, because it has not yet passed QA testing).
+simple-scan-3.12.2-1.el7 has been pushed to the Fedora EPEL 7 stable repository.  If problems still persist, please make note of it in this bug report.

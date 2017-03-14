@@ -1,0 +1,34 @@
+Description of problem:
+Adding pre install manifest entries                  [ DONE ]
+Preparing servers                                 [ ERROR ]
+
+ERROR : Failed to run remote script, stdout: no package provides yum-utils
+Loaded plugins: product-id, subscription-manager
+This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.
+No package yum-utils available.
+
+stderr: Warning: Permanently added '192.168.122.30' (ECDSA) to the list of known hosts.
++ trap t ERR
++ rpm -q --whatprovides yum-utils
++ yum install -y yum-utils
+Error: Nothing to do
+++ t
+++ exit 1
+
+Please check log file /var/tmp/packstack/20150619-071544-c3TkLR/openstack-setup.log for more information
+
+Additional information:
+ * Time synchronization installation was skipped. Please note that unsynchronized time on server instances might be problem for some OpenStack components.
+[para@rhel7-clone ~]$ rpm -qa yum-utils
+yum-utils-1.1.31-29.el7.noarch
+[para@rhel7-clone ~]$ 
+
+
+Version-Release number of selected component (if applicable):
+[para@rhel7-clone ~]$ rpm -qa openstack-packstack
+openstack-packstack-2014.1.1-0.46.dev1280.el7ost.noarch
+
+
+Steps to Reproduce:
+On vanilla RHEL7, install rhos-release 5 and run:
+packstack --allinone --os-compute-hosts=192.168.122.44,192.168.122.30

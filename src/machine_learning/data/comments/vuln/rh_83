@@ -1,0 +1,191 @@
+Created attachment 1044303
+logs from host and engine and 'journalctl -r'
+
+Description of problem:
+Tried to deploy hosted-engine using RHEV-7.1 (20150609.0.el7ev) over iSCSI.
+After RHEVM installation on the hosted-engine VM got finished, the deployment got stuck in the following phase and after around 1 hour failed with a time-out:
+
+
+
+          (1, 2, 3, 4)[1]: 1                                                                                                                                                              
+[ INFO  ] Engine replied: DB Up!Welcome to Health Status!
+          Enter the name of the cluster to which you want to add the host (Default) [Default]:                                                                                            
+[ INFO  ] Waiting for the host to become operational in the engine. This may take several minutes...
+[ INFO  ] Still waiting for VDSM host to become operational...                                                                                                                            
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ INFO  ] Still waiting for VDSM host to become operational...
+[ ERROR ] Timed out while waiting for host to start. Please check the logs.
+[ ERROR ] Unable to add hosted_engine_1 to the manager
+          Please shutdown the VM allowing the system to launch it as a monitored service.
+          The system will wait until the VM is down.
+
+
+
+Version-Release number of selected component (if applicable):
+Red Hat Enterprise Virtualization Hypervisor release 7.1 (20150609.0.el7ev)
+vdsm-4.16.20-1.el7ev.x86_64
+libvirt-1.2.8-16.el7_1.3.x86_64
+qemu-kvm-rhev-2.1.2-23.el7_1.3.x86_64
+sanlock-3.2.2-2.el7.x86_64
+rhevm-3.5.3.1-1.4.el6ev.noarch
+ovirt-node-plugin-hosted-engine-0.2.0-15.0.el7ev.noarch
+ovirt-hosted-engine-setup-1.2.4-2.el7ev.noarch
+ovirt-hosted-engine-ha-1.2.6-2.el7ev.noarch
+
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Deploy hosted engine on RHEV 7.1 over iSCSI, follow the HE installation phases
+
+Actual results:
+After RHEVM installation on the hosted-engine VM got finished, the deployment got stuck in the the "[ INFO  ] Still waiting for VDSM host to become operational..." phase and after around 1 hour failed with a time-out.
+
+In vdsm.log:
+
+Thread-497::ERROR::2015-06-29 06:40:30,704::brokerlink::75::ovirt_hosted_engine_ha.lib.brokerlink.BrokerLink::(connect) Failed to connect to broker, the number of errors has exceeded the
+ limit (5)
+Thread-497::ERROR::2015-06-29 06:40:30,705::API::1723::vds::(_getHaInfo) failed to retrieve Hosted Engine HA info
+Traceback (most recent call last):
+  File "/usr/share/vdsm/API.py", line 1703, in _getHaInfo
+  File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/client/client.py", line 97, in get_all_stats
+  File "/usr/lib64/python2.7/contextlib.py", line 17, in __enter__
+  File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 99, in connection
+  File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 78, in connect
+BrokerConnectionError: Failed to connect to broker, the number of errors has exceeded the limit (5)
+
+
+In the hosted-engine-setup log this message appears every few seconds:
+
+20**FILTERED**5-06-29 06:27:27 DEBUG otopi.ovirt_hosted_engine_setup.tasks tasks.wait:9**FILTERED** Waiting for VM down
+20**FILTERED**5-06-29 06:27:27 DEBUG otopi.ovirt_hosted_engine_setup.tasks tasks.wait:97 Done
+20**FILTERED**5-06-29 06:27:32 DEBUG otopi.ovirt_hosted_engine_setup.tasks tasks.wait:9**FILTERED** Waiting for VM down
+20**FILTERED**5-06-29 06:27:33 DEBUG otopi.ovirt_hosted_engine_setup.tasks tasks.wait:97 Done
+20**FILTERED**5-06-29 06:27:38 DEBUG otopi.ovirt_hosted_engine_setup.tasks tasks.wait:9**FILTERED** Waiting for VM down
+
+Checked journalctl -r:
+
+journalctl -r
+-- Logs begin at Mon 2015-06-29 04:30:27 UTC, end at Mon 2015-06-29 06:42:31 UTC. --
+Jun 29 06:42:31 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm vds ERROR failed to retrieve Hosted Engine HA info
+                                                              Traceback (most recent call last):
+                                                                File "/usr/share/vdsm/API.py", line 1703, in _getHaInfo
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/client/client.py", line 97, in get_all_stats
+                                                                File "/usr/lib64/python2.7/contextlib.py", line 17, in __enter__
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 99, in connection
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 78, in connect
+                                                              BrokerConnectionError: Failed to connect to broker, the number of errors has exceeded the limit (5)
+Jun 29 06:42:31 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm ovirt_hosted_engine_ha.lib.brokerlink.BrokerLink ERROR Failed to connect to broker, the number of errors has exceeded t
+Jun 29 06:42:28 green-vdsb.qa.lab.tlv.redhat.com systemd-journal[5703]: Forwarding to syslog missed 13 messages.
+Jun 29 06:42:28 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:42:13 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:42:12 green-vdsb.qa.lab.tlv.redhat.com python[1502]: Unable to recover, retry in 60 seconds.
+Jun 29 06:42:12 green-vdsb.qa.lab.tlv.redhat.com python[1502]: Error in communication with subscription manager, trying to recover:
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26404]: (root) CMDOUT (virtualization.errors.NotRegistered: System ID not found.)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26404]: (root) CMDOUT (  File "/usr/share/rhn/virtualization/notification.py", line 71, in execute)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26404]: (root) CMDOUT (  File "/usr/share/rhn/virtualization/poller.py", line 252, in _send_notifications)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26404]: (root) CMDOUT (  File "/usr/share/rhn/virtualization/poller.py", line 324, in <module>)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26404]: (root) CMDOUT (Traceback (most recent call last):)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com CROND[26406]: (root) CMD (python  /usr/share/rhn/virtualization/poller.pyc)
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com systemd[1]: Failed to reset devices.list on /machine.slice: Invalid argument
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com systemd[1]: Started Session 115 of user root.
+Jun 29 06:42:01 green-vdsb.qa.lab.tlv.redhat.com systemd[1]: Starting Session 115 of user root.
+Jun 29 06:41:58 green-vdsb.qa.lab.tlv.redhat.com systemd-journal[5703]: Forwarding to syslog missed 4 messages.
+Jun 29 06:41:58 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:41:50 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm vds ERROR failed to retrieve Hosted Engine HA info
+                                                              Traceback (most recent call last):
+                                                                File "/usr/share/vdsm/API.py", line 1703, in _getHaInfo
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/client/client.py", line 97, in get_all_stats
+                                                                File "/usr/lib64/python2.7/contextlib.py", line 17, in __enter__
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 99, in connection
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 78, in connect
+                                                              BrokerConnectionError: Failed to connect to broker, the number of errors has exceeded the limit (5)
+Jun 29 06:41:50 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm ovirt_hosted_engine_ha.lib.brokerlink.BrokerLink ERROR Failed to connect to broker, the number of errors has exceeded t
+Jun 29 06:41:43 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:41:28 green-vdsb.qa.lab.tlv.redhat.com systemd-journal[5703]: Forwarding to syslog missed 6 messages.
+Jun 29 06:41:28 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:41:13 green-vdsb.qa.lab.tlv.redhat.com libvirtd[23624]: metadata not found: Requested metadata element is not present
+Jun 29 06:41:12 green-vdsb.qa.lab.tlv.redhat.com python[1502]: Unable to recover, retry in 60 seconds.
+Jun 29 06:41:12 green-vdsb.qa.lab.tlv.redhat.com python[1502]: Error in communication with subscription manager, trying to recover:
+Jun 29 06:41:10 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm vds ERROR failed to retrieve Hosted Engine HA info
+                                                              Traceback (most recent call last):
+                                                                File "/usr/share/vdsm/API.py", line 1703, in _getHaInfo
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/client/client.py", line 97, in get_all_stats
+                                                                File "/usr/lib64/python2.7/contextlib.py", line 17, in __enter__
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 99, in connection
+                                                                File "/usr/lib/python2.7/site-packages/ovirt_hosted_engine_ha/lib/brokerlink.py", line 78, in connect
+                                                              BrokerConnectionError: Failed to connect to broker, the number of errors has exceeded the limit (5)
+Jun 29 06:41:10 green-vdsb.qa.lab.tlv.redhat.com vdsm[23899]: vdsm ovirt_hosted_engine_ha.lib.brokerlink.BrokerLink ERROR Failed to connect to broker, the number of 
+
+
+Seems that ovirt-hosted-engine-agent and ovirt-hosted-engine-broker are inactive:
+
+[root@green-vdsb ovirt-hosted-engine-setup]# systemctl status ovirt-hosted-engine-broker
+ovirt-hosted-engine-broker.service
+   Loaded: not-found (Reason: No such file or directory)
+   Active: inactive (dead)
+
+[root@green-vdsb ovirt-hosted-engine-setup]# systemctl status ovirt-hosted-engine-agent 
+ovirt-hosted-engine-agent.service
+   Loaded: not-found (Reason: No such file or directory)
+   Active: inactive (dead)
+
+
+
+In the engine, the host is in status 'Up':
+
+2015-06-29 06:12:19,236 INFO  [org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogDirector] (DefaultQuartzScheduler_Worker-5) [6f19673a] Correlation ID: null, Call Stack: null, 
+Custom Event ID: -1, Message: Status of host hosted_engine_1 was set to Up.
+
+
+
+Expected results:
+Hosted engine deployment over RHEV-H 7.1 should be completed successfully.
+
+Additional info:
+logs from host and engine and 'journalctl -r'
+20**FILTERED**5-06-29 06:2**FILTERED**:5**FILTERED** DEBUG otopi.plugins.ovirt_hosted_engine_setup.engine.add_host add_host._wait_host_ready:**FILTERED**83 Error fetching host state: 
+status: 40**FILTERED**
+reason: Unauthorized
+
+Please use password different than "1" it makes hard to read the logs.
+I won't look anymore into logs filled using password = '1'.
+
+Error seems to be having set a password for admin user different than the one used in hosted-engine --deploy.
+
+Please try again ensuring to use the same admin password in engine and hosted-engine.
+(In reply to Sandro Bonazzola from comment #1)
+> 20**FILTERED**5-06-29 06:2**FILTERED**:5**FILTERED** DEBUG
+> otopi.plugins.ovirt_hosted_engine_setup.engine.add_host
+> add_host._wait_host_ready:**FILTERED**83 Error fetching host state: 
+> status: 40**FILTERED**
+> reason: Unauthorized
+> 
+> Please use password different than "1" it makes hard to read the logs.
+> I won't look anymore into logs filled using password = '1'.
+> 
+> Error seems to be having set a password for admin user different than the
+> one used in hosted-engine --deploy.
+> 
+> Please try again ensuring to use the same admin password in engine and
+> hosted-engine.
+
+Thanks Sandro, tried again over RHEV-H 7.1 (20150609.0.el7ev), deployment succeeded. Closing

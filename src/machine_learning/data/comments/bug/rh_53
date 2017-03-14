@@ -1,0 +1,81 @@
+Description of problem:
+Steps to reproduce:
+1) Install Fedora from 'Fedora-Live-Security-x86_64-rawhide-20150704.iso' to a qemu-kvm guest.
+2) Boot the installed system.
+3) Observe that abrt catches this exceptio.
+
+How reproducible:
+Happens every time I boot this guest.
+
+Additional info:
+reporter:       libreport-2.6.0
+[ INFO: possible recursive locking detected ]
+4.2.0-0.rc0.git4.1.fc23.x86_64 #1 Not tainted
+---------------------------------------------
+kworker/u4:2/88 is trying to acquire lock:
+ (&dev->struct_mutex){+.+.+.}, at: [<ffffffffa011613d>] qxl_bo_unref+0x4d/0xf0 [qxl]
+
+but task is already holding lock:
+ (&dev->struct_mutex){+.+.+.}, at: [<ffffffffa01161b0>] qxl_bo_unref+0xc0/0xf0 [qxl]
+
+other info that might help us debug this:
+ Possible unsafe locking scenario:
+
+       CPU0
+       ----
+  lock(&dev->struct_mutex);
+  lock(&dev->struct_mutex);
+
+ *** DEADLOCK ***
+
+ May be due to missing lock nesting notation
+
+4 locks held by kworker/u4:2/88:
+ #0:  ("%s""qxl_gc"){++++.+}, at: [<ffffffff810cb34b>] process_one_work+0x19b/0x840
+ #1:  ((&qdev->gc_work)){+.+.+.}, at: [<ffffffff810cb34b>] process_one_work+0x19b/0x840
+ #2:  (&dev->struct_mutex){+.+.+.}, at: [<ffffffffa01161b0>] qxl_bo_unref+0xc0/0xf0 [qxl]
+ #3:  (&qdev->surf_evict_mutex){+.+.+.}, at: [<ffffffffa01180ba>] qxl_surface_evict+0x2a/0x70 [qxl]
+
+stack backtrace:
+CPU: 0 PID: 88 Comm: kworker/u4:2 Not tainted 4.2.0-0.rc0.git4.1.fc23.x86_64 #1
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.1-20150318_183358- 04/01/2014
+Workqueue: qxl_gc qxl_gc_work [qxl]
+ 0000000000000000 000000008d245c29 ffff880035ea7948 ffffffff81862c73
+ 0000000000000000 ffffffff82bab770 ffff880035ea7a28 ffffffff81106ed8
+ 37d1bf0c00000000 37d1bf0cec694339 0000000000000000 ffff88007d3d8200
+Call Trace:
+ [<ffffffff81862c73>] dump_stack+0x4c/0x65
+ [<ffffffff81106ed8>] __lock_acquire+0x1cd8/0x1d00
+ [<ffffffff810e670b>] ? sched_clock_local+0x1b/0x90
+ [<ffffffff810e693a>] ? sched_clock_cpu+0x8a/0xb0
+ [<ffffffff81107887>] lock_acquire+0xc7/0x270
+ [<ffffffffa011613d>] ? qxl_bo_unref+0x4d/0xf0 [qxl]
+ [<ffffffffa00dfb50>] ? ttm_mem_io_reserve+0x40/0xd0 [ttm]
+ [<ffffffffa0116163>] qxl_bo_unref+0x73/0xf0 [qxl]
+ [<ffffffffa011613d>] ? qxl_bo_unref+0x4d/0xf0 [qxl]
+ [<ffffffffa011b172>] qxl_alloc_surface_release_reserved+0xc2/0x110 [qxl]
+ [<ffffffffa01180ba>] ? qxl_surface_evict+0x2a/0x70 [qxl]
+ [<ffffffffa011714e>] qxl_hw_surface_dealloc.part.3+0x3e/0x110 [qxl]
+ [<ffffffffa01180d4>] qxl_surface_evict+0x44/0x70 [qxl]
+ [<ffffffffa01165ba>] qxl_gem_object_free+0x3a/0x70 [qxl]
+ [<ffffffffa0070197>] drm_gem_object_free+0x27/0x30 [drm]
+ [<ffffffffa01161ce>] qxl_bo_unref+0xde/0xf0 [qxl]
+ [<ffffffff81248f8c>] ? kfree+0x28c/0x2f0
+ [<ffffffffa011a7ac>] qxl_release_free_list+0x4c/0x90 [qxl]
+ [<ffffffffa011ab22>] qxl_release_free+0x82/0xf0 [qxl]
+ [<ffffffffa01175d5>] qxl_garbage_collect+0xd5/0x1b0 [qxl]
+ [<ffffffffa0111305>] qxl_gc_work+0x15/0x20 [qxl]
+ [<ffffffff810cb3e2>] process_one_work+0x232/0x840
+ [<ffffffff810cb34b>] ? process_one_work+0x19b/0x840
+ [<ffffffff8112535d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
+ [<ffffffff810cbac5>] ? worker_thread+0xd5/0x450
+ [<ffffffff810cba3e>] worker_thread+0x4e/0x450
+ [<ffffffff810cb9f0>] ? process_one_work+0x840/0x840
+ [<ffffffff810cb9f0>] ? process_one_work+0x840/0x840
+ [<ffffffff810d2404>] kthread+0x104/0x120
+ [<ffffffff810d2300>] ? kthread_create_on_node+0x250/0x250
+ [<ffffffff8186c85f>] ret_from_fork+0x3f/0x70
+ [<ffffffff810d2300>] ? kthread_create_on_node+0x250/0x250
+Created attachment 1049245
+File: dmesg
+*** This bug has been marked as a duplicate of bug 1238803 ***

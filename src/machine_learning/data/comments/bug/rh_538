@@ -1,0 +1,5 @@
+Could you please build librepo-1.7.16 in epel7 and add it to the buildroot overrides as it is required by DNF>1.0.0?
+Done
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10236514
+https://admin.fedoraproject.org/updates/override/list

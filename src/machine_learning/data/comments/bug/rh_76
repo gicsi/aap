@@ -1,0 +1,48 @@
+Description of problem:
+Caja spawns a dozen windows every time a user logs in. Even when using Xfce.
+
+Version-Release number of selected component (if applicable):
+caja-1.10.1-4.fc22.x86_64
+
+
+How reproducible:
+Every time
+
+Steps to Reproduce:
+1. Login your user.
+2. Just watch.
+3.
+
+Actual results:
+A dozen Caja windows open when the desktop appears. 
+
+Expected results:
+Clean desktop.
+
+Additional info:
+I'm not even running MATE desktop, I have no idea why Caja loads itself a doszen times every time I login.
+Ran - dnf distro-sync 
+Same results, caja still loads a dozen (or more) windows when user logs in.
+Please do not double posting!
+
+*** This bug has been marked as a duplicate of bug 1240308 ***
+This is a different bug. Caja loads a dozen times on login with NO user intervention. It is NOT a duplicate. of 1240308!
+Do you really use caja for session start in xfce!!!!
+Caja is develop for mate-desktop and not for using it with session start in xfce.
+Why did you that?
+And why do you expect that this will work.
+Caja needs more other components for session start which aren't in xfce.
+Sorry, this isn't a bug
+It is impossible to replace thunar with caja for xfce.
+Try out mate.
+No I DO NOT use caja at startup. It is loading itself without my intervention. It is really annoying. I've removed mate. Problem solved. Thanks for not understanding.
+Normaly, caja doesn't start at session login in other desktops because /usr/share/applications/caja.desktop has this entry
+OnlyShowIn=MATE
+
+This means this desktop file is only vissible in mate session.
+
+Your description is very short and implement that you use caja for session start.
+Please beware that you not the only one that files out reports which i've to answer.
+A good description with more than one sentence helps us to understand better what the prob is.
+caja-1.10.1-5.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/caja-1.10.1-5.fc22

@@ -1,0 +1,63 @@
+Description of problem:
+Having a content view (CV) with some puppet module attached: while the CV is in Library environment, CV versions of the CV show expected puppet modules in Content column.
+
+But when promoting this CV to further environment, the Content column shows 0 Puppet Modules.
+
+Checking the CV version via hammer shows expected Puppet module(s) attached, though.
+
+
+Version-Release number of selected component (if applicable):
+Sat 6.0.8
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+0. Create a lifecycle environment above Library one.
+1. Create a product with a puppet repo with uploaded puppet module (i.e. motd)
+2. Create a CV, attach some arbitrary repo (i.e. rhel 7Server or whatever is synced)
+3. Add New Puppet Module to the CV
+4. Publish New Version of the CV and wait until it finishes.
+5. Check Content of the CV (some packages and errata per product repo attached in step 2, plus the puppet module from step 3)
+6. Promote the CV to the lifecycle environment created in step 0.
+7. Check Contents of the CV
+
+
+Actual results:
+Step 5 shows expected "1 Puppet Modules"
+
+Step 7 shows "0 Puppet Modules"
+
+
+Expected results:
+Both step 5 and 7 should show "1 Puppet Modules"
+
+
+Additional info:
+hammer shows the CV version contains the puppet module:
+
+hammer content-view version info --content-view <CV-name> --organization Default_Organization --id <id>
+ID:                 5
+Name:               cv_test 3
+Version:            3
+Content View ID:    3
+Content View Name:  cv_test
+Content View Label: cv_test
+Environments:       
+ 1) ID:    2
+    Name:  Dev
+    Label: Dev
+Repositories:       
+ 1) ID:    5
+    Name:  Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server
+    Label: Red_Hat_Enterprise_Linux_7_Server_RPMs_x86_64_7Server
+Puppet Modules:     
+ 1) ID:      76bb12be-1b3f-489b-920b-96f17a3fa425
+    Name:    motd
+    Author:  jeffmccune
+    Version: 1.0.3
+
+
+Interestingly, when I do some change to the CV (i.e. create any filter), create new version, the new version (in Library) has 1 Puppet Modules, while previous version with the same modules inside but in Dev has 0 Puppet Modules.

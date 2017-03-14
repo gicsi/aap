@@ -1,0 +1,4 @@
+When running a sparc with a serial console, certain types of interrupts would
+cause great grief.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/sparc/034_zsconsole.patch">
+A source code patch exists which remedies this problem.</a>

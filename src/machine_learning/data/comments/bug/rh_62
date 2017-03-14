@@ -1,0 +1,17 @@
+Document URL: 
+https://access.redhat.com/beta/documentation/en/openshift-enterprise-30-using-images#java
+
+Section Number and Name: 
+Java
+
+Describe the issue: 
+This section should not exist as we are not shipping a plain java builder.
+Verified that the Customer Portal docs build has been updated in production and the Java image topic no longer appears:
+
+https://access.redhat.com/beta/documentation/en/openshift-enterprise-30-using-images#source-to-image-s2i
+
+It still exists in the Origin docs:
+
+https://docs.openshift.org/latest/using_images/s2i_images/java.html
+
+Further, the build script for the CP build has been updated to avoid hitting this type of issue again (i.e., respect when topics are conditionalized for certain distros in the TOC).

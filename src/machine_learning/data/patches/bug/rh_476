@@ -1,0 +1,222 @@
+From 1885a273fc3df0ae25c9e51aa91f0206b41491c4 Mon Sep 17 00:00:00 2001
+From: David King <amigadave@amigadave.com>
+Date: Thu, 25 Jun 2015 10:00:39 +0100
+Subject: [PATCH 1/5] Update to 1.15.0
+
+---
+ .gitignore   |  1 +
+ libpeas.spec | 15 +++++++--------
+ sources      |  2 +-
+ 3 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index f997446..79a3dfe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,4 @@
+ /libpeas-1.12.1.tar.xz
+ /libpeas-1.13.0.tar.xz
+ /libpeas-1.14.0.tar.xz
++/libpeas-1.15.0.tar.xz
+diff --git a/libpeas.spec b/libpeas.spec
+index c7cc097..daf73d1 100644
+--- a/libpeas.spec
++++ b/libpeas.spec
+@@ -5,14 +5,14 @@
+ %endif
+ 
+ Name:		libpeas
+-Version:	1.14.0
+-Release:	2%{?dist}
++Version:	1.15.0
++Release:	1%{?dist}
+ Summary:	Plug-ins implementation convenience library
+ 
+ Group:		System Environment/Libraries
+ License:	LGPLv2+
+-URL:		http://ftp.acc.umu.se/pub/GNOME/sources/libpeas/
+-Source0:	http://ftp.acc.umu.se/pub/GNOME/sources/%{name}/1.14/%{name}-%{version}.tar.xz
++URL:		https://download.gnome.org/sources/libpeas/
++Source0:	https://download.gnome.org/sources/%{name}/1.15/%{name}-%{version}.tar.xz
+ 
+ BuildRequires:	chrpath
+ BuildRequires:	gtk3-devel >= 3.0.0
+@@ -22,12 +22,8 @@ BuildRequires:	python-devel
+ BuildRequires:	python3-devel
+ %endif
+ BuildRequires:	intltool
+-BuildRequires:	libtool
+-BuildRequires:	gtk-doc
+ BuildRequires:	glade-devel
+ 
+-BuildRequires:	autoconf automake gnome-common
+-
+ # For the girepository-1.0 directory
+ Requires:	gobject-introspection%{?_isa}
+ 
+@@ -109,6 +105,9 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ %{_datadir}/glade/catalogs/libpeas-gtk.xml
+ 
+ %changelog
++* Thu Jun 25 2015 David King <amigadave@amigadave.com> - 1.15.0-1
++- Update to 1.15.0 (#1235615)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.14.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+diff --git a/sources b/sources
+index 14ca07e..e53f8bf 100644
+--- a/sources
++++ b/sources
+@@ -1 +1 @@
+-1347653703ba4d50dd746845c35d010a  libpeas-1.14.0.tar.xz
++990dcbcdea482e4845176b4ee88e7c63  libpeas-1.15.0.tar.xz
+-- 
+2.4.4
+
+
+From 768bdcc4d8b6eb891349ea85a450e0debbde9355 Mon Sep 17 00:00:00 2001
+From: David King <amigadave@amigadave.com>
+Date: Thu, 25 Jun 2015 10:05:05 +0100
+Subject: [PATCH 2/5] Update URL
+
+---
+ libpeas.spec | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libpeas.spec b/libpeas.spec
+index daf73d1..01029a0 100644
+--- a/libpeas.spec
++++ b/libpeas.spec
+@@ -11,7 +11,7 @@ Summary:	Plug-ins implementation convenience library
+ 
+ Group:		System Environment/Libraries
+ License:	LGPLv2+
+-URL:		https://download.gnome.org/sources/libpeas/
++URL:		https://wiki.gnome.org/Projects/Libpeas
+ Source0:	https://download.gnome.org/sources/%{name}/1.15/%{name}-%{version}.tar.xz
+ 
+ BuildRequires:	chrpath
+@@ -107,6 +107,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ %changelog
+ * Thu Jun 25 2015 David King <amigadave@amigadave.com> - 1.15.0-1
+ - Update to 1.15.0 (#1235615)
++- Update URL
+ 
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.14.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+-- 
+2.4.4
+
+
+From 951132bd3ec7b28fdd7344c70bfbcc50251f3aca Mon Sep 17 00:00:00 2001
+From: David King <amigadave@amigadave.com>
+Date: Thu, 25 Jun 2015 10:05:25 +0100
+Subject: [PATCH 3/5] Use license macro for COPYING
+
+---
+ libpeas.spec | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libpeas.spec b/libpeas.spec
+index 01029a0..85b2937 100644
+--- a/libpeas.spec
++++ b/libpeas.spec
+@@ -82,6 +82,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ 
+ %files -f libpeas.lang
+ %doc AUTHORS
++%license COPYING
+ %{_libdir}/libpeas*-1.0.so.*
+ %dir %{_libdir}/libpeas-1.0/
+ %dir %{_libdir}/libpeas-1.0/loaders
+@@ -108,6 +109,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ * Thu Jun 25 2015 David King <amigadave@amigadave.com> - 1.15.0-1
+ - Update to 1.15.0 (#1235615)
+ - Update URL
++- Use license macro for COPYING
+ 
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.14.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+-- 
+2.4.4
+
+
+From abd032bc18d89c72f338a93c7e58b725f6f335c7 Mon Sep 17 00:00:00 2001
+From: David King <amigadave@amigadave.com>
+Date: Thu, 25 Jun 2015 10:07:51 +0100
+Subject: [PATCH 4/5] Use pkgconfig for BuildRequires
+
+https://fedoraproject.org/wiki/Packaging:PkgConfigBuildRequires
+---
+ libpeas.spec | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/libpeas.spec b/libpeas.spec
+index 85b2937..476d92f 100644
+--- a/libpeas.spec
++++ b/libpeas.spec
+@@ -15,14 +15,14 @@ URL:		https://wiki.gnome.org/Projects/Libpeas
+ Source0:	https://download.gnome.org/sources/%{name}/1.15/%{name}-%{version}.tar.xz
+ 
+ BuildRequires:	chrpath
+-BuildRequires:	gtk3-devel >= 3.0.0
+-BuildRequires:	pygobject3-devel
++BuildRequires:	pkgconfig(gtk+-3.0) >= 3.0.0
++BuildRequires:	pkgconfig(pygobject-3.0)
+ BuildRequires:	python-devel
+ %if %{use_python3}
+ BuildRequires:	python3-devel
+ %endif
+ BuildRequires:	intltool
+-BuildRequires:	glade-devel
++BuildRequires:	pkgconfig(gladeui-2.0)
+ 
+ # For the girepository-1.0 directory
+ Requires:	gobject-introspection%{?_isa}
+@@ -110,6 +110,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ - Update to 1.15.0 (#1235615)
+ - Update URL
+ - Use license macro for COPYING
++- Use pkgconfig for BuildRequires
+ 
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.14.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+-- 
+2.4.4
+
+
+From 2443d6d4d04b80a83786c431166f5c79deccf493 Mon Sep 17 00:00:00 2001
+From: David King <amigadave@amigadave.com>
+Date: Thu, 25 Jun 2015 10:59:17 +0100
+Subject: [PATCH 5/5] Add README and NEWS to doc
+
+---
+ libpeas.spec | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libpeas.spec b/libpeas.spec
+index 476d92f..2b43bce 100644
+--- a/libpeas.spec
++++ b/libpeas.spec
+@@ -81,7 +81,7 @@ fi
+ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ 
+ %files -f libpeas.lang
+-%doc AUTHORS
++%doc AUTHORS NEWS README
+ %license COPYING
+ %{_libdir}/libpeas*-1.0.so.*
+ %dir %{_libdir}/libpeas-1.0/
+@@ -111,6 +111,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor >&/dev/null || :
+ - Update URL
+ - Use license macro for COPYING
+ - Use pkgconfig for BuildRequires
++- Add README and NEWS to doc
+ 
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.14.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+-- 
+2.4.4
+
+

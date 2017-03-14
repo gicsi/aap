@@ -1,0 +1,9 @@
+...
+  Updating   : selinux-policy-3.13.1-131.fc23.noarch               42/238 
+libsemanage.semanage_fc_sort: WARNING: semanage_fc_sort: Incomplete context. ')
+
+
+
+Version-Release number of selected component (if applicable):
+selinux-policy-3.13.1-131.fc23
+I guess that was fixed somewhere along the line....

@@ -1,0 +1,675 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_bgpd.patch
+
+And then rebuild and install bgpd:
+	cd usr.sbin/bgpd/
+	make obj
+	make depend
+	make 
+	make install
+
+Index: usr.sbin/bgpd/rde.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/rde.c,v
+retrieving revision 1.316
+retrieving revision 1.316.2.1
+diff -u -r1.316 -r1.316.2.1
+--- usr.sbin/bgpd/rde.c	27 May 2012 18:52:07 -0000	1.316
++++ usr.sbin/bgpd/rde.c	29 Nov 2012 20:06:16 -0000	1.316.2.1
+@@ -1382,7 +1382,7 @@
+ 	} while (0)
+ 
+ #define CHECK_FLAGS(s, t, m)	\
+-	(((s) & ~(ATTR_EXTLEN | (m))) == (t))
++	(((s) & ~(ATTR_DEFMASK | (m))) == (t))
+ 
+ int
+ rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
+Index: usr.sbin/bgpd/rde.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/rde.h,v
+retrieving revision 1.142
+retrieving revision 1.142.4.1
+diff -u -r1.142 -r1.142.4.1
+--- usr.sbin/bgpd/rde.h	21 Sep 2011 08:59:01 -0000	1.142
++++ usr.sbin/bgpd/rde.h	29 Nov 2012 20:06:16 -0000	1.142.4.1
+@@ -118,6 +118,9 @@
+ #define ATTR_PARTIAL		0x20
+ #define ATTR_TRANSITIVE		0x40
+ #define ATTR_OPTIONAL		0x80
++#define ATTR_RESERVED		0x0f
++/* by default mask the reserved bits and the ext len bit */
++#define ATTR_DEFMASK		(ATTR_RESERVED | ATTR_EXTLEN)
+ 
+ /* default attribute flags for well known attributes */
+ #define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
+Index: usr.sbin/bgpd/rde_attr.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/rde_attr.c,v
+retrieving revision 1.90
+retrieving revision 1.90.2.1
+diff -u -r1.90 -r1.90.2.1
+--- usr.sbin/bgpd/rde_attr.c	12 Apr 2012 17:27:20 -0000	1.90
++++ usr.sbin/bgpd/rde_attr.c	29 Nov 2012 20:06:16 -0000	1.90.2.1
+@@ -37,12 +37,12 @@
+ 	u_char		*b = p;
+ 	u_int16_t	 tmp, tot_len = 2; /* attribute header (without len) */
+ 
++	flags &= ~ATTR_DEFMASK;
+ 	if (data_len > 255) {
+ 		tot_len += 2 + data_len;
+ 		flags |= ATTR_EXTLEN;
+ 	} else {
+ 		tot_len += 1 + data_len;
+-		flags &= ~ATTR_EXTLEN;
+ 	}
+ 
+ 	if (tot_len > p_len)
+@@ -69,12 +69,12 @@
+ {
+ 	u_char	hdr[4];
+ 
++	flags &= ~ATTR_DEFMASK;
+ 	if (data_len > 255) {
+ 		flags |= ATTR_EXTLEN;
+ 		hdr[2] = (data_len >> 8) & 0xff;
+ 		hdr[3] = data_len & 0xff;
+ 	} else {
+-		flags &= ~ATTR_EXTLEN;
+ 		hdr[2] = data_len & 0xff;
+ 	}
+ 
+@@ -322,6 +322,7 @@
+ 		fatal("attr_optadd");
+ 	rdemem.attr_cnt++;
+ 
++	flags &= ~ATTR_DEFMASK;	/* normalize mask */
+ 	a->flags = flags;
+ 	a->hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
+ 	a->type = type;
+@@ -351,6 +352,7 @@
+ 	struct attr		*a;
+ 	u_int32_t		 hash;
+ 
++	flags &= ~ATTR_DEFMASK;	/* normalize mask */
+ 	hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
+ 	hash = hash32_buf(&type, sizeof(type), hash);
+ 	hash = hash32_buf(&len, sizeof(len), hash);
+
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_bgpd.patch
+
+And then rebuild and install bgpd:
+	cd usr.sbin/bgpd/
+	make obj
+	make depend
+	make 
+	make install
+
+Index: usr.sbin/bgpd/session.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/session.c,v
+retrieving revision 1.323
+diff -u -p -u -r1.323 usr.sbin/bgpd/session.c
+--- usr.sbin/bgpd/session.c	11 Jul 2012 09:43:10 -0000	1.323
++++ usr.sbin/bgpd/session.c	16 Mar 2013 03:34:00 -0000
+@@ -1002,13 +1002,12 @@ session_accept(int listenfd)
+ 	len = sizeof(cliaddr);
+ 	if ((connfd = accept(listenfd,
+ 	    (struct sockaddr *)&cliaddr, &len)) == -1) {
+-		if (errno == ENFILE || errno == EMFILE) {
++		if (errno == ENFILE || errno == EMFILE)
+ 			pauseaccept = getmonotime();
+-			return;
+-		} else if (errno == EWOULDBLOCK || errno == EINTR)
+-			return;
+-		else
++		else if (errno != EWOULDBLOCK && errno != EINTR &&
++		    errno != ECONNABORTED)
+ 			log_warn("accept");
++		return;
+ 	}
+ 
+ 	p = getpeerbyip((struct sockaddr *)&cliaddr);
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_tftpd.patch
+
+And then rebuild and install tftpd:
+	cd usr.sbin/tftpd/
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.sbin/tftpd/tftpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/tftpd/tftpd.c,v
+retrieving revision 1.8
+retrieving revision 1.8.2.1
+diff -u -p -r1.8 -r1.8.2.1
+--- usr.sbin/tftpd/tftpd.c	13 Jul 2012 02:31:46 -0000	1.8
++++ usr.sbin/tftpd/tftpd.c	21 Mar 2013 05:20:32 -0000	1.8.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: tftpd.c,v 1.8 2012/07/13 02:31:46 gsoares Exp $	*/
++/*	$OpenBSD: tftpd.c,v 1.8.2.1 2013/03/21 05:20:32 dlg Exp $	*/
+ 
+ /*
+  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
+@@ -168,7 +168,7 @@ void		tftp_end(struct tftp_client *);
+ void		tftp(struct tftp_client *, struct tftphdr *, size_t);
+ void		tftp_open(struct tftp_client *, const char *);
+ void		nak(struct tftp_client *, int);
+-void		oack(struct tftp_client *);
++int		oack(struct tftp_client *);
+ void		oack_done(int, short, void *);
+ 
+ void		sendfile(struct tftp_client *);
+@@ -565,7 +565,7 @@ client_alloc()
+ {
+ 	struct tftp_client *client;
+ 
+-	client = calloc(sizeof(*client), 1);
++	client = calloc(1, sizeof(*client));
+ 	if (client == NULL)
+ 		return (NULL);
+ 
+@@ -812,7 +812,7 @@ again:
+ 	client->fgetc = pf->f_getc;
+ 	client->fputc = pf->f_putc;
+ 
+-	client->options = options = calloc(sizeof(*client->options), NOPT);
++	client->options = options = calloc(NOPT, sizeof(*client->options));
+ 	if (options == NULL) {
+ 		ecode = 100 + ENOMEM;
+ 		goto error;
+@@ -876,7 +876,8 @@ tftp_open(struct tftp_client *client, co
+ 		goto error;
+ 
+ 	if (client->options) {
+-		oack(client);
++		if (oack(client) == -1)
++			goto error;
+ 
+ 		free(client->options);
+ 		client->options = NULL;
+@@ -886,7 +887,6 @@ tftp_open(struct tftp_client *client, co
+ 		sendfile(client);
+ 
+ 	return;
+-
+ error:
+ 	nak(client, ecode);
+ }
+@@ -1386,7 +1386,7 @@ nak(struct tftp_client *client, int erro
+ /*
+  * Send an oack packet (option acknowledgement).
+  */
+-void
++int
+ oack(struct tftp_client *client)
+ {
+ 	struct opt_client *options = client->options;
+@@ -1396,7 +1396,7 @@ oack(struct tftp_client *client)
+ 
+ 	tp = (struct tftphdr *)client->buf;
+ 	bp = (char *)tp->th_stuff;
+-	size = client->packet_size - 2;
++	size = sizeof(client->buf) - 2;
+ 
+ 	tp->th_opcode = htons((u_short)OACK);
+ 	for (i = 0; i < NOPT; i++) {
+@@ -1406,14 +1406,14 @@ oack(struct tftp_client *client)
+ 		n = snprintf(bp, size, "%s%c%lld", opt_names[i], '\0',
+ 		    options[i].o_reply);
+ 		if (n == -1 || n >= size) {
+-			lwarn("oack: no buffer space");
++			lwarnx("oack: no buffer space");
+ 			goto error;
+ 		}
+ 
+ 		bp += n + 1;
+ 		size -= n + 1;
+ 		if (size < 0) {
+-			lwarn("oack: no buffer space");
++			lwarnx("oack: no buffer space");
+ 			goto error;
+ 		}
+ 	}
+@@ -1436,10 +1436,10 @@ oack(struct tftp_client *client)
+ 		    oack_done, client);
+ 
+ 	event_add(&client->sev, &client->tv);
+-	return;
++	return (0);
+ 
+ error:
+-	client_free(client);
++	return (-1);
+ }
+ 
+ int
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_nginx.patch
+
+And then rebuild and install nginx:
+	cd usr.sbin/nginx/
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper 
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c,v
+retrieving revision 1.7
+diff -p -u -r1.7 ngx_http_proxy_module.c
+--- usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c	13 May 2012 09:14:58 -0000	1.7
++++ usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c	16 May 2013 06:49:33 -0000
+@@ -1864,6 +1864,10 @@ data:
+ 
+     }
+ 
++    if (ctx->size < 0 || ctx->length < 0) {
++        goto invalid;
++    }
++
+     return rc;
+ 
+ done:
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_in6.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet6/in6.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/in6.c,v
+retrieving revision 1.98
+retrieving revision 1.98.2.1
+diff -u -p -r1.98 -r1.98.2.1
+--- sys/netinet6/in6.c	14 Jul 2012 17:23:16 -0000	1.98
++++ sys/netinet6/in6.c	30 May 2013 20:41:54 -0000	1.98.2.1
+@@ -425,6 +425,12 @@ in6_control(struct socket *so, u_long cm
+ 	case SIOCGIFSTAT_ICMP6:
+ 		sa6 = &ifr->ifr_addr;
+ 		break;
++	case SIOCSIFADDR:
++		/*
++		 * Do not pass this ioctl to driver handler since it is not
++		 * properly setup. Instead just error out.
++		 */
++		return (EOPNOTSUPP);
+ 	default:
+ 		sa6 = NULL;
+ 		break;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_bgpd.patch
+
+And then rebuild and install bgpd:
+	cd usr.sbin/bgpd/
+	make obj
+	make depend
+	make 
+	make install
+
+Index: usr.sbin/bgpd/session.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/session.c,v
+retrieving revision 1.326
+diff -u -p -u -r1.326 session.c
+--- usr.sbin/bgpd/session.c	1 Dec 2012 10:35:17 -0000	1.326
++++ usr.sbin/bgpd/session.c	16 Mar 2013 03:31:30 -0000
+@@ -1034,13 +1034,12 @@ session_accept(int listenfd)
+ 	len = sizeof(cliaddr);
+ 	if ((connfd = accept(listenfd,
+ 	    (struct sockaddr *)&cliaddr, &len)) == -1) {
+-		if (errno == ENFILE || errno == EMFILE) {
++		if (errno == ENFILE || errno == EMFILE)
+ 			pauseaccept = getmonotime();
+-			return;
+-		} else if (errno == EWOULDBLOCK || errno == EINTR)
+-			return;
+-		else
++		else if (errno != EWOULDBLOCK && errno != EINTR &&
++		    errno != ECONNABORTED)
+ 			log_warn("accept");
++		return;
+ 	}
+ 
+ 	p = getpeerbyip((struct sockaddr *)&cliaddr);
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_vr.patch
+
+Then build and install a new kernel.
+
+Index: sys/dev/pci/if_vr.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_vr.c,v
+retrieving revision 1.127
+retrieving revision 1.127.2.1
+diff -u -p -r1.127 -r1.127.2.1
+--- sys/dev/pci/if_vr.c	9 Feb 2013 19:17:52 -0000	1.127
++++ sys/dev/pci/if_vr.c	5 May 2013 11:05:49 -0000	1.127.2.1
+@@ -1610,7 +1610,7 @@ vr_watchdog(struct ifnet *ifp)
+ 	 * some TX descriptors to reclaim, so check for that first.
+ 	 */
+ 	vr_txeof(sc);
+-	if (sc->vr_cdata.vr_tx_cnt == 0);
++	if (sc->vr_cdata.vr_tx_cnt == 0)
+ 		return;
+ 
+ 	ifp->if_oerrors++;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_nginx.patch
+
+And then rebuild and install nginx:
+	cd usr.sbin/nginx/
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper 
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c,v
+retrieving revision 1.7
+diff -p -u -r1.7 ngx_http_proxy_module.c
+--- usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c	13 May 2012 09:14:58 -0000	1.7
++++ usr.sbin/nginx/src/http/modules/ngx_http_proxy_module.c	16 May 2013 06:49:33 -0000
+@@ -1864,6 +1864,10 @@ data:
+ 
+     }
+ 
++    if (ctx->size < 0 || ctx->length < 0) {
++        goto invalid;
++    }
++
+     return rc;
+ 
+ done:
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_route.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/rtsock.c
+===================================================================
+RCS file: /cvs/src/sys/net/rtsock.c,v
+retrieving revision 1.123
+retrieving revision 1.123.2.1
+diff -u -p -r1.123 -r1.123.2.1
+--- sys/net/rtsock.c	20 Sep 2012 20:53:13 -0000	1.123
++++ sys/net/rtsock.c	17 May 2013 11:34:49 -0000	1.123.2.1
+@@ -621,6 +621,7 @@ route_output(struct mbuf *m, ...)
+ 		rn = (struct radix_node *)rt;
+ 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
+ 			error = ESRCH;
++			rt = NULL;
+ 			goto flush;
+ 		}
+ #ifndef SMALL_KERNEL
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_in6.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet6/in6.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/in6.c,v
+retrieving revision 1.101
+retrieving revision 1.101.2.1
+diff -u -p -r1.101 -r1.101.2.1
+--- sys/netinet6/in6.c	30 Nov 2012 13:48:12 -0000	1.101
++++ sys/netinet6/in6.c	30 May 2013 20:41:24 -0000	1.101.2.1
+@@ -428,6 +428,12 @@ in6_control(struct socket *so, u_long cm
+ 	case SIOCGIFSTAT_ICMP6:
+ 		sa6 = &ifr->ifr_addr;
+ 		break;
++	case SIOCSIFADDR:
++		/*
++		 * Do not pass this ioctl to driver handler since it is not
++		 * properly setup. Instead just error out.
++		 */
++		return (EOPNOTSUPP);
+ 	default:
+ 		sa6 = NULL;
+ 		break;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 006_tftpd.patch
+
+And then rebuild and install tftpd:
+	cd usr.sbin/tftpd/
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.sbin/tftpd/tftpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/tftpd/tftpd.c,v
+retrieving revision 1.8
+diff -p -u -r1.8 tftpd.c
+--- usr.sbin/tftpd/tftpd.c	13 Jul 2012 02:31:46 -0000	1.8
++++ usr.sbin/tftpd/tftpd.c	12 Jun 2013 10:24:55 -0000
+@@ -168,7 +168,7 @@ void		tftp_end(struct tftp_client *);
+ void		tftp(struct tftp_client *, struct tftphdr *, size_t);
+ void		tftp_open(struct tftp_client *, const char *);
+ void		nak(struct tftp_client *, int);
+-void		oack(struct tftp_client *);
++int		oack(struct tftp_client *);
+ void		oack_done(int, short, void *);
+ 
+ void		sendfile(struct tftp_client *);
+@@ -565,7 +565,7 @@ client_alloc()
+ {
+ 	struct tftp_client *client;
+ 
+-	client = calloc(sizeof(*client), 1);
++	client = calloc(1, sizeof(*client));
+ 	if (client == NULL)
+ 		return (NULL);
+ 
+@@ -812,7 +812,7 @@ again:
+ 	client->fgetc = pf->f_getc;
+ 	client->fputc = pf->f_putc;
+ 
+-	client->options = options = calloc(sizeof(*client->options), NOPT);
++	client->options = options = calloc(NOPT, sizeof(*client->options));
+ 	if (options == NULL) {
+ 		ecode = 100 + ENOMEM;
+ 		goto error;
+@@ -876,7 +876,8 @@ tftp_open(struct tftp_client *client, co
+ 		goto error;
+ 
+ 	if (client->options) {
+-		oack(client);
++		if (oack(client) == -1)
++			goto error;
+ 
+ 		free(client->options);
+ 		client->options = NULL;
+@@ -886,7 +887,6 @@ tftp_open(struct tftp_client *client, co
+ 		sendfile(client);
+ 
+ 	return;
+-
+ error:
+ 	nak(client, ecode);
+ }
+@@ -1386,7 +1386,7 @@ nak(struct tftp_client *client, int erro
+ /*
+  * Send an oack packet (option acknowledgement).
+  */
+-void
++int
+ oack(struct tftp_client *client)
+ {
+ 	struct opt_client *options = client->options;
+@@ -1396,7 +1396,7 @@ oack(struct tftp_client *client)
+ 
+ 	tp = (struct tftphdr *)client->buf;
+ 	bp = (char *)tp->th_stuff;
+-	size = client->packet_size - 2;
++	size = sizeof(client->buf) - 2;
+ 
+ 	tp->th_opcode = htons((u_short)OACK);
+ 	for (i = 0; i < NOPT; i++) {
+@@ -1406,14 +1406,14 @@ oack(struct tftp_client *client)
+ 		n = snprintf(bp, size, "%s%c%lld", opt_names[i], '\0',
+ 		    options[i].o_reply);
+ 		if (n == -1 || n >= size) {
+-			lwarn("oack: no buffer space");
++			lwarnx("oack: no buffer space");
+ 			goto error;
+ 		}
+ 
+ 		bp += n + 1;
+ 		size -= n + 1;
+ 		if (size < 0) {
+-			lwarn("oack: no buffer space");
++			lwarnx("oack: no buffer space");
+ 			goto error;
+ 		}
+ 	}
+@@ -1436,10 +1436,10 @@ oack(struct tftp_client *client)
+ 		    oack_done, client);
+ 
+ 	event_add(&client->sev, &client->tv);
+-	return;
++	return (0);
+ 
+ error:
+-	client_free(client);
++	return (-1);
+ }
+ 
+ int
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 007_vio.patch
+
+Then build and install a new kernel.
+
+Index: sys/dev/pci/if_vio.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_vio.c,v
+retrieving revision 1.9
+retrieving revision 1.9.2.2
+diff -u -p -r1.9 -r1.9.2.2
+--- sys/dev/pci/if_vio.c	5 Dec 2012 23:20:20 -0000	1.9
++++ sys/dev/pci/if_vio.c	30 May 2013 21:52:12 -0000	1.9.2.2
+@@ -232,11 +232,13 @@ struct vio_softc {
+ 	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
+ 
+ #define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
+-#define VIRTIO_NET_CTRL_MAC_MAXENTRIES	64 /* for more entries, use ALLMULTI */
++#define VIRTIO_NET_CTRL_MAC_MC_ENTRIES	64 /* for more entries, use ALLMULTI */
++#define VIRTIO_NET_CTRL_MAC_UC_ENTRIES	 1 /* one entry for own unicast addr */
+ 
+ #define VIO_CTRL_MAC_INFO_SIZE 					\
+ 	(2*sizeof(struct virtio_net_ctrl_mac_tbl) + 		\
+-	 (VIRTIO_NET_CTRL_MAC_MAXENTRIES + 1) * ETHER_ADDR_LEN)
++	 (VIRTIO_NET_CTRL_MAC_MC_ENTRIES + 			\
++	  VIRTIO_NET_CTRL_MAC_UC_ENTRIES) * ETHER_ADDR_LEN)
+ 
+ /* cfattach interface functions */
+ int	vio_match(struct device *, void *, void *);
+@@ -391,9 +393,7 @@ vio_alloc_mem(struct vio_softc *sc)
+ 		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
+ 		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
+ 		allocsize += sizeof(struct virtio_net_ctrl_rx) * 1;
+-		allocsize += sizeof(struct virtio_net_ctrl_mac_tbl)
+-			+ sizeof(struct virtio_net_ctrl_mac_tbl)
+-			+ ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES;
++		allocsize += VIO_CTRL_MAC_INFO_SIZE;
+ 	}
+ 	sc->sc_dma_size = allocsize;
+ 
+@@ -413,7 +413,8 @@ vio_alloc_mem(struct vio_softc *sc)
+ 		sc->sc_ctrl_rx = (void*)(kva + offset);
+ 		offset += sizeof(*sc->sc_ctrl_rx);
+ 		sc->sc_ctrl_mac_tbl_uc = (void*)(kva + offset);
+-		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc);
++		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc) +
++		    ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_UC_ENTRIES;
+ 		sc->sc_ctrl_mac_tbl_mc = (void*)(kva + offset);
+ 	}
+ 
+@@ -742,6 +743,10 @@ again:
+ 			break;
+ 		}
+ 		IFQ_DEQUEUE(&ifp->if_snd, m);
++		if (m != sc->sc_tx_mbufs[slot]) {
++			m_freem(m);
++			m = sc->sc_tx_mbufs[slot];
++		}
+ 
+ 		hdr = &sc->sc_tx_hdrs[slot];
+ 		memset(hdr, 0, sc->sc_hdr_size);
+@@ -1113,7 +1118,6 @@ vio_encap(struct vio_softc *sc, int slot
+ 		    r);
+ 		return ENOBUFS;
+ 	}
+-	m_freem(m);
+ 	*mnew = m0;
+ 	return 0;
+ }
+@@ -1342,7 +1346,7 @@ vio_iff(struct vio_softc *sc)
+ 	}
+ 
+ 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+-	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
++	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MC_ENTRIES) {
+ 		ifp->if_flags |= IFF_ALLMULTI;
+ 		if (ifp->if_flags & IFF_PROMISC)
+ 			promisc = 1;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 008_pflow.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/if_pflow.c
+===================================================================
+RCS file: /vol/openbsd/cvs/src/sys/net/if_pflow.c,v
+retrieving revision 1.24
+diff -u -p -r1.24 if_pflow.c
+--- sys/net/if_pflow.c	5 Feb 2013 11:58:39 -0000	1.24
++++ sys/net/if_pflow.c	7 Nov 2013 16:45:42 -0000
+@@ -256,6 +256,12 @@ pflow_clone_destroy(struct ifnet *ifp)
+ 	int			 s;
+ 
+ 	s = splnet();
++	if (timeout_initialized(&sc->sc_tmo))
++		timeout_del(&sc->sc_tmo);
++	if (timeout_initialized(&sc->sc_tmo6))
++		timeout_del(&sc->sc_tmo6);
++	if (timeout_initialized(&sc->sc_tmo_tmpl))
++		timeout_del(&sc->sc_tmo_tmpl);
+ 	pflow_flush(sc);
+ 	if_detach(ifp);
+ 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
+

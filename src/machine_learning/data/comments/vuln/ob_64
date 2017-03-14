@@ -1,0 +1,6 @@
+libedit would check for a <b>.editrc</b> file in the current directory.
+That behaviour is not nice; this does not turn into a security problem in
+any real world situation that we know of, but a patch is available anyways.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/013_libedit.patch">
+A source code patch exists which remedies this problem.</a>

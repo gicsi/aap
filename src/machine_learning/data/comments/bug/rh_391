@@ -1,0 +1,26 @@
+Description of problem:
+lpf-gui fails to build package
+
+Version-Release number of selected component (if applicable):
+lpf-0.2-1.f1f5dd9.fc22.noarch
+lpf-flash-plugin-11.2.202.468-1.fc21.x86_64
+
+How reproducible:
+every time
+
+Steps to Reproduce:
+1. run lpf-gui to build new version of flash-plugin for patching
+
+Actual results:
+lpf fails with errors
+
+Expected results:
+lpf builds revised version of flash-plugin
+
+Additional info:
+Created attachment 1044153
+log file of lpf-gui
+
+log of lpf openning and lpf attempting to build package there are multiple errors in the python code and in the calls to yum/dnf
+This is likely not a lpf bug but a bug in the lpf-flash-plugin package which not is a Fedora one.
+See https://bugzilla.rpmfusion.org/show_bug.cgi?id=3701

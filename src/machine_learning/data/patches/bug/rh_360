@@ -1,0 +1,36 @@
+From 5768b8b8298ae98a454ff31cbf14df12d7b03353 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Tue, 30 Jun 2015 00:21:27 +0000
+Subject: [PATCH] Update to 6.44 (#1236766)
+
+---
+ perl-Coro.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-Coro.spec b/perl-Coro.spec
+index 01de74e..3fd49ba 100644
+--- a/perl-Coro.spec
++++ b/perl-Coro.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-Coro
+-Version:        6.43
+-Release:        3%{?dist}
++Version:        6.44
++Release:        1%{?dist}
+ Summary:        The only real threads in perl
+ # Coro/libcoro:    GPLv2 or BSD
+ # Rest of package: GPL+ or Artistic
+@@ -157,6 +157,9 @@ make test
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Tue Jun 30 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 6.44-1
++- Update to 6.44 (#1236766)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 6.43-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

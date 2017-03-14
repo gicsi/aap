@@ -1,0 +1,31 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_ktrace.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/kern_ktrace.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_ktrace.c,v
+retrieving revision 1.27
+retrieving revision 1.27.2.1
+diff -u -r1.27 -r1.27.2.1
+--- sys/kern/kern_ktrace.c	2002/03/14 01:27:04	1.27
++++ sys/kern/kern_ktrace.c	2002/06/28 15:10:26	1.27.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: kern_ktrace.c,v 1.27 2002/03/14 01:27:04 millert Exp $	*/
++/*	$OpenBSD: kern_ktrace.c,v 1.27.2.1 2002/06/28 15:10:26 jason Exp $	*/
+ /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
+ 
+ /*
+@@ -530,7 +530,8 @@
+ 	    target->p_ruid == target->p_svuid &&
+ 	    caller->p_rgid == target->p_rgid &&	/* XXX */
+ 	    target->p_rgid == target->p_svgid &&
+-	    (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
++	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
++	    !ISSET(targetp->p_flag, P_SUGID)) ||
+ 	    caller->pc_ucred->cr_uid == 0)
+ 		return (1);
+ 
+

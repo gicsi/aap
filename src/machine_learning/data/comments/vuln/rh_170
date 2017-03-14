@@ -1,0 +1,43 @@
+Description of problem:
+I created a Rails4 application using console.itos.redhat.com but apart from viewing files in public folder (index.html) it does not allow for any app building of any soryt. 
+If I add a custom controller and a view for the controller, uncomment the root statement in config.rb to point to the controller and action, and finally rename public/index.html - this reports a rails error. See steps below.
+
+Moreover, the SAME STEPS on openshift.redhat.com produces a working app. i.e. I can build rails apps on openshift.redhat.com but NOT via console.itos.redhat.com
+
+This has been a persistent problem with console.itos - I have yet to create a functioning rails app using it unless I do everything in the public folder which defeats the purpose of creating an app.
+
+I looked into the ruby log file and it may be Phusion passenger related. But please 
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Create a rails 4 app
+2. create a file called graphs_controller.rb in app/controller/folder. paste this code in it:
+class GraphsController < ApplicationController
+	def home
+		render "index"
+	end
+end
+3. Create a directory in app/views called graphs
+In that add an index.html file with contents "Hello World"
+4. Uncomment #root 'welcome#index' in config/routes.rb to: 
+root graphs#home
+5. rename public/index.html to public/index_defunct.html
+6. git add . at the app root.
+7. git add -u public/index.html
+8. git push
+
+Now go to the URL 
+
+Actual results:
+Rails error "we're sorry but something went wrong..." message
+
+Expected results:
+It should show me contents of app/views/graphs/index.html. it does not do it when creating an app using the above steps from console.itos.redhat.com but does so when creating the rubyonrails4 app using openshift.redhat.com
+
+Additional info:

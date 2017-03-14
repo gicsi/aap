@@ -1,0 +1,23 @@
+cinnamon-screensaver leaves multiple processes running.
+
+After I wake up the display, I get this:
+
+$ ps -eF | grep xscreensaver
+rick      1535     1  0 50902 45356   1 Jul07 ?        00:01:34 /usr/libexec/xscreensaver/glslideshow -window-id 69206019
+rick      3191     1  0 50901 47312   1 08:45 ?        00:00:08 /usr/libexec/xscreensaver/glslideshow -window-id 65011715
+rick      5600     1  0 50902 47236   1 09:15 ?        00:00:02 /usr/libexec/xscreensaver/glslideshow -window-id 77594627
+rick      6381     1  0 50902 47368   0 09:25 ?        00:00:30 /usr/libexec/xscreensaver/glslideshow -window-id 77594627
+rick      6748     1  0 50902 47236   3 16:09 ?        00:00:01 /usr/libexec/xscreensaver/glslideshow -window-id 77594627
+rick     12456     1  0 50902 45280   2 Jul07 ?        00:01:13 /usr/libexec/xscreensaver/glslideshow -window-id 65011715
+rick     14677     1  2 50902 47288   2 17:52 ?        00:00:02 /usr/libexec/xscreensaver/glslideshow -window-id 65011715
+rick     26833     1  0 50902 47216   0 13:36 ?        00:00:00 /usr/libexec/xscreensaver/glslideshow -window-id 77594627
+rick     27084     1  0 50902 47252   3 06:56 ?        00:00:06 /usr/libexec/xscreensaver/glslideshow -window-id 65011715
+rick     29022     1  0 50902 47256   0 07:21 ?        00:00:23 /usr/libexec/xscreensaver/glslideshow -window-id 65011715
+rick     29125     1  0 50902 47392   0 14:06 ?        00:00:05 /usr/libexec/xscreensaver/glslideshow -window-id 77594627
+
+It's not a problem. I guess.  Just worrying to me.
+
+$ killall glslideshow
+
+takes care of it.  It seems to be ANY of the xscreensavers.
+xscreensaver stuff is part of cinnamon-screensaver-unsupported, I named it that for a reason.

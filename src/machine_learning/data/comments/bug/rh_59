@@ -1,0 +1,71 @@
+Description of problem:
+I booted off the latest rawhide image for x64. The installer crashed after a few minutes of being open. My first attempt I couldn't get past the EULA page. My second attempt crashed on the Installation Summery page and then the error message apeared. The program seems to be still running in the background since the Installation Desination button stopped probing local disks.
+
+Version-Release number of selected component:
+anaconda-core-23.13-1.fc23.x86_64
+
+The following was filed automatically by anaconda:
+anaconda 23.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib/python3.4/site-packages/blivet/tasks/fsminsize.py", line 57, in _getResizeInfo
+    error_msg = "failed to gather info from resize program: %s" % e
+  File "/usr/lib/python3.4/site-packages/blivet/tasks/fsminsize.py", line 168, in doTask
+    resize_info = self._getResizeInfo()
+  File "/usr/lib/python3.4/site-packages/blivet/formats/fs.py", line 288, in updateSizeInfo
+    result = self._minsize.doTask()
+  File "/usr/lib/python3.4/site-packages/blivet/formats/fs.py", line 134, in __init__
+    self.updateSizeInfo()
+  File "/usr/lib/python3.4/site-packages/blivet/formats/__init__.py", line 81, in getFormat
+    fmt = fmt_class(*args, **kwargs)
+  File "/usr/lib/python3.4/site-packages/blivet/populator.py", line 1427, in handleUdevDeviceFormat
+    device.format = formats.getFormat(format_designator, **kwargs)
+  File "/usr/lib/python3.4/site-packages/blivet/populator.py", line 757, in addUdevDevice
+    self.handleUdevDeviceFormat(info, device)
+  File "/usr/lib/python3.4/site-packages/blivet/populator.py", line 1656, in _populate
+    self.addUdevDevice(dev)
+  File "/usr/lib/python3.4/site-packages/blivet/populator.py", line 1593, in populate
+    self._populate()
+  File "/usr/lib/python3.4/site-packages/blivet/devicetree.py", line 551, in populate
+    self._populator.populate(cleanupOnly=cleanupOnly)
+  File "/usr/lib/python3.4/site-packages/blivet/blivet.py", line 279, in reset
+    self.devicetree.populate(cleanupOnly=cleanupOnly)
+  File "/usr/lib/python3.4/site-packages/blivet/osinstall.py", line 1119, in storageInitialize
+    storage.reset()
+  File "/usr/lib64/python3.4/threading.py", line 868, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib64/python3.4/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+UnboundLocalError: local variable 'e' referenced before assignment
+
+Additional info:
+cmdline:        /usr/bin/python3  /sbin/anaconda --liveinst --method=livecd:///dev/mapper/live-base
+cmdline_file:   BOOT_IMAGE=vmlinuz0 initrd=initrd0.img root=live:CDLABEL=Fedora-Live-WS-x86_64-rawhide-20 rootfstype=auto ro rd.live.image quiet  rhgb rd.luks=0 rd.md=0 rd.dm=0 
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.2.0-0.rc0.git4.1.fc23.x86_64
+other involved packages: python3-libs-3.4.3-5.fc23.x86_64, python3-blivet-1.7-1.fc23.noarch
+product:        Fedora
+release:        Fedora release 23 (Rawhide)
+type:           anaconda
+version:        Rawhide
+Created attachment 1049017
+File: anaconda-tb
+Created attachment 1049018
+File: anaconda.log
+Created attachment 1049019
+File: environ
+Created attachment 1049020
+File: journalctl
+Created attachment 1049021
+File: lsblk_output
+Created attachment 1049022
+File: nmcli_dev_list
+Created attachment 1049023
+File: os_info
+Created attachment 1049024
+File: program.log
+Created attachment 1049025
+File: storage.log
+Created attachment 1049026
+File: ifcfg.log
+*** This bug has been marked as a duplicate of bug 1239158 ***

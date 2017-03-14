@@ -1,0 +1,25 @@
+Description of problem:
+Similar to Bug 810483. GrowISOfs stops short of full media maximum when burning BD-RE BDXL media.We have 100GB or so that wants to format itself that large, 93.1GB to use and Im capping out at around 78.85GB as the maximum.Ive "used the force" and gotten nowhere by doing so."Sparing none" has no effect.My file to burn is around 83GB, well within the maximum size, even when formatted.Im stopped at 95.8% of burn of the 83GB file.Resulting disc is unmountable and useless, requires a reformat.
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.generate a BIG BIG ISO file as UDF with genisoimage
+(takes a VERY LOOONG time...)
+2. try and burn it as such: (BDXL is my second drive) growisofs -use-the-force-luke=spare:none -overburn -Z /dev/sr1=file1.iso
+(BD-RE is forced to 2x, very annoyingly-so loooong burn time)
+
+Actual results:
+Burn stops short.Cant flush cache in any way, then exits.
+
+Expected results:
+Burn should complete if overburn condition is not met.Even so, should continue until end of media.We are running out of media for some reason.
+
+Additional info:
+Sony 100GB media (3 layer) BD-RE disc
+LG HL-DT-ST WH16NS40 (supports 4-layer media at 128GB)
+Thank you for your report. Unfortunately I do not have hardware to work with BDXL. The best thing I could advise you is to try xorriso instead of dvd+rw-tools. Xorriso is actively developed these days and there is a real chance that the developer would be interested in supporting BDXL.

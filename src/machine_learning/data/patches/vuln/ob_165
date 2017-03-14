@@ -1,0 +1,176 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_kerberos.patch
+
+And then rebuild and install the Kerberos 5 KDC:
+	cd kerberosV/lib/roken
+	make obj
+	make cleandir
+	make depend
+	make
+	cd ../../libexec/kdc
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: kerberosV/src/kdc/524.c
+===================================================================
+RCS file: /cvs/src/kerberosV/src/kdc/524.c,v
+retrieving revision 1.1.1.3
+retrieving revision 1.1.1.3.4.1
+diff -u -r1.1.1.3 -r1.1.1.3.4.1
+--- kerberosV/src/kdc/524.c	6 Feb 2002 08:54:50 -0000	1.1.1.3
++++ kerberosV/src/kdc/524.c	22 Mar 2003 21:26:30 -0000	1.1.1.3.4.1
+@@ -251,6 +251,14 @@
+ 	free_EncTicketPart(&et);
+ 	goto out;
+     }
++    if (!enable_v4_cross_realm && strcmp (et.crealm, t->realm) != 0) {
++	kdc_log(0, "524 cross-realm %s -> %s disabled", et.crealm,
++		t->realm);
++	free_EncTicketPart(&et);
++	ret = KRB5KDC_ERR_POLICY;
++	goto out;
++    }
++
+     ret = encode_v4_ticket(buf + sizeof(buf) - 1, sizeof(buf),
+ 			   &et, &t->sname, &len);
+     free_EncTicketPart(&et);
+Index: kerberosV/src/kdc/config.c
+===================================================================
+RCS file: /cvs/src/kerberosV/src/kdc/config.c,v
+retrieving revision 1.1.1.3
+retrieving revision 1.1.1.3.4.1
+diff -u -r1.1.1.3 -r1.1.1.3.4.1
+--- kerberosV/src/kdc/config.c	6 Feb 2002 08:54:50 -0000	1.1.1.3
++++ kerberosV/src/kdc/config.c	22 Mar 2003 21:26:30 -0000	1.1.1.3.4.1
+@@ -67,6 +67,7 @@
+ char *v4_realm;
+ int enable_v4 = -1;
+ int enable_524 = -1;
++int enable_v4_cross_realm = -1;
+ int enable_kaserver = -1;
+ #endif
+ 
+@@ -100,6 +101,10 @@
+     {	"524",		0, 	arg_negative_flag, &enable_524,
+ 	"don't respond to 524 requests" 
+     },
++    {	"kerberos4-cross-realm",	0, 	arg_flag,
++	&enable_v4_cross_realm,
++	"respond to kerberos 4 requests from foreign realms" 
++    },
+     { 
+ 	"v4-realm",	'r',	arg_string, &v4_realm, 
+ 	"realm to serve v4-requests for"
+@@ -301,6 +306,12 @@
+     if(enable_v4 == -1)
+ 	enable_v4 = krb5_config_get_bool_default(context, cf, TRUE, "kdc", 
+ 					 "enable-kerberos4", NULL);
++    if(enable_v4_cross_realm == -1)
++	enable_v4_cross_realm =
++	    krb5_config_get_bool_default(context, NULL,
++					 FALSE, "kdc",
++					 "enable-kerberos4-cross-realm",
++					 NULL);
+     if(enable_524 == -1)
+ 	enable_524 = krb5_config_get_bool_default(context, cf, enable_v4, 
+ 						  "kdc", "enable-524", NULL);
+@@ -325,8 +336,11 @@
+ 				    "kdc",
+ 				    "v4-realm",
+ 				    NULL);
+-	if(p)
++	if(p != NULL) {
+ 	    v4_realm = strdup(p);
++	    if (v4_realm == NULL)
++		krb5_errx(context, 1, "out of memory");
++	}
+     }
+     if (enable_kaserver == -1)
+ 	enable_kaserver = krb5_config_get_bool_default(context, cf, FALSE,
+@@ -355,6 +369,8 @@
+ #ifdef KRB4
+     if(v4_realm == NULL){
+ 	v4_realm = malloc(40); /* REALM_SZ */
++	if (v4_realm == NULL)
++	    krb5_errx(context, 1, "out of memory");
+ 	krb_get_lrealm(v4_realm, 1);
+     }
+ #endif
+Index: kerberosV/src/kdc/kdc.8
+===================================================================
+RCS file: /cvs/src/kerberosV/src/kdc/kdc.8,v
+retrieving revision 1.2
+retrieving revision 1.2.6.1
+diff -u -r1.2 -r1.2.6.1
+--- kerberosV/src/kdc/kdc.8	25 Jun 2001 04:43:37 -0000	1.2
++++ kerberosV/src/kdc/kdc.8	22 Mar 2003 21:26:30 -0000	1.2.6.1
+@@ -1,4 +1,4 @@
+-.\" $KTH: kdc.8,v 1.13 2001/06/08 21:35:32 joda Exp $
++.\" $Id: kdc.8,v 1.2.6.1 2003/03/22 21:26:30 margarida Exp $
+ .\"
+ .Dd July 27, 1997
+ .Dt KDC 8
+@@ -19,6 +19,7 @@
+ .Fl -v4-realm= Ns Ar string
+ .Xc
+ .Oc
++.Op Fl -kerberos4-cross-realm
+ .Op Fl K | Fl -no-kaserver
+ .Op Fl r Ar realm
+ .Op Fl -v4-realm= Ns Ar realm
+@@ -56,6 +57,12 @@
+ .Xc
+ Gives an upper limit on the size of the requests that the kdc is
+ willing to handle.
++.It Xo
++.Fl -kerberos4-cross-realm
++.Xc
++respond to kerberos 4 requests from foreign realms.
++This is a known security hole and should not be enabled unless you
++understand the consequences and are willing to live with them.
+ .It Xo
+ .Fl H Ns ,
+ .Fl -enable-http
+Index: kerberosV/src/kdc/kdc_locl.h
+===================================================================
+RCS file: /cvs/src/kerberosV/src/kdc/kdc_locl.h,v
+retrieving revision 1.3
+retrieving revision 1.3.4.1
+diff -u -r1.3 -r1.3.4.1
+--- kerberosV/src/kdc/kdc_locl.h	6 Feb 2002 09:10:02 -0000	1.3
++++ kerberosV/src/kdc/kdc_locl.h	22 Mar 2003 21:26:30 -0000	1.3.4.1
+@@ -67,6 +67,7 @@
+ extern char *v4_realm;
+ extern int enable_v4;
+ extern int enable_524;
++extern int enable_v4_cross_realm;
+ extern krb5_boolean enable_kaserver;
+ #endif
+ 
+Index: kerberosV/src/kdc/kerberos4.c
+===================================================================
+RCS file: /cvs/src/kerberosV/src/kdc/kerberos4.c,v
+retrieving revision 1.2
+retrieving revision 1.2.2.1
+diff -u -r1.2 -r1.2.2.1
+--- kerberosV/src/kdc/kerberos4.c	6 Jun 2002 00:37:36 -0000	1.2
++++ kerberosV/src/kdc/kerberos4.c	22 Mar 2003 21:26:30 -0000	1.2.2.1
+@@ -430,6 +430,13 @@
+ 	    goto out2;
+ 	}
+ 
++	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
++	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
++	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
++			   "Can't hop realms");
++	    goto out2;
++	}
++
+ 	if(strcmp(sname, "changepw") == 0){
+ 	    kdc_log(0, "Bad request for changepw ticket");
+ 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+

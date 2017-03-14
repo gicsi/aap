@@ -1,0 +1,45 @@
+Description of problem:
+seems already fixed as Bug 740327, but appears again.
+
+Version-Release number of selected component (if applicable):
+ user@dell-fedora  ~/rpmbuild/SRPMS  uname -r
+4.0.4-303.fc22.x86_64
+ user@dell-fedora  ~/rpmbuild/SRPMS  rpm -qa | grep mock
+mock-1.2.9-1.fc22.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.prepare src.rpm
+2.mock xxx.src.rpm or 
+mock -r /etc/mock/fedora-22-x86_64.cfg --rebuild kernel-4.0.4-303.freesign.fc22.src.rpm
+
+Actual results:
+ user@dell-fedora  ~/rpmbuild/SRPMS  id user
+uid=1000(user) gid=1000(user) 组=1000(user),10(wheel),36(kvm),979(libvirt),135(mock),977(pesign),1001(mockbuild)
+ user@dell-fedora  ~/rpmbuild/SRPMS  mock -r /etc/mock/fedora-22-x86_64.cfg --rebuild kernel-4.0.4-303.freesign.fc22.src.rpm
+ERROR: Must be member of 'mock' group to run mock! (wheel, user, user)
+Traceback (most recent call last):
+  File "/usr/sbin/mock", line 831, in <module>
+    main()
+  File "/usr/lib/python3.4/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 603, in main
+    groupcheck(uidManager.unprivGid, config_opts['chrootgid'])
+  File "/usr/lib/python3.4/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 540, in groupcheck
+    (name, ", ".join(members)))
+RuntimeError: Must be member of 'mock' group to run mock! (wheel, user, user)
+ ✘ user@dell-fedora  ~/rpmbuild/SRPMS  
+
+
+Expected results:
+should works fine
+
+
+Additional info:
+Restart the OS seems OK.
+Just Record it!

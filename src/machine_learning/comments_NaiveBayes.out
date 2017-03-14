@@ -1,0 +1,27 @@
+loading ./data/comments
+2 labels: ['bug', 'vuln']
+calculating word scores
+using bag of words from known set feature extraction
+1000 words meet min_score and/or max_feats
+1093 training feats, 562 testing feats
+training NaiveBayes classifier
+accuracy: 0.734875
+bug precision: 0.888889
+bug recall: 0.686327
+bug f-measure: 0.774584
+vuln precision: 0.572993
+vuln recall: 0.830688
+vuln f-measure: 0.678186
+10 most informative features
+Most Informative Features
+   ('allow', 'attacker') = True             vuln : bug    =     40.0 : 1.0
+                   items = True              bug : vuln   =     31.3 : 1.0
+                overflow = True             vuln : bug    =     30.1 : 1.0
+                remember = True              bug : vuln   =     27.6 : 1.0
+ ('upstream', 'release') = True              bug : vuln   =     27.6 : 1.0
+  ('current', 'version') = True              bug : vuln   =     27.3 : 1.0
+                    mind = True              bug : vuln   =     26.9 : 1.0
+                sendmail = True             vuln : bug    =     26.9 : 1.0
+      ('found', 'https') = True              bug : vuln   =     26.6 : 1.0
+('https', 'fedoraproject') = True              bug : vuln   =     26.4 : 1.0
+dumping NaiveBayesClassifier to ./comments_NaiveBayes.pickle

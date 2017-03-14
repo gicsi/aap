@@ -1,0 +1,42 @@
+Description of problem:
+In /usr/local/lib64/perl5/List/Util.pm line 22(XSLoader::load('List::Util', $XS_VERSION);)   segfaults.
+I observed this by calling it from updmap from the texlive package.
+Perl debug output:
+
+Signal SEGV at /usr/local/lib64/perl5/List/Util.pm line 22.
+	require List/Util.pm called at /usr/local/lib64/perl5/Scalar/Util.pm line 11
+	require Scalar/Util.pm called at /usr/share/perl5/vendor_perl/File/Temp.pm line 18
+	File::Temp::BEGIN() called at /usr/local/lib64/perl5/List/Util.pm line 0
+	eval {...} called at /usr/local/lib64/perl5/List/Util.pm line 0
+	require File/Temp.pm called at /usr/local/tlpkg/TeXLive/TLUtils.pm line 205
+	TeXLive::TLUtils::BEGIN() called at /usr/local/lib64/perl5/List/Util.pm line 0
+	eval {...} called at /usr/local/lib64/perl5/List/Util.pm line 0
+	require TeXLive/TLUtils.pm called at /usr/local/bin/x86_64-unknown-linux-gnu//updmap line 41
+	main::BEGIN() called at /usr/local/lib64/perl5/List/Util.pm line 0
+	eval {...} called at /usr/local/lib64/perl5/List/Util.pm line 0
+zsh: abort (core dumped)  perl -d /usr/local/bin/x86_64-unknown-linux-gnu//updmap
+
+
+Version-Release number of selected component (if applicable):
+perl 5.10.2
+
+How reproducible:
+call updmap 
+
+Steps to Reproduce:
+1. updmap
+
+Actual results:
+Segfault 
+
+Expected results:
+do not know
+This file is not provided by Fedora.  Perl doesn't guarantee binary compatibility and binary third party modules may need to be recompiled if you built them against an older version.
+Which file is not provided by Fedora
+Fedora does not install any file below /usr/local
+=> The files in question are not provided by Fedora.
+Oohh
+
+Thanks guys, for the fast support.
+
+There was another perl installation on the machine.

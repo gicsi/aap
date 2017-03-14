@@ -1,0 +1,51 @@
+Description of problem:
+
+When grub.cfg contains special characters like &, $, etc., grub2 treats them like metacharacters and gives them special meaning. This is - in some cases - unwanted in the case of a kernel command line.
+
+The grub documentation [1], section 5.2, mentions that
+
+  "Enclosing characters in single quotes preserves the literal value of each character within the quotes. A single quote may not occur between single quotes, even when preceded by a backslash."
+
+This means that pre-processing the kernel command line by enclosing it in single quotes and escaping any existing single quotes should make grub pass the cmdline unchanged, without interpreting it as special.
+
+For example:
+
+  lorem ipsum&dolor$sit'amet"
+
+would be specified as
+
+  'lorem ipsum&dolor$sit'\''amet"'
+
+However this instead becomes, when "cat /proc/cmdline" on a running system,
+
+  "lorem ipsum&dolor$sit\'amet\""
+
+Turning it into multiple arguments for the linux/linux16 command by using a variable,
+
+  set testvar='lorem ipsum&dolor$sit'\''amet"'
+  linux16 /some/image ... $testvar
+
+gets rid of the double quotes (which are a valid operation by the linux/linux16 command), but still manages to overquote / overescape the result:
+
+  lorem ipsum&dolor$sit\'amet\"
+
+
+[1]: http://www.gnu.org/software/grub/manual/html_node/Shell_002dlike-scripting.html#Shell_002dlike-scripting
+
+
+Version-Release number of selected component (if applicable):
+grub2-2.02-0.16.el7.x86_64
+
+How reproducible:
+always
+
+Actual results:
+grub overescapes the input on (at least) linux/linux16 command lines
+
+Expected results:
+grub behaves according to docs, without treating anything inside '' as special
+
+Additional info:
+This issue was somewhat discussed upstream, http://lists.gnu.org/archive/html/help-grub/2015-06/msg00004.html .
+
+There's a potential customer impact if the customer uses ie. PHP/CGI to generate a parametrized kickstart, passing it as ks= on the cmdline. For example ks=http://host/ks.cfg?param1=value1&param2=value2 . This worked fine with grub1 (on RHEL6) and syslinux (pxelinux), but doesn't with grub2 (important for UEFI and RHEL7).

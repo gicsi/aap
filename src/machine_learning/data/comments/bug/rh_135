@@ -1,0 +1,12 @@
+Your package perl-Data-Dump-Streamer failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10125733
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047628
+build.log
+Created attachment 1047629
+root.log
+Created attachment 1047630
+state.log
+*** This bug has been marked as a duplicate of bug 1231204 ***

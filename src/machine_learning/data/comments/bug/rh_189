@@ -1,0 +1,47 @@
+Version-Release number of selected component:
+webkitgtk4-2.8.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 3
+cmdline:        /usr/libexec/webkit2gtk-4.0/WebKitWebProcess 42
+crash_function: IPC::Connection::invalidate
+executable:     /usr/libexec/webkit2gtk-4.0/WebKitWebProcess
+global_pid:     13116
+kernel:         4.0.6-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (7 frames)
+ #0 IPC::Connection::invalidate at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/Connection.cpp:345
+ #1 WebKit::WebInspectorUI::closeWindow at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/WebProcess/WebPage/WebInspectorUI.cpp:121
+ #2 WebCore::InspectorFrontendHost::closeWindow at /usr/src/debug/webkitgtk-2.8.3/Source/WebCore/inspector/InspectorFrontendHost.cpp:166
+ #3 WebCore::jsInspectorFrontendHostPrototypeFunctionCloseWindow at /usr/src/debug/webkitgtk-2.8.3/x86_64-redhat-linux-gnu/DerivedSources/WebCore/JSInspectorFrontendHost.cpp:185
+ #4 ??
+ #5 ??
+ #6 llint_entry at /lib64/libjavascriptcoregtk-4.0.so.18
+Created attachment 1046094
+File: backtrace
+Created attachment 1046095
+File: cgroup
+Created attachment 1046096
+File: core_backtrace
+Created attachment 1046097
+File: dso_list
+Created attachment 1046098
+File: environ
+Created attachment 1046099
+File: limits
+Created attachment 1046100
+File: maps
+Created attachment 1046101
+File: mountinfo
+Created attachment 1046102
+File: namespaces
+Created attachment 1046103
+File: open_fds
+Created attachment 1046104
+File: proc_pid_status
+This should be fixed in the upcoming 2.8.4 update.

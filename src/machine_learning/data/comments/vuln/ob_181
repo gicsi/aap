@@ -1,0 +1,5 @@
+It is possible for a local user to execute arbitrary code resulting in escalation of
+privileges due to a stack overrun in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=compat_ibcs2&amp;sektion=8&amp;apropos=0&amp;manpath=OpenBSD+Current&amp;arch=i386">compat_ibcs2(8)</a>.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/i386/011_ibcs2.patch">
+A source code patch exists which remedies this problem.</a>

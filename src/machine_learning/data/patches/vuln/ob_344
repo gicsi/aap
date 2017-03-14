@@ -1,0 +1,135 @@
+
+OpenBSD 5.4 errata 7, Apr 8, 2014:  Missing bounds checking in OpenSSL's
+implementation of the TLS/DTLS heartbeat extension (RFC6520) which, if
+exploited, can result in a leak of memory contents.
+
+After patching, private keys and certificates exposed to services running
+this code (for example web/mail server SSL certificates) should be replaced
+and old certificates revoked.
+
+Only SSL/TLS services are affected.  Software that uses libcrypto alone
+is not affected.  In particular, ssh/sshd are not affected and there
+is no need to regenerate SSH host keys that have not otherwise been
+exposed.
+
+Apply patch using:
+
+    cat 007_openssl.patch | (cd /usr/src && patch -p0)
+
+Then build and install libssl
+
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+Also recompile any statically-linked binaries depending on it - in
+the base OS, this is just ftp(1):
+
+    cd /usr/src/usr.bin/ftp
+    make obj
+    make clean
+    make
+    make install
+
+Then restart services which depend on SSL.
+
+Index: lib/libssl/src/ssl/d1_both.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_both.c,v
+retrieving revision 1.1.1.5
+retrieving revision 1.1.1.5.4.1
+diff -u -r1.1.1.5 -r1.1.1.5.4.1
+--- lib/libssl/src/ssl/d1_both.c	13 Oct 2012 21:23:49 -0000	1.1.1.5
++++ lib/libssl/src/ssl/d1_both.c	8 Apr 2014 00:55:23 -0000	1.1.1.5.4.1
+@@ -1452,26 +1452,36 @@
+ 	unsigned int payload;
+ 	unsigned int padding = 16; /* Use minimum padding */
+ 
+-	/* Read type and payload length first */
+-	hbtype = *p++;
+-	n2s(p, payload);
+-	pl = p;
+-
+ 	if (s->msg_callback)
+ 		s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
+ 			&s->s3->rrec.data[0], s->s3->rrec.length,
+ 			s, s->msg_callback_arg);
+ 
++	/* Read type and payload length first */
++	if (1 + 2 + 16 > s->s3->rrec.length)
++		return 0; /* silently discard */
++	hbtype = *p++;
++	n2s(p, payload);
++	if (1 + 2 + payload + 16 > s->s3->rrec.length)
++		return 0; /* silently discard per RFC 6520 sec. 4 */
++	pl = p;
++
+ 	if (hbtype == TLS1_HB_REQUEST)
+ 		{
+ 		unsigned char *buffer, *bp;
++		unsigned int write_length = 1 /* heartbeat type */ +
++					    2 /* heartbeat length */ +
++					    payload + padding;
+ 		int r;
+ 
++		if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
++			return 0;
++
+ 		/* Allocate memory for the response, size is 1 byte
+ 		 * message type, plus 2 bytes payload length, plus
+ 		 * payload, plus padding
+ 		 */
+-		buffer = OPENSSL_malloc(1 + 2 + payload + padding);
++		buffer = OPENSSL_malloc(write_length);
+ 		bp = buffer;
+ 
+ 		/* Enter response type, length and copy payload */
+@@ -1482,11 +1492,11 @@
+ 		/* Random padding */
+ 		RAND_pseudo_bytes(bp, padding);
+ 
+-		r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, 3 + payload + padding);
++		r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, write_length);
+ 
+ 		if (r >= 0 && s->msg_callback)
+ 			s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+-				buffer, 3 + payload + padding,
++				buffer, write_length,
+ 				s, s->msg_callback_arg);
+ 
+ 		OPENSSL_free(buffer);
+Index: lib/libssl/src/ssl/t1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/t1_lib.c,v
+retrieving revision 1.12
+retrieving revision 1.12.4.1
+diff -u -r1.12 -r1.12.4.1
+--- lib/libssl/src/ssl/t1_lib.c	14 Feb 2013 15:11:44 -0000	1.12
++++ lib/libssl/src/ssl/t1_lib.c	8 Apr 2014 00:55:23 -0000	1.12.4.1
+@@ -2441,15 +2441,19 @@
+ 	unsigned int payload;
+ 	unsigned int padding = 16; /* Use minimum padding */
+ 
+-	/* Read type and payload length first */
+-	hbtype = *p++;
+-	n2s(p, payload);
+-	pl = p;
+-
+ 	if (s->msg_callback)
+ 		s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
+ 			&s->s3->rrec.data[0], s->s3->rrec.length,
+ 			s, s->msg_callback_arg);
++
++	/* Read type and payload length first */
++	if (1 + 2 + 16 > s->s3->rrec.length)
++		return 0; /* silently discard */
++	hbtype = *p++;
++	n2s(p, payload);
++	if (1 + 2 + payload + 16 > s->s3->rrec.length)
++		return 0; /* silently discard per RFC 6520 sec. 4 */
++	pl = p;
+ 
+ 	if (hbtype == TLS1_HB_REQUEST)
+ 		{
+

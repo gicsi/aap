@@ -1,0 +1,12 @@
+A workaround for an xterm problem that causes <strong>vi</strong> to not
+restore the correct cursor position on exit.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/terminfo.src.patch">
+A source code patch exists which remedies this problem.</a>
+<br>
+Alternately, you can also download a pre-compiled terminfo file to be
+installed as <strong>/usr/share/misc/terminfo.db</strong>.  For i386,
+alpha and mips, use the
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/terminfo.db-LE.tar.gz">
+little endian</a> version.  For sparc, m68k and powerpc, use the
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/terminfo.db-BE.tar.gz">
+big endian</a> version.

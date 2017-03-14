@@ -1,0 +1,3 @@
+The Emacs add-on packaging guidelines no longer stipulate that packages which also bundle support for Emacs should split out those Emacs files into separate sub-packages. This package should instead ship those files with the main package which should also Require emacs-filesystem. See https://fedoraproject.org/wiki/Packaging:Emacs for more detail.
+Could you be more specific?  What perl subpackage are you talking about?
+Hm, apologies, it seems my script hit a false positive here. I'll close this.

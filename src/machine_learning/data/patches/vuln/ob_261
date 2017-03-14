@@ -1,0 +1,46 @@
+This file contains a patch for OpenBSD 3.9 errata #17.
+
+For more information about this errata, please refer to
+  http://www.OpenBSD.org/errata39.html#agp
+
+Apply this patch by doing:
+	cd /usr/src
+	patch -p0 < 017_agp.patch
+
+And then rebuild and install the kernel.
+
+For more information about OpenBSD errata and how to apply them, please
+refer to FAQ 10.15: http://www.OpenBSD.org/faq/faq10.html#Patches
+
+For more information about compiling the OpenBSD kernel, please refer to
+FAQ 5.3.4: http://www.OpenBSD.org/faq/faq5.html#Building
+
+
+
+Index: sys/dev/pci/vga_pci.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/vga_pci.c,v
+retrieving revision 1.20
+retrieving revision 1.20.2.1
+diff -u -r1.20 -r1.20.2.1
+--- sys/dev/pci/vga_pci.c	19 Nov 2005 02:18:00 -0000	1.20
++++ sys/dev/pci/vga_pci.c	3 Jan 2007 21:11:10 -0000	1.20.2.1
+@@ -317,8 +317,6 @@
+ 
+ 	switch (cmd) {
+ 	case AGPIOC_INFO:
+-		if (!sc->sc_chipc)
+-			return (ENXIO);
+ 	case AGPIOC_ACQUIRE:
+ 	case AGPIOC_RELEASE:
+ 	case AGPIOC_SETUP:
+@@ -326,6 +324,8 @@
+ 	case AGPIOC_DEALLOCATE:
+ 	case AGPIOC_BIND:
+ 	case AGPIOC_UNBIND:
++		if (sc->sc_methods == NULL || sc->sc_chipc == NULL)
++			return (ENXIO);
+ 		if (cmd != AGPIOC_INFO && !(flag & FWRITE))
+ 			return (EPERM);
+ 		break;
+

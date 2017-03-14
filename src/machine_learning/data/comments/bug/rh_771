@@ -1,0 +1,4 @@
+seen on rhel 6.6 release
+I had specified that the hardware certification was rhel 7.1.  When 6.6 (the actual version) was specified in the cert, the problem went away.
+
+closing.

@@ -1,0 +1,19 @@
+Description of problem:
+Please consider adding blacklisting into the rpmgrill. I had already
+written the corresponding patch which:
+
+Adds "--blacklist" option which provides a blacklist file
+to the rpmgrill in format:
+
+# COMMENT
+# BuildLog module  
+MacroExpansion
+MakeError
+...
+    
+where each blacklisted test case is on a separate line.
+Found issues in test cases specified in blacklist file will
+not be reported by rpmgrill.
+Created attachment 1044407
+added-blacklisting-of-test-cases.patch
+*** This bug has been marked as a duplicate of bug 1202633 ***

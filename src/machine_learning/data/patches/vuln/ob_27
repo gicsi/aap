@@ -1,0 +1,28 @@
+Note: this is the fourth version of this patch.
+
+Apply by doing
+	cd /usr/src/sys/netinet
+	patch -p0 < rst.patch
+
+And then rebuild your kernel.
+
+Index: tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.19
+diff -u -r1.19 tcp_input.c
+--- tcp_input.c	1998/06/27 02:42:40	1.19
++++ tcp_input.c	1999/02/19 06:24:46
+@@ -1083,10 +1083,7 @@
+ 	 *	Close the tcb.
+ 	 */
+ 	if (tiflags & TH_RST) {
+-
+-		if ((ti->ti_seq != tp->rcv_nxt) &&
+-		    (ti->ti_ack && ((SEQ_GT(ti->ti_ack, tp->snd_nxt) ||
+-		      SEQ_LT(ti->ti_ack, (tp->snd_nxt - tp->snd_wnd))))))
++		if (ti->ti_seq != tp->last_ack_sent)
+ 			goto drop;
+ 
+ 		switch (tp->t_state) {
+

@@ -1,0 +1,3 @@
+Insufficient checks in the IPSEC AH IPv4 option handling code can lead to a buffer overrun leading to a remote DoS. This option is not on by default.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/023_ip_ah.patch">
+A source code patch exists which remedies this problem.</a>

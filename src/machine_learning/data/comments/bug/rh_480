@@ -1,0 +1,89 @@
+Description of problem:
+We have got a system with EPEL repository and there we have got python packages (python-requests, python-urllib3, python-backports, python-chardet, python-ordereddict, python-six),  which were installed from epel (for example as dependences for cloud-init). 
+
+When we try to install redhat-access-insights on this system, everything looks like good. The problem is, when we try to run redhat-access-insights, we get the traceback (ImportError: No module named 'requests.packages.urllib3.fields').
+
+
+The problem is that, the cloud-init package install all dependences from EPEL and after that, the package redhat-access-insights (installed from rh-access-insights-server6-x86_64) upgrade only python-requests, other packages stay in old version from EPEL.
+
+Yes, easy fix is upgrade system. But in my case, I install redhat-access-insights automatically from Satellite and there are this step and upgrade step two different actions, which are not running in the same time.
+
+Version-Release number of selected component (if applicable):
+redhat-access-insights-1.0.4-0.el6
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. We have got RHEL6 with cloud-ini package from EPEL.
+2. Setup access insights using Satellite5 or add rh-access-insights-server6-x86_64 channel and than install redhat-access-insights.
+3. Run commmand
+> redhat-access-insights --help
+Traceback (most recent call last):
+  File "/usr/bin/redhat-access-insights", line 9, in <module>
+    load_entry_point('redhat-access-insights==1.0.4', 'console_scripts', 'redhat-access-insights')()
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 299, in load_entry_point
+    return get_distribution(dist).load_entry_point(group, name)
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 2229, in load_entry_point
+    return ep.load()
+  File "/usr/lib/python2.6/site-packages/pkg_resources.py", line 1948, in load
+    entry = __import__(self.module_name, globals(),globals(), ['__name__'])
+  File "/usr/lib/python2.6/site-packages/redhat_access_insights/__init__.py", line 16, in <module>
+    import requests
+  File "/usr/lib/python2.6/site-packages/requests/__init__.py", line 59, in <module>
+    from .models import Request, Response, PreparedRequest
+  File "/usr/lib/python2.6/site-packages/requests/models.py", line 19, in <module>
+    from .packages.urllib3.fields import RequestField
+  File "/usr/lib/python2.6/site-packages/requests/packages/__init__.py", line 95, in load_module
+    raise ImportError("No module named '%s'" % (name,))
+ImportError: No module named 'requests.packages.urllib3.fields'   
+
+
+> rpm -q --requires redhat-access-insights
+/bin/sh  
+/bin/sh  
+/usr/bin/python  
+config(redhat-access-insights) = 0:1.0.4-0.el6
+libcgroup  
+pciutils  
+python  
+python(abi) = 2.6
+python-magic  
+python-requests >= 2.4
+python-setuptools  
+rpmlib(CompressedFileNames) <= 3.0.4-1
+rpmlib(FileDigests) <= 4.6.0-1
+rpmlib(PartialHardlinkSets) <= 4.0.4-1
+rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+rpmlib(PayloadIsXz) <= 5.2-1
+
+> rpm -q --requires python-requests
+ca-certificates  
+python(abi) = 2.6
+python-chardet  
+python-ordereddict  
+python-urllib3  
+rpmlib(CompressedFileNames) <= 3.0.4-1
+rpmlib(FileDigests) <= 4.6.0-1
+rpmlib(PartialHardlinkSets) <= 4.0.4-1
+rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+rpmlib(PayloadIsXz) <= 5.2-1
+
+
+Actual results:
+
+> rpm -q python-backports python-chardet python-ordereddict python-six
+python-backports-1.0-3.el6.x86_64
+python-chardet-2.0.1-1.el6.noarch
+python-ordereddict-1.1-2.el6.noarch
+python-six-1.7.3-1.el6.noarch
+
+
+Expected results:
+
+> rpm -q python-backports python-chardet python-ordereddict python-six
+python-backports-1.0-4.el6.x86_64
+python-chardet-2.2.1-1.el6.noarch
+python-ordereddict-1.1-3.el6ui.noarch
+python-six-1.9.0-2.el6.noarch
+*** This bug has been marked as a duplicate of bug 1224002 ***

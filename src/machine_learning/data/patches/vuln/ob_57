@@ -1,0 +1,23 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 026_talkd.patch
+	cd libexec/talkd
+	make obj && make depend && make && make install
+
+Index: libexec/talkd/announce.c
+===================================================================
+RCS file: /cvs/src/libexec/talkd/announce.c,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -r1.8 -r1.9
+--- libexec/talkd/announce.c	1998/08/18 03:42:10	1.8
++++ libexec/talkd/announce.c	2000/07/06 00:01:45	1.9
+@@ -160,6 +160,6 @@
+ 		*(bptr++) = '\n';
+ 	}
+ 	*bptr = '\0';
+-	fprintf(tf, big_buf);
++	fprintf(tf, "%s", big_buf);
+ 	fflush(tf);
+ }
+

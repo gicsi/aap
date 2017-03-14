@@ -1,0 +1,125 @@
+Description of problem:Detection of gesture of more than one finger has became worst with the libinput 0.18 update. Example of gesture would be two finger scrolling, before the update it detects fine but after the update it often register it as is I place the cursor using another finger when I already have one finger on the touchpad
+
+
+Version-Release number of selected component (if applicable): 0.18
+
+
+How reproducible:Very 
+
+
+Steps to Reproduce:
+1.Open anything that can be scrolled (a website)
+2.Use two finger to scroll down the page like you used to before the update
+3.Observe the decreased sensitivity in two finger detection/algorithm
+
+Actual results: Wonky scrolling half of the time
+
+
+Expected results: Flawless gesture detection as before the 0.18 update
+
+
+Additional info: output of libinput-list-devices
+
+Device:           Power Button
+Kernel:           /dev/input/event2
+Group:            1
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           Video Bus
+Kernel:           /dev/input/event4
+Group:            2
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           Sleep Button
+Kernel:           /dev/input/event1
+Group:            3
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           Lenovo EasyCamera
+Kernel:           /dev/input/event10
+Group:            4
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           Ideapad extra buttons
+Kernel:           /dev/input/event6
+Group:            5
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           AT Translated Set 2 keyboard
+Kernel:           /dev/input/event3
+Group:            6
+Seat:             seat0, default
+Capabilities:     keyboard 
+Tap-to-click:     n/a
+Left-handed:      n/a
+Nat.scrolling:    n/a
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   none
+Click methods:    none
+
+Device:           SynPS/2 Synaptics TouchPad
+Kernel:           /dev/input/event5
+Group:            7
+Seat:             seat0, default
+Size:             87.45x58.16mm
+Capabilities:     pointer 
+Tap-to-click:     disabled
+Left-handed:      disabled
+Nat.scrolling:    disabled
+Middle emulation: n/a
+Calibration:      n/a
+Scroll methods:   *two-finger 
+Click methods:    *button-areas clickfinger
+attach an evemu-record output for one of those misdetected gestures please, thanks.
+
+http://www.freedesktop.org/wiki/Evemu
+Created attachment 1045823
+The evemu-record file requested
+
+Here is the file requested, there are some cases of the issue appearing, but there are also cases where the two finger scrolling works as expected being recorded. Feel free to let me know if you only need one that when the gesture didn't work.
+Created attachment 1045973
+Updated evemu-record file
+
+This is a new one, with most of the event recorded being the glitched one.
+*** This bug has been marked as a duplicate of bug 1212230 ***

@@ -1,0 +1,10 @@
+Chris Evans reported several flaws (stack and integer overflows) in the
+<a href="http://www.inria.fr/koala/lehors/xpm.html">Xpm</a>
+library code that parses image files
+(<a href="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0687">CAN-2004-0687</a>,
+<a href="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0688">CAN-2004-0688</a>).
+Some of these would be exploitable when parsing malicious image files in
+an application that handles XPM images, if they could escape ProPolice.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/030_xpm.patch">
+A source code patch exists which remedies this problem.</a>

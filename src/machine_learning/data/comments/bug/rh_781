@@ -1,0 +1,59 @@
+Description of problem:
+I am attempting to start a docker image, exposing a locally assigned IP address, the creation fails due to a missing "DOCKER" Chain for the relevant firewall rule to be applied.
+
+
+
+Version-Release number of selected component (if applicable):
+docker-1.6.0-3.git9d26a07.fc22.x86_64
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. ip addr add 192.168.1.52/24 dev enp2s0
+2. docker run -d --name=TestBox -p 192.168.1.52:443:443 l3iggs/owncloud
+
+Actual results:
+Container fails to start.
+
+
+Expected results:
+Container to start.
+
+Additional info:
+I should note, that this appears to have odd behavior in so far as, I was able ot start a container in this manner after a restart, however no trying to create additional containers it appears to fail, additionally that original container fails to restart.
+
+Errors.
+
+Jun 18 18:33:32 behemouth docker[1502]: time="2015-06-18T18:33:32+01:00" level=info msg="POST /v1.18/containers/create?name=TestBox"
+Jun 18 18:33:32 behemouth docker[1502]: time="2015-06-18T18:33:32+01:00" level=info msg="+job create(TestBox)"
+Jun 18 18:33:34 behemouth docker[1502]: time="2015-06-18T18:33:34+01:00" level=info msg="+job log(create, aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5, docker.io/l3iggs/owncloud:latest)"
+Jun 18 18:33:34 behemouth docker[1502]: time="2015-06-18T18:33:34+01:00" level=info msg="-job log(create, aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5, docker.io/l3iggs/owncloud:latest) = OK (0)"
+Jun 18 18:33:34 behemouth docker[1502]: time="2015-06-18T18:33:34+01:00" level=info msg="-job create(TestBox) = OK (0)"
+Jun 18 18:33:34 behemouth docker[1502]: time="2015-06-18T18:33:34+01:00" level=info msg="POST /v1.18/containers/aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5/start"
+Jun 18 18:33:34 behemouth docker[1502]: time="2015-06-18T18:33:34+01:00" level=info msg="+job start(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="+job allocate_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job allocate_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5) = OK (0)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="+job allocate_port(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)"
+Jun 18 18:33:35 behemouth docker[1502]: [60a9b4cf.allocate_port(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)] Failed to allocate and map port 443: iptables failed: iptables --wait -t nat -A DOCKER -p tcp -d 192.168.1.52 --dport 443 ! -i docker0 -j DNAT --to-destination 172.17.0.18:443: iptables: No chain/target/match by that name.
+Jun 18 18:33:35 behemouth docker[1502]: (exit status 1)
+Jun 18 18:33:35 behemouth docker[1502]: iptables failed: iptables --wait -t nat -A DOCKER -p tcp -d 192.168.1.52 --dport 443 ! -i docker0 -j DNAT --to-destination 172.17.0.18:443: iptables: No chain/target/match by that name.
+Jun 18 18:33:35 behemouth docker[1502]: (exit status 1)
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job allocate_port(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5) = ERR (1)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="+job release_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job release_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5) = OK (0)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="+job release_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job release_interface(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5) = OK (0)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="+job log(die, aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5, docker.io/l3iggs/owncloud:latest)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job log(die, aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5, docker.io/l3iggs/owncloud:latest) = OK (0)"
+Jun 18 18:33:35 behemouth docker[1502]: Cannot start container aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5:  (exit status 1)
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=info msg="-job start(aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5) = ERR (1)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=error msg="Handler for POST /containers/{name:.*}/start returned error: Cannot start container aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5:  (exit status 1)"
+Jun 18 18:33:35 behemouth docker[1502]: time="2015-06-18T18:33:35+01:00" level=error msg="HTTP Error: statusCode=500 Cannot start container aa8ed47368af508ea79dccfe5012b2ddfb3aa5e847252164529899ae009acdf5:  (exit status 1)"
+Okay, this isn't as reproducible as I thought,
+
+For some reason it would appear that the DOCKER chain was removed during the creation/removal of docker containers.
+
+I've tested by stopping all containers, yet the DOCKER chain is still present, so no idea why/how it got removed.
+
+I'm going to make this as closed, until I can track down what was going on.

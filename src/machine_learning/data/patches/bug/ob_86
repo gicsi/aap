@@ -1,0 +1,167 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 012_imacdv.patch
+And then rebuild your kernel.
+
+Index: sys/arch/powerpc/pci/vgafb_pci.c
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/pci/vgafb_pci.c,v
+retrieving revision 1.1
+diff -u -r1.1 vgafb_pci.c
+--- sys/arch/powerpc/pci/vgafb_pci.c	2000/09/06 02:12:15	1.1
++++ sys/arch/powerpc/pci/vgafb_pci.c	2000/12/15 01:22:32
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: vgafb_pci.c,v 1.1 2000/09/06 02:12:15 rahnds Exp $	*/
++/*	$OpenBSD: vgafb_pci.c,v 1.2 2000/11/21 02:03:44 deraadt Exp $	*/
+ /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
+ 
+ /*
+@@ -231,6 +231,9 @@
+ 		potential = 1;
+ 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+ 	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
++		potential = 1;
++	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
++	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_MISC)
+ 		potential = 1;
+ 
+ 	if (!potential)
+Index: sys/arch/powerpc/pci/vgafb_pcivar.h
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/pci/vgafb_pcivar.h,v
+retrieving revision 1.1
+diff -u -r1.1 vgafb_pcivar.h
+--- sys/arch/powerpc/pci/vgafb_pcivar.h	2000/09/06 02:12:15	1.1
++++ sys/arch/powerpc/pci/vgafb_pcivar.h	2000/12/15 01:22:32
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: vgafb_pcivar.h,v 1.1 2000/09/06 02:12:15 rahnds Exp $	*/
++/*	$OpenBSD: vgafb_pcivar.h,v 1.2 2000/11/21 02:03:45 deraadt Exp $	*/
+ /*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
+ 
+ /*
+@@ -31,6 +31,8 @@
+ #define	DEVICE_IS_VGA_PCI(class, id)					\
+ 	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
+ 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||	\
++	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
++	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC) ||	\
+ 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
+ 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
+ 
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 011_hwcrypto.patch
+And then rebuild your kernel.
+
+Index: sys/crypto/crypto.c
+===================================================================
+RCS file: /cvs/src/sys/crypto/crypto.c,v
+retrieving revision 1.14
+diff -u -r1.14 crypto.c
+--- crypto.c	2000/09/07 18:44:29	1.14
++++ crypto.c	2000/12/13 16:18:29
+@@ -106,7 +106,7 @@
+     if (err == 0)
+     {
+ 	(*sid) = hid;
+-	(*sid) <<= 31;
++	(*sid) <<= 32;
+ 	(*sid) |= (lid & 0xffffffff);
+         crypto_drivers[hid].cc_sessions++;
+     }
+@@ -128,7 +128,7 @@
+       return EINVAL;
+ 
+     /* Determine two IDs */
+-    hid = (sid >> 31) & 0xffffffff;
++    hid = (sid >> 32) & 0xffffffff;
+ 
+     if (hid >= crypto_drivers_num)
+       return ENOENT;
+@@ -317,7 +317,7 @@
+ 	return 0;
+     }
+ 
+-    hid = (crp->crp_sid >> 31) & 0xffffffff;
++    hid = (crp->crp_sid >> 32) & 0xffffffff;
+ 
+     if (hid >= crypto_drivers_num)
+     {
+
+Fixes fastroute-related panic's (pr 1541).
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_fastroute.patch
+And then rebuild your kernel.
+
+Index: sys/netinet/ip_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_input.c,v
+retrieving revision 1.60
+diff -u -r1.60 ip_input.c
+--- ip_input.c	2000/10/13 02:01:10	1.60
++++ ip_input.c	2000/12/11 04:58:20
+@@ -420,6 +420,13 @@
+ #endif /* IPSEC */
+ 			return;
+ 		}
++		if (m0 == 0) {  /* in case of 'fastroute' */
++#ifdef IPSEC
++			if (tdbi)
++				free (tdbi, M_TEMP);
++#endif /* IPSEC */
++			return;
++		}
+ 		ip = mtod(m = m0, struct ip *);
+ 	}
+ #endif
+Index: sys/netinet/ip_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_output.c,v
+retrieving revision 1.83
+diff -u -r1.83 ip_output.c
+--- ip_output.c	2000/10/25 22:40:40	1.83
++++ ip_output.c	2000/12/11 04:58:29
+@@ -557,16 +557,21 @@
+ 			error = EHOSTUNREACH;
+ 			splx(s);
+ 			goto done;
+-		    } else {
+-			ip = mtod(m = m0, struct ip *);
+-			hlen = ip->ip_hl << 2;
+ 		    }
++		    if (m0 == 0) { /* in case of 'fastroute' */
++			error = 0;
++			splx(s);
++			goto done;
++		    }
++		    ip = mtod(m = m0, struct ip *);
++		    hlen = ip->ip_hl << 2;
+   	        }
+ #endif /* IPFILTER */
+ 		
+ 		tdb = gettdb(sspi, &sdst, sproto);
+ 		if (tdb == NULL) {
+ 			error = EHOSTUNREACH;
++			splx(s);
+ 			m_freem(m);
+ 			goto done;
+ 		}
+@@ -597,8 +602,12 @@
+ 		if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
+ 			error = EHOSTUNREACH;
+ 			goto done;
+-		} else
+-			ip = mtod(m = m0, struct ip *);
++		}
++		if (m0 == 0) { /* in case of 'fastroute' */
++			error = 0;
++			goto done;
++		}
++		ip = mtod(m = m0, struct ip *);
+ 	}
+ #endif
+ 	/*
+

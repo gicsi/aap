@@ -1,0 +1,6 @@
+Created attachment 1041929
+Enable servlet environment
+
+Description of problem:
+Please enable servlet environment, which is now used by jetty. Patch attached
+weld-core-2.2.6-4 should now be available in rawhide

@@ -1,0 +1,201 @@
+Created attachment 1048833
+quota
+
+Description of problem:
+===================
+Quotad crashed 
+
+
+Version-Release number of selected component (if applicable):
+======================
+glusterfs-3.7.1-6
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+=================
+1.Create a volume and enable bitrot on the volume
+2.Copy linux binary and untar the same and enable quota on the volume
+3.Set Quota limit 
+
+Actual results:
+=============
+Quotad Crashed 
+
+
+Expected results:
+
+
+Additional info:
+============
+IP: 10.70.36.22
+
+Attaching the core
+I am not able to create new directory from the mount and getting following error message 
+
+[root@scarface dist3]# mkdir test
+mkdir: cannot create directory `test': Transport endpoint is not connected
+[root@rhs-hpc-srv2 core]# gdb /usr/sbin/glusterfs core.32672.1436268624.dump
+GNU gdb (GDB) Red Hat Enterprise Linux (7.2-83.el6)
+Copyright (C) 2010 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>...
+Reading symbols from /usr/sbin/glusterfs...(no debugging symbols found)...done.
+[New Thread 32713]
+[New Thread 32672]
+[New Thread 32674]
+[New Thread 32676]
+[New Thread 32673]
+[New Thread 32677]
+[New Thread 32675]
+Reading symbols from /usr/lib64/libglusterfs.so.0...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/libglusterfs.so.0
+Reading symbols from /usr/lib64/libgfrpc.so.0...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/libgfrpc.so.0
+Reading symbols from /usr/lib64/libgfxdr.so.0...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/libgfxdr.so.0
+Reading symbols from /lib64/libz.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libz.so.1
+Reading symbols from /lib64/libuuid.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libuuid.so.1
+Reading symbols from /lib64/libm.so.6...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libm.so.6
+Reading symbols from /lib64/librt.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/librt.so.1
+Reading symbols from /lib64/libpthread.so.0...(no debugging symbols found)...done.
+[Thread debugging using libthread_db enabled]
+Loaded symbols for /lib64/libpthread.so.0
+Reading symbols from /usr/lib64/libcrypto.so.10...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/libcrypto.so.10
+Reading symbols from /lib64/libc.so.6...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libc.so.6
+Reading symbols from /lib64/libdl.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libdl.so.2
+Reading symbols from /lib64/ld-linux-x86-64.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/ld-linux-x86-64.so.2
+Reading symbols from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+Reading symbols from /usr/lib64/libssl.so.10...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/libssl.so.10
+Reading symbols from /lib64/libgssapi_krb5.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libgssapi_krb5.so.2
+Reading symbols from /lib64/libkrb5.so.3...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libkrb5.so.3
+Reading symbols from /lib64/libcom_err.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libcom_err.so.2
+Reading symbols from /lib64/libk5crypto.so.3...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libk5crypto.so.3
+Reading symbols from /lib64/libkrb5support.so.0...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libkrb5support.so.0
+Reading symbols from /lib64/libkeyutils.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libkeyutils.so.1
+Reading symbols from /lib64/libresolv.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libresolv.so.2
+Reading symbols from /lib64/libselinux.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libselinux.so.1
+Reading symbols from /lib64/libnss_files.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libnss_files.so.2
+Reading symbols from /usr/lib64/glusterfs/3.7.1/xlator/protocol/client.so...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/glusterfs/3.7.1/xlator/protocol/client.so
+Reading symbols from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+Reading symbols from /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so
+Reading symbols from /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so...(no debugging symbols found)...done.
+Loaded symbols for /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so
+Reading symbols from /lib64/libgcc_s.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib64/libgcc_s.so.1
+Core was generated by `/usr/sbin/glusterfs -s localhost --volfile-id gluster/quotad -p /var/lib/gluste'.
+Program terminated with signal 11, Segmentation fault.
+#0  0x00007fb0f2ca5b01 in afr_local_init () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+Missing separate debuginfos, use: debuginfo-install glusterfs-fuse-3.7.1-6.el6rhs.x86_64
+(gdb) bt
+#0  0x00007fb0f2ca5b01 in afr_local_init () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#1  0x00007fb0f2caf2ae in afr_discover () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#2  0x00007fb0f2caf89d in afr_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#3  0x00007fb0f2a31a19 in dht_discover () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so
+#4  0x00007fb0f2a34e5e in dht_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so
+#5  0x00007fb0f27f9296 in qd_nameless_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so
+#6  0x00007fb0f27fa377 in quotad_aggregator_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so
+#7  0x00007fb1003ccee5 in rpcsvc_handle_rpc_call () from /usr/lib64/libgfrpc.so.0
+#8  0x00007fb1003cd123 in rpcsvc_notify () from /usr/lib64/libgfrpc.so.0
+#9  0x00007fb1003cead8 in rpc_transport_notify () from /usr/lib64/libgfrpc.so.0
+#10 0x00007fb0f5134255 in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+#11 0x00007fb0f5135e4d in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+#12 0x00007fb100667970 in ?? () from /usr/lib64/libglusterfs.so.0
+#13 0x00007fb0ff6eea51 in start_thread () from /lib64/libpthread.so.0
+#14 0x00007fb0ff05896d in clone () from /lib64/libc.so.6
+(gdb)
+Thread 7 (Thread 0x7fae2d188700 (LWP 30656)):
+#0  0x00007fae36b3aa0e in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libpthread.so.0
+#1  0x00007fae37a92cab in syncenv_task () from /usr/lib64/libglusterfs.so.0
+#2  0x00007fae37a97ba0 in syncenv_processor () from /usr/lib64/libglusterfs.so.0
+#3  0x00007fae36b36a51 in start_thread () from /lib64/libpthread.so.0
+#4  0x00007fae364a096d in clone () from /lib64/libc.so.6
+
+Thread 6 (Thread 0x7fae2db89700 (LWP 30655)):
+#0  0x00007fae36b3aa0e in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libpthread.so.0
+#1  0x00007fae37a92cab in syncenv_task () from /usr/lib64/libglusterfs.so.0
+#2  0x00007fae37a97ba0 in syncenv_processor () from /usr/lib64/libglusterfs.so.0
+#3  0x00007fae36b36a51 in start_thread () from /lib64/libpthread.so.0
+#4  0x00007fae364a096d in clone () from /lib64/libc.so.6
+
+Thread 5 (Thread 0x7fae2af55700 (LWP 30658)):
+#0  0x00007fae37a71972 in inode_table_new () from /usr/lib64/libglusterfs.so.0
+#1  0x00007fae2a0e7389 in afr_selfheal_daemon_init () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#2  0x00007fae2a0ec148 in init () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#3  0x00007fae37a48882 in xlator_init () from /usr/lib64/libglusterfs.so.0
+#4  0x00007fae37a8f901 in glusterfs_graph_init () from /usr/lib64/libglusterfs.so.0
+#5  0x00007fae37a8fa65 in glusterfs_graph_activate () from /usr/lib64/libglusterfs.so.0
+#6  0x00007fae37f14d4b in glusterfs_process_volfp ()
+#7  0x00007fae37f1ccd5 in mgmt_getspec_cbk ()
+#8  0x00007fae3781a445 in rpc_clnt_handle_reply () from /usr/lib64/libgfrpc.so.0
+#9  0x00007fae3781b8f2 in rpc_clnt_notify () from /usr/lib64/libgfrpc.so.0
+#10 0x00007fae37816ad8 in rpc_transport_notify () from /usr/lib64/libgfrpc.so.0
+#11 0x00007fae2c57c255 in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+#12 0x00007fae2c57de4d in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+#13 0x00007fae37aaf970 in ?? () from /usr/lib64/libglusterfs.so.0
+#14 0x00007fae36b36a51 in start_thread () from /lib64/libpthread.so.0
+#15 0x00007fae364a096d in clone () from /lib64/libc.so.6
+
+Thread 4 (Thread 0x7fae2e58a700 (LWP 30654)):
+#0  0x00007fae36b3e535 in sigwait () from /lib64/libpthread.so.0
+#1  0x00007fae37f1502b in glusterfs_sigwaiter ()
+#2  0x00007fae36b36a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007fae364a096d in clone () from /lib64/libc.so.6
+
+Thread 3 (Thread 0x7fae37efa740 (LWP 30652)):
+#0  0x00007fae36b372ad in pthread_join () from /lib64/libpthread.so.0
+#1  0x00007fae37aaf41d in ?? () from /usr/lib64/libglusterfs.so.0
+#2  0x00007fae37f16ef1 in main ()
+
+Thread 2 (Thread 0x7fae2ef8b700 (LWP 30653)):
+#0  0x00007fae36b3dfbd in nanosleep () from /lib64/libpthread.so.0
+#1  0x00007fae37a6d5ca in gf_timer_proc () from /usr/lib64/libglusterfs.so.0
+#2  0x00007fae36b36a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007fae364a096d in clone () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7fae28ba8700 (LWP 30698)):
+#0  0x00007fae2a0edb01 in afr_local_init () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#1  0x00007fae2a0f72ae in afr_discover () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#2  0x00007fae2a0f789d in afr_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/replicate.so
+#3  0x00007fae29e79a19 in dht_discover () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so
+#4  0x00007fae29e7ce5e in dht_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/cluster/distribute.so
+#5  0x00007fae29c41296 in qd_nameless_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so
+#6  0x00007fae29c42377 in quotad_aggregator_lookup () from /usr/lib64/glusterfs/3.7.1/xlator/features/quotad.so
+#7  0x00007fae37814ee5 in rpcsvc_handle_rpc_call () from /usr/lib64/libgfrpc.so.0
+#8  0x00007fae37815123 in rpcsvc_notify () from /usr/lib64/libgfrpc.so.0
+#9  0x00007fae37816ad8 in rpc_transport_notify () from /usr/lib64/libgfrpc.so.0
+#10 0x00007fae2c57c255 in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+---Type <return> to continue, or q <return> to quit---quit
+Quit
+Looking at the stack-trace, this issue is same as bug# 1239317. FOPs happening before graph initialization
+
+*** This bug has been marked as a duplicate of bug 1239317 ***

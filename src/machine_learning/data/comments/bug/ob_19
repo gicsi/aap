@@ -1,0 +1,4 @@
+The sparc le(4) driver does media changes incorrectly on one type of
+sbus le(4) card.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/sparc/le.patch">
+A source code patch exists which remedies this problem.</a>

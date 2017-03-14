@@ -1,0 +1,38 @@
+From 7a39c33cf94f10c8dc8a064e8941ae64368deef9 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 2 Jul 2015 12:12:53 +0000
+Subject: [PATCH] Update to 1.9.6 (#1238681)
+
+---
+ ant.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/ant.spec b/ant.spec
+index 285102c..9bbcaf0 100644
+--- a/ant.spec
++++ b/ant.spec
+@@ -35,8 +35,8 @@
+ %global major_version 1.9
+ 
+ Name:           ant
+-Version:        1.9.5
+-Release:        2%{?dist}
++Version:        1.9.6
++Release:        1%{?dist}
+ Epoch:          0
+ Summary:        Java build tool
+ Summary(it):    Tool per la compilazione di programmi java
+@@ -596,6 +596,9 @@ cp -pr build/javadocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+ # -----------------------------------------------------------------------------
+ 
+ %changelog
++* Thu Jul 02 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0:1.9.6-1
++- Update to 1.9.6 (#1238681)
++
+ * Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:1.9.5-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

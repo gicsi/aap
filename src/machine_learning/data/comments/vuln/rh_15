@@ -1,0 +1,23 @@
+Description of problem:
+The default backend for Glance should be local storage (LVM). When deploying with osp-d the default is Swift for some reason. You can see it if you look in /etc/glance/glance-api.conf:
+
+[glance_store]
+stores=glance.store.swift.Store
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Deploy an overcloud with osp-d
+2. Look in a controller node in /etc/glance/glance-api.conf
+
+
+Actual results:
+The default backend for storage is swift
+
+
+Expected results:
+The default backend for storage should be "file"
+The default is going to support an HA deployment. The default is going to be stores=glance.store.swift.Store

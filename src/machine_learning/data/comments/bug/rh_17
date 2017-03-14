@@ -1,0 +1,6 @@
+Description of problem:
+BZ #709470 was fixed by adding ownership of /usr/lib/rpm/fileattrs to javapackages-tools. Surely it would be better for javapackages-tools to instead Require rpm-build (and drop the ownership of that directory) - it's not possible to create a java package without rpmbuild on the system.
+Is there some problem with directory ownership? Or is this just an enhancement request?
+
+Adding requires on rpm-build doesn't make sense - javapackages-tools works fine without it, macros and rpmfc generators provided by javapackages-tools enhance rpm and rpm-build, but are not the primary use case.
+There's not a problem with the directory ownership as such, it just struck me as maybe the wrong solution. But, since you say javapackages-tools does what it needs without rpm-build, I'll close this.

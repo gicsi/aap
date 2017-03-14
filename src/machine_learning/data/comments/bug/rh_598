@@ -1,0 +1,17 @@
+The Emacs add-on packaging guidelines no longer stipulate that packages which also bundle support for Emacs should split out those Emacs files into separate sub-packages. This package should instead ship those files with the main package which should also Require emacs-filesystem. See https://fedoraproject.org/wiki/Packaging:Emacs for more detail.
+librep-0.92.5-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/librep-0.92.5-1.fc22
+librep-0.92.5-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/librep-0.92.5-1.fc21
+Package librep-0.92.5-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing librep-0.92.5-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10738/librep-0.92.5-1.fc21
+then log in and leave karma (feedback).
+librep-0.92.5-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+librep-0.92.5-1.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

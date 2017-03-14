@@ -1,0 +1,12 @@
+Your package ykpers failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10161526
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048585
+build.log
+Created attachment 1048586
+root.log
+Created attachment 1048587
+state.log
+Fixed in https://koji.fedoraproject.org/koji/taskinfo?taskID=10293026

@@ -1,0 +1,67 @@
+Description of problem:
+I am trying to run sample program provided in following link using g++ (4.8.2) to report "initialization-order-fiasco" error.
+https://code.google.com/p/address-sanitizer/wiki/InitializationOrderFiasco
+
+However, if we are using g++ it do not report any error for following commands:
+ASAN_OPTIONS=check_initialization_order=true ./a.out
+export ASAN_OPTIONS=check_initialization_order=1; ./a.out
+a.out // It will not work as AddressSanitizer can optionally detect dynamic initialization order problems.
+
+Version-Release number of selected component (if applicable): 4.8.2
+
+
+How reproducible:
+
+Prerequisites:
+1. libasan must be installed for successful compilation.
+2. llvm should be installed to get the line numbers using "/usr/bin/llvm-symbolizer".
+
+Steps to Reproduce:
+1. Create a.cc and b.cc file as mentioned in https://code.google.com/p/address-sanitizer/wiki/InitializationOrderFiasco
+2. Run following shell script to build and run a.cc and b.cc under AddressSanitizer.
+==================================================================
+# For gcc to print line numbers
+export ASAN_OPTIONS=symbolize=1
+export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
+#export ASAN_OPTIONS=check_initialization_order=1 # NOT WORKING :-/
+
+flags="-fno-omit-frame-pointer -fno-common"
+
+echo "+++++++++++++++++++++++++++++++++++++++++"
+echo "++++ Loose init-order checking"
+echo "+++++++++++++++++++++++++++++++++++++++++"
+rm -f a.out
+g++ -fsanitize=address $flags -g a.cc b.cc
+
+echo "**** ASAN_OPTIONS=check_initialization_order=true ./a.out ****"
+ASAN_OPTIONS=check_initialization_order=true ./a.out
+==================================================================
+
+Actual results:
+Runs fine without reporting InitializationOrderFiasco error.
+
+Expected results:
+It must report InitializationOrderFiasco error.
+
+Additional info:
+If we use "clang++" instead of "g++" in above script then it reports "initialization-order-fiasco" error for same sample program.
+Prerequisites: clang and llvm must be installed.
+
+
+Please let us know if I am missing any step OR "ASAN_OPTIONS=check_initialization_order" is not supported for gcc 4.8.2.
+This is not supported in GCC 4.8.x, should work in 4.9.x and later (thus e.g. in Developer Toolset 3.0 and later).
+(In reply to Jakub Jelinek from comment #2)
+> This is not supported in GCC 4.8.x, should work in 4.9.x and later (thus
+> e.g. in Developer Toolset 3.0 and later).
+
+Thank you very much for your reply.
+I will check with gcc version 4.9.x and later.
+(In reply to Bhupendra Thosare from comment #3)
+> (In reply to Jakub Jelinek from comment #2)
+> > This is not supported in GCC 4.8.x, should work in 4.9.x and later (thus
+> > e.g. in Developer Toolset 3.0 and later).
+> 
+> Thank you very much for your reply.
+> I will check with gcc version 4.9.x and later.
+
+Yes, its working fine with gcc version 4.9.1 and symbolization working automatically. :-)

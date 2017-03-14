@@ -1,0 +1,25 @@
+Description of problem:
+The servers don't have ntpd running, their time & date is not synced. 
+The Ceph monitors should all be synced with to the same time (if not the warning message will be: clock skew detected on mon.overcloud-controller-1, mon.overcloud-controller-2 
+
+Version-Release number of selected component (if applicable):
+openstack-puppet-modules-2015.1.7-5.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-tuskar-ui-0.3.0-6.el7ost.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy new controllers with Ceph monitors 
+
+Actual results:
+The ntpd.service is not running 
+
+Expected results:
+The ntpd.service is running and the servers in the setup are sync to the same timezone
+
+Additional info:
+This is a duplicate of bug 1233916.  The ntp packages will be in new images and are configured using the --ntp-server CLI parameter
+
+*** This bug has been marked as a duplicate of bug 1233916 ***

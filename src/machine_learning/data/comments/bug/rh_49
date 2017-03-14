@@ -1,0 +1,12 @@
+Description of problem:
+Recently, I filed a bug found by test (BZ#1237213, clone of already fixed RHEL6 bug for RHEL7, actually). The test has TCMS test case linked in External Trackers since the beginning, however when the bug got the 3acks, qe_coverage? flag was added requiring additional action.
+IMO bugzilla shall take the External Trackers into account when setting qe_coverage flag and set qe_coverage+ iff there is a test case already linked.
+
+
+Version-Release number of selected component (if applicable):
+4.4.9032-3
+
+Additional info:
+This can be done in the rules engine, there's no need to modify the bugzilla codebase to do it.
+
+Contact your program manager and ask them to create a rule to do this.

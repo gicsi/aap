@@ -1,0 +1,4 @@
+The 3C900B-TPO fails to select the correct media type (it never sees or
+sends packets).<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/012_3c900b.patch">
+A source code patch exists which remedies this problem.</a>

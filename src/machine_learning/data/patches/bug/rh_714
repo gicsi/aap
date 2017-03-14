@@ -1,0 +1,36 @@
+From ae47cd70ef532e79bd0054de67f55a1934456385 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 20 Jun 2015 01:15:33 +0000
+Subject: [PATCH] Update to 2.7.4 (#1234003)
+
+---
+ pari.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/pari.spec b/pari.spec
+index 5a9c316..0dddaf2 100644
+--- a/pari.spec
++++ b/pari.spec
+@@ -1,6 +1,6 @@
+ Name:           pari
+-Version:        2.7.3
+-Release:        2%{?dist}
++Version:        2.7.4
++Release:        1%{?dist}
+ Summary:        Number Theory-oriented Computer Algebra System
+ Group:          System Environment/Libraries
+ # No version is specified
+@@ -161,6 +161,9 @@ make test-all
+ %{_libdir}/libpari.so
+ 
+ %changelog
++* Sat Jun 20 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.7.4-1
++- Update to 2.7.4 (#1234003)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.7.3-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

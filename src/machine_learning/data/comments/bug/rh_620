@@ -1,0 +1,42 @@
+Description of problem:
+
+External USB audio device stop working with system configuration. 
+
+Version-Release number of selected component (if applicable):
+
+Attached alsa-info.sh output
+
+How reproducible:
+
+Always
+
+Steps to Reproduce:
+1. access audio configuration page and try to chose external usb audio
+2.
+3.
+
+Actual results:
+
+External usb audio device is listed on Input and Audio tabs, but audio always comes out from Built in speakers.
+
+Expected results:
+
+Audio from USB device
+
+Additional info:
+
+Device device definitely works because if I configure linphone application to use directly the USB device, audio gets correctly sent there. What is no longer working is integration with system configuration.
+
+See alsa-info.sh output for extensive details:
+
+http://www.alsa-project.org/db/?f=b154e7922ade6f96fb4fe35642c89d09e1158e57
+I actually fixed my problem running these commands as my non root user:
+
+pulseaudio -k
+pulseaudio --start
+
+
+still working after a reboot. 
+
+Still not sure what happened, but this is now resolved for me.
+ok, closing as requested

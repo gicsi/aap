@@ -1,0 +1,32 @@
+Description of problem:
+
+Glusterd from the 3.7 fedora repository does not start up.
+
+It's in a minimal fedora 22 docker container, but it doesn't look like that's the problem.
+
+Version-Release number of selected component (if applicable):
+
+glusterfs-server-3.7.2-3.fc22.x86_64
+
+
+How reproducible:
+
+Always
+
+
+Steps to Reproduce:
+
+> glusterd --debug
+USAGE: /usr/sbin/glusterd [options] [mountpoint]
+
+
+Actual results:
+
+USAGE: /usr/sbin/glusterd [options] [mountpoint]
+
+Expected results:
+much debug output
+
+Additional info:
+Does not happen with glusterd from the 3.6 repository.
+That happened, because there was nothing in /etc/glusterfs. RaSTar from irc said that it's because of /etc/glusterfs/glusterd.vol.

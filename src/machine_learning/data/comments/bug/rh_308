@@ -1,0 +1,45 @@
+Created attachment 1044735
+SYSTEM_THREAD_EXCEPTION_NOT_HANDLED
+
+Description of problem:
+Installer of latest Win 10 x64 Enterprise Tech Preview build, no. 10074, fails with message "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED". See attached screenshot.
+
+Version-Release number of selected component (if applicable):
+Fedora 22
+qemu-kvm.x86_64                         2:2.3.0-5.fc22
+virt-manager.noarch                     1.2.1-1.fc22,
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Create new Vm in virt-manager
+3000MB RAM, 20GB IDE qcow2 disk, IDE "10074.0.150424-1350.FBL_IMPRESSIVE_CLIENTENTERPRISE_VOL_X64FRE_EN-US.ISO" cd-rom, booting only from cd-rom
+2. Run vm and wait
+3. Windows logo and spinning dots appears
+4. BSOD
+
+
+Additional info:
+It works in Virtual Box
+When you installed it in virt-manager, did you select Windows as the guest operating system type ?  I'm wondering if you got all the desired hyperv enlightenments enabled
+
+Can you provide the /var/log/libvirt/qemu/$GUESTNAME.log file and also 'virsh -c qemu:///system dumpxml $GUESTNAME' output.
+Created attachment 1044744
+vm_log
+Created attachment 1044745
+dumpxml
+
+I can't remember what guest OS I set and I don't even know how to find that out. Can you please tell where virt-manager exposes guest OS of VM?
+The XML confirms that virt-manager hasn't configured the guest as windows as I don't see any of the hyper-v features enabled. This generally makes modern Windows much more prone to BSOD.
+
+On the page in the wizard where you select the ISO image to install, there should be a drop down list to select the guest OS to install. It probably won't have Windows 10, but if you select the nearest match, eg Win2k12 or Win9 it should be sufficient.
+Created attachment 1044976
+dumpxml os=win8.1
+Created attachment 1044979
+vm_log os=win8.1
+
+I created new wm with guest os set to Window 8.1 (latest available windows in dropdown). It fails with the same BSOD: SYSTEM_THREAD_EXCEPTION_NOT_HANDLED.
+Ok, thanks, that at least confirms the problem is nothing todo with time keeping / hyperv enlightenments.
+It might be helpful to note that Win 10 x64 Enterprise build 9926 (January 2015) installs ok.
+Latest standard (non-Enterprise) build 10162 works ok. It can be installed. Feel free to close.

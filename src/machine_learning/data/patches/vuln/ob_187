@@ -1,0 +1,60 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_realpath.patch
+
+And then rebuild and install libc:
+        cd lib/libc
+        make obj cleandir depend
+        make && make install
+
+Note that programs that are linked statically will not pick up the
+change unless they are rebuilt.  This includes the contents of /bin
+and /sbin.  The following static binaries use realpath(3):
+    /bin/mv, /bin/systrace, /sbin/mount, /sbin/mount_*,
+    /sbin/mountd, /sbin/umount
+
+Of those, the most important to rebuild is /sbin/mountd.
+
+Index: lib/libc/stdlib/realpath.c
+===================================================================
+RCS file: /cvs/src/lib/libc/stdlib/realpath.c,v
+retrieving revision 1.7
+retrieving revision 1.7.4.1
+diff -u -r1.7 -r1.7.4.1
+--- lib/libc/stdlib/realpath.c	24 May 2002 21:22:37 -0000	1.7
++++ lib/libc/stdlib/realpath.c	3 Aug 2003 02:17:03 -0000	1.7.4.1
+@@ -60,7 +60,7 @@
+ 	char *resolved;
+ {
+ 	struct stat sb;
+-	int fd, n, rootd, serrno;
++	int fd, n, needslash, serrno;
+ 	char *p, *q, wbuf[MAXPATHLEN];
+ 	int symlinks = 0;
+ 
+@@ -134,18 +134,18 @@
+ 	 * happens if the last component is empty, or the dirname is root.
+ 	 */
+ 	if (resolved[0] == '/' && resolved[1] == '\0')
+-		rootd = 1;
++		needslash = 0;
+ 	else
+-		rootd = 0;
++		needslash = 1;
+ 
+ 	if (*wbuf) {
+-		if (strlen(resolved) + strlen(wbuf) + rootd + 1 > MAXPATHLEN) {
++		if (strlen(resolved) + strlen(wbuf) + needslash >= MAXPATHLEN) {
+ 			errno = ENAMETOOLONG;
+ 			goto err1;
+ 		}
+-		if (rootd == 0)
+-			(void)strcat(resolved, "/");
+-		(void)strcat(resolved, wbuf);
++		if (needslash)
++			(void)strlcat(resolved, "/", MAXPATHLEN);
++		(void)strlcat(resolved, wbuf, MAXPATHLEN);
+ 	}
+ 
+ 	/* Go back to where we came from. */
+

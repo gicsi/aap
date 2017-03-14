@@ -1,0 +1,181 @@
+User-Agent:       Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0
+Build Identifier: 
+
+after 'fedup --network 22' from fedora 21 workstation, and reboot, i can't use dnf or other programs using python script (like bugzilla, for instance). The error is:
+TypeError: 'frozenset' object is not callable
+importing hashlib
+at line  115 build/bdist.linux-x86_64/egg/hashlib.py 
+
+Reproducible: Always
+(In reply to Stefano Cirelli from comment #0)
+> User-Agent:       Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:38.0)
+> Gecko/20100101 Firefox/38.0
+> Build Identifier: 
+> 
+> after 'fedup --network 22' from fedora 21 workstation, and reboot, i can't
+> use dnf or other programs using python script (like bugzilla, for instance).
+> The error is:
+> TypeError: 'frozenset' object is not callable
+> importing hashlib
+> at line  115 build/bdist.linux-x86_64/egg/hashlib.py 
+
+This line makes me think this could be a local problem, since hashlib should be normally located in /usr/lib64/python3.4/hashlib.py.
+
+What is the full path to build/bdist.linux-x86_64/egg/hashlib.py?
+
+What is the output of:
+echo $PYTHONPATH
+echo $PYTHONHOME
+I think something went wrong with fedup.
+I've made the upgrade with fedora, updates and updates-testing, and rpmfusion/rpmfusion-nonfree repositories.
+
+Neither PYTHONPATH nor PYTHONHOME are set.
+When I set PYTHONPATH to python2.7, i get the usual 'frozenset' not callable.
+With python3.4, there's a new error message.
+
+++ export PYTHONPATH=/usr/lib64/python2.7
+++ PYTHONPATH=/usr/lib64/python2.7
+++ echo .
+.
+++ dnf repolist
+Traceback (most recent call last):
+  File "/bin/dnf", line 35, in <module>
+    from dnf.cli import main
+  File "/usr/lib/python2.7/site-packages/dnf/__init__.py", line 31, in <module>
+    import dnf.base
+  File "/usr/lib/python2.7/site-packages/dnf/base.py", line 26, in <module>
+    from dnf.comps import CompsQuery
+  File "/usr/lib/python2.7/site-packages/dnf/comps.py", line 29, in <module>
+    import dnf.util
+  File "/usr/lib/python2.7/site-packages/dnf/util.py", line 36, in <module>
+    import tempfile
+  File "/usr/lib64/python2.7/tempfile.py", line 35, in <module>
+    from random import Random as _Random
+  File "/usr/lib64/python2.7/random.py", line 49, in <module>
+    import hashlib as _hashlib
+  File "build/bdist.linux-x86_64/egg/hashlib.py", line 115, in <module>
+    try:
+TypeError: 'frozenset' object is not callable
+++ echo .
+.
+++ export PYTHONPATH=/usr/lib64/python3.4
+++ PYTHONPATH=/usr/lib64/python3.4
+++ echo .
+.
+++ dnf repolist
+  File "/usr/lib64/python3.4/site.py", line 176
+    file=sys.stderr)
+        ^
+SyntaxError: invalid syntax
+++ echo .
+.
+++ echo '$PYTHONHOME='
+$PYTHONHOME=
+
+these are the only lines found with filename 'hashlib.py*'
+19359    8 -rw-r--r--   1 root     root         5011 mag 13 19:05 ./share/jython/Lib/hashlib.py
+591953   12 -rw-r--r--   1 root     root         9854 gen 12 13:14 ./lib64/python3.4/hashlib.py
+526996    8 -rw-r--r--   1 root     root         7655 mag 27 20:11 ./lib64/python2.7/hashlib.py
+527301    8 -rw-r--r--   2 root     root         6906 mag 27 20:12 ./lib64/python2.7/hashlib.pyc
+527301    8 -rw-r--r--   2 root     root         6906 mag 27 20:12 ./lib64/python2.7/hashlib.pyo
+
+thank you for your attention
+SC
+more on python.
+
+i've grepped for 'build' in /usr/lib64/python2.7, the most significant results seems in sysconfig:
+
+/usr/lib64/python2.7/site.py:    from sysconfig import is_python_build
+/usr/lib64/python2.7/site.py:        from _sysconfigdata import build_time_vars
+/usr/lib64/python2.7/_sysconfigdata.py:build_time_vars = {'AC_APPLE_UNIVERSAL_BUILD': 0,
+/usr/lib64/python2.7/_sysconfigdata.py: 'ASDLGEN': '/builddir/build/BUILD/Python-2.7.10/Parser/asdl_c.py',
+/usr/lib64/python2.7/_sysconfigdata.py: 'ASDLGEN_FILES': '/builddir/build/BUILD/Python-2.7.10/Parser/asdl.py /builddir/build/BUILD/Python-2.7.10/Parser/asdl_c.py',
+/usr/lib64/python2.7/_sysconfigdata.py: 'AST_ASDL': '/builddir/build/BUILD/Python-2.7.10/Parser/Python.asdl',
+/usr/lib64/python2.7/_sysconfigdata.py: 'CONFIG_ARGS': "'--build=x86_64-redhat-linux-gnu' '--host=x86_64-redhat-linux-gnu' '--program-prefix=' '--disable-dependency-tracking' '--prefix=/usr' '--exec-prefix=/usr' '--bindir=/usr/bin' '--sbindir=/usr/sbin' '--sysconfdir=/etc' '--datadir=/usr/share' '--includedir=/usr/include' '--libdir=/usr/lib64' '--libexecdir=/usr/libexec' '--localstatedir=/var' '--sharedstatedir=/var/lib' '--mandir=/usr/share/man' '--infodir=/usr/share/info' '--enable-ipv6' '--enable-shared' '--enable-unicode=ucs4' '--with-dbmliborder=gdbm:ndbm:bdb' '--with-system-expat' '--with-system-ffi' '--with-dtrace' '--with-tapset-install-dir=/usr/share/systemtap/tapset' '--with-valgrind' 'build_alias=x86_64-redhat-linux-gnu' 'host_alias=x86_64-redhat-linux-gnu' 'CC=gcc' 'CFLAGS=-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches  -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv ' 'LDFLAGS=-Wl,-z,relro  ' 'CPPFLAGS=' 'PKG_CONFIG_PATH=:/usr/lib64/pkgconfig:/usr/share/pkgconfig'",
+/usr/lib64/python2.7/_sysconfigdata.py: 'CPPFLAGS': '-I. -IInclude -I/builddir/build/BUILD/Python-2.7.10/Include',
+/usr/lib64/python2.7/_sysconfigdata.py: 'GRAMMAR_INPUT': '/builddir/build/BUILD/Python-2.7.10/Grammar/Grammar',
+/usr/lib64/python2.7/_sysconfigdata.py: 'MAKESETUP': '/builddir/build/BUILD/Python-2.7.10/Modules/makesetup',
+/usr/lib64/python2.7/_sysconfigdata.py: 'PROFILE_TASK': '/builddir/build/BUILD/Python-2.7.10/Tools/pybench/pybench.py -n 2 --with-gc --with-syscheck',
+/usr/lib64/python2.7/_sysconfigdata.py: 'PY_CFLAGS': '-fno-strict-aliasing -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches  -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv  -DNDEBUG -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches  -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -I. -IInclude -I/builddir/build/BUILD/Python-2.7.10/Include -fPIC -DPy_BUILD_CORE',
+/usr/lib64/python2.7/_sysconfigdata.py: 'RUNSHARED': 'LD_LIBRARY_PATH=/builddir/build/BUILD/Python-2.7.10/build/optimized',
+/usr/lib64/python2.7/_sysconfigdata.py: 'SRC_GDB_HOOKS': '/builddir/build/BUILD/Python-2.7.10/Tools/gdb/libpython.py',
+/usr/lib64/python2.7/_sysconfigdata.py: 'TESTPROG': '/builddir/build/BUILD/Python-2.7.10/Lib/test/regrtest.py',
+/usr/lib64/python2.7/_sysconfigdata.py: 'TESTPYTHON': 'LD_LIBRARY_PATH=/builddir/build/BUILD/Python-2.7.10/build/optimized ./python -Wd -3 -E -tt',
+/usr/lib64/python2.7/_sysconfigdata.py: 'VPATH': '/builddir/build/BUILD/Python-2.7.10',
+/usr/lib64/python2.7/_sysconfigdata.py: 'abs_builddir': '/builddir/build/BUILD/Python-2.7.10/build/optimized',
+/usr/lib64/python2.7/_sysconfigdata.py: 'abs_srcdir': '/builddir/build/BUILD/Python-2.7.10',
+/usr/lib64/python2.7/_sysconfigdata.py: 'build': 'x86_64-redhat-linux-gnu',
+/usr/lib64/python2.7/_sysconfigdata.py: 'srcdir': '/builddir/build/BUILD/Python-2.7.10'}
+Il file binario /usr/lib64/python2.7/_sysconfigdata.pyc corrisponde
+Il file binario /usr/lib64/python2.7/_sysconfigdata.pyo corrisponde
+/usr/lib64/python2.7/sysconfig.py:if os.name == "nt" and "pcbuild" in _PROJECT_BASE[-8:].lower():
+/usr/lib64/python2.7/sysconfig.py:if os.name == "nt" and "\\pcbuild\\amd64" in _PROJECT_BASE[-14:].lower():
+/usr/lib64/python2.7/sysconfig.py:# set for cross builds
+/usr/lib64/python2.7/sysconfig.py:    # the build directory for posix builds
+/usr/lib64/python2.7/sysconfig.py:def is_python_build():
+/usr/lib64/python2.7/sysconfig.py:_PYTHON_BUILD = is_python_build()
+/usr/lib64/python2.7/sysconfig.py:    """Generate the Python module containing build-time variables."""
+/usr/lib64/python2.7/sysconfig.py:    # `make pybuilddir.txt` target -- which is a precursor to the
+/usr/lib64/python2.7/sysconfig.py:    # _sysconfigdata module manually and populate it with the build vars.
+/usr/lib64/python2.7/sysconfig.py:        module.build_time_vars = vars
+/usr/lib64/python2.7/sysconfig.py:    pybuilddir = 'build/lib.%s-%s' % (get_platform(), sys.version[:3])
+/usr/lib64/python2.7/sysconfig.py:        pybuilddir += '-pydebug'
+/usr/lib64/python2.7/sysconfig.py:        os.makedirs(pybuilddir)
+/usr/lib64/python2.7/sysconfig.py:    destfile = os.path.join(pybuilddir, name + '.py')
+/usr/lib64/python2.7/sysconfig.py:        f.write('build_time_vars = ')
+/usr/lib64/python2.7/sysconfig.py:    with open('pybuilddir.txt', 'w') as f:
+/usr/lib64/python2.7/sysconfig.py:        f.write(pybuilddir)
+/usr/lib64/python2.7/sysconfig.py:    # _sysconfigdata is generated at build time, see _generate_posix_vars()
+/usr/lib64/python2.7/sysconfig.py:    from _sysconfigdata import build_time_vars
+/usr/lib64/python2.7/sysconfig.py:    vars.update(build_time_vars)
+/usr/lib64/python2.7/sysconfig.py:        # Normally it is relative to the build directory.  However, during
+/usr/lib64/python2.7/sysconfig.py:                # as the executable. Assume executable is in the build
+/usr/lib64/python2.7/sysconfig.py:    This is used mainly to distinguish platform-specific build directories and
+/usr/lib64/python2.7/sysconfig.py:    # Set for cross builds explicitly
+Il file binario /usr/lib64/python2.7/sysconfig.pyc corrisponde
+Il file binario /usr/lib64/python2.7/sysconfig.pyo corrisponde
+Do you remember installing something with pip or easy_install? Could you please run "find / -name '*.egg" and paste the output here?
+Hi Matje
+the only package is
+/usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+(In reply to Stefano Cirelli from comment #5)
+> Hi Matje
+> the only package is
+> /usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+
+I reckon that's where the problem lies. Could you please try to remove the file, at least temporarily, and see if that fixes your problem?
+(In reply to Matej Stuchlik from comment #6)
+> (In reply to Stefano Cirelli from comment #5)
+> > Hi Matje
+> > the only package is
+> > /usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+> 
+> I reckon that's where the problem lies. Could you please try to remove the
+> file, at least temporarily, and see if that fixes your problem?
+
+Before you do so, can you please make sure that the egg file doesn't belong to any rpm?
+
+rpm -qf /usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+(In reply to Robert Kuska from comment #7)
+> (In reply to Matej Stuchlik from comment #6)
+> > (In reply to Stefano Cirelli from comment #5)
+> > > Hi Matje
+> > > the only package is
+> > > /usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+> > 
+> > I reckon that's where the problem lies. Could you please try to remove the
+> > file, at least temporarily, and see if that fixes your problem?
+> 
+> Before you do so, can you please make sure that the egg file doesn't belong
+> to any rpm?
+> 
+> rpm -qf
+> /usr/lib/python2.7/site-packages/hashlib-20081119-py2.7-linux-x86_64.egg
+
+Hi robert, MAtej,
+removing the egg worked. Now all is fine.
+Thank you very much.
+but i don't remember having installed that egg thing.
+Thank you again
+Stefano
+You're very welcome. :)

@@ -1,0 +1,30 @@
+Description of problem:
+When Upgrading CloudForms to a new version, the RedHat and ManageIQ data stores are not automatically upgraded. A customer has to reset the datastore to make the new upgraded Automate model available.
+
+Neither the release notes nor the upgrade document mention this fact.
+
+
+Version-Release number of selected component (if applicable):
+5.4
+
+How reproducible:
+always during upgrade
+
+Steps to Reproduce:
+1. follow the upgrade instructions here:
+https://access.redhat.com/articles/1435433
+
+Actual results:
+It should be mentioned that after the upgrade the administrator has to navigate to "Automate, Expoert/Import" and then click on "Reset "Reset all Datastore custom classes and instances to default"
+Greg, is this correct?  Are there caveats?
+That is correct.  Since they are running commands on the appliance you could run "rake evm:automate:reset" instead of doing it from the UI.
+
+The automate changes are required to support new features and enhancements.  For example in the last release there were enhancements to retirement and new features like orchestration, foreman and SCVMM.
+Christian, I just added the steps to the migration articles, can you please review them before I close this?
+
+Thanks,
+Marianne
+Perfect, IMHO the ticket can be closed.
+
+Thanks,
+Christian

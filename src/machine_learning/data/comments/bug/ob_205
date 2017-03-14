@@ -1,0 +1,9 @@
+When DMA'able memory is mapped by device drivers, the
+mapping flags and protection are partially uninitialized.
+Depending on the calling context, this may cause devices to misbehave, like
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=audio&sektion=4">audio(4)</a>
+to stutter, but other anomalies might be observed for other
+device types.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.5/i386/003_bus_dma.patch">
+A source code patch exists which remedies this problem.</a>

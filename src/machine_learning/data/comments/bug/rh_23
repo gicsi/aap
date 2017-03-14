@@ -1,0 +1,76 @@
+A previously working dnf, on `dnf update`, produced the following traceback after listing upgraded packages:
+
+'''
+Traceback (most recent call last):
+  File "/usr/bin/dnf", line 36, in <module>
+    main.user_main(sys.argv[1:], exit_code=True)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 185, in user_main
+    errcode = main(args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 84, in main
+    return _main(base, args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 141, in _main
+    ret = resolving(cli, base)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 170, in resolving
+    base.plugins.run_transaction()
+  File "/usr/lib/python2.7/site-packages/dnf/plugin.py", line 82, in fn
+    dnf.util.mapall(operator.methodcaller(method), self.plugins)
+  File "/usr/lib/python2.7/site-packages/dnf/util.py", line 157, in mapall
+    return list(map(fn, *seq))
+  File "/usr/lib/python2.7/site-packages/dnf-plugins/tracer.py", line 59, in transaction
+    args = ["tracer", "-n"] + list(installed | erased)
+NameError: global name 'installed' is not defined
+'''
+
+Versions of packages:
+
+'''
+# rpm -qa | grep dnf
+dnf-plugins-extras-snapper-0.0.4-1.fc21.noarch
+dnf-plugins-extras-local-0.0.4-1.fc21.noarch
+dnf-plugins-extras-tracer-0.0.4-1.fc21.noarch
+dnf-plugins-extras-common-0.0.4-1.fc21.noarch
+dnf-plugins-extras-repoclosure-0.0.4-1.fc21.noarch
+dnf-plugins-extras-repomanage-0.0.4-1.fc21.noarch
+dnf-plugins-extras-0.0.4-1.fc21.noarch
+dnf-0.6.4-5.fc21.noarch
+dnf-plugins-extras-repograph-0.0.4-1.fc21.noarch
+dnf-plugins-core-0.1.5-2.fc21.noarch
+'''
+
+On this system, it is 100% reproducable:
+
+'''
+# dnf update
+Failed to synchronize cache for repo '_local' from 'file:///var/lib/dnf/plugins/local': Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried, disabling.
+Using metadata from Wed Jul  8 12:42:23 2015 (1:21:42 hours old)
+Dependencies resolved.
+Nothing to do.
+Traceback (most recent call last):
+  File "/usr/bin/dnf", line 36, in <module>
+    main.user_main(sys.argv[1:], exit_code=True)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 185, in user_main
+    errcode = main(args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 84, in main
+    return _main(base, args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 141, in _main
+    ret = resolving(cli, base)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 170, in resolving
+    base.plugins.run_transaction()
+  File "/usr/lib/python2.7/site-packages/dnf/plugin.py", line 82, in fn
+    dnf.util.mapall(operator.methodcaller(method), self.plugins)
+  File "/usr/lib/python2.7/site-packages/dnf/util.py", line 157, in mapall
+    return list(map(fn, *seq))
+  File "/usr/lib/python2.7/site-packages/dnf-plugins/tracer.py", line 59, in transaction
+    args = ["tracer", "-n"] + list(installed | erased)
+NameError: global name 'installed' is not defined
+'''
+I should add that `yum update` is working as expected.
+*** This bug has been marked as a duplicate of bug 1187763 ***
+Hello Robbie,
+thank you for the feedback.
+
+Unfortunately this issue isn't easy to solve. Clearly, there is a bug in dnf-plugins-extras-tracer plugin which causes this traceback. The bug was fixed long time ago, but it is not possible to build the new release for F21 because of dependency on new DNF.
+
+It is not that convenient, but `tracer` command works just fine - only the dnf plugin is bugged, so you still can run it manually. Also, the plugin is working on F22.
+
+My apologies

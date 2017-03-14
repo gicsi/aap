@@ -1,0 +1,48 @@
+Description of problem:
+On a virt setup, I tried to deploy with the command:
+
+openstack overcloud deploy -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/net-single-nic-with-vlans.yaml --ceph-storage-scale 1 --block-storage-scale 1 --swift-storage-scale 1 --plan-uuid 22e3f973-7cf9-407c-a612-32ddd5cab433
+
+I started the deployment at 12:00 and went to lunch. At a bit passed 14:30 I finally got an error:
+
+ERROR: openstack Unable to establish connection to http://10.0.0.4:35357/v2.0/tenants
+
+This also happened on a deployment where we didn't use network isolation.
+
+
+Version-Release number of selected component (if applicable):
+openstack-heat-engine-2015.1.0-4.el7ost.noarch
+openstack-heat-api-cfn-2015.1.0-4.el7ost.noarch
+openstack-heat-api-2015.1.0-4.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-19.el7ost.noarch
+openstack-tuskar-0.4.18-3.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Additional info:
+In heat. I see "CREATE_COMPLETE". In nova I see no errors as well:
+
+$ nova list
++--------+---------------------------+--------+------------+-------------+---------------------+
+| ID     | Name                      | Status | Task State | Power State | Networks            | 
++--------+---------------------------+--------+------------+-------------+---------------------+
+| 1da... | overcloud-blockstorage-0  | ACTIVE | -          | Running     | ctlplane=192.0.2.11 |
+| eb6... | overcloud-cephstorage-0   | ACTIVE | -          | Running     | ctlplane=192.0.2.7  |
+| d06... | overcloud-compute-0       | ACTIVE | -          | Running     | ctlplane=192.0.2.10 |
+| e32... | overcloud-controller-0    | ACTIVE | -          | Running     | ctlplane=192.0.2.12 |
+| 0b8... | overcloud-objectstorage-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.8  |
++--------+---------------------------+--------+------------+-------------+---------------------+
+
+The overcloudrc file points to an address I can't reach:
+export OS_AUTH_URL=http://10.0.0.4:5000/v2.0/
+Postconfig appears to be populating the overcloud keystone with users/endpoints by using the overcloud public ip. It should probably use the ctlplane.
+I think it would be useful to edit the BZ title as per comment #3 to distinguish this from BZ 1236136, they are not the same issue.
+If postconfig will use the public API instead, and the user makes a mistake and passes the wrong parameters and the public IP end up being unreachable - the deployment will fail and it would be pretty hard for a user to understand why.
+OK, after a discussion with Dan Prince, Hugh Brock, and others, we decided that there are tradeoffs associated with putting the service on the control plane, and that requiring a route to the external public network is acceptable.
+
+The behavior is fine as-is, and we will document the requirement to have a route between the undercloud and the external network.
+Correction, the above comment applies to another bug that I thought was related, but this issue is more than just a doc bug. Reopening.
+I think this was incorrectly moved back into NEW state and resolved instead as per comment #6

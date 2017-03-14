@@ -1,0 +1,5 @@
+Description of problem:
+Error: Transaction check error:
+  file /usr/share/terminfo/s/st from install of st-0.6-1.fc23.i686 conflicts with file from package ncurses-base-5.9-21.20150214.fc23.noarch
+  file /usr/share/terminfo/s/st-256color from install of st-0.6-1.fc23.i686 conflicts with file from package ncurses-base-5.9-21.20150214.fc23.noarch
+Thanks, fixed.

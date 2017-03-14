@@ -1,0 +1,20 @@
+Update text and link in all 22 language versions of the Release Notes packages. 
+The 22 packages take the form: 
+Red_Hat_Enterprise_Linux-Release_Notes-6-as-XX-7-0.el6.noarch.rpm
+
+Where XX is the two-letter langugage code. 
+
+Each package should be updated to use the following content: 
+
+
+For the official, up-to-date Red Hat Enterprise Linux 6.7 Release Notes, refer to:
+
+https://access.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/6.7_Release_Notes/index.html
+Slight correction -- 
+
+Update text and link in all 22 language versions of the Release Notes packages. 
+The 22 packages take the form: 
+Red_Hat_Enterprise_Linux-Release_Notes-6-$LANG-7-0.el6.noarch.rpm
+
+where $LANG is a language code like en-US, ru-RU, ja-JP, etc.
+Done for all non-Indic languages.

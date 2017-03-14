@@ -1,0 +1,5 @@
+There is an exploitable heap corruption bug in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sudo&amp;sektion=8">sudo</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/021_sudo.patch">
+A source code patch exists which remedies this problem.</a>

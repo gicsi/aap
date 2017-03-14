@@ -1,0 +1,8 @@
+Created attachment 1040616
+Patch for adding OSGi MANIFEST.MF to jnr-enxio
+
+Description of problem:
+
+jnr-enxio does not export its packages which is needed for Eclipse plugins and some of their dependencies.
+Pushed to rawhide.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=663658

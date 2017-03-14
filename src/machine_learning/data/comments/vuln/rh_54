@@ -1,0 +1,60 @@
+Description of problem:
+
+
+
+
+
+The service is running it appears:
+
+[root@test1 httpd]# service evmserverd status
+Checking EVM status...
+ Zone    | Server Name        | Status  |             ID |  PID | SPID | URL                     | Started On           | Last Heartbeat       | Active Roles
+---------+--------------------+---------+----------------+------+------+-------------------------+----------------------+----------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ default | EVM-POC-test-DB | started | 99000000000001 | 1821 | 1857 | druby://127.0.0.1:51198 | 2015-02-20T22:41:21Z | 2015-06-29T18:55:26Z | automate:database_operations:database_owner:ems_inventory:ems_metrics_collector:ems_metrics_coordinator:ems_metrics_processor:ems_operations:event:notifier:reporting:scheduler:smartproxy:smartstate:user_interface:web_services
+
+[root@test1 httpd]# 
+
+The logs appear to still be showing encryption key errors:
+
+[----] I, [2015-06-30T08:09:13.256602 #1940:1105ea4]  INFO -- : MIQ(MiqServer.validate_database) Database Adapter: [PostgreSQL], version: [PostgreSQL 9.2.7 on x86_64-redhat-linux-gnu, compiled by gcc (GCC) 4.4.6 20110731 (Red Hat 4.4.6-3), 64-bit]
+[----] I, [2015-06-30T08:09:13.257858 #1940:1105ea4]  INFO -- : EvmDatabase.seed Seeding...
+[----] I, [2015-06-30T08:09:13.271619 #1940:1105ea4]  INFO -- : EvmDatabase.seed Seeding MiqDatabase
+[----] E, [2015-06-30T08:09:13.305881 #1940:1105ea4] ERROR -- : [RuntimeError]: no encryption key v1_key  Method:[rescue in block in seed]
+[----] E, [2015-06-30T08:09:13.305984 #1940:1105ea4] ERROR -- : /var/www/miq/lib/util/miq-password.rb:37:in `decrypt'
+/var/www/miq/lib/util/miq-password.rb:64:in `decrypt'
+/var/www/miq/vmdb/app/models/mixins/password_mixin.rb:27:in `block in encrypt_column'
+
+
+I went back through my console history and noticed the fix_auth --db command didn't work from the migration document, so that might be part of the issue.:
+
+[root@poccldfmapp01 log]# fix_auth --db
+Error: unknown argument '--db'.
+Try --help for help.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+fix_auth --db has been available since 5.4.0.0-beta2
+
+Either they are running an unsupported version of 5.4 or they did not upgrade properly.
+
+Do we know what version of the product they are running?
+Do we know what steps (or document) they followed to upgrade?
+They just updated from 5.2.x to 5.4.0.5. For some odd reason that is not there even though he has the supported version. 
+
+The document that they used is: https://access.redhat.com/articles/1452003

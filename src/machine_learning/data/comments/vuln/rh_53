@@ -1,0 +1,47 @@
+Description of problem:
+I'm doing a deployment with 3 controllers, 1 compute and 1 ceph node on baremetal with network isolation. During the deployment there are large periods when the overcloud nodes don't output anything in os-collect-config log. Also the heat-engine log seems to be showing the same things in loop. Note that this happens only when introducing the ceph node. Deployment with 1 controller, 1 compute, 3 controllers, 1 compute went ok. 
+
+Version-Release number of selected component (if applicable):
+instack-undercloud-2.1.2-6.el7ost.noarch
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-tripleo-0.0.7-0.1.1664e566.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-4.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-22.el7ost.noarch
+
+How reproducible:
+50%
+
+Steps to Reproduce:
+1. Deploy a 3 controller, 1 compute and 1 ceph node with network isolation
+2. 
+3.
+
+Actual results:
+Deployment doesn't show any progress, overcloud nodes don't show any activity in os-collect-config. 
+
+Expected results:
+Deployment would be successful.
+
+Additional info:
+Attaching part of the heat-engine.log.
+(In reply to Marius Cornea from comment #0)
+
+Can you clarify what output you see when you deploy the cloud? Does anything start to build?
+
+What was in your network-environment.yaml file?
+
+I have seen an issue where CephStorageNodesPostDeployment would time out when network isolation was enabled, but the Heat resources would all go into CREATE_COMPLETE except for Ceph. Not sure if that's related. That's this bug: https://bugzilla.redhat.com/show_bug.cgi?id=1236167
+Yes, it start to build, the nodes boot up, I can log in via ssh and watch the os-collect-config logs. At the end deployment fails with this  message.
+
+ERROR: openstack ERROR: Authentication failed. Please try again with option --include-password or export HEAT_INCLUDE_PASSWORD=1
+Authentication required
+
+Attaching environment file and nic templates.
+Created attachment 1044794
+env file
+Created attachment 1044795
+heat engine log
+This appears to be due to the keystone timeout issue.  Marking a duplicate
+
+*** This bug has been marked as a duplicate of bug 1235908 ***

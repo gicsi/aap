@@ -1,0 +1,36 @@
+From 386845c70b5a434658c0aa1eef49ce02ea02f3f8 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Tue, 23 Jun 2015 00:39:00 +0000
+Subject: [PATCH] Update to 1.046 (#1234662)
+
+---
+ perl-Gnome2.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-Gnome2.spec b/perl-Gnome2.spec
+index fbc573e..3afd6f2 100644
+--- a/perl-Gnome2.spec
++++ b/perl-Gnome2.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-Gnome2
+-Version:        1.045
+-Release:        6%{?dist}
++Version:        1.046
++Release:        1%{?dist}
+ Summary:        Perl interface to the 2.x series of the GNOME libraries
+ License:        LGPLv2
+ Group:          Development/Libraries
+@@ -64,6 +64,9 @@ make test
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Tue Jun 23 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.046-1
++- Update to 1.046 (#1234662)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.045-6
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

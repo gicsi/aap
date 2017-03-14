@@ -1,0 +1,104 @@
+From 534ab44f92ec33e2b39b8710a91c54d1f821024e Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Mon, 22 Jun 2015 17:01:34 -0400
+Subject: [PATCH] Add OSGi MANIFEST.MF.
+
+---
+ MANIFEST.MF        | 12 ++++++++++++
+ add-manifest.patch | 23 +++++++++++++++++++++++
+ jnr-x86asm.spec    |  9 ++++++++-
+ 3 files changed, 43 insertions(+), 1 deletion(-)
+ create mode 100644 MANIFEST.MF
+ create mode 100644 add-manifest.patch
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+new file mode 100644
+index 0000000..66abf45
+--- /dev/null
++++ b/MANIFEST.MF
+@@ -0,0 +1,12 @@
++Manifest-Version: 1.0
++Bundle-SymbolicName: jnr.x86asm
++Export-Package: com.kenai.jnr.x86asm;version="1.0.2",jnr.x86asm;versio
++ n="1.0.2"
++Bundle-Name: Pure Java x86 And x86_64 Assembler
++Bundle-Version: 1.0.2
++Bundle-Localization: plugin
++Bundle-ManifestVersion: 2
++Bundle-ActivationPolicy: lazy
++Bundle-RequiredExecutionEnvironment: JavaSE-1.7
++Bundle-Vendor: Eclipse Orbit
++
+diff --git a/add-manifest.patch b/add-manifest.patch
+new file mode 100644
+index 0000000..b320b67
+--- /dev/null
++++ b/add-manifest.patch
+@@ -0,0 +1,23 @@
++diff -up ./pom.xml.fix ./pom.xml
++--- ./pom.xml.fix	2015-06-22 15:44:35.991442997 -0400
+++++ ./pom.xml	2015-06-22 15:45:44.215610804 -0400
++@@ -50,4 +50,19 @@
++     <maven.compiler.source>1.5</maven.compiler.source>
++     <maven.compiler.target>1.5</maven.compiler.target>
++   </properties>
+++
+++  <build>
+++    <plugins>
+++      <plugin>
+++        <groupId>org.apache.maven.plugins</groupId>
+++        <artifactId>maven-jar-plugin</artifactId>
+++        <configuration>
+++          <archive>
+++            <manifestFile>MANIFEST.MF</manifestFile>
+++          </archive>
+++        </configuration>
+++      </plugin>
+++    </plugins>
+++  </build>
+++
++ </project>
+diff --git a/jnr-x86asm.spec b/jnr-x86asm.spec
+index 18b5a0d..1554fa9 100644
+--- a/jnr-x86asm.spec
++++ b/jnr-x86asm.spec
+@@ -3,13 +3,15 @@
+ 
+ Name:           jnr-x86asm
+ Version:        1.0.2
+-Release:        7%{?dist}
++Release:        8%{?dist}
+ Summary:        Pure-java port of asmjit
+ 
+ Group:          Development/Libraries
+ License:        MIT
+ URL:            http://github.com/jnr/%{name}/
+ Source0:        https://github.com/jnr/%{name}/tarball/%{version}/jnr-%{name}-%{version}-0-g%{commit_hash}.tar.gz
++Source1:        MANIFEST.MF
++Patch0:         add-manifest.patch
+ BuildArch:      noarch
+ 
+ BuildRequires:  java-devel
+@@ -27,6 +29,8 @@ Javadoc for %{name}.
+ 
+ %prep
+ %setup -q -n jnr-%{name}-%{tag_hash}
++%patch0
++cp %{SOURCE1} .
+ find ./ -name '*.jar' -delete
+ find ./ -name '*.class' -delete
+ 
+@@ -43,6 +47,9 @@ find ./ -name '*.class' -delete
+ %doc LICENSE
+ 
+ %changelog
++* Mon Jun 22 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.2-8
++- Add OSGi MANIFEST.MF.
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.2-7
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.9.3
+
+

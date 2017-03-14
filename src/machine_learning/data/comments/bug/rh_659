@@ -1,0 +1,29 @@
+Since it is not known when the next wxWidgets stable release will occur, I would like to request a few patches be cherry-picked from upstream git.  These fix a few warnings and crashes.
+
+https://github.com/wxWidgets/wxWidgets/commit/d988a94acba127d7cf189eb391d81b0ff8ed992a
+https://github.com/wxWidgets/wxWidgets/commit/5d3376802258191166a86cd9175cb4adb0a16c2e
+https://github.com/wxWidgets/wxWidgets/commit/a2f1bc1fdec222f3be7b7c5745ebc52c3c85a51c
+https://github.com/wxWidgets/wxWidgets/commit/bb3dcf85fb05324a4fb71769635a820661c82797
+https://github.com/wxWidgets/wxWidgets/commit/c4f569ed60f08ecb318c7268c92471cc5d9071a8
+https://github.com/wxWidgets/wxWidgets/commit/eb4aab5639579264c5de62f662e0562d3d4aad80
+
+Thanks,
+Scott
+Sounds good. I'll pull this and link this bug to the update.
+wxGTK3-3.0.2-8.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/wxGTK3-3.0.2-8.fc21
+wxGTK3-3.0.2-8.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/wxGTK3-3.0.2-8.fc22
+Thanks Jeremy!
+Package wxGTK3-3.0.2-8.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing wxGTK3-3.0.2-8.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10572/wxGTK3-3.0.2-8.fc21
+then log in and leave karma (feedback).
+wxGTK3-3.0.2-8.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+wxGTK3-3.0.2-8.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

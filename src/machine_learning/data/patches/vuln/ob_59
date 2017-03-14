@@ -1,0 +1,44 @@
+Bad ESP/AH packets could cause a crash under certain conditions.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 024_ipsec.patch
+
+And then rebuild your kernel.
+
+Index: sys/netinet/ipsec_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ipsec_input.c,v
+retrieving revision 1.23
+diff -u -r1.23 ipsec_input.c
+--- sys/netinet/ipsec_input.c	2000/03/29 10:15:22	1.23
++++ sys/netinet/ipsec_input.c	2000/09/18 16:39:30
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: ipsec_input.c,v 1.23 2000/03/29 10:15:22 angelos Exp $	*/
++/*	$OpenBSD: ipsec_input.c,v 1.31 2000/09/17 19:52:24 angelos Exp $	*/
+ 
+ /*
+  * The authors of this code are John Ioannidis (ji@tla.org),
+@@ -130,6 +130,13 @@
+         return EOPNOTSUPP;
+     }
+ 
++    if (m->m_pkthdr.len - skip < 2 * sizeof(u_int32_t))
++    {
++        m_freem(m);
++        IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
++        return EINVAL;
++    }
++
+     /* Retrieve the SPI from the relevant IPsec header */
+     if (sproto == IPPROTO_ESP)
+       m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
+@@ -287,6 +294,7 @@
+ 	ip = mtod(m, struct ip *);
+ 	ip->ip_len = htons(m->m_pkthdr.len);
+ 	HTONS(ip->ip_id);
++	HTONS(ip->ip_off);
+ 	ip->ip_sum = 0;
+ 	ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+ 	prot = ip->ip_p;
+

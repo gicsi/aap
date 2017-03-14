@@ -1,0 +1,5 @@
+A benign looking buffer overflow in the resolver routines was re-introduced
+accidentally.  The previously fixed behaviour is more correct.  A patch
+to fix this is
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/resolver.patch">
+available here.</a>

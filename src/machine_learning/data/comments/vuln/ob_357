@@ -1,0 +1,4 @@
+This patch contains a number of SSL library fixes.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/010_openssl.patch.sig">
+A source code patch exists which remedies this problem.</a>

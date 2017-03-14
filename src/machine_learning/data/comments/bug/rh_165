@@ -1,0 +1,21 @@
+Your package galera failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10089846
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046866
+build.log
+Created attachment 1046867
+root.log
+Created attachment 1046868
+state.log
+I decided to rebase to the latest upstream release, which built for me locally. A 'fedpkg build' in rawhide is now failing to find the pthread library, which is strange because it should be part of glibc.
+(In reply to Ryan O'Hara from comment #4)
+> I decided to rebase to the latest upstream release, which built for me
+> locally. A 'fedpkg build' in rawhide is now failing to find the pthread
+> library, which is strange because it should be part of glibc.
+
+OK. I found and fixed the problem with pthread library in latest upstream release, but the original problem where is fails the gu_hash_test is still present. I am leaning towards excluding arm builds until this is fixed.
+I've disabled ARM builds for galera in rawhide to get past this. Bug for ExcludeArch is here:
+
+https://bugzilla.redhat.com/show_bug.cgi?id=1241164

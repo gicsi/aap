@@ -1,0 +1,19 @@
+Spec URL: https://ppisar.fedorapeople.org/perl-Encode-JISX0213/perl-Encode-JISX0213.spec
+SRPM URL: https://ppisar.fedorapeople.org/perl-Encode-JISX0213/perl-Encode-JISX0213-0.03-1.fc23.src.rpm
+Description:
+This package provides Perl encoding data for JIS X 0213.
+
+Fedora Account System Username: ppisar
+The description doesn't say much but there isn't really a lot to tell.
+
+No packaging issues found.  Approving.
+New Package SCM Request
+=======================
+Package Name: perl-Encode-JISX0213
+Short Description: JIS X 0213 encoding
+Upstream URL: http://search.cpan.org/dist/Encode-JISX0213/
+Owners: ppisar jplesnik psabata
+Branches: 
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

@@ -1,0 +1,5 @@
+A problem with writing to NFS version 3 mounted filesystems from Solaris 7
+hosts exists.  Attempts to create files will result in an error such as
+"Inappropriate file type or format".
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/nfs3_solaris7.patch">
+A source code patch exists which remedies this problem.</a>

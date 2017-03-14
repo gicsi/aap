@@ -1,0 +1,7 @@
+OpenBSD's TCP/IP stack did not impose limits on how many out-of-order
+TCP segments are queued in the system.  An attacker could
+send out-of-order TCP segments and trick the system into using all
+available memory buffers.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/018_tcp.patch">
+A source code patch exists which remedies this problem.</a>

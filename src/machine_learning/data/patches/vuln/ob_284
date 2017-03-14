@@ -1,0 +1,41 @@
+This file contains a patch for OpenBSD 4.0 errata #7.
+
+For more information about this errata, please refer to
+  http://www.OpenBSD.org/errata.html#agp
+
+This URL will change to http://www.OpenBSD.org/errata40.html#agp once
+OpenBSD 4.1 is released around May 1st, 2007.
+
+Apply this patch by doing:
+	cd /usr/src
+	patch -p0 < 007_agp.patch
+
+And then rebuild and install the kernel.
+
+For more information about OpenBSD errata and how to apply them, please
+refer to FAQ 10.15: http://www.OpenBSD.org/faq/faq10.html#Patches
+
+For more information about compiling the OpenBSD kernel, please refer to
+FAQ 5.3.4: http://www.OpenBSD.org/faq/faq5.html#Building
+
+
+
+Index: sys/dev/pci/agp.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/agp.c,v
+retrieving revision 1.1
+retrieving revision 1.1.2.1
+diff -u -r1.1 -r1.1.2.1
+--- sys/dev/pci/agp.c	16 Mar 2006 21:32:34 -0000	1.1
++++ sys/dev/pci/agp.c	3 Jan 2007 21:09:41 -0000	1.1.2.1
+@@ -145,6 +145,9 @@
+ 	agp_unbind *unbind;
+ 	vsize_t size;
+ 	int error = 0;
++
++	if (sc->sc_methods == NULL || sc->sc_chipc == NULL)
++		return (ENXIO);
+ 
+ 	switch (cmd) {
+ 	case AGPIOC_INFO:
+

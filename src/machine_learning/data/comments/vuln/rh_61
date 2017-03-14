@@ -1,0 +1,60 @@
+Description of problem:
+
+In attempting to install everything from a group I found that "dnf group install <group-spec>" was not working as expected. I was directed to "dnf groupinstall <group-spec>" which did work. Looking for "groupinstall" in the dnf man page I found that it was missing. I'm wondering what else is missing. Perhaps a simple pointer to more elaborate/detailed information about DNF in the dnf man page would be useful?
+
+Version-Release number of selected component (if applicable):
+dnf-1.0.1-2.fc22.noarch
+
+
+How reproducible:
+
+always
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+"groupinstall" is an undocumented alias for "group install". And I don't think that we want to document it. I guess that the problem was somewhere else.
+https://lists.fedoraproject.org/pipermail/users/2015-June/462473.html
+Radek,
+
+I don't understand why "group install" and "groupinstall" behave differently.
+
+I'm interested in installing all of several groups the "group install" appears to just "mark" the group as installed whereas "groupinstall" appears to go ahead and do the actual installs.
+
+My confusion is almost complete now.
+
+Thanks,
+
+George...
+George, as described in the e-mail, the key is the "with-optional" argument.
+
+"dnf group install with-optional @Group" and
+"dnf groupinstall with-optional @Group" (don't use it)
+behaves the same
+
+"dnf group install @Group" and
+"dnf groupinstall with-optional @Group"
+doesn't
+
+"dnf group install with-optional @Group" and
+"dnf groupinstall @Group"
+doesn't as well
+
+Just forget the "groupinstall" command and learn the "with-optional" argument.
+groupinstall command "does not exist" in DNF -> group install should be used.
+Radek/Jan,
+
+Ok. I'll write it a 1000 times on the wall... 
+
+Thanks for your patience,
+
+George...

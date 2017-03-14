@@ -1,0 +1,11 @@
+Your package sympy failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10187550
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048606
+build.log
+Created attachment 1048607
+root.log
+Created attachment 1048608
+state.log

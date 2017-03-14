@@ -1,0 +1,22 @@
+following info is reported by pchavan@redhat.com through https://engineering.redhat.com/rt/Ticket/Display.html?id=358216:
+
+<snip>
+While accessing the following link without login, we get the Access Denied Message instead of a Menu with First link to "New Hardware Catalog" And second link to "Old Catalog with Login" 
+
+[1] https://hardware.redhat.com/show.cgi?id=1210662 
+
+Try accessing this link above. And then see the access denied message. 
+
+Working link for example is as follows. 
+
+[2] https://hardware.redhat.com/show.cgi?id=1159178 
+
+This gives us the Menu. We need to have such menu for [1] . 
+
+Note: [2] is given only for reference. There is nothing to do with [2] 
+</snip>
+Hi Chavan,
+
+This is fixed.
+
+Now [1] has the guide links for public access.

@@ -1,0 +1,32 @@
+Version-Release number of selected component:
+firewalld-0.3.14.1-1.fc23
+
+Additional info:
+reporter:       libreport-2.6.0
+cmdline:        /usr/bin/python3 -Es /usr/sbin/firewalld --nofork --nopid
+executable:     /usr/sbin/firewalld
+kernel:         4.1.0-0.rc7.git1.1.fc23.x86_64
+runlevel:       N 5
+type:           Python3
+uid:            0
+
+Truncated backtrace:
+firewalld:131:startup:UnboundLocalError: local variable 'pid_file' referenced before assignment
+
+Traceback (most recent call last):
+  File "/usr/sbin/firewalld", line 176, in <module>
+    main()
+  File "/usr/sbin/firewalld", line 171, in main
+    startup(args)
+  File "/usr/sbin/firewalld", line 131, in startup
+    if os.path.exists(pid_file) and not args.nopid:
+UnboundLocalError: local variable 'pid_file' referenced before assignment
+
+Local variables in innermost frame:
+server: <module 'firewall.server.server' from '/usr/lib/python3.4/site-packages/firewall/server/server.py'>
+args: Namespace(debug=0, debug_gc=False, nofork=True, nopid=True)
+Created attachment 1040500
+File: backtrace
+Created attachment 1040501
+File: environ
+Fixed in rawhide in firewalld-0.3.14.2-2.fc23 or newer.

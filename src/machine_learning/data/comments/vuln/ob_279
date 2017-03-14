@@ -1,0 +1,6 @@
+Malicious DHCP clients could cause dhcpd(8) to corrupt its stack<br>
+A DHCP client that claimed to require a maximum message size less than
+the minimum IP MTU could cause dhcpd(8) to overwrite stack memory.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/016_dhcpd.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,8 @@
+Restore the ability to negotiate tags/wide/sync with some SCSI controllers ( i.e.
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=siop&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">siop(4)</a>,
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=trm&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">trm(4)</a>,
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=iha&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">iha(4)</a>
+).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/004_scsi.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,69 @@
+Created attachment 1042686
+win10-64 105 balloon whql test hlk log
+
+Description of problem:
+
+"HyperVisor Code Integrity Readiness Test" and "Device Driver INF Verification Test" failed during win10-32/64 balloon whql test
+
+
+Version-Release number of selected component (if applicable):
+virtio-win-prewhql-105
+qemu-kvm-rhev-2.3.0-2.el7.x86_64
+kernel-3.10.0-259.el7.x86_64
+seabios-1.7.5-9.el7.x86_64
+HLK:10.0.10075
+windows10:build **10074**
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.boot guest with:
+/usr/libexec/qemu-kvm -name 105BLNW10D64H6F -enable-kvm -m 3G -smp 4 -uuid 5fe7482b-1aa3-46d4-83a2-5777cf80a602 -nodefconfig -nodefaults -cpu Nehalem,+fsgsbase -chardev socket,id=charmonitor,path=/tmp/105BLNW10D64H6F,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=localtime,driftfix=slew -boot order=cd,menu=on -device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2 -drive file=105BLNW10D64H6F,if=none,id=drive-ide0-0-0,format=raw,serial=mike_cao,cache=none -device ide-drive,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 -drive file=en_windows_10_enterprise_insider_preview_10074_x64_dvd_6651209.iso,if=none,media=cdrom,id=drive-ide0-1-0,readonly=on,format=raw -device ide-drive,bus=ide.1,unit=0,drive=drive-ide0-1-0,id=ide0-1-0 -drive file=105BLNW10D64H6F.vfd,if=none,id=drive-fdc0-0-0,format=raw,cache=none -global isa-fdc.driveA=drive-fdc0-0-0 -netdev tap,script=/etc/qemu-ifup1,downscript=no,id=hostnet0 -device rtl8139,netdev=hostnet0,id=net0,mac=00:52:5b:79:b2:55,bus=pci.0,addr=0x3 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=isa_serial0 -device usb-tablet,id=input0 -vnc 0.0.0.0:1 -vga cirrus -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x7
+
+2.submit jobs in hlk
+
+
+Actual results:
+following jobs failed
+HyperVisor Code Integrity Readiness Test - we didn't meet this job in win10 build 9926 105-balloon whql test 
+Device Driver INF Verification Test - job passed during win10 build 9926 105-balloon whql test 
+
+Expected results:
+jobs can pass
+
+Additional info:
+1.we have run 105 balloon whql test with windows 10 build **9926** before,all jobs passed.
+2.Try on windows 10 build **10130**,still failed
+3.Please check the attached hlk log
+1.Job "Device Driver INF Verification Test" should pass after download the latest errata filter according to http://blogs.msdn.com/b/windows_hardware_certification/archive/2015/05/19/hlk-compatibility-program-playlist-update.aspx,I will try it tmr due to the network issue.
+
+2.If I use playlist from https://sysdev.microsoft.com/en-US/Hardware/compatibilityplaylists/,the total job amount will reduce from 49 to 15.
+job "HyperVisor Code Integrity Readiness Test" will be removed.
+following is my questions:
+Is it necessary to fix this issue when it's not in the playlist?
+Is that ok if we submit with playlist loaded?We still can get the same certification,right?
+Can we self-define the playlist and submit result to msft?
+Job "Device Driver INF Verification Test" passed after update the latest filter
+Hi Li,
+
+Are you using playlists? I think "HyperVisor Code Integrity Readiness Test" should be excluded when using playlist.
+
+Thanks,
+Yan.
+(In reply to Yan Vugenfirer from comment #4)
+> Hi Li,
+> 
+> Are you using playlists? I think "HyperVisor Code Integrity Readiness Test"
+> should be excluded when using playlist.
+> 
+> Thanks,
+> Yan.
+
+Sorry missed commend #2.
+
+For certification we should pass only the tests that are defined in playlist.
+
+For internal testing we should run all the tests - but "HyperVisor Code Integrity Readiness Test" should be investigated more (it uses MS hypervisor capabilities during the test, not sure it can even run in VM).
+
+We can close this BZ.

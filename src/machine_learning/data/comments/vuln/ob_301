@@ -1,0 +1,14 @@
+Multiple vulnerabilities have been discovered in X.Org.<br>
+RENDER Extension heap buffer overflow,
+RENDER Extension crash,
+RENDER Extension memory corruption,
+MIT-SHM arbitrary memory read,
+RECORD and Security extensions memory corruption.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-2360">CVE-2008-2360</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-2361">CVE-2008-2361</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-2362">CVE-2008-2362</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-1379">CVE-2008-1379</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-1377">CVE-2008-1377</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.2/common/012_xorg2.patch">
+A source code patch exists which remedies this problem.</a>

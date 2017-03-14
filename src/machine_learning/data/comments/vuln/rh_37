@@ -1,0 +1,235 @@
+Description of problem:
+I'm using OpenLdap 2.4.39 version that came with the RHEL7.1 but I am unable to pass a sample ldapadd argument. I'm using the Red hat 7 admin guide as well as this site for guidance on setting up a sample ldap server: http://www.certdepot.net/rhel7-configure-ldap-directory-service-user-connection/
+
+Version-Release number of selected component (if applicable):
+OpenLdap 2.4.39
+
+How reproducible:
+I can reproduce the error,
+# ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f /etc/openldap/base.ldif
+ldap_result: Can't contact LDAP server (-1)
+
+my base.ldif file has this content:
+# cat base.ldif 
+dn: dc=example,dc=com
+dc: example
+objectClass: top
+objectClass: domain
+
+dn: ou=People,dc=example,dc=com
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Group,dc=example,dc=com
+ou: Group
+objectClass: top
+objectClass: organizationalUnit
+
+Steps to Reproduce:
+1. slapd service is enabled and started, no errors or issues there
+2. ran ldapadd 
+3. can't contact ldap server
+4. both selinux and firwalld are disabled/stopped, rebooted the box twice
+
+Actual results:
+# ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f /etc/openldap/base.ldif -d5
+ldap_create
+ldap_sasl_bind
+ldap_send_initial_request
+ldap_new_connection 1 1 0
+ldap_int_open_connection
+ldap_connect_to_host: TCP localhost:389
+ldap_new_socket: 4
+ldap_prepare_socket: 4
+ldap_connect_to_host: Trying 127.0.0.1:389
+ldap_pvt_connect: fd: 4 tm: -1 async: 0
+attempting to connect: 
+connect success
+ldap_open_defconn: successful
+ldap_send_server_request
+ber_scanf fmt ({it) ber:
+ber_scanf fmt ({i) ber:
+ber_flush2: 48 bytes to sd 4
+ldap_result ld 0x7f6d6c7fa360 msgid 1
+wait4msg ld 0x7f6d6c7fa360 msgid 1 (infinite timeout)
+wait4msg continue ld 0x7f6d6c7fa360 msgid 1 all 1
+** ld 0x7f6d6c7fa360 Connections:
+* host: localhost  port: 389  (default)
+  refcnt: 2  status: Connected
+  last used: Thu Jul  2 16:29:06 2015
+
+
+** ld 0x7f6d6c7fa360 Outstanding Requests:
+ * msgid 1,  origid 1, status InProgress
+   outstanding referrals 0, parent count 0
+  ld 0x7f6d6c7fa360 request count 1 (abandoned 0)
+** ld 0x7f6d6c7fa360 Response Queue:
+   Empty
+  ld 0x7f6d6c7fa360 response count 0
+ldap_chkResponseList ld 0x7f6d6c7fa360 msgid 1 all 1
+ldap_chkResponseList returns ld 0x7f6d6c7fa360 NULL
+ldap_int_select
+read1msg: ld 0x7f6d6c7fa360 msgid 1 all 1
+ber_get_next
+ldap_err2string
+ldap_result: Can't contact LDAP server (-1)
+ldap_free_request (origid 1, msgid 1)
+ldap_free_connection 1 1
+ldap_free_connection: actually freed
+
+Expected results:
+# ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f /etc/openldap/base.ldif
+adding new entry "dc=example,dc=com"
+adding new entry "ou=People,dc=example,dc=com"
+adding new entry "ou=Group,dc=example,dc=com"
+
+Additional info:
+Hi Liz,
+
+configuring based on the link you provided works for me.
+Could you please provide logs (please add them as attachment) with level -1 (which means all possible logging) set for both ldapadd and slapd, and precise versions of openldap* packages installed?
+Also, what does the command
+> ldapsearch -x -w redhat -D cn=Manager,dc=example,dc=com -b dc=example,dc=com
+return for you?
+Thanks.
+Hi Matus,
+
+Thank you for your reply.
+
+I ran the following command to enable logging:
+	
+~# ldapmodify -Y EXTERNAL -H ldapi:///
+dn: cn=config
+replace: olcLogLevel
+olcLogLevel: 1
+ 
+CTRL + D
+
+But I can't find the slapd log in /var/log. 
+
+Then slapd -d -1 returns the following:
+
+# slapd -d -1
+ldap_url_parse_ext(ldap://localhost/)
+ldap_init: trying /etc/openldap/ldap.conf
+ldap_init: using /etc/openldap/ldap.conf
+ldap_init: HOME env is /root
+ldap_init: trying /root/ldaprc
+ldap_init: trying /root/.ldaprc
+ldap_init: LDAPCONF env is NULL
+ldap_init: LDAPRC env is NULL
+559ab278 @(#) $OpenLDAP: slapd 2.4.39 (Dec  9 2014 03:55:47) $
+	mockbuild@x86-030.build.eng.bos.redhat.com:/builddir/build/BUILD/openldap-2.4.39/openldap-2.4.39/servers/slapd
+ldap_pvt_gethostbyname_a: host=oberon.cluster.sec312, r=0
+559ab278 daemon_init: <null>
+559ab278 daemon_init: listen on ldap:///
+559ab278 daemon_init: 1 listeners to open...
+ldap_url_parse_ext(ldap:///)
+559ab278 daemon: bind(7) failed errno=98 (Address already in use)
+559ab278 daemon: bind(7) failed errno=98 (Address already in use)
+559ab278 slap_open_listener: failed on ldap:///
+559ab278 slapd stopped.
+559ab278 connections_destroy: nothing to destroy.
+
+Looking at the messages log, there aren't openldap entries of interest other that the stop/start o the daemon:
+# tail -50 messages 
+Jul  2 16:44:27 oberon systemd: Starting Session 4 of user root.
+Jul  2 16:44:27 oberon systemd-logind: New session 4 of user root.
+Jul  2 16:44:27 oberon systemd: Started Session 4 of user root.
+Jul  2 16:45:47 oberon systemd-logind: Removed session 4.
+Jul  3 15:45:35 oberon systemd: Starting Cleanup of Temporary Directories...
+Jul  3 15:45:35 oberon systemd: Started Cleanup of Temporary Directories.
+Jul  4 15:45:35 oberon systemd: Starting Cleanup of Temporary Directories...
+Jul  4 15:45:35 oberon systemd: Started Cleanup of Temporary Directories.
+Jul  5 15:45:35 oberon systemd: Starting Cleanup of Temporary Directories...
+Jul  5 15:45:35 oberon systemd: Started Cleanup of Temporary Directories.
+Jul  6 09:21:47 oberon systemd: Created slice user-0.slice.
+Jul  6 09:21:47 oberon systemd: Starting Session 5 of user root.
+Jul  6 09:21:47 oberon systemd-logind: New session 5 of user root.
+Jul  6 09:21:47 oberon systemd: Started Session 5 of user root.
+Jul  6 09:45:53 oberon systemd: Stopping OpenLDAP Server Daemon...
+Jul  6 09:45:53 oberon systemd: Starting OpenLDAP Server Daemon...
+Jul  6 09:45:53 oberon systemd: Started OpenLDAP Server Daemon.
+Jul  6 09:52:54 oberon systemd: Stopping OpenLDAP Server Daemon...
+Jul  6 09:52:54 oberon systemd: Stopped OpenLDAP Server Daemon.
+Jul  6 09:52:59 oberon systemd: Reloading.
+Jul  6 09:52:59 oberon systemd: [/usr/lib/systemd/system/lvm2-lvmetad.socket:9] Unknown lvalue 'RemoveOnStop' in section 'Socket'
+Jul  6 09:52:59 oberon systemd: [/usr/lib/systemd/system/dm-event.socket:10] Unknown lvalue 'RemoveOnStop' in section 'Socket'
+Jul  6 09:52:59 oberon systemd: Activated swap /dev/disk/by-uuid/1875efe4-1110-413b-a93e-901d8ead784e.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Mounted /scratch0.
+Jul  6 09:52:59 oberon systemd: Mounted /boot.
+Jul  6 09:52:59 oberon systemd: Mounted /.
+Jul  6 09:52:59 oberon systemd: Started File System Check on /dev/disk/by-uuid/28237e9b-550b-48f4-998a-fb3d7748a2aa.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Started File System Check on /dev/disk/by-uuid/dbe40255-1bbc-4841-ba6a-38376e78120c.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Found device ST3250820NS.
+Jul  6 09:52:59 oberon systemd: Activated swap /dev/disk/by-id/ata-ST3250820NS_9QE7NCAS-part5.
+Jul  6 09:52:59 oberon systemd: Activated swap /dev/sda5.
+Jul  6 09:52:59 oberon systemd: Starting Flexible Branding Service...
+Jul  6 09:52:59 oberon systemd: Started Flexible Branding Service.
+Jul  6 09:53:05 oberon systemd: Starting OpenLDAP Server Daemon...
+Jul  6 09:53:05 oberon systemd: Started OpenLDAP Server Daemon.
+Jul  6 09:57:28 oberon dbus-daemon: dbus[638]: [system] Activating service name='org.freedesktop.PackageKit' (using servicehelper)
+Jul  6 09:57:28 oberon dbus[638]: [system] Activating service name='org.freedesktop.PackageKit' (using servicehelper)
+Jul  6 09:57:28 oberon dbus-daemon: dbus[638]: [system] Successfully activated service 'org.freedesktop.PackageKit'
+Jul  6 09:57:28 oberon dbus[638]: [system] Successfully activated service 'org.freedesktop.PackageKit'
+
+
+Openldap packages installed:
+# rpm -qa | grep openldap*
+compat-openldap-2.3.43-5.el7.x86_64
+openldap-devel-2.4.39-6.el7.x86_64
+openldap-servers-2.4.39-6.el7.x86_64
+openldap-clients-2.4.39-6.el7.x86_64
+openldap-2.4.39-6.el7.x86_64
+Hi Liz,
+
+to set up logging, please modify using (see `man slapd-config' searched for olcLogLevel):
+dn: cn=config
+changetype: modify
+replace: olcLogLevel
+olcLogLevel: any
+
+When running slapd with systemd, you get the logs running this:
+journalctl _SYSTEMD_UNIT=slapd.service
+
+Running `slapd -d -1' failed for you because of another `slapd' already running.
+
+Please, supply both ldapadd and slapd logs for running the failing ldapadd command. It would be great if you could reproduce the issue on a clean system.
+
+Thank you
+Thanks Matus,
+
+I did setup logging as described in man slapd-config, the olcLogLevel is set to any. I ran the ldapadd command again and got the same error: ldap_result: Can't contact LDAP server (-1). There is nothing in /var/log/slapd/slapd.log
+
+Ran the journalctl command and got a huge output, what am I looking for here? I searched for anything failed and found this:
+# journalctl _SYSTEMD_UNIT=slapd.service | grep fail*
+Jul 06 12:05:38 oberon.cluster.sec312 slapd[1016]: ber_get_next on fd 11 failed errno=0 (Success)
+Jul 06 12:06:14 oberon.cluster.sec312 slapd[1016]: ber_get_next on fd 11 failed errno=0 (Success)
+Jul 06 12:06:59 oberon.cluster.sec312 slapd[1016]: ber_get_next on fd 11 failed errno=0 (Success)
+Jul 06 12:08:01 oberon.cluster.sec312 slapd[1016]: ber_get_next on fd 11 failed errno=0 (Success)
+Jul 07 10:57:08 oberon.cluster.sec312 slapd[2271]: ber_get_next on fd 12 failed errno=0 (Success)
+Jul 07 10:57:46 oberon.cluster.sec312 slapd[2271]: ber_get_next on fd 12 failed errno=0 (Success)
+Jul 07 10:58:25 oberon.cluster.sec312 slapd[2271]: ber_get_next on fd 12 failed errno=0 (Success)
+After looking at configuration files on the server, I looked at the /etc/hosts.allow file, added this:
+slapd: 127.0.0.1
+
+AND it works!!!
+
+Thank you for your time.
+Liz
+This article lead me to look at the /etc/hosts.allow file: http://serverfault.com/questions/665570/openldap-server-not-working-through-ldap-protocol
+Great to here it works!
+
+I am therefore closing this as NOTABUG, as the issue was a server side configuration error.

@@ -1,0 +1,5 @@
+Some ATAPI cdroms which do not support the full mandatory command set,
+(e.g. ATAPI_READ_CD_CAPACITY) do not work with the acd(4) driver.
+A patch is
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/acd.patch">
+available here.</a>

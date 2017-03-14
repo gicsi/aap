@@ -1,0 +1,12 @@
+Title: Configure the ISAPI to Send Client Requests to JBoss EAP 6
+
+Describe the issue:
+In step 5. the aligment is not cotrrect:
+⁠
+5. 
+Create the rewrite.properties file.
+
+Suggestions for improvement:
+Fix this issue
+
+Additional information:

@@ -1,0 +1,21 @@
+Mozilla community member Jonas Jenwald reported broken behavior in Mozilla's PDF.js PDF file viewer which led to the discovery that internal Workers were incorrectly executed with high privilege. If this flaw were combined with a separate vulnerability allowing for same-origin policy violation, it could be used to run arbitrary code. 
+
+
+External Reference:
+
+http://www.mozilla.org/security/announce/2015/mfsa2015-69.html
+
+
+Acknowledgements:
+
+Red Hat would like to thank the Mozilla project for reporting this issue. Upstream acknowledges Jonas Jenwald as the original reporter.
+This issue has been addressed in the following products:
+
+  Red Hat Enterprise Linux 7
+  Red Hat Enterprise Linux 6
+  Red Hat Enterprise Linux 5
+
+Via RHSA-2015:1207 https://rhn.redhat.com/errata/RHSA-2015-1207.html
+Statement:
+
+This issue does not affect the version of thunderbird package, as shipped with Red Hat Enterprise Linux 5, 6 and 7.

@@ -1,0 +1,688 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 013_tcp.patch
+
+Rebuild your kernel.
+
+Update headers.
+        make includes
+
+Then rebuild and install sysctl:
+        cd sbin/sysctl
+        make depend
+        make
+        make install
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.132
+retrieving revision 1.132.2.2
+diff -u -p -r1.132 -r1.132.2.2
+--- sys/netinet/tcp_input.c	9 Jul 2003 22:03:16 -0000	1.132
++++ sys/netinet/tcp_input.c	3 Mar 2004 08:37:05 -0000	1.132.2.2
+@@ -200,11 +200,23 @@ tcp_reass(tp, th, m, tlen)
+ 	 * Allocate a new queue entry, before we throw away any data.
+ 	 * If we can't, just drop the packet.  XXX
+ 	 */
+-	tiqe =  pool_get(&ipqent_pool, PR_NOWAIT);
++	tiqe = pool_get(&tcpqe_pool, PR_NOWAIT);
+ 	if (tiqe == NULL) {
+-		tcpstat.tcps_rcvmemdrop++;
+-		m_freem(m);
+-		return (0);
++		tiqe = LIST_FIRST(&tp->segq);
++		if (tiqe != NULL && th->th_seq == tp->rcv_nxt) {
++			/* Reuse last entry since new segment fills a hole */
++			while ((p = LIST_NEXT(tiqe, ipqe_q)) != NULL)
++				tiqe = p;
++			m_freem(tiqe->ipqe_m);
++			LIST_REMOVE(tiqe, ipqe_q);
++		}
++		if (tiqe == NULL || th->th_seq != tp->rcv_nxt) {
++			/* Flush fragments for this connection */
++			tcp_freeq(tp);
++			tcpstat.tcps_rcvmemdrop++;
++			m_freem(m);
++			return (0);
++		}
+ 	}
+ 
+ 	/*
+@@ -231,7 +243,7 @@ tcp_reass(tp, th, m, tlen)
+ 				tcpstat.tcps_rcvduppack++;
+ 				tcpstat.tcps_rcvdupbyte += *tlen;
+ 				m_freem(m);
+-				pool_put(&ipqent_pool, tiqe);
++				pool_put(&tcpqe_pool, tiqe);
+ 				return (0);
+ 			}
+ 			m_adj(m, i);
+@@ -261,7 +273,7 @@ tcp_reass(tp, th, m, tlen)
+ 		nq = q->ipqe_q.le_next;
+ 		m_freem(q->ipqe_m);
+ 		LIST_REMOVE(q, ipqe_q);
+-		pool_put(&ipqent_pool, q);
++		pool_put(&tcpqe_pool, q);
+ 	}
+ 
+ 	/* Insert the new fragment queue entry into place. */
+@@ -297,7 +309,7 @@ present:
+ 			m_freem(q->ipqe_m);
+ 		else
+ 			sbappendstream(&so->so_rcv, q->ipqe_m);
+-		pool_put(&ipqent_pool, q);
++		pool_put(&tcpqe_pool, q);
+ 		q = nq;
+ 	} while (q != NULL && q->ipqe_tcp->th_seq == tp->rcv_nxt);
+ 	sorwakeup(so);
+@@ -1380,8 +1392,10 @@ findpcb:
+ 				tp->snd_scale = tp->requested_s_scale;
+ 				tp->rcv_scale = tp->request_r_scale;
+ 			}
++			tcp_reass_lock(tp);
+ 			(void) tcp_reass(tp, (struct tcphdr *)0,
+ 				(struct mbuf *)0, &tlen);
++			tcp_reass_unlock(tp);
+ 			/*
+ 			 * if we didn't have to retransmit the SYN,
+ 			 * use its rtt as our initial srtt & rtt var.
+@@ -1640,8 +1654,10 @@ trimthenstep6:
+ 			tp->snd_scale = tp->requested_s_scale;
+ 			tp->rcv_scale = tp->request_r_scale;
+ 		}
++		tcp_reass_lock(tp);
+ 		(void) tcp_reass(tp, (struct tcphdr *)0, (struct mbuf *)0,
+ 				 &tlen);
++		tcp_reass_unlock(tp);
+ 		tp->snd_wl1 = th->th_seq - 1;
+ 		/* fall into ... */
+ 
+@@ -2144,8 +2160,10 @@ dodata:							/* XXX */
+ 	 */
+ 	if ((tlen || (tiflags & TH_FIN)) &&
+ 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
++		tcp_reass_lock(tp);
+ 		if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
+ 		    tp->t_state == TCPS_ESTABLISHED) {
++			tcp_reass_unlock(tp);
+ 			TCP_SETUP_ACK(tp, tiflags);
+ 			tp->rcv_nxt += tlen;
+ 			tiflags = th->th_flags & TH_FIN;
+@@ -2162,6 +2180,7 @@ dodata:							/* XXX */
+ 		} else {
+ 			m_adj(m, hdroptlen);
+ 			tiflags = tcp_reass(tp, th, m, &tlen);
++			tcp_reass_unlock(tp);
+ 			tp->t_flags |= TF_ACKNOW;
+ 		}
+ #ifdef TCP_SACK
+Index: sys/netinet/tcp_subr.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_subr.c,v
+retrieving revision 1.68
+retrieving revision 1.68.2.2
+diff -u -p -r1.68 -r1.68.2.2
+--- sys/netinet/tcp_subr.c	9 Jul 2003 22:03:16 -0000	1.68
++++ sys/netinet/tcp_subr.c	3 Mar 2004 08:37:05 -0000	1.68.2.2
+@@ -139,17 +139,18 @@ u_int32_t	tcp_now;
+ #endif
+ int	tcbhashsize = TCBHASHSIZE;
+ 
++int tcp_reass_limit = NMBCLUSTERS / 2; /* hardlimit for tcpqe_pool */
++
+ #ifdef INET6
+ extern int ip6_defhlim;
+ #endif /* INET6 */
+ 
+ struct pool tcpcb_pool;
++struct pool tcpqe_pool;
+ #ifdef TCP_SACK
+ struct pool sackhl_pool;
+ #endif
+ 
+-int	tcp_freeq(struct tcpcb *);
+-
+ struct tcpstat tcpstat;		/* tcp statistics */
+ tcp_seq  tcp_iss;
+ 
+@@ -164,6 +165,9 @@ tcp_init()
+ #endif /* TCP_COMPAT_42 */
+ 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
+ 	    NULL);
++	pool_init(&tcpqe_pool, sizeof(struct ipqent), 0, 0, 0, "tcpqepl",
++	    NULL);
++	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit, NULL, 0);
+ #ifdef TCP_SACK
+ 	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhlpl",
+ 	    NULL);
+@@ -669,7 +673,9 @@ tcp_close(struct tcpcb *tp)
+ #endif /* RTV_RTT */
+ 
+ 	/* free the reassembly queue, if any */
++	tcp_reass_lock(tp);
+ 	tcp_freeq(tp);
++	tcp_reass_unlock(tp);
+ 
+ 	tcp_canceltimers(tp);
+ 	TCP_CLEAR_DELACK(tp);
+@@ -702,7 +708,7 @@ tcp_freeq(struct tcpcb *tp)
+ 	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
+ 		LIST_REMOVE(qe, ipqe_q);
+ 		m_freem(qe->ipqe_m);
+-		pool_put(&ipqent_pool, qe);
++		pool_put(&tcpqe_pool, qe);
+ 		rv = 1;
+ 	}
+ 	return (rv);
+@@ -711,7 +717,20 @@ tcp_freeq(struct tcpcb *tp)
+ void
+ tcp_drain()
+ {
+-
++	struct inpcb *inp;
++ 
++	/* called at splimp() */
++	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
++		struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
++
++		if (tp != NULL) {
++			if (tcp_reass_lock_try(tp) == 0)
++				continue;
++			if (tcp_freeq(tp))
++				tcpstat.tcps_conndrained++;
++			tcp_reass_unlock(tp);
++		}
++	}
+ }
+ 
+ /*
+Index: sys/netinet/tcp_usrreq.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_usrreq.c,v
+retrieving revision 1.71
+retrieving revision 1.71.2.1
+diff -u -p -r1.71 -r1.71.2.1
+--- sys/netinet/tcp_usrreq.c	9 Jun 2003 07:40:25 -0000	1.71
++++ sys/netinet/tcp_usrreq.c	3 Mar 2004 08:37:05 -0000	1.71.2.1
+@@ -873,6 +873,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp,
+ 	void *newp;
+ 	size_t newlen;
+ {
++	int error, nval;
+ 
+ 	/* All sysctl names at this level are terminal. */
+ 	if (namelen != 1)
+@@ -927,6 +928,18 @@ tcp_sysctl(name, namelen, oldp, oldlenp,
+ 		return (sysctl_int(oldp, oldlenp, newp, newlen,
+ 		   &tcp_do_ecn));
+ #endif
++	case TCPCTL_REASS_LIMIT:
++		nval = tcp_reass_limit;
++		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
++		if (error)
++			return (error);
++		if (nval != tcp_reass_limit) {
++			error = pool_sethardlimit(&tcpqe_pool, nval, NULL, 0);
++			if (error)
++				return (error);
++			tcp_reass_limit = nval;
++		}
++		return (0);
+ 	default:
+ 		return (ENOPROTOOPT);
+ 	}
+Index: sys/netinet/tcp_var.h
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_var.h,v
+retrieving revision 1.51
+retrieving revision 1.51.2.3
+diff -u -p -r1.51 -r1.51.2.3
+--- sys/netinet/tcp_var.h	9 Jun 2003 07:40:25 -0000	1.51
++++ sys/netinet/tcp_var.h	4 Mar 2004 03:28:09 -0000	1.51.2.3
+@@ -82,6 +82,7 @@ struct tcpcb {
+ #define TF_SEND_CWR	0x00020000	/* send CWR in next seg */
+ #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
+ #endif
++#define TF_REASSLOCK	0x00080000	/* reassembling or draining */
+ 
+ 	struct	mbuf *t_template;	/* skeletal packet for transmit */
+ 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
+@@ -205,6 +206,35 @@ do {									\
+ 		timeout_del(&(tp)->t_delack_to);			\
+ 	}								\
+ } while (/*CONSTCOND*/0)
++
++static __inline int tcp_reass_lock_try(struct tcpcb *);
++static __inline void tcp_reass_unlock(struct tcpcb *);
++#define tcp_reass_lock(tp) tcp_reass_lock_try(tp)
++
++static __inline int
++tcp_reass_lock_try(struct tcpcb *tp)
++{
++	int s;
++
++	s = splimp();
++	if (tp->t_flags & TF_REASSLOCK) {
++		splx(s);
++		return (0);
++	}
++	tp->t_flags |= TF_REASSLOCK;
++	splx(s);
++	return (1);
++}
++
++static __inline void
++tcp_reass_unlock(struct tcpcb *tp)
++{
++	int s;
++
++	s = splimp();
++	tp->t_flags &= ~TF_REASSLOCK;
++	splx(s);
++}
+ #endif /* _KERNEL */
+ 
+ /*
+@@ -319,6 +349,8 @@ struct	tcpstat {
+ 	u_int32_t tcps_cwr_ecn;		/* # of cwnd reduced by ecn */
+ 	u_int32_t tcps_cwr_frecovery;	/* # of cwnd reduced by fastrecovery */
+ 	u_int32_t tcps_cwr_timeout;	/* # of cwnd reduced by timeout */
++
++	u_int64_t tcps_conndrained;	/* # of connections drained */
+ };
+ 
+ /*
+@@ -339,7 +371,8 @@ struct	tcpstat {
+ #define	TCPCTL_RSTPPSLIMIT     12 /* RST pps limit */
+ #define	TCPCTL_ACK_ON_PUSH     13 /* ACK immediately on PUSH */
+ #define	TCPCTL_ECN	       14 /* RFC3168 ECN */
+-#define	TCPCTL_MAXID	       15
++#define	TCPCTL_REASS_LIMIT     15 /* max entries for tcp reass queues */
++#define	TCPCTL_MAXID	       16
+ 
+ #define	TCPCTL_NAMES { \
+ 	{ 0, 0 }, \
+@@ -357,6 +390,7 @@ struct	tcpstat {
+ 	{ "rstppslimit",	CTLTYPE_INT }, \
+ 	{ "ackonpush",	CTLTYPE_INT }, \
+ 	{ "ecn", 	CTLTYPE_INT }, \
++	{ "reasslimit",	CTLTYPE_INT }, \
+ }
+ 
+ struct tcp_ident_mapping {
+@@ -377,10 +411,14 @@ extern	struct pool sackhl_pool;
+ #endif
+ extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
+ 
++extern	struct pool tcpqe_pool;
++extern	int tcp_reass_limit;	/* max entries for tcp reass queues */
++
+ int	 tcp_attach(struct socket *);
+ void	 tcp_canceltimers(struct tcpcb *);
+ struct tcpcb *
+ 	 tcp_close(struct tcpcb *);
++int	 tcp_freeq(struct tcpcb *);
+ #if defined(INET6) && !defined(TCP6)
+ void	 tcp6_ctlinput(int, struct sockaddr *, void *);
+ #endif
+
+Apply by doing:
+        cd /usr/XF4
+        patch -p0 < 012_font.patch
+
+Then rebuild and install X:
+        cd /usr/obj
+        lndir /usr/XF4
+        make build
+
+Index: xc/lib/font/fontfile/dirfile.c
+===================================================================
+RCS file: /cvs/XF4/xc/lib/font/fontfile/dirfile.c,v
+retrieving revision 1.1.1.4
+retrieving revision 1.1.1.4.2.2
+diff -u -p -r1.1.1.4 -r1.1.1.4.2.2
+--- xc/lib/font/fontfile/dirfile.c	1 Apr 2003 18:44:59 -0000	1.1.1.4
++++ xc/lib/font/fontfile/dirfile.c	13 Feb 2004 07:46:49 -0000	1.1.1.4.2.2
+@@ -68,6 +68,9 @@ FontFileReadDirectory (char *directory, 
+ 
+     FontDirectoryPtr	dir = NullFontDirectory;
+ 
++    if (strlen(directory) + 1 + sizeof(FontDirFile) > sizeof(dir_file))
++	return BadFontPath;
++
+ #ifdef FONTDIRATTRIB
+     /* Check for font directory attributes */
+ #ifndef __UNIXOS2__
+@@ -154,6 +157,9 @@ FontFileDirectoryChanged(FontDirectoryPt
+     char	dir_file[MAXFONTFILENAMELEN];
+     struct stat	statb;
+ 
++    if (strlen(dir->directory) + sizeof(FontDirFile) > sizeof(dir_file))
++	return FALSE;
++
+     strcpy (dir_file, dir->directory);
+     strcat (dir_file, FontDirFile);
+     if (stat (dir_file, &statb) == -1)
+@@ -202,6 +208,8 @@ AddFileNameAliases(FontDirectoryPtr dir)
+ 	    continue;
+ 	
+ 	len = strlen (fileName) - renderer->fileSuffixLen;
++	if (len >= sizeof(copy))
++	    continue;
+ 	CopyISOLatin1Lowered (copy, fileName, len);
+ 	copy[len] = '\0';
+ 	name.name = copy;
+@@ -251,9 +259,13 @@ ReadFontAlias(char *directory, Bool isFi
+     int			status = Successful;
+     struct stat		statb;
+ 
++    if (strlen(directory) >= sizeof(alias_file))
++	return BadFontPath;
+     dir = *pdir;
+     strcpy(alias_file, directory);
+     if (!isFile) {
++	if (strlen(directory) + 1 + sizeof(FontAliasFile) > sizeof(alias_file))
++	    return BadFontPath;
+ 	if (directory[strlen(directory) - 1] != '/')
+ 	    strcat(alias_file, "/");
+ 	strcat(alias_file, FontAliasFile);
+@@ -286,6 +298,10 @@ ReadFontAlias(char *directory, Bool isFi
+ 	    status = AllocError;
+ 	    break;
+ 	case NAME:
++	    if (strlen(lexToken) >= sizeof(alias)) {
++		status = BadFontPath;
++		break;
++	    }
+ 	    strcpy(alias, lexToken);
+ 	    token = lexAlias(file, &lexToken);
+ 	    switch (token) {
+@@ -302,6 +318,10 @@ ReadFontAlias(char *directory, Bool isFi
+ 		status = AllocError;
+ 		break;
+ 	    case NAME:
++		if (strlen(lexToken) >= sizeof(font_name)) {
++		    status = BadFontPath;
++		    break;
++		}
+ 		CopyISOLatin1Lowered(alias, alias, strlen(alias));
+ 		CopyISOLatin1Lowered(font_name, lexToken, strlen(lexToken));
+ 		if (!FontFileAddFontAlias (dir, alias, font_name))
+Index: xc/lib/font/fontfile/encparse.c
+===================================================================
+RCS file: /cvs/XF4/xc/lib/font/fontfile/encparse.c,v
+retrieving revision 1.1.1.2
+retrieving revision 1.1.1.2.8.1
+diff -u -p -r1.1.1.2 -r1.1.1.2.8.1
+--- xc/lib/font/fontfile/encparse.c	19 Jan 2002 11:06:06 -0000	1.1.1.2
++++ xc/lib/font/fontfile/encparse.c	13 Feb 2004 07:46:49 -0000	1.1.1.2.8.1
+@@ -833,6 +833,7 @@ FontEncReallyReallyLoad(const char *char
+     char file_name[MAXFONTFILENAMELEN], encoding_name[MAXFONTNAMELEN],
+         buf[MAXFONTFILENAMELEN];
+     int count, n;
++    static char format[24] = "";
+     
+     /* As we don't really expect to open encodings that often, we don't
+        take the trouble of caching encodings directories. */
+@@ -848,8 +849,12 @@ FontEncReallyReallyLoad(const char *char
+     }
+ 
+     encoding = NULL;
++    if (!format[0]) {
++	sprintf(format, "%%%ds %%%d[^\n]\n", sizeof(encoding_name) - 1,
++		sizeof(file_name) - 1);
++    }
+     for(;;) {
+-        count = fscanf(file, "%s %[^\n]\n", encoding_name, file_name);
++        count = fscanf(file, format, encoding_name, file_name);
+         if(count == EOF)
+             break;
+         if(count != 2)
+Index: xc/lib/font/fontfile/fontfile.c
+===================================================================
+RCS file: /cvs/XF4/xc/lib/font/fontfile/fontfile.c,v
+retrieving revision 1.1.1.4
+retrieving revision 1.1.1.4.2.1
+diff -u -p -r1.1.1.4 -r1.1.1.4.2.1
+--- xc/lib/font/fontfile/fontfile.c	1 Apr 2003 18:44:59 -0000	1.1.1.4
++++ xc/lib/font/fontfile/fontfile.c	13 Feb 2004 07:46:49 -0000	1.1.1.4.2.1
+@@ -424,11 +424,16 @@ FontFileOpenFont (pointer client, FontPa
+ 		    vals.ranges = ranges;
+ 		    vals.nranges = nranges;
+ 
+-		    strcpy (fileName, dir->directory);
+-		    strcat (fileName, scalable->fileName);
+-		    ret = (*scalable->renderer->OpenScalable) (fpe, pFont,
++		    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++			sizeof(fileName)) {
++			ret = BadFontName;
++		    } else {
++			strcpy (fileName, dir->directory);
++			strcat (fileName, scalable->fileName);
++			ret = (*scalable->renderer->OpenScalable) (fpe, pFont,
+ 			   flags, entry, fileName, &vals, format, fmask,
+ 			   non_cachable_font);
++		    }
+ 
+ 		    /* In case rasterizer does something bad because of
+ 		       charset subsetting... */
+@@ -497,6 +502,10 @@ FontFileOpenBitmapNCF (FontPathElementPt
+ 
+     dir = (FontDirectoryPtr) fpe->private;
+     bitmap = &entry->u.bitmap;
++    if(!bitmap || !bitmap->renderer->OpenBitmap)
++	return BadFontName;
++    if (strlen(dir->directory) + strlen(bitmap->fileName) >= sizeof(fileName))
++	return BadFontName;
+     strcpy (fileName, dir->directory);
+     strcat (fileName, bitmap->fileName);
+     ret = (*bitmap->renderer->OpenBitmap) 
+@@ -530,6 +539,10 @@ FontFileGetInfoBitmap (FontPathElementPt
+ 
+     dir = (FontDirectoryPtr) fpe->private;
+     bitmap = &entry->u.bitmap;
++    if (!bitmap || !bitmap->renderer->GetInfoBitmap)
++        return BadFontName;
++    if (strlen(dir->directory) + strlen(bitmap->fileName) >= sizeof(fileName))
++      return BadFontName;
+     strcpy (fileName, dir->directory);
+     strcat (fileName, bitmap->fileName);
+     ret = (*bitmap->renderer->GetInfoBitmap) (fpe, pFontInfo, entry, fileName);
+@@ -891,10 +904,15 @@ FontFileListOneFontWithInfo (pointer cli
+ 		    vals.ranges = FontParseRanges(origName, &vals.nranges);
+ 		    ranges = vals.ranges;
+ 		    /* Make a new scaled instance */
+-	    	    strcpy (fileName, dir->directory);
+-	    	    strcat (fileName, scalable->fileName);
+-	    	    ret = (*scalable->renderer->GetInfoScalable)
+-			(fpe, *pFontInfo, entry, &tmpName, fileName, &vals);
++		    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++			sizeof(fileName)) {
++			ret = BadFontName;
++		    } else {
++			strcpy (fileName, dir->directory);
++			strcat (fileName, scalable->fileName);
++			ret = (*scalable->renderer->GetInfoScalable)
++			   (fpe, *pFontInfo, entry, &tmpName, fileName, &vals);
++		    }
+ 		    if (ranges) xfree(ranges);
+ 		}
+ 	    }
+@@ -931,10 +949,15 @@ FontFileListOneFontWithInfo (pointer cli
+ 	    bc = &entry->u.bc;
+ 	    entry = bc->entry;
+ 	    /* Make a new scaled instance */
+-    	    strcpy (fileName, dir->directory);
+-    	    strcat (fileName, scalable->fileName);
+-	    ret = (*scalable->renderer->GetInfoScalable)
++	    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++		sizeof(fileName)) {
++		ret = BadFontName;
++	    } else {
++		strcpy (fileName, dir->directory);
++		strcat (fileName, scalable->fileName);
++		ret = (*scalable->renderer->GetInfoScalable)
+ 		    (fpe, *pFontInfo, entry, tmpName, fileName, &bc->vals);
++	    }
+ 	    break;
+ #endif
+ 	default:
+Index: xc-old/lib/font/fontfile/dirfile.c
+===================================================================
+RCS file: /cvs/XF4/xc-old/lib/font/fontfile/dirfile.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.1.1.1.12.2
+diff -u -p -r1.1.1.1 -r1.1.1.1.12.2
+--- xc-old/lib/font/fontfile/dirfile.c	18 Feb 2001 16:08:19 -0000	1.1.1.1
++++ xc-old/lib/font/fontfile/dirfile.c	13 Feb 2004 07:46:49 -0000	1.1.1.1.12.2
+@@ -73,6 +73,9 @@ FontFileReadDirectory (directory, pdir)
+ 
+     FontDirectoryPtr	dir = NullFontDirectory;
+ 
++    if (strlen(directory) + 1 + sizeof(FontDirFile) > sizeof(dir_file))
++       return BadFontPath;
++
+ #ifdef FONTDIRATTRIB
+     /* Check for font directory attributes */
+ #ifndef __EMX__
+@@ -160,6 +163,9 @@ FontFileDirectoryChanged(dir)
+     char	dir_file[MAXFONTFILENAMELEN];
+     struct stat	statb;
+ 
++    if (strlen(dir->directory) + sizeof(FontDirFile) > sizeof(dir_file))
++       return FALSE;
++
+     strcpy (dir_file, dir->directory);
+     strcat (dir_file, FontDirFile);
+     if (stat (dir_file, &statb) == -1)
+@@ -209,6 +215,8 @@ AddFileNameAliases(dir)
+ 	    continue;
+ 	
+ 	len = strlen (fileName) - renderer->fileSuffixLen;
++       if (len >= sizeof(copy))
++           continue;
+ 	CopyISOLatin1Lowered (copy, fileName, len);
+ 	copy[len] = '\0';
+ 	name.name = copy;
+@@ -263,6 +271,8 @@ ReadFontAlias(directory, isFile, pdir)
+     int			status = Successful;
+     struct stat		statb;
+ 
++    if (strlen(directory) >= sizeof(alias_file))
++       return BadFontPath;
+     dir = *pdir;
+     strcpy(alias_file, directory);
+     if (!isFile) {
+@@ -298,6 +308,10 @@ ReadFontAlias(directory, isFile, pdir)
+ 	    status = AllocError;
+ 	    break;
+ 	case NAME:
++	    if (strlen(lexToken) >= sizeof(alias)) {
++		status = BadFontPath;
++		break;
++	    }
+ 	    strcpy(alias, lexToken);
+ 	    token = lexAlias(file, &lexToken);
+ 	    switch (token) {
+@@ -314,6 +328,10 @@ ReadFontAlias(directory, isFile, pdir)
+ 		status = AllocError;
+ 		break;
+ 	    case NAME:
++               if (strlen(lexToken) >= sizeof(font_name)) {
++                   status = BadFontPath;
++                   break;
++               }
+ 		CopyISOLatin1Lowered((unsigned char *) alias,
+ 				     (unsigned char *) alias,
+ 				     strlen(alias));
+Index: xc-old/lib/font/fontfile/fontfile.c
+===================================================================
+RCS file: /cvs/XF4/xc-old/lib/font/fontfile/fontfile.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.1.1.1.12.1
+diff -u -p -r1.1.1.1 -r1.1.1.1.12.1
+--- xc-old/lib/font/fontfile/fontfile.c	18 Feb 2001 16:08:20 -0000	1.1.1.1
++++ xc-old/lib/font/fontfile/fontfile.c	13 Feb 2004 07:46:49 -0000	1.1.1.1.12.1
+@@ -438,11 +438,16 @@ FontFileOpenFont (client, fpe, flags, na
+ 		    vals.ranges = ranges;
+ 		    vals.nranges = nranges;
+ 
+-		    strcpy (fileName, dir->directory);
+-		    strcat (fileName, scalable->fileName);
+-		    ret = (*scalable->renderer->OpenScalable) (fpe, pFont,
++		    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++			sizeof(fileName)) {
++			ret = BadFontName;
++		    } else {
++			strcpy (fileName, dir->directory);
++			strcat (fileName, scalable->fileName);
++			ret = (*scalable->renderer->OpenScalable) (fpe, pFont,
+ 			   flags, entry, fileName, &vals, format, fmask,
+ 			   non_cachable_font);
++		    }
+ 
+ 		    /* In case rasterizer does something bad because of
+ 		       charset subsetting... */
+@@ -517,6 +522,10 @@ FontFileOpenBitmapNCF (fpe, pFont, flags
+ 
+     dir = (FontDirectoryPtr) fpe->private;
+     bitmap = &entry->u.bitmap;
++    if(!bitmap || !bitmap->renderer->OpenBitmap)
++        return BadFontName;
++    if (strlen(dir->directory) + strlen(bitmap->fileName) >= sizeof(fileName))
++       return BadFontName;
+     strcpy (fileName, dir->directory);
+     strcat (fileName, bitmap->fileName);
+     ret = (*bitmap->renderer->OpenBitmap) 
+@@ -553,6 +562,10 @@ FontFileGetInfoBitmap (fpe, pFontInfo, e
+ 
+     dir = (FontDirectoryPtr) fpe->private;
+     bitmap = &entry->u.bitmap;
++    if (!bitmap || !bitmap->renderer->GetInfoBitmap)
++       return BadFontName;
++    if (strlen(dir->directory) + strlen(bitmap->fileName) >= sizeof(fileName))
++       return BadFontName;
+     strcpy (fileName, dir->directory);
+     strcat (fileName, bitmap->fileName);
+     ret = (*bitmap->renderer->GetInfoBitmap) (fpe, pFontInfo, entry, fileName);
+@@ -936,10 +949,15 @@ FontFileListOneFontWithInfo (client, fpe
+ 		    vals.ranges = FontParseRanges(origName, &vals.nranges);
+ 		    ranges = vals.ranges;
+ 		    /* Make a new scaled instance */
+-	    	    strcpy (fileName, dir->directory);
+-	    	    strcat (fileName, scalable->fileName);
+-	    	    ret = (*scalable->renderer->GetInfoScalable)
+-			(fpe, *pFontInfo, entry, &tmpName, fileName, &vals);
++		    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++			sizeof(fileName)) {
++			ret = BadFontName;
++		    } else {
++			strcpy (fileName, dir->directory);
++			strcat (fileName, scalable->fileName);
++			ret = (*scalable->renderer->GetInfoScalable)
++			   (fpe, *pFontInfo, entry, &tmpName, fileName, &vals);
++		    }
+ 		    if (ranges) xfree(ranges);
+ 		}
+ 	    }
+@@ -976,10 +994,15 @@ FontFileListOneFontWithInfo (client, fpe
+ 	    bc = &entry->u.bc;
+ 	    entry = bc->entry;
+ 	    /* Make a new scaled instance */
+-    	    strcpy (fileName, dir->directory);
+-    	    strcat (fileName, scalable->fileName);
+-	    ret = (*scalable->renderer->GetInfoScalable)
++	    if (strlen(dir->directory) + strlen(scalable->fileName) >=
++		sizeof(fileName)) {
++		ret = BadFontName;
++	    } else {
++		strcpy (fileName, dir->directory);
++		strcat (fileName, scalable->fileName);
++		ret = (*scalable->renderer->GetInfoScalable)
+ 		    (fpe, *pFontInfo, entry, tmpName, fileName, &bc->vals);
++	    }
+ 	    break;
+ #endif
+ 	default:
+

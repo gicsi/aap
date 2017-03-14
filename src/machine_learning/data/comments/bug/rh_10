@@ -1,0 +1,68 @@
+Description of problem:
+SELinux is preventing evince-thumbnai from using the 'dac_override' capabilities.
+
+*****  Plugin dac_override (91.4 confidence) suggests   **********************
+
+If desea ayudar a identificar si el dominio necesita este acceso, o posee un archivo con permisos equivocados en el sistema
+Then activa auditoría completa para obtener información de la ruta relacionada con el archivo conflictivo, y generar el error nuevamente.
+Do
+
+Active auditoría completa
+# auditctl -w /etc/shadow -p w
+Intente recrear el AVC. Luego ejecute
+# ausearch -m avc -ts recent
+Si observa un registro PATH verifique permisos y pertenencia del archivo, y solucionelo, 
+de lo contrario, repórtelo en bugzilla.
+
+*****  Plugin catchall (9.59 confidence) suggests   **************************
+
+If cree que evince-thumbnai debería tener la capacidad de dac_override de forma predeterminada.
+Then debería reportar esto como un error.
+Puede generar un módulo de política local para permitir este acceso.
+Do
+permita el acceso momentáneamente executando:
+# grep evince-thumbnai /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                unconfined_u:unconfined_r:thumb_t:s0-s0:c0.c1023
+Target Context                unconfined_u:unconfined_r:thumb_t:s0-s0:c0.c1023
+Target Objects                Unknown [ capability ]
+Source                        evince-thumbnai
+Source Path                   evince-thumbnai
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch selinux-
+                              policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   12
+First Seen                    2015-06-15 03:51:07 COT
+Last Seen                     2015-07-08 04:13:10 COT
+Local ID                      a2ce2141-8f9a-472b-85eb-a1b88fd6f7df
+
+Raw Audit Messages
+type=AVC msg=audit(1436346790.95:743): avc:  denied  { dac_override } for  pid=7332 comm="totem-video-thu" capability=1  scontext=unconfined_u:unconfined_r:thumb_t:s0-s0:c0.c1023 tcontext=unconfined_u:unconfined_r:thumb_t:s0-s0:c0.c1023 tclass=capability permissive=0
+
+
+Hash: evince-thumbnai,thumb_t,thumb_t,capability,dac_override
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 815106
+Hi, 
+I believe you have wrong permissions on some file touched by thumb. You can read this blog for more information: http://danwalsh.livejournal.com/69478.html

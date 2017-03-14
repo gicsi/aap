@@ -1,0 +1,124 @@
+Note that this is the second version of this patch.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 029_fts.patch
+
+And then rebuild and install libc:
+	cd lib/libc
+	make obj
+	make depend
+	make
+	make install
+
+You also need to rebuild the static binaries that use fts(3):
+	foreach d ( bin/{chmod,cp,ls,pax,rm} usr.bin/cmp sbin/dump )
+		cd /usr/src/$d
+		make obj
+		make depend
+		make
+		make install
+	end
+
+If you use sh/ksh/bash/zsh instead of csh/tcsh:
+	for d in bin/{chmod,cp,ls,pax,rm} usr.bin/cmp sbin/dump; do
+		cd /usr/src/$d
+		make obj
+		make obj
+		make depend
+		make
+		make install
+	done
+
+Index: lib/libc/gen/fts.c
+===================================================================
+RCS file: /cvs/src/lib/libc/gen/fts.c,v
+retrieving revision 1.24
+diff -u -r1.24 fts.c
+--- lib/libc/gen/fts.c	2000/08/24 17:04:12	1.24
++++ lib/libc/gen/fts.c	2001/05/31 21:56:56
+@@ -61,7 +61,7 @@
+ static int	 fts_palloc __P((FTS *, size_t));
+ static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
+ static u_short	 fts_stat __P((FTS *, FTSENT *, int));
+-static int	 fts_safe_changedir __P((FTS *, FTSENT *, int));
++static int	 fts_safe_changedir __P((FTS *, FTSENT *, int, char *));
+ 
+ #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
+ 
+@@ -69,7 +69,6 @@
+ #define	ISSET(opt)	(sp->fts_options & (opt))
+ #define	SET(opt)	(sp->fts_options |= (opt))
+ 
+-#define	CHDIR(sp, path)	(!ISSET(FTS_NOCHDIR) && chdir(path))
+ #define	FCHDIR(sp, fd)	(!ISSET(FTS_NOCHDIR) && fchdir(fd))
+ 
+ /* fts_build flags */
+@@ -346,7 +345,7 @@
+ 		 * FTS_STOP or the fts_info field of the node.
+ 		 */
+ 		if (sp->fts_child) {
+-			if (fts_safe_changedir(sp, p, -1)) {
++			if (fts_safe_changedir(sp, p, -1, p->fts_accpath)) {
+ 				p->fts_errno = errno;
+ 				p->fts_flags |= FTS_DONTCHDIR;
+ 				for (p = sp->fts_child; p; p = p->fts_link)
+@@ -457,11 +456,10 @@
+ 			return (NULL);
+ 		}
+ 		(void)close(p->fts_symfd);
+-	} else if (!(p->fts_flags & FTS_DONTCHDIR)) {
+-		if (CHDIR(sp, "..")) {
+-			SET(FTS_STOP);
+-			return (NULL);
+-		}
++	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
++	    fts_safe_changedir(sp, p->fts_parent, -1, "..")) {
++		SET(FTS_STOP);
++		return (NULL);
+ 	}
+ 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
+ 	return (sp->fts_cur = p);
+@@ -646,7 +644,7 @@
+ 	 */
+ 	cderrno = 0;
+ 	if (nlinks || type == BREAD) {
+-		if (fts_safe_changedir(sp, cur, dirfd(dirp))) {
++		if (fts_safe_changedir(sp, cur, dirfd(dirp), NULL)) {
+ 			if (nlinks && type == BREAD)
+ 				cur->fts_errno = errno;
+ 			cur->fts_flags |= FTS_DONTCHDIR;
+@@ -808,8 +806,8 @@
+ 	 * can't get back, we're done.
+ 	 */
+ 	if (descend && (type == BCHILD || !nitems) &&
+-	    (cur->fts_level == FTS_ROOTLEVEL ?
+-	    FCHDIR(sp, sp->fts_rfd) : CHDIR(sp, ".."))) {
++	    (cur->fts_level == FTS_ROOTLEVEL ? FCHDIR(sp, sp->fts_rfd) :
++	    fts_safe_changedir(sp, cur->fts_parent, -1, ".."))) {
+ 		cur->fts_info = FTS_ERR;
+ 		SET(FTS_STOP);
+ 		return (NULL);
+@@ -1086,10 +1084,11 @@
+  * Assumes p->fts_dev and p->fts_ino are filled in.
+  */
+ static int
+-fts_safe_changedir(sp, p, fd)
++fts_safe_changedir(sp, p, fd, path)
+ 	FTS *sp;
+ 	FTSENT *p;
+ 	int fd;
++	char *path;
+ {
+ 	int ret, oerrno, newfd;
+ 	struct stat sb;
+@@ -1097,7 +1096,7 @@
+ 	newfd = fd;
+ 	if (ISSET(FTS_NOCHDIR))
+ 		return (0);
+-	if (fd < 0 && (newfd = open(p->fts_accpath, O_RDONLY, 0)) < 0)
++	if (fd < 0 && (newfd = open(path, O_RDONLY, 0)) < 0)
+ 		return (-1);
+ 	if (fstat(newfd, &sb)) {
+ 		ret = -1;
+

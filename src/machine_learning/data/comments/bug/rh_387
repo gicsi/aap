@@ -1,0 +1,17 @@
+Description of problem:
+
+voms 2.0.12-3.el6 dropped voms-clients sub-package and added new sub-package voms-clients-cpp.
+
+package: myproxy-voms-6.1.14-1.el6.x86_64 from epel-testing
+  unresolved deps: 
+     voms-clients
+Yes, the package changed name. But at the same time a provides was added:
+
+# repoquery --whatprovides voms-clients
+voms-clients-cpp-0:2.0.12-3.el6.x86_64
+
+So voms-clients-cpp still provides voms-clients, thereby satisfying the dependency in myproxy-voms.
+
+This was done on purpose. The reason for doing this is the following: Both voms-clients-cpp and voms-clients-java provide voms-clients. A package (like myproxy-voms) that requires the voms client tools, but without a spceific requirement on whether the C++ or Java implementation is needed can require voms-clients and either implementation can satisfy the dependency.
+
+Now voms-clients-java is not available in EPEL 6 at the moment due to that its dependency bouncycastle-mail is missing (see bug #1233527), so the "either package fulfils the dependency" scenario doesn't really apply in EPEL 6 since only voms-clients-cpp provides voms-clients. There is however no problem installing myproxy-voms in EPEL 6 since the dependency is provided by voms-clients-cpp.

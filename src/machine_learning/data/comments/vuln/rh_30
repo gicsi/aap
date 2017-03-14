@@ -1,0 +1,65 @@
+Description of problem:
+
+After the installation of latest ISO ,After adding the latest puddle for RHGS3.1:
+http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo
+
+Yum update fails with a dependency error of pcs package on one of the python package:
+
+Error: Package: pcs-0.9.139-9.el6.x86_64 (RH-Gluster-3-Server)
+           Requires: python-clufter
+
+
+Resolving Dependencies
+--> Running transaction check
+---> Package corosync.x86_64 0:1.4.7-1.el6 will be updated
+---> Package corosync.x86_64 0:1.4.7-2.el6 will be an update
+---> Package corosynclib.x86_64 0:1.4.7-1.el6 will be updated
+---> Package corosynclib.x86_64 0:1.4.7-2.el6 will be an update
+---> Package pcs.x86_64 0:0.9.123-9.el6 will be updated
+---> Package pcs.x86_64 0:0.9.139-9.el6 will be an update
+--> Processing Dependency: python-clufter for package: pcs-0.9.139-9.el6.x86_64
+---> Package python-prettytable.noarch 0:0.6.1-1.el6 will be updated
+---> Package python-prettytable.noarch 0:0.7.2-1.el6 will be an update
+--> Finished Dependency Resolution
+Error: Package: pcs-0.9.139-9.el6.x86_64 (RH-Gluster-3-Server)
+           Requires: python-clufter
+ You could try using --skip-broken to work around the problem
+ You could try running: rpm -Va --nofiles --nodigest
+
+Version-Release number of selected component (if applicable):
+RHGSS-3.1-20150629.n.0/
+Puddle repo:
+http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo
+
+How reproducible:
+Tried once
+
+Steps to Reproduce:
+1. Install ISO 
+2. Subscribe to rhel-server, rhs3.0.4 and rhel-sfs channels
+3. Add repo for RHGS3.1 , smaba repo, NFS repo
+4. Yum update
+
+Actual results:
+Yum update fails to update pcs package and gives a dependency error.
+
+Expected results:
+Yum update should happen successfully and not give any dependency errors.
+
+
+Additional info:
+Don't find the python-clufter package anywhere
+The python-clufter package is present in following repo  :
+
+http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/external-RH-Gluster-3-Samba-.repo
+
+The package is require for pcs which is required for nfs-ganesha HA feature so it should be part of rhgs repo itself.
+The external samba repo doesn't seem to be the correct place holder for this pacakge
+python-clufter-0.11.2-1.el6 is actually a sub-pkg of clufter-0.11.2-1.el6 which come from RHEL-6.7 (still unreleased) and is part of the external repo [1] for RHEL-6.7.
+
+
+[1] http://download.eng.bos.redhat.com/brewroot/repos/RHEL-6.7-build/latest/x86_64
+Please mention it in RT for puddle that we need to add the external repo to get all dependent packages from RHEL.
+The usage instructions can be mentioned at the Everglades puddles usage [1] page rather than at RT.
+
+[1]https://mojo.redhat.com/message/959347

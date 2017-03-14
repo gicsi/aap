@@ -1,0 +1,37 @@
+Description of problem:
+
+Since a few days, startDynamicHelp does not work anymore and complains about a socket issue.
+
+> tools::startDynamicHelp()
+starting httpd help server ...Error in tools::startDynamicHelp() : 
+  unable to bind socket to TCP port 18159
+
+Disabling the firewall or selinux, or using R as root does not fix the issue
+
+Version-Release number of selected component (if applicable):
+3.2.1
+3.2.0
+
+
+How reproducible:
+
+This bug appears using Rstudio but is visible using the standalone R version (3.2.1 and 3.2.0)
+
+Steps to Reproduce:
+
+> tools::startDynamicHelp()
+starting httpd help server ...Error in tools::startDynamicHelp() : 
+  unable to bind socket to TCP port 18159
+
+Expected results:
+
+No socket errors
+
+Additional info:
+
+Used to work until a few days.
+I'm using update-testing...
+This issue is caused by NetworkManager who fails to mount the loopback interface:
+https://bugzilla.redhat.com/show_bug.cgi?id=1234121
+
+*** This bug has been marked as a duplicate of bug 1234121 ***

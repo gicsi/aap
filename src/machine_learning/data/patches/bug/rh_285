@@ -1,0 +1,36 @@
+From 47b0374d2a6c285db511bbc5fa368cfca2ab1a38 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 1 Jul 2015 13:17:32 +0000
+Subject: [PATCH] Update to 3.6.1 (#1238250)
+
+---
+ openbox.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/openbox.spec b/openbox.spec
+index 34acd35..a201ef8 100644
+--- a/openbox.spec
++++ b/openbox.spec
+@@ -1,6 +1,6 @@
+ Name:		openbox
+-Version:	3.6
+-Release:	3%{?dist}
++Version:	3.6.1
++Release:	1%{?dist}
+ Summary:	A highly configurable and standards-compliant X11 window manager
+ 
+ Group:		User Interface/Desktops
+@@ -181,6 +181,9 @@ rm -rf %{buildroot}%{_datadir}/doc/%{name}
+ 
+ 
+ %changelog
++* Wed Jul 01 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 3.6.1-1
++- Update to 3.6.1 (#1238250)
++
+ * Thu Jun 25 2015 Miroslav Lichvar <mlichvar@redhat.com> - 3.6-3
+ - restore libobrender compatibility (#1231693)
+ 
+-- 
+1.8.3.1
+
+

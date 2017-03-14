@@ -1,0 +1,6 @@
+libcurses honored terminal descriptions in the $HOME/.terminfo directory
+as well as in the TERMCAP environment variable for setuid and setgid
+applications.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/027_curses.patch">
+A source code patch exists which remedies this problem.</a>

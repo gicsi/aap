@@ -1,0 +1,27 @@
+Description of problem:
+Currently, there is no way to get a direct download verified from getfedora.org/verify.
+
+Version-Release number of selected component (if applicable):
+Fedora 22
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Download any Fedora 22 spin
+2. Look for verify download link on getfedora.org/verify or spins.fedoraproject.org
+3. 
+
+Actual results:
+Verify ISO checksums are available only for GNOME3 workstation ,Server and Cloud variants
+
+Expected results:
+Checksums available for all variants
+
+Additional info:
+Available at mirror sites like ftp://ftp.jaist.ac.jp/pub/Linux/Fedora/releases/22/Live/x86_64/Fedora-Live-x86_64-22-CHECKSUM
+This is an expected behaviour. Fedora editions (Cloud, Workstation and Server) are on getfedora.org, spins and labs have their own website, Therefore also the checksum is available on their specific website.
+
+You should have seen the checksum when you downloaded the Spin ISO. If you miss the button on the download splash page there is also a link to a specific verify page where you get not only the checksums for your image but also instructions how to use them:
+http://spins.fedoraproject.org/verify
+Finally as a sidenote, all checksums we use on the websites are stored locally, we don't call them through mirrormanager.

@@ -1,0 +1,4 @@
+The pctr(4) driver has bugs that permit any user to crash the machine,
+if the CPU is not an Intel CPU.  This problem has been properly fixed
+since, but fixes are hard to apply to the 2.2 or 2.3 releases.  To avoid
+the problem, recompile your kernel without the pctr(4) device driver.

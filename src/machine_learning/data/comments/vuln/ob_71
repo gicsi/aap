@@ -1,0 +1,9 @@
+A security hole exists in <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=lpd&amp;sektion=8">lpd(8)</a>
+that may allow an attacker with line printer access to gain root
+privileges.  A machine must be running lpd to be vulnerable (OpenBSD
+does not start lpd by default).  Only machines with line printer
+access (ie: listed in either /etc/hosts.lpd or /etc/hosts.equiv)
+may be used to mount an attack.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/032_lpd.patch">
+A source code patch exists which remedies this problem.</a>

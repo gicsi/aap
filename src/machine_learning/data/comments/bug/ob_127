@@ -1,0 +1,7 @@
+Bugs in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=tcp&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">tcp(4)</a>
+stack can lead to memory exhaustion or processing of TCP segments with
+invalid SACK options and cause a system crash.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/030_sack.patch">
+A source code patch exists which remedies this problem.</a>

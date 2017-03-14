@@ -1,0 +1,11 @@
+Description of problem:
+
+First, let me thank you guys or adding systemd services to ntsysv.
+
+Using ntsysv is 100 times faster and better than using systemctl by hand.
+
+As you know pressing F1 gives a short help text about the SysV service, can  something similar be added for systemd services?
+Damn, I have bet that nobody will notice that new feature :)
+
+Anyway, upstream commit https://git.fedorahosted.org/cgit/chkconfig.git/commit/?id=0b219a352b49fcc99f26a9453015e04166d59c7c will be in next version of chkconfig.
+Thanks!

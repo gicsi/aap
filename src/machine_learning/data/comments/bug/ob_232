@@ -1,0 +1,6 @@
+Some other systems have started sending incorrect flags which
+cause session failures in OpenBSD's bgpd, and cause it
+to propagate incorrect updates.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.2/common/001_bgpd.patch">
+A source code patch exists which remedies this problem.</a>

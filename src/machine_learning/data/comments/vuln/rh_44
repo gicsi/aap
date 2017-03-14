@@ -1,0 +1,52 @@
+Description of problem:
+Error message pops up while saving text with kwrite
+
+Version-Release number of selected component (if applicable):
+kwrite-15.04.0-1.fc22
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Launch kwrite from terminal
+2. Type some text using IME of your choice
+3. Ctrl_S or Fn_Ctrl_S to save the text
+
+Actual results:
+Text is not saved and following error message pops up:
+"Could not start process Cannot talk to klauncher: The name org.kde.klauncher5 was not provided by any .service files."
+
+Expected results:
+Text gets saved with no error message
+
+Additional info:
+http://fpaste.org/238742/43582969/
+Created attachment 1045430
+image showing the error msg while saving the text
+Note:
+
+While filing this bugzilla, kwrite was not available in the 'Component' list [1]. Thereby, temporarily filed against 'kwrited'.
+
+
+
+[1] https://bugzilla.redhat.com/show_bug.cgi?id=1238625
+Noticed problem present for zh_CN locale. Message is 
+"无法启动进程 无法和 klauncher 通信：The name org.kde.klauncher5 was not provided by any .service files"
+Is kf5-kinit pkg installed?  If not, does installing it help?
+(In reply to Rex Dieter from comment #4)
+> Is kf5-kinit pkg installed?  If not, does installing it help?
+
+No, 'kf5-kinit' pkg was not installed.
+
+However, post installation the said error message doesn't pop up any-more.
+Yes, helpful.
+OK, I'm working on fixing this elsewhere, will let you know when a fix is available.
+kate-15.04.3-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/kate-15.04.3-1.fc22
+kate-15.04.3-1.fc22 works
+From Comment 7,
+
+With kwrite-15.04.3-1.fc22, error message doesn't pop any-more while saving text.
+Err.. moving back to MODIFIED.
+kwrite-15.04.3-1.fc22 works fine for zh_CN locale as well.
+kate-15.04.3-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

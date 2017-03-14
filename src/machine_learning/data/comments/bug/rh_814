@@ -1,0 +1,32 @@
+Description of problem:
+
+g++ -g -Wall -O2 -c  speechAnalysisCut.cc   -I /home/gaoxinglong/tools/software/development/boost_1_58_0 -I /usr/include  -static  -L /home/gaoxi
+nglong/tools/software/development/boost_1_58_0/lib/ -l boost_system-gcc44-mt-1_58 -l  boost_filesystem-gcc44-mt-d-1_58 -l boost_regex-gcc44-mt-s-1_58 -o speechAnalysisCut.o g++: Internal error: Killed (program cc1plus)
+Please submit a full bug report.
+See <http://bugzilla.redhat.com/bugzilla> for instructions.
+make: *** [speechAnalysisCut.o] Error 1
+
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+That is generally not a bug, but a sign you don't have enough memory and kernel decided to kill some process.
+Thank you for submitting this request for inclusion in Red Hat Enterprise Linux. We have been unable to reproduce your issue.
+
+Please review the feedback in comment 1 and re-open if you are able to reproduce after trying on different machines.

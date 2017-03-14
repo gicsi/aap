@@ -1,0 +1,37 @@
+From 80ceeb0aec4f5d8cfe6a130dd371372c687709f3 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sun, 5 Jul 2015 13:09:16 +0000
+Subject: [PATCH] Update to 2.4.2 (#1239301)
+
+---
+ nano.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/nano.spec b/nano.spec
+index 6db1be6..b4aa8b3 100644
+--- a/nano.spec
++++ b/nano.spec
+@@ -1,7 +1,7 @@
+ Summary:         A small text editor
+ Name:            nano
+-Version:         2.4.1
+-Release:         2%{?dist}
++Version:         2.4.2
++Release:         1%{?dist}
+ License:         GPLv3+
+ Group:           Applications/Editors
+ URL:             http://www.nano-editor.org
+@@ -89,6 +89,9 @@ exit 0
+ %{_datadir}/nano
+ 
+ %changelog
++* Sun Jul 05 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.4.2-1
++- Update to 2.4.2 (#1239301)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.1-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

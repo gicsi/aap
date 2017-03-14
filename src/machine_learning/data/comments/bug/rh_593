@@ -1,0 +1,2 @@
+The Emacs add-on packaging guidelines no longer stipulate that packages which also bundle support for Emacs should split out those Emacs files into separate sub-packages. This package should instead ship those files with the main package which should also Require emacs-filesystem. See https://fedoraproject.org/wiki/Packaging:Emacs for more detail.
+*** This bug has been marked as a duplicate of bug 1234578 ***

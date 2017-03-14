@@ -1,0 +1,9 @@
+Hi there.
+I had git-core installed, but got a similar error like the following, if i wanted to upgrade. Sorry, but i don't know the package which interfered. So i uninstalled git-core and done the upgrade. Now i get the following error, if i want to install git* http://pasted.co/11431ebb - It seems there are more hickups with more packages. How do i solve this? Of course, to disable testing 'is not solved'.
+
+Severity 'high', cause upgrading is impossible.
+Hi Raul,
+git-2.4.3-3 solve these troubles but it's still pending for push to testing repository.
+Yes, this is a duplicate of the bug 1231736.
+
+*** This bug has been marked as a duplicate of bug 1231736 ***

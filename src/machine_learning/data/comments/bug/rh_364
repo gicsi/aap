@@ -1,0 +1,92 @@
+Description of problem:
+
+If you have the dnf 'local' plugin installed, using dnf to upgrade
+installed RPMs with local (on-disk) RPMs causes dnf to install the
+packages but exit uncleanly with a Python exception trace.
+
+Version-Release number of selected component (if applicable):
+
+dnf-1.0.1-2.fc22.noarch
+python-dnf-plugins-extras-local-0.0.8-1.fc22.noarch
+
+How reproducible:
+For me, 100%.
+
+Steps to Reproduce:
+1. Install the dnf local plugin
+2. Build local versions of some RPM(s) that you have installed
+3. Run 'dnf update yours.rpm'
+4. Watch the Python exception at the end of dnf's execution
+
+Actual results:
+
+# dnf update choqok*-1.5-*
+Failed to synchronize cache for repo '_local' from 'file:///var/lib/dnf/plugins/local': Cannot download repomd.xml: Cannot download repodata
+/repomd.xml: All mirrors were tried, disabling.
+Last metadata expiration check performed 0:00:28 ago on Mon Jun 29 15:45:40 2015.
+[...]
+Dependencies resolved.
+================================================================================
+ Package           Arch         Version                Repository          Size
+================================================================================
+Upgrading:
+ choqok            x86_64       1.5-1.fc22.cks.0       @commandline       1.4 M
+ choqok-libs       x86_64       1.5-1.fc22.cks.0       @commandline       260 k
+
+Transaction Summary
+================================================================================
+Upgrade  2 Packages
+
+Total size: 1.7 M
+Is this ok [y/N]: y
+Downloading Packages:
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Upgrading   : choqok-libs-1.5-1.fc22.cks.0.x86_64                         1/4 
+  Upgrading   : choqok-1.5-1.fc22.cks.0.x86_64                              2/4 
+  Cleanup     : choqok-libs-1.5-1.fc22.x86_64                               3/4 
+  Cleanup     : choqok-1.5-1.fc22.x86_64                                    4/4 
+  Verifying   : choqok-1.5-1.fc22.cks.0.x86_64                              1/4 
+  Verifying   : choqok-libs-1.5-1.fc22.cks.0.x86_64                         2/4 
+  Verifying   : choqok-1.5-1.fc22.x86_64                                    3/4 
+  Verifying   : choqok-libs-1.5-1.fc22.x86_64                               4/4 
+
+Upgraded:
+  choqok.x86_64 1.5-1.fc22.cks.0       choqok-libs.x86_64 1.5-1.fc22.cks.0      
+
+Traceback (most recent call last):
+  File "/usr/bin/dnf", line 36, in <module>
+    main.user_main(sys.argv[1:], exit_code=True)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 185, in user_main
+    errcode = main(args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 84, in main
+    return _main(base, args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 141, in _main
+    ret = resolving(cli, base)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 170, in resolving
+    base.plugins.run_transaction()
+  File "/usr/lib/python2.7/site-packages/dnf/plugin.py", line 82, in fn
+    dnf.util.mapall(operator.methodcaller(method), self.plugins)
+  File "/usr/lib/python2.7/site-packages/dnf/util.py", line 157, in mapall
+    return list(map(fn, *seq))
+  File "/usr/lib/python2.7/site-packages/dnf-plugins/local.py", line 119, in transaction
+    if pkg.repo.pkgdir == repodir:
+  File "/usr/lib/python2.7/site-packages/dnf/package.py", line 108, in repo
+    return self.base.repos[self.reponame]
+KeyError: u'@commandline'
+
+Expected results:
+
+No Python exception backtrace and dnf does whatever it's skipping here.
+
+Additional info:
+
+I assume that this happening because dnf is mocking up a fake
+'@commandline' repo name that does not actually exist in self.base.repos
+and the local plugin is not prepared to deal with this.
+This is a duplicate of the bug 1226766.
+
+*** This bug has been marked as a duplicate of bug 1226766 ***

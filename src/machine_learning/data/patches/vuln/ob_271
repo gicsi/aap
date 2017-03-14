@@ -1,0 +1,57 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 007_sem.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/sysv_sem.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sysv_sem.c,v
+retrieving revision 1.32
+retrieving revision 1.32.8.1
+diff -u -p -r1.32 -r1.32.8.1
+--- sys/kern/sysv_sem.c	15 Jul 2004 11:24:46 -0000	1.32
++++ sys/kern/sysv_sem.c	11 Aug 2006 04:08:45 -0000	1.32.8.1
+@@ -423,25 +423,23 @@ sys_semget(struct proc *p, void *v, regi
+ 	if (key != IPC_PRIVATE) {
+ 		for (semid = 0, semaptr = NULL; semid < seminfo.semmni; semid++) {
+ 			if ((semaptr = sema[semid]) != NULL &&
+-			    semaptr->sem_perm.key == key)
+-				break;
+-		}
+-		if (semaptr != NULL) {
+-			DPRINTF(("found public key\n"));
+-			if ((error = ipcperm(cred, &semaptr->sem_perm,
+-			    semflg & 0700)))
+-				goto error;
+-			if (nsems > 0 && semaptr->sem_nsems < nsems) {
+-				DPRINTF(("too small\n"));
+-				error = EINVAL;
+-				goto error;
+-			}
+-			if ((semflg & IPC_CREAT) && (semflg & IPC_EXCL)) {
+-				DPRINTF(("not exclusive\n"));
+-				error = EEXIST;
+-				goto error;
++			    semaptr->sem_perm.key == key) {
++				DPRINTF(("found public key\n"));
++				if ((error = ipcperm(cred, &semaptr->sem_perm,
++				    semflg & 0700)))
++					goto error;
++				if (nsems > 0 && semaptr->sem_nsems < nsems) {
++					DPRINTF(("too small\n"));
++					error = EINVAL;
++					goto error;
++				}
++				if ((semflg & IPC_CREAT) && (semflg & IPC_EXCL)) {
++					DPRINTF(("not exclusive\n"));
++					error = EEXIST;
++					goto error;
++				}
++				goto found;
+ 			}
+-			goto found;
+ 		}
+ 	}
+ 
+

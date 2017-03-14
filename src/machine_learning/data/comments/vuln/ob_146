@@ -1,0 +1,9 @@
+Several remote buffer overflows can occur in the SSL2 server and SSL3 client of the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ssl&amp;sektion=8">ssl(8)</a>
+library, as in the ASN.1 parser code in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=crypto&amp;sektion=3">crypto(3)</a>
+library, all of them being potentially remotely exploitable.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/013_ssl.patch">
+A source code patch exists which remedies this problem.</a>
+<br>
+This is the second version of the patch.

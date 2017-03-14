@@ -1,0 +1,32 @@
+Description of problem:
+
+In Storage (tab) > export storage domain > VM Import (tab) > import dialog > Disks (tab), there is no way to select the destination Storage Domain.
+
+The select-box is always forcing the selection of the first Storage Domain.
+
+Version-Release number of selected component (if applicable): 3.6 alpha-2
+
+How reproducible: Always on my setup
+
+Steps to Reproduce:
+1. Go to Storage (tab) > export storage domain > VM Import (tab) > import dialog > Disks (tab)
+2. Select a storage domain
+
+Actual results:
+
+The select-box is always forcing the selection of the first Storage Domain.
+I cannot select a glusterfs data storage domain that is accessible by the selected cluster.
+
+Expected results:
+
+Ability to select other storage domain (the master storage domain in my case).
+
+
+Additional info:
+
+There is no problem in migrating to the desired storage-domain later (takes very long).
+There is no difference when clone is checked or not.
+Christopher, please attach the engine and VDSM logs.
+This has already been reported in bug 1217379. Closing this one so we don't "spam" bugzilla. Christopher - please follow there.
+
+*** This bug has been marked as a duplicate of bug 1217379 ***

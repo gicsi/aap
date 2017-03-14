@@ -1,0 +1,76 @@
+Description of problem:
+The C++14 standard has a header file named <stdint> (similar to stdint.h>.  When I compile a C++ source file with either gcc or clang I get an error that <stdint> can't be found.
+
+Version-Release number of selected component (if applicable):
+gcc++-5.1.1 and clang++-3.6
+
+How reproducible:
+Compiling a C++ source file that includes <stdint> fails for both gcc and clang.
+
+
+Steps to Reproduce:
+1.  Create a C++ source file, nostdint.cpp, that has
+
+        #include <stdint>
+
+2.  Compile the code:
+
+        g++ nostdint.cpp
+
+3.  See syntax error about missing header file.
+
+Actual results:
+$ clang++ --std=c++1y nostdint.cpp 
+nostdint.cpp:1:10: fatal error: 'stdint' file not found
+#include <stdint>
+         ^
+1 error generated.
+[2]+  Done                    emacs nostdint.cpp
+mhcox@dv7-7300-fedora:~/workspace/mikehcox-cxx_exp/embedded/hal/test
+$ clang++ --std=c++14 nostdint.cpp 
+nostdint.cpp:1:10: fatal error: 'stdint' file not found
+#include <stdint>
+         ^
+1 error generated.
+mhcox@dv7-7300-fedora:~/workspace/mikehcox-cxx_exp/embedded/hal/test
+$ g++ --std=c++1y nostdint.cpp 
+nostdint.cpp:1:18: fatal error: stdint: No such file or directory
+compilation terminated.
+mhcox@dv7-7300-fedora:~/workspace/mikehcox-cxx_exp/embedded/hal/test
+$ g++ --std=c++14 nostdint.cpp 
+nostdint.cpp:1:18: fatal error: stdint: No such file or directory
+compilation terminated.
+
+
+Expected results:
+Successful compile.
+
+Additional info:
+$ find /usr/include /usr/lib -name "*stdint*" -type f
+/usr/include/d/core/stdc/stdint.d
+/usr/include/d/std/stdint.d
+/usr/include/stdint.h
+/usr/include/boost/cstdint.hpp
+/usr/include/boost/asio/detail/cstdint.hpp
+/usr/include/c++/5.1.1/tr1/stdint.h
+/usr/include/c++/5.1.1/tr1/cstdint
+/usr/include/c++/5.1.1/cstdint
+/usr/lib/clang/3.5.0/include/stdint.h
+/usr/lib/gcc/arm-none-eabi/4.9.2/include/stdint-gcc.h
+/usr/lib/gcc/arm-none-eabi/4.9.2/include/stdint.h
+/usr/lib/gcc/arm-none-eabi/4.9.2/plugin/include/config/newlib-stdint.h
+/usr/lib/gcc/x86_64-redhat-linux/5.1.1/include/stdint-gcc.h
+/usr/lib/gcc/x86_64-redhat-linux/5.1.1/include/stdint.h
+/usr/lib/gcc/avr/4.9.2/include/stdint-gcc.h
+/usr/lib/gcc/avr/4.9.2/include/stdint.h
+/usr/lib/gcc/avr/4.9.2/plugin/include/config/avr/avr-stdint.h
+Version of clang++ is 3.5.0:
+$ clang++ --version
+clang version 3.5.0 (tags/RELEASE_350/final)
+Target: x86_64-redhat-linux-gnu
+Thread model: posix
+Using <cstdint> is a suitable workaround for my problem.
+(In reply to Michael H. Cox from comment #0)
+> The C++14 standard has a header file named <stdint> (similar to stdint.h>.
+
+No it doesn't. It has <cstdint> and <stdint.h>, there is no such header as <stdint>.

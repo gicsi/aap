@@ -1,0 +1,127 @@
+This is the second version of this patch.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 027_isakmpd.patch
+
+Then rebuild and install isakmpd:
+	cd sbin/isakmpd
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: sbin/isakmpd/message.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/message.c,v
+retrieving revision 1.45.2.1
+diff -u -r1.45.2.1 message.c
+--- sbin/isakmpd/message.c	27 Mar 2002 04:24:22 -0000	1.45.2.1
++++ sbin/isakmpd/message.c	5 Jul 2002 13:21:11 -0000
+@@ -492,6 +500,14 @@
+   struct exchange *exchange = msg->exchange;
+   size_t len = GET_ISAKMP_GEN_LENGTH (p->p);
+ 
++  if (!exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_id: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   if (exchange->doi
+       && exchange->doi->validate_id_information (GET_ISAKMP_ID_TYPE (p->p),
+ 						 p->p + ISAKMP_ID_DOI_DATA_OFF,
+@@ -512,6 +528,14 @@
+   struct exchange *exchange = msg->exchange;
+   size_t len = GET_ISAKMP_GEN_LENGTH (p->p);
+ 
++  if (!exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_key_exch: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   if (exchange->doi
+       && exchange->doi->validate_key_information (p->p + ISAKMP_KE_DATA_OFF,
+ 						  len - ISAKMP_KE_DATA_OFF))
+@@ -526,6 +550,14 @@
+ static int
+ message_validate_nonce (struct message *msg, struct payload *p)
+ {
++  if (!msg->exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_nonce: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   /* Nonces require no specific validation.  */
+   return 0;
+ }
+@@ -598,6 +630,14 @@
+   u_int8_t proto = GET_ISAKMP_PROP_PROTO (p->p);
+   u_int8_t *sa = p->context->p;
+ 
++  if (!msg->exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_proposal: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   if (proto != ISAKMP_PROTO_ISAKMP
+       && msg->exchange->doi->validate_proto (proto))
+     {
+@@ -727,6 +767,14 @@
+ static int
+ message_validate_sig (struct message *msg, struct payload *p)
+ {
++  if (!msg->exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_sig: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   /* XXX Not implemented yet.  */
+   return 0;
+ }
+@@ -738,6 +786,14 @@
+   u_int8_t proto = GET_ISAKMP_PROP_PROTO (p->context->p);
+   u_int8_t *prop = p->context->p;
+ 
++  if (!msg->exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_transform: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   if (msg->exchange->doi
+       ->validate_transform_id (proto, GET_ISAKMP_TRANSFORM_ID (p->p)))
+     {
+@@ -782,6 +838,14 @@
+ static int
+ message_validate_vendor (struct message *msg, struct payload *p)
+ {
++  if (!msg->exchange)
++    {
++      /* We should have an exchange at this point.  */
++      log_print ("message_validate_vendor: payload out of sequence");
++      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
++      return -1;
++    }
++
+   /* Vendor IDs are only allowed in phase 1.  */
+   if (msg->exchange->phase != 1)
+     {
+

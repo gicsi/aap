@@ -1,0 +1,9 @@
+A fix for an
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=lprm&amp;sektion=1">lprm(1)</a>
+bug made in 1996 contains an error that could lead to privilege escalation.
+For OpenBSD 3.2 the impact is limited since
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=lprm&amp;sektion=1">lprm(1)</a>
+is setuid daemon, not setuid root.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/010_lprm.patch">
+A source code patch exists which remedies this problem.</a>

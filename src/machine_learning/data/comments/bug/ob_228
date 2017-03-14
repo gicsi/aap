@@ -1,0 +1,7 @@
+Fix a flaw in the OpenSSL TLS server extension code parsing which could lead to
+a buffer overflow. This affects OpenSSL based TLS servers which are multi-threaded
+and use OpenSSL's internal caching mechanism. Servers that are multi-process
+and/or disable internal session caching are not affected.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.8/common/004_openssl.patch">
+A source code patch exists which remedies this problem.</a>

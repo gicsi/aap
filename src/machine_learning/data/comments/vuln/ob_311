@@ -1,0 +1,8 @@
+The Neighbor Discovery Protocol (ndp) did not correctly verify neighbor
+solicitation requests maybe allowing a nearby attacker to intercept traffic.
+The attacker must have IPv6 connectivity to the same router as their target for
+this vulnerability to be exploited.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-2476">CVE-2008-2476</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.3/common/006_ndp.patch">
+A source code patch exists which remedies this problem.</a>

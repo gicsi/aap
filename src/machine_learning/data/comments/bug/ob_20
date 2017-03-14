@@ -1,0 +1,2 @@
+The Xhp as shipped does not have the execute permissions set.  The fix is
+'chmod 755 /usr/X11R6/bin/Xhp' if you have installed X.

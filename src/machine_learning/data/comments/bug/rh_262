@@ -1,0 +1,12 @@
+Hi,
+
+it would be nice to have a smartproxy for infoblox ipam.
+
+Actually we evaluate IPAM Systems and we prefer infoblox IPAM. Here we will manage v4 and v6 blocks. 
+An usecase will be. 
+
+# Foreman create a vm, ask vmware for mac address
+# sends data (hostname and mac) to ipam
+# gets next ip address (v4 and/or v6)
+Created from redmine issue http://projects.theforeman.org/issues/10156
+*** This bug has been marked as a duplicate of bug 1155811 ***

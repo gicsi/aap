@@ -1,0 +1,66 @@
+Rawhide installed via 20150617 Live Workstation image.
+
+$ gnome-terminal 
+Segmentation fault (core dumped)
+$
+
+Version-Release number of selected component (if applicable):
+# rpm -q gnome-terminal gnutls
+gnome-terminal-3.16.2-1.fc23.x86_64
+gnutls-3.4.1-1.fc23.x86_64
+
+ABRT failed creating a backtrace. Here's one with debuginfo missing. Could be related to the brandnew gnutls (as there's a report about a gnutls crash in Claws Mail, too).
+
+(gdb) bt
+#0  0x00007ffff4480402 in free () from /lib64/libc.so.6
+#1  0x00007ffff768daab in _gnutls_ext_deinit () from /lib64/libgnutls.so.30
+#2  0x00007ffff7694c80 in _gnutls_global_deinit () from /lib64/libgnutls.so.30
+#3  0x00007ffff7de97b7 in _dl_fini () from /lib64/ld-linux-x86-64.so.2
+#4  0x00007ffff44348c8 in __run_exit_handlers () from /lib64/libc.so.6
+#5  0x00007ffff4434915 in exit () from /lib64/libc.so.6
+#6  0x00007ffff441a9a7 in __libc_start_main () from /lib64/libc.so.6
+#7  0x000055555555ac09 in _start ()
+vinagre crashes in exactly the same way just by starting it and exiting it.
+Reassigning to gnutls.
+
+# rpm -q gnutls vinagre
+gnutls-3.4.1-1.fc23.x86_64
+vinagre-3.17.2-1.fc23.x86_64
+
+(gdb) bt
+#0  0x00007ffff1cbc422 in __GI___libc_free (mem=0x7fffea864137)
+    at malloc.c:2954
+#1  0x00007ffff3c4faab in _gnutls_ext_deinit () at gnutls_extensions.c:399
+#2  0x00007ffff3c56c80 in _gnutls_global_deinit (destructor=1)
+    at gnutls_global.c:385
+#3  0x00007ffff7de97b7 in _dl_fini () at dl-fini.c:252
+#4  0x00007ffff1c708c8 in __run_exit_handlers (status=0, 
+    listp=0x7ffff1ffb618 <__exit_funcs>, 
+    run_list_atexit=run_list_atexit@entry=true) at exit.c:82
+#5  0x00007ffff1c70915 in __GI_exit (status=<optimized out>) at exit.c:104
+#6  0x00007ffff1c569a7 in __libc_start_main (main=0x555555566090 <main>, 
+    argc=1, argv=0x7fffffffe398, init=<optimized out>, fini=<optimized out>, 
+    rtld_fini=<optimized out>, stack_end=0x7fffffffe388) at libc-start.c:323
+#7  0x0000555555566289 in _start ()
+Flooding me with reports will not solve the issue. Could you please reply to the questions asked?
+Sorry if you feel that way after just 2-3 tickets. I only have limited time to spend on Rawhide, and while I'm running into crashes, I report them. Tickets with a wrong assignee won't "solve" anything either.
+
+Rawhide should be kept in a working state. I'd like to understand what is the culprit of all these crashes that mention gnutls.
+You did well reassigning the tickets, but since this will affect almost every program linked with gnutls, it is counter-productive to spend your energy to reassign every possible bug. Responding to requests will help fix the bug sooner.
+
+Anyway, these specific crashes should be solved by gnutls-3.4.2-2.fc23 build, irrespective of the mass rebuild. Please reopen if they don't.
+> Responding to requests will help fix the bug sooner.
+
+Even sooner?
+
+  Nikos Mavrogiannopoulos 2015-06-18 08:37:00 EDT
+
+  Michael Schwendt 2015-06-18 09:03:05 EDT 
+
+Even on IRC response times can be slower, and bugzilla isn't a real-time chat.
+
+[...]
+
+You're far from fair here. In bug 1230889, one could say that six days have been wasted without thinking about a fix. It's simply your latest gnutls fix that fixes all these crashes.
+Indeed I was not fair. You responded and because of that the issue was fixed. About #1230889 it is your turn not to be fair, as I asked rel-eng for recompilation. There was not much else that could be done as the issue was not visible there. It was you who sent the backtrace, so kudos for that.
+*** Bug 1233179 has been marked as a duplicate of this bug. ***

@@ -1,0 +1,33 @@
+rhel-osp-director: the network variables in /home/stack/deploy-overcloudrc are being ignored for overcloud deployment.
+
+
+Enviroment:
+instack-undercloud-2.1.2-1.el7ost.noarch
+
+Steps to reproduce:
+Follow the steps in this guide: https://repos.fedorapeople.org/repos/openstack-m/docs/internal/master/basic_deployment/basic_deployment.html
+
+1. cp /usr/share/instack-undercloud/deploy-baremetal-overcloudrc ~/deploy-overcloudrc
+2. Edit the file and configure the subnets to match your environment.
+3. source deploy-overcloudrc
+4. continue with the guide - deploy an overcloud
+
+
+Result:
+The overcloud subnets have different settings:
++--------------------------------------+---------------------------------------------------+------------------+------------------------------------------------------+
+| id                                   | name                                              | cidr             | allocation_pools                                     |
++--------------------------------------+---------------------------------------------------+------------------+------------------------------------------------------+
+| 414fbd2d-7dd1-4b8e-a2e4-5757330b34d2 |                                                   | 10.0.0.0/8       | {"start": "10.0.0.2", "end": "10.255.255.254"}       |
+| a3377f9f-d456-44f1-a53f-e1c112ce20d1 |                                                   | 192.0.2.0/24     | {"start": "192.0.2.45", "end": "192.0.2.64"}         |
+| 31d85c49-a7f3-483b-a5ee-889e5eacfee4 | HA subnet tenant 90014ce113fc49f4939b15c90a46d6a4 | 169.254.192.0/18 | {"start": "169.254.192.1", "end": "169.254.255.254"} |
++--------------------------------------+---------------------------------------------------+------------------+------------------------------------------------------+
+
+
+Expected result:
+The created subnets should match the values configured in the deploy-overcloudrc file.
+The unified CLI has changed the way these parameters are defined. Instead of using environment variables (which is what happens when you source deploy-overcloudrc), the parameters are passed on the CLI to the openstack command.
+
+This is actually a duplicate of https://bugzilla.redhat.com/show_bug.cgi?id=1233860
+
+*** This bug has been marked as a duplicate of bug 1233860 ***

@@ -1,0 +1,83 @@
+Description of problem:
+
+Some instances are left in a build state on computes while attempting to acquire a lock at the start of the build process.
+
+The only lines logged in nova-compute.log related to this locking, nothing is seen after this until a restart of the service is called for :
+
+~~~
+2015-06-25 13:53:15.150 89922 DEBUG nova.openstack.common.lockutils [-] Created new semaphore "bd6e3347-0f53-40ba-ab5e-be5f66f4518f" internal_lock /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:206
+2015-06-25 13:53:15.150 89922 DEBUG nova.openstack.common.lockutils [-] Acquired semaphore "bd6e3347-0f53-40ba-ab5e-be5f66f4518f" lock /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:229
+2015-06-25 13:53:15.150 89922 DEBUG nova.openstack.common.lockutils [-] Got semaphore / lock "_locked_do_build_and_run_instance" inner /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:271
+2015-06-25 13:53:15.167 89922 AUDIT nova.compute.manager [req-f9a7b793-a028-4c71-98fa-2c33cbff3781 None] [instance: bd6e3347-0f53-40ba-ab5e-be5f66f4518f] Starting instance...
+2015-06-25 13:53:15.224 89922 DEBUG nova.openstack.common.lockutils [-] Using existing semaphore "compute_resources" internal_lock /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:202
+2015-06-25 14:05:23.439 89922 INFO nova.openstack.common.service [-] Caught SIGTERM, exiting
+2015-06-25 14:05:23.850 143883 DEBUG nova.servicegroup.api [-] ServiceGroup driver defined as an instance of db __new__ /usr/lib/python2.7/site-packages/nova/servicegroup/api.py:65
+2015-06-25 14:05:23.926 143883 INFO nova.openstack.common.periodic_task [-] Skipping periodic task _periodic_update_dns because its interval is negative
+2015-06-25 14:05:23.941 143883 INFO nova.virt.driver [-] Loading compute driver 'libvirt.LibvirtDriver'
+
+~~~
+
+Gathering a guru-report from the nova-compute process in question appears to show the green thread in question hanging here :
+
+~~~
+11681 Jun 25 13:58:22 compute.example.com nova-compute[89922]: ------                        Green Thread                        ------
+11682 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:272 in inner
+11683 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return f(*args, **kwargs)`
+11684 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:2025 in _locked_do_build_and_run_instance
+11685 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `self._do_build_and_run_instance(*args, **kwargs)`
+11686 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/exception.py:71 in wrapped
+11687 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return f(self, context, *args, **kw)`
+11688 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:286 in decorated_function
+11689 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return function(self, context, *args, **kwargs)`
+11690 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:359 in decorated_function
+11691 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return function(self, context, *args, **kwargs)`
+11692 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:325 in decorated_function
+11693 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return function(self, context, *args, **kwargs)`
+11694 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:2075 in _do_build_and_run_instance
+11695 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `filter_properties)`
+11696 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/compute/manager.py:2139 in _build_and_run_instance
+11697 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `with rt.instance_claim(context, instance, limits) as inst_claim:`
+11698 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:269 in inner
+11699 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `with lock(name, lock_file_prefix, external, lock_path):`
+11700 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib64/python2.7/contextlib.py:17 in __enter__
+11701 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return self.gen.next()`
+11702 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/nova/openstack/common/lockutils.py:228 in lock
+11703 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `with int_lock:`
+11704 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib64/python2.7/threading.py:470 in acquire
+11705 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `self.__cond.wait()`
+11706 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib64/python2.7/threading.py:339 in wait
+11707 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `waiter.acquire()`
+11708 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/eventlet/semaphore.py:96 in acquire
+11709 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `hubs.get_hub().switch()`
+11710 Jun 25 13:58:22 compute.example.com nova-compute[89922]: /usr/lib/python2.7/site-packages/eventlet/hubs/hub.py:293 in switch
+11711 Jun 25 13:58:22 compute.example.com nova-compute[89922]: `return self.greenlet.switch()`
+~~~
+
+Version-Release number of selected component (if applicable):
+openstack-nova-common-2014.2.3-9.el7ost.noarch
+openstack-nova-compute-2014.2.3-9.el7ost.noarch
+python-nova-2014.2.3-9.el7ost.noarch
+python-novaclient-2.20.0-1.el7ost.noarch
+
+How reproducible:
+Unclear, this is often seen after placing a 1 or more controllers into standby mode within pacemaker. 
+
+Steps to Reproduce:
+1. As above.
+
+Actual results:
+Instances are left in a BUILD state.
+
+Expected results:
+Instances are built and then marked as ACTIVE.
+
+Additional info:
+So, what is happening is that there are two threads competing for the compute_resources semaphore: An instance build (in rt.instance_claim) and the update_resources periodic task. The periodic owns the semaphore and is choking on the fact that the connection to the message broker is failing, which is preventing the instance build from proceeding. It looks like you waited about 13 minutes before doing the sigterm, which seems like more than enough time to have the periodic's call give up and bail out. However, perhaps it's coming and going enough that we are stuck in some retry loop which keeps the periodic alive and holding the semaphore.
+
+From the look of it, we _may_ be better off doing our object queries ahead of time before we enter the locked region to make this better...
+Could you try reproducing this with the following value set to non-zero in nova.conf?
+
+  #rabbit_max_retries=0
+
+I'm wondering if this being zero (infinite) if we never break out of a retry loop that we should.
+Not a bug from the nova point of view, covered by rabbitmq BZ 1235992.

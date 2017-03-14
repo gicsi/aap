@@ -1,0 +1,18 @@
+The Emacs add-on packaging guidelines no longer stipulate that packages which also bundle support for Emacs should split out those Emacs files into separate sub-packages. This package should instead ship those files with the main package which should also Require emacs-filesystem. See https://fedoraproject.org/wiki/Packaging:Emacs for more detail.
+Created attachment 1049509
+Spec file patch to fix compliance with Emacs add-on packaging guidelines
+
+Spec file patch to fix compliance with Emacs add-on packaging guidelines (untested).
+Created attachment 1049889
+Updated patch, slightly more considered and slightly more tested
+Created attachment 1049927
+modified patch
+
+Ho Jonathan,
+thanks for patch. I did some modification, please check it if you are ok with it.
+Looks ok to me, though I can't immediately see what changed :)
+- files from emacs* packages are moved to git instead of git-core
+- for obsoletes/provides used only version - without release
+Ah, right. Gottit. Looks good!
+Thanks!
+Thank you too :-) Good job.

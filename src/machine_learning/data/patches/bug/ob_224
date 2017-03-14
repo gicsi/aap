@@ -1,0 +1,42 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 017_getsockopt.patch
+
+And then rebuild your kernel.
+
+Index: sys/netinet/ip_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_output.c,v
+retrieving revision 1.167
+retrieving revision 1.167.2.1
+diff -u -p -r1.167 -r1.167.2.1
+--- sys/netinet/ip_output.c	22 Jun 2004 07:35:20 -0000	1.167
++++ sys/netinet/ip_output.c	14 Jun 2005 01:47:20 -0000	1.167.2.1
+@@ -1475,7 +1475,25 @@ ip_ctloutput(op, so, level, optname, mp)
+ 			if (ipr == NULL)
+ 				*mtod(m, u_int16_t *) = opt16val;
+ 			else {
+-				m->m_len += ipr->ref_len;
++				size_t len;
++
++				len = m->m_len + ipr->ref_len;
++				if (len > MCLBYTES) {
++					 m_free(m);
++					 error = EINVAL;
++					 break;
++				}
++				/* allocate mbuf cluster for larger option */
++				if (len > MLEN) {
++					 MCLGET(m, M_WAITOK);
++					 if ((m->m_flags & M_EXT) == 0) {
++						 m_free(m);
++						 error = ENOBUFS;
++						 break;
++					 }
++						 
++				}
++				m->m_len = len;
+ 				*mtod(m, u_int16_t *) = ipr->ref_type;
+ 				m_copyback(m, sizeof(u_int16_t), ipr->ref_len,
+ 				    ipr + 1);
+

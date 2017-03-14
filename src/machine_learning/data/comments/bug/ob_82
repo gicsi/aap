@@ -1,0 +1,6 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;sektion=8&amp;format=html">isakmpd(8)</a>
+will fail to use a certificate with an identity string that is
+exactly N * 8 bytes long.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/004_isakmpd.patch">
+A source code patch exists which remedies this problem.</a>

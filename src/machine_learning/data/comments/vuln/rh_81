@@ -1,0 +1,50 @@
+Created attachment 1044344
+Stack trace
+
+Description of problem:
+
+During testing jbpm-workitems-camel from the Integration pack, it turned out that jbpm-flow-builder is unable to load org.jbpm.process.workitem.camel.CamelHandler class because bundle jbpm-flow-builder cannot see CamelHandler's parent class AbstractLogOrThrowWorkItemHandler:
+
+java.lang.ClassNotFoundException: org.jbpm.process.workitem.AbstractLogOrThrowWorkItemHandler not found by org.jbpm.flow.builder [324]
+...
+org.jbpm.process.workitem.camel.CamelHandlerFactory.fileHandler(CamelHandlerFactory.java:32)
+
+
+Class org.jbpm.process.workitem.AbstractLogOrThrowWorkItemHandler is located in jbpm-workitems bundle, but the package org.jbpm.process.workitem is not listed in Import-Package header of jbpm-flow-builder.
+
+In addition, jbpm-workitems-camel bundle (located now in Integration pack) does not import the package org.jbpm.process.workitem as well.
+
+I am not sure what the right design would be, regarded to OSGi, because it seems we have a split-package [1] problem (org.jbpm.process.workitem) here.
+
+Version-Release number of selected component (if applicable):
+BPMS 6.1.1.CR2
+Fuse 6.2.CR1
+
+How reproducible:
+Try to use a workitem handler (e.g. org.jbpm.process.workitem.camel.CamelHandler) in OSGi environment.
+
+I am sorry for not providing a standalone reproducer yet, you can meanwhile see [2]. The exception is thrown on line 124.
+
+Actual results:
+A ClassNotFoundException is thrown.
+
+Expected results:
+No exception is thrown, WorkItemHandler is loaded sucessfully.
+
+[1] http://wiki.osgi.org/wiki/Split_Packages
+[2] http://git.app.eng.bos.redhat.com/git/jbossqe/brms.git/tree/test-fuse/camel-blueprint/src/test/java/org/jboss/qa/brms/fuse/camel/workitem/CamelFileTest.java
+Managed to (finally) reproduce this.  The issue is not with handlers generically (I didn't find any issue when using ksession.getWorkItemManager().registerWorkItemHandler(..) with custom defined handler implementations), but with the camel handler specifically.
+
+The issue is that jbpm-workitems-camel is depending on a class in jbpm-workitems, but this jar was never OSGI-ified (so isn't exporting the class).  So I see two options:
+ (1) OSGi-ify jbpm-workitems (but since that hasn't been tested, it's not sure all the handlers in there will just work)
+ (2) remove the dependency from jbpm-workitems-camel to jbpm-workitems (by integrating a version of AbstractLogOrThrowWorkItemHandler into that project directly)
+
+I would vote for (2) as this is closest to what we want to achieve (doing (1) would increase the scope, as we'd have start testing that jar on OSGi as well).  This also doesn't require any changes in the bxms code base, only in the integration repo at the moment.  A local test seemed to indicate this works well.
+
+Wdyt?
+Could option (2) affect any current user ? Which are the impacts ?
+Does it need a new Fuse 6.2 Integration Pack rebuild ?
+It wouldn't affect existing customers afaik.  It would need a new integration pack rebuilt if we want to support jbpm-workitems-camel on osgi (but I believe option 1 probably also needs this).
+I agree that (2) would have more limited impact and the existing users should not be impacted by this (jbpm-workitems-camel now contains a new class, it should not clash with the original class in jbpm-workitems, as it is located in a different package).
+The fix was committed to fuse-bxms-integ repo.  Since there is no impact on bxms code, this has no impact on our patch releases and I believe this BZ can be closed?
+Yes, I am closing it. Thanks Kris.

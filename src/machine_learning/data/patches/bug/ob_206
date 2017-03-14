@@ -1,0 +1,228 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 030_sack.patch
+
+And then rebuild your kernel.
+
+--- sys/netinet/tcp_input.c.orig	Mon Mar 28 21:48:25 2005
++++ sys/netinet/tcp_input.c	Mon Mar 28 21:49:41 2005
+@@ -133,6 +133,10 @@ struct timeval tcp_synack_ppslim_last;
+ #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
+ #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+ 
++/* for TCP SACK comparisons */
++#define	SEQ_MIN(a,b)	(SEQ_LT(a,b) ? (a) : (b))
++#define	SEQ_MAX(a,b)	(SEQ_GT(a,b) ? (a) : (b))
++
+ /*
+  * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
+  */
+@@ -2282,8 +2286,7 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen
+ 				tp->t_flags |= TF_SACK_PERMIT;
+ 			break;
+ 		case TCPOPT_SACK:
+-			if (tcp_sack_option(tp, th, cp, optlen))
+-				continue;
++			tcp_sack_option(tp, th, cp, optlen);
+ 			break;
+ #endif
+ #ifdef TCP_SIGNATURE
+@@ -2547,11 +2550,10 @@ tcp_update_sack_list(tp)
+ }
+ 
+ /*
+- * Process the TCP SACK option.  Returns 1 if tcp_dooptions() should continue,
+- * and 0 otherwise, if the option was fine.  tp->snd_holes is an ordered list
++ * Process the TCP SACK option.  tp->snd_holes is an ordered list
+  * of holes (oldest to newest, in terms of the sequence space).
+  */
+-int
++void
+ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
+ {
+ 	int tmp_olen;
+@@ -2559,11 +2561,18 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 	struct sackhole *cur, *p, *temp;
+ 
+ 	if (!tp->sack_enable)
+-		return (1);
+-
++		return;
++	/* SACK without ACK doesn't make sense. */
++	if ((th->th_flags & TH_ACK) == 0)
++	       return;
++	/* Make sure the ACK on this segment is in [snd_una, snd_max]. */
++	if (SEQ_LT(th->th_ack, tp->snd_una) ||
++	    SEQ_GT(th->th_ack, tp->snd_max))
++		return;
+ 	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
+ 	if (optlen <= 2 || (optlen - 2) % TCPOLEN_SACK != 0)
+-		return (1);
++		return;
++	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
+ 	tmp_cp = cp + 2;
+ 	tmp_olen = optlen - 2;
+ 	if (tp->snd_numholes < 0)
+@@ -2600,7 +2609,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 			    pool_get(&sackhl_pool, PR_NOWAIT);
+ 			if (tp->snd_holes == NULL) {
+ 				/* ENOBUFS, so ignore SACKed block for now*/
+-				continue;
++				goto done;
+ 			}
+ 			cur = tp->snd_holes;
+ 			cur->start = th->th_ack;
+@@ -2664,7 +2673,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 				}
+ 				/* otherwise, move start of hole forward */
+ 				cur->start = sack.end;
+-				cur->rxmit = max (cur->rxmit, cur->start);
++				cur->rxmit = SEQ_MAX(cur->rxmit, cur->start);
+ 				p = cur;
+ 				cur = cur->next;
+ 				continue;
+@@ -2678,7 +2687,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 					    sack.start);
+ #endif /* TCP_FACK */
+ 				cur->end = sack.start;
+-				cur->rxmit = min(cur->rxmit, cur->end);
++				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
+ 				cur->dups++;
+ 				if (((sack.end - cur->end)/tp->t_maxseg) >=
+ 				    tcprexmtthresh)
+@@ -2696,7 +2705,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 				temp = (struct sackhole *)
+ 				    pool_get(&sackhl_pool, PR_NOWAIT);
+ 				if (temp == NULL)
+-					continue; /* ENOBUFS */
++					goto done; /* ENOBUFS */
+ #if defined(TCP_SACK) && defined(TCP_FACK)
+ 				if (SEQ_GT(cur->rxmit, sack.end))
+ 					tp->retran_data -=
+@@ -2711,9 +2720,9 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 				temp->start = sack.end;
+ 				temp->end = cur->end;
+ 				temp->dups = cur->dups;
+-				temp->rxmit = max(cur->rxmit, temp->start);
++				temp->rxmit = SEQ_MAX(cur->rxmit, temp->start);
+ 				cur->end = sack.start;
+-				cur->rxmit = min(cur->rxmit, cur->end);
++				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
+ 				cur->dups++;
+ 				if (((sack.end - cur->end)/tp->t_maxseg) >=
+ 					tcprexmtthresh)
+@@ -2733,7 +2742,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 			temp = (struct sackhole *)
+ 			    pool_get(&sackhl_pool, PR_NOWAIT);
+ 			if (temp == NULL)
+-				continue; /* ENOBUFS */
++				goto done; /* ENOBUFS */
+ 			temp->start = tp->rcv_lastsack;
+ 			temp->end = sack.start;
+ 			temp->dups = min(tcprexmtthresh,
+@@ -2747,6 +2756,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 			tp->snd_numholes++;
+ 		}
+ 	}
++done:
+ #if defined(TCP_SACK) && defined(TCP_FACK)
+ 	/*
+ 	 * Update retran_data and snd_awnd.  Go through the list of
+@@ -2762,7 +2772,7 @@ tcp_sack_option(struct tcpcb *tp, struct
+ 	    tp->retran_data;
+ #endif /* TCP_FACK */
+ 
+-	return (0);
++	return;
+ }
+ 
+ /*
+--- sys/netinet/tcp_subr.c.orig	Mon Mar 28 21:48:44 2005
++++ sys/netinet/tcp_subr.c	Mon Mar 28 21:49:42 2005
+@@ -149,6 +149,9 @@ int	tcp_syn_bucket_limit = 3*TCP_SYN_BUC
+ struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
+ 
+ int tcp_reass_limit = NMBCLUSTERS / 2; /* hardlimit for tcpqe_pool */
++#ifdef TCP_SACK
++int tcp_sackhole_limit = 32*1024; /* hardlimit for sackhl_pool */
++#endif
+ 
+ #ifdef INET6
+ extern int ip6_defhlim;
+@@ -180,6 +183,7 @@ tcp_init()
+ #ifdef TCP_SACK
+ 	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhlpl",
+ 	    NULL);
++	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
+ #endif /* TCP_SACK */
+ 	in_pcbinit(&tcbtable, tcbhashsize);
+ 	tcp_now = arc4random() / 2;
+--- sys/netinet/tcp_usrreq.c.orig	Mon Mar 28 21:49:00 2005
++++ sys/netinet/tcp_usrreq.c	Mon Mar 28 21:49:42 2005
+@@ -916,6 +916,20 @@ tcp_sysctl(name, namelen, oldp, oldlenp,
+ 			tcp_reass_limit = nval;
+ 		}
+ 		return (0);
++#ifdef TCP_SACK
++	case TCPCTL_SACKHOLE_LIMIT:
++		nval = tcp_sackhole_limit;
++		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
++		if (error)
++			return (error);
++		if (nval != tcp_sackhole_limit) {
++			error = pool_sethardlimit(&sackhl_pool, nval, NULL, 0);
++			if (error)
++				return (error);
++			tcp_sackhole_limit = nval;
++		}
++		return (0);
++#endif
+ 	default:
+ 		if (name[0] < TCPCTL_MAXID)
+ 			return (sysctl_int_arr(tcpctl_vars, name, namelen,
+--- sys/netinet/tcp_var.h.orig	Mon Mar 28 21:49:15 2005
++++ sys/netinet/tcp_var.h	Mon Mar 28 21:59:15 2005
+@@ -465,7 +465,8 @@ struct	tcpstat {
+ #define	TCPCTL_SYN_BUCKET_LIMIT	16 /* max size of hash bucket */
+ #define	TCPCTL_RFC3390	       17 /* enable/disable RFC3390 increased cwnd */
+ #define	TCPCTL_REASS_LIMIT     18 /* max entries for tcp reass queues */
+-#define	TCPCTL_MAXID	       19
++#define	TCPCTL_SACKHOLE_LIMIT  19 /* max entries for tcp sack queues */
++#define	TCPCTL_MAXID	       20
+ 
+ #define	TCPCTL_NAMES { \
+ 	{ 0, 0 }, \
+@@ -487,6 +488,7 @@ struct	tcpstat {
+ 	{ "synbucketlimit", 	CTLTYPE_INT }, \
+ 	{ "rfc3390", 	CTLTYPE_INT }, \
+ 	{ "reasslimit", 	CTLTYPE_INT }, \
++	{ "sackholelimit",	CTLTYPE_INT }, \
+ }
+ 
+ #define	TCPCTL_VARS { \
+@@ -508,6 +510,7 @@ struct	tcpstat {
+ 	&tcp_syn_cache_limit, \
+ 	&tcp_syn_bucket_limit, \
+ 	&tcp_do_rfc3390, \
++	NULL, \
+ 	NULL \
+ }
+ 
+@@ -526,6 +529,7 @@ extern	int tcp_ack_on_push;	/* ACK immed
+ #ifdef TCP_SACK
+ extern	int tcp_do_sack;	/* SACK enabled/disabled */
+ extern	struct pool sackhl_pool;
++extern	int tcp_sackhole_limit;	/* max entries for tcp sack queues */
+ #endif
+ extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
+ extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
+@@ -597,7 +601,7 @@ int	 tcp_usrreq(struct socket *,
+ void	 tcp_xmit_timer(struct tcpcb *, int);
+ void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
+ #ifdef TCP_SACK
+-int	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
++void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
+ void	 tcp_update_sack_list(struct tcpcb *tp);
+ void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+ void	 tcp_clean_sackreport(struct tcpcb *tp);
+

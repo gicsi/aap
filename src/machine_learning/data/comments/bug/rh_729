@@ -1,0 +1,50 @@
+Description of problem:
+SELinux is preventing firefox from read, write access on the chr_file /dev/dri/renderD128.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If sie denken, dass es firefox standardmässig erlaubt sein sollte, read write Zugriff auf renderD128 chr_file zu erhalten.
+Then sie sollten dies als Fehler melden.
+Um diesen Zugriff zu erlauben, können Sie ein lokales Richtlinien-Modul erstellen.
+Do
+zugriff jetzt erlauben, indem Sie die nachfolgenden Befehle ausführen:
+# grep firefox /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:svirt_lxc_net_t:s0:c568,c716
+Target Context                system_u:object_r:dri_device_t:s0
+Target Objects                /dev/dri/renderD128 [ chr_file ]
+Source                        firefox
+Source Path                   firefox
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-122.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.2-300.fc22.x86_64 #1 SMP Thu
+                              May 7 16:05:02 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-05-12 09:49:32 CEST
+Last Seen                     2015-05-12 09:49:32 CEST
+Local ID                      820b48e5-2c2b-4582-87c5-d586552d4dbc
+
+Raw Audit Messages
+type=AVC msg=audit(1431416972.16:769): avc:  denied  { read write } for  pid=19232 comm="firefox" path="/dev/dri/renderD128" dev="devtmpfs" ino=8696 scontext=system_u:system_r:svirt_lxc_net_t:s0:c568,c716 tcontext=system_u:object_r:dri_device_t:s0 tclass=chr_file permissive=1
+
+
+Hash: firefox,svirt_lxc_net_t,dri_device_t,chr_file,read,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-122.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.5-300.fc22.x86_64
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1233881 ***

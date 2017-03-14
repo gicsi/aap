@@ -1,0 +1,122 @@
+[mariadb-galera]: 'power-off node' corrupt the DB,  the corruption prevent galera to start and as result the node won't be part of cluster after the node is powered back on.   
+
+Environment: 
+-------------
+mariadb-galera-server-5.5.41-2.el7ost.x86_64
+galera-25.3.5-7.el7ost.x86_64
+mariadb-galera-common-5.5.41-2.el7ost.x86_64
+instack-0.0.7-1.el7ost.noarch
+instack-undercloud-2.1.2-4.el7ost.noarch
+openstack-heat-common-2015.1.0-4.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-15.el7ost.noarch
+openstack-heat-api-cloudwatch-2015.1.0-4.el7ost.noarch
+heat-cfntools-1.2.8-2.el7.noarch
+python-heatclient-0.6.0-1.el7ost.noarch
+openstack-heat-api-2015.1.0-4.el7ost.noarch
+openstack-heat-templates-0-0.6.20150605git.el7ost.noarch
+openstack-heat-engine-2015.1.0-4.el7ost.noarch
+openstack-heat-api-cfn-2015.1.0-4.el7ost.noarch
+openstack-puppet-modules-2015.1.7-2.el7ost.noarch
+puppet-3.6.2-2.el7.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+
+
+Steps:
+--------
+1) Install HA deployment using rhel-osp-director  ( 3 X controllers)  
+2) After overcloud deployment finish --> Attempt to power-off node using ironic
+ 
+  2a. : ironic node-list 
+  2b. : ironic node-set-power-state <controller_0_uuid> off
+  2c. : ironic node-set-power-state <controller_0_uuid> on
+
+3) ssh  controller_0_uuid  
+  3a.  grep ERROR in /var/log/mariadb/mariadb.log
+  3b.  sudo pcs status  
+
+
+Results: 
+---------
+1)  grep ERROR in /var/log/mariadb/mariadb.log  shows corruption in DB 
+2)  pcs status --> shows that galera failed to start . 
+3)  as result the host won't be part of HA cluster in case of Power-outage or hard-shutdown.  
+
+[root@overcloud-controller-0 heat-admin]# grep ERROR in /var/log/mariadb/mariadb.log
+grep: in: No such file or directory
+/var/log/mariadb/mariadb.log:150624 15:47:16 [ERROR] mysqld: Table './mysql/user' is marked as crashed and should be repaired
+/var/log/mariadb/mariadb.log:150624 15:47:16 [ERROR] mysql.user: 1 client is using or hasn't closed the table properly
+/var/log/mariadb/mariadb.log:150624 15:47:16 [ERROR] mysqld: Table './mysql/db' is marked as crashed and should be repaired
+/var/log/mariadb/mariadb.log:150624 15:47:16 [ERROR] mysql.db: 1 client is using or hasn't closed the table properly
+
+
+pcs status 
+
+Failed actions:
+    openstack-heat-engine_start_0 on overcloud-controller-2 'not running' (7): call=316, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:51:39 2015', queued=2000ms, exec=6ms
+    openstack-cinder-volume_start_0 on overcloud-controller-2 'not running' (7): call=314, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:47 2015', queued=2001ms, exec=4ms
+    galera_start_0 on overcloud-controller-0 'unknown error' (1): call=216, status=Timed Out, exit-reason='none', last-rc-change='Wed Jun 24 15:47:30 2015', queued=0ms, exec=120003ms
+    redis_start_0 on overcloud-controller-0 'unknown error' (1): call=219, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:49:35 2015', queued=0ms, exec=21910ms
+    openstack-nova-scheduler_start_0 on overcloud-controller-0 'not running' (7): call=236, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:30 2015', queued=2001ms, exec=2ms
+    openstack-heat-engine_start_0 on overcloud-controller-0 'not running' (7): call=268, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:51:31 2015', queued=2001ms, exec=2ms
+    openstack-nova-consoleauth_start_0 on overcloud-controller-0 'not running' (7): call=238, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:34 2015', queued=2001ms, exec=5ms
+    openstack-cinder-api_start_0 on overcloud-controller-0 'not running' (7): call=242, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:39 2015', queued=2002ms, exec=5ms
+    neutron-server_start_0 on overcloud-controller-0 'not running' (7): call=246, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:46 2015', queued=2001ms, exec=3ms
+    openstack-heat-engine_start_0 on overcloud-controller-1 'not running' (7): call=327, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:51:35 2015', queued=2002ms, exec=2ms
+    openstack-cinder-volume_start_0 on overcloud-controller-1 'not running' (7): call=325, status=complete, exit-reason='none', last-rc-change='Wed Jun 24 15:50:41 2015', queued=2001ms, exec=2ms
+Created attachment 1042832
+mariadb.log
+
+full mariadb.log
+my initial take on this as discussed on IRC is that the power off is causing a single mariadb node to become corrupted in some way.  The established approach to re-introducing a failed node into the cluster is to repair the corruption on the failed node first.
+
+In this case, the tables that are impacted are the MyISAM tables "user" and "db", which aren't handled by Galera.   The operator should log into the console for this database specifically and run the "REPAIR TABLE" command, documented at https://dev.mysql.com/doc/refman/5.1/en/repair-table.html.  E.g. this corruption is not a bug; it is a known behavior of MySQL/MariaDB with an established solution.
+
+At that stage, the node should be able to rejoin the cluster, perhaps after a restart.  Deleting grastate.dat will ensure the node does a full SST when it rejoins.
+
+
+From my POV this is a "worksforme".
+confirm that the mysql.user and mysql.db tables are in fact MyISAM, and that these are not replicated by galera.  
+
+https://mariadb.com/kb/en/mariadb/mariadb-galera-cluster-known-limitations/
+
+"Currently replication works only with the InnoDB storage engine. Any writes to tables of other types, including system (mysql.*) tables are not replicated (this limitation excludes DDL statements such as CREATE USER, which implicitly modify the mysql.* tables — those are replicated). There is however experimental support for MyISAM - see the wsrep_replicate_myisam system variable) "
+
+
+This is only significant since we can confirm that these two tables are corrupted in an ordinary way.   Just run "REPAIR TABLE" on them and restart.
+please reopen if the resolution doesn't work for you or there are other compounding factors, thanks!
+I tried to recover the broken node from such condition and encountered some factors that required workarounds. End results was the node rejoined the cluster but can you confirm the steps I followed are correct? 
+
+I couldn't login to the console since the server was only accepting connections form localhost on via file socket:
+
+[root@overcloud-controller-0 ~]# mysql
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+[root@overcloud-controller-0 ~]# ps axu | grep sql
+mysql     1342  0.0  0.0 115348  1700 ?        Ss   08:35   0:00 /bin/sh /usr/bin/mysqld_safe --basedir=/usr
+mysql     3583  0.1  1.2 1490632 104136 ?      Sl   08:35   0:01 /usr/libexec/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib64/mysql/plugin --wsrep-provider=/usr/lib64/galera/libgalera_smm.so --log-error=/var/log/mariadb/mariadb.log --open-files-limit=-1 --pid-file=/var/run/mariadb/mariadb.pid --socket=/var/lib/mysql/mysql.sock --port=3306 --wsrep_start_position=f66ffed3-1b32-11e5-a6b0-b25242c6d09d:4365
+root     25412  0.0  0.0 112644   928 pts/0    S+   08:50   0:00 grep --color=auto sql
+
+To workaround this I added 'innodb_force_recovery = 1' to /etc/my.cnf.d/galera.cnf
+and restarted the mariadb service.
+
+After this I could access the console and run the repair steps:
+SET wsrep_on=OFF;
+repair table mysql.user;
+repair table mysql.db;
+
+Next I run:
+systemctl stop mariadb
+rm /var/lib/mysql/grastate.dat
+remove 'innodb_force_recovery = 1' from /etc/my.cnf.d/galera.cnf
+crm_resource -C -r galera-master
+
+After running these steps the node rejoined the cluster.Can you please confirm the steps I did are correct? Thanks.
+absolutely, once a *single* mariadb node is corrupted or otherwise unable to start, the general steps are:
+
+1. get that mariadb node to start as an independent database service first.   Any special commands or startup recovery flags needed to make this happen are OK.   It is even usually OK to just rebuild the data directory of this node completely fresh to start with, because it will be getting all the current data and user accounts from the other nodes when it rejoins the cluster in any case.  E.g. there's nothing you need to preserve there, consider if you built a brand new MariaDB, that brand new service could join into your cluster just as easily (*as long as the rest of the cluster is still running fine*.  If you've lost all nodes or some corruption has occurred to all/most of them, that's a different ballgame.)
+
+2. delete grastate.dat on the node that had a problem. This effectively means it will unconditionally get all of its data replaced by the other nodes when it rejoins the cluster.  E.g. all the InnoDB datafiles that we possibly were worried about in step #1 are going to get overwritten via an rsync in any case.
+
+3. restart the node again and it should join the cluster and be synchronized.
+In a HA environment, it's not the case that the node that failed is guaranteed to be clean and able to rejoin the cluster (or even boot) - the HA software is there to provide continuity of service from the other hosts.
+
+We should probably note these recovery steps somewhere.

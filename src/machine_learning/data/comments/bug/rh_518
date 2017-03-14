@@ -1,0 +1,318 @@
+Description of problem:
+When issuing command 'oadm prune images' the docker registry size stays the same. No layers are deleted.
+
+Version-Release number of selected component (if applicable):
+OSE v3.0.0.0
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Push a new image to docker registry
+2. Delete the image (by oadm prune, deleting imagestream)
+3. Check the size of docker registry volume
+
+Actual results:
+Same size as before.
+
+Expected results:
+Lower size (because at least some of the layers were deleted).
+
+Additional info:
+Apparently deleting imagestream deletes the manifest (when asking for /v2/name/tags/list I get empty list), but underlying fs layers (blobs) stay stored in docker registry.
+Hi Tomas,
+
+I tested this and found that it is able to delete layers when pruning, but I did find a bug related to a recent change for how we handle authorization in the registry.
+
+Here's what I did:
+
+$ docker tag busybox 172.30.x.x:5000/p1/bbox
+$ docker push 172.30.x.x:5000/p1/bbox
+
+$ docker tag -f openshift3/ose-pod:v3.0.0.0 172.30.x.x:5000/p1/bbox
+$ docker push 172.30.x.x:5000/p1/bbox
+
+# get the size of the registry's volume before
+$ cd /var/lib/openshift/openshift.local.volumes/pods/34e308e6-1b73-11e5-86aa-080027c39896/volumes/kubernetes.io~empty-dir/registry-storage
+$ du . > /tmp/before.txt
+
+# this will prune any layers only referenced by busybox, as it's the image being pruned
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1
+
+Dry run enabled - no modifications will be made.
+IMAGE                                                                     STREAMS
+sha256:4af0f92763caff2847d74a09694f676c8a038e936951bd6ce8f990a48a9c00e9   172.30.23.190:5000/p1/bbox
+
+REGISTRY             STREAM    LAYER
+172.30.23.190:5000   p1/bbox   sha256:1db09adb5ddd7f1a07b6d585a7db747a51c7bd17418d47e91f901bdf420abd66
+
+# note the status code 400 errors below - I'll be working on a fix for that
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 --confirm
+
+E0625 16:48:27.502057    9406 imagepruner.go:627] Unexpected status code in response: 400
+E0625 16:48:27.502158    9406 imagepruner.go:463] error pruning manifest for registry "172.30.23.190:5000", repo "p1/bbox", image "sha256:4af0f92763caff2847d74a09694f676c8a038e936951bd6ce8f990a48a9c00e9": unexpected status code 400 in response: map[string]interface {}{}
+IMAGE                                                                     STREAMS
+sha256:4af0f92763caff2847d74a09694f676c8a038e936951bd6ce8f990a48a9c00e9   172.30.23.190:5000/p1/bbox
+
+E0625 16:48:27.544968    9406 imagepruner.go:627] Unexpected status code in response: 400
+E0625 16:48:27.545025    9406 imagepruner.go:565] error invoking pruneLayer: unexpected status code 400 in response: map[string]interface {}{}
+REGISTRY             STREAM    LAYER
+172.30.23.190:5000   p1/bbox   sha256:1db09adb5ddd7f1a07b6d585a7db747a51c7bd17418d47e91f901bdf420abd66
+
+# get the size of the registry's volume after
+$ du . > /tmp/after.txt
+
+# check the diffs
+
+$ diff /tmp/before.txt /tmp/after.txt
+24,25c24
+< 1120	./docker/registry/v2/blobs/sha256/1d/1db09adb5ddd7f1a07b6d585a7db747a51c7bd17418d47e91f901bdf420abd66
+< 1120	./docker/registry/v2/blobs/sha256/1d
+---
+> 0	./docker/registry/v2/blobs/sha256/1d
+34,39c33,38
+< 55500	./docker/registry/v2/blobs/sha256
+< 55500	./docker/registry/v2/blobs
+< 55532	./docker/registry/v2
+< 55532	./docker/registry
+< 55532	./docker
+< 55532	.
+---
+> 54380	./docker/registry/v2/blobs/sha256
+> 54380	./docker/registry/v2/blobs
+> 54412	./docker/registry/v2
+> 54412	./docker/registry
+> 54412	./docker
+> 54412	.
+
+As you can see, 1 layer is deleted, but what fails is deleting repository signatures and repository layer links, which I'll address in a pull request.
+Commit pushed to master at https://github.com/openshift/origin
+
+https://github.com/openshift/origin/commit/e8a1ebe273a56182dc390c4c5efff60d37e8d24b
+Correct registry auth for pruning
+
+With #3166, we modified the registry authorization handler to reject
+unknown resource types and/or actions. This unfortunately broke layer
+and signature pruning, as those operations use both admin/prune and
+repo/* (aka DELETE).
+
+Fix authorization check to associate repo/* with admin/prune.
+
+Fixes bug 1235148.
+@Andy, currently I even can not run "oadm prune images":
+
+[root@master ~]# oadm prune images
+error: You must use a client config with a token
+
+[root@master ~]# ls /etc/openshift/master/
+admin.crt         ca.key           master-config.yaml         master.kubelet-client.key  openshift-master.key         openshift-registry.kubeconfig  policy.json
+admin.key         ca.serial.txt    master.etcd-client.crt     master.server.crt          openshift-master.kubeconfig  openshift-router.crt           scheduler.json
+admin.kubeconfig  etcd.server.crt  master.etcd-client.key     master.server.key          openshift-registry.crt       openshift-router.key           serviceaccounts.private.key
+ca.crt            etcd.server.key  master.kubelet-client.crt  openshift-master.crt       openshift-registry.key       openshift-router.kubeconfig    serviceaccounts.public.key
+
+I run "oadm prume images --certificate-authority=" with most available certificate files on master, but always throw the same error.
+[root@master ~]# oadm prune images --certificate-authority=/etc/openshift/master/ca.crt
+error: You must use a client config with a token
+[root@master ~]# oadm prune images --certificate-authority=/etc/openshift/master/master.kubelet-client.crt
+error: You must use a client config with a token
+
+Do I miss something?
+You need to log in as a user who uses a token instead of a certificate to authenticate. In addition, that user needs the system:image-pruner cluster role:
+
+oadm policy add-cluster-role-to-user system:image-pruner someuser
+oc login -u someuser ...
+oadm prune images ...
+Does this need to be cherry-picked to the OSE repo or will it get picked up on a rebase?
+It depends on how fast you want it to ship.  We're working on a 3.0.0.1 update that will include a few hot fixes that missed GA.  The thought is that 3.0.1.0 will be hopefully within a month and include a merge from the latest stable upstream.  I'd need to sync with Clayton on whether or not that plan is sane.
+
+As for this bug, it seems to be like it could wait for 3.0.1.0 as long as once the fix lands it will clean up the data that should have been previously deleted.
+> as long as once the fix lands it will clean up the data that should have been previously deleted
+
+Unfortunately that is unlikely. Once the image is deleted from etcd, we no longer have the info about the layers that need to be deleted.
+Ok, then it sounds like the sooner we fix this the better.  +1 for 3.0.0.1.
+https://github.com/openshift/ose/pull/46 merged
+@Andy, I guess you misunderstand Tomas' issue. 
+
+Here I give the more clear steps.
+# rpm -q openshift
+openshift-3.0.0.1-1.git.4.eab4c86.el7ose.x86_64
+
+$ oc login --username=jialiu
+$ oc new-app https://github.com/openshift/simple-openshift-sinatra-sti.git  -i openshift/ruby
+$ oc get is
+NAME                           DOCKER REPO                                               TAGS      UPDATED
+simple-openshift-sinatra-sti   172.30.178.156:5000/jialiu/simple-openshift-sinatra-sti   latest    4 hours ago
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1
+Dry run enabled - no modifications will be made.
+$ oc delete all --all
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 
+Dry run enabled - no modifications will be made.
+IMAGE     STREAMS
+sha256:dc7299fd780ba7ea84db49cb6efbe02a031e47166f171221a925b5975518a32b
+
+On node:
+# pwd
+/var/lib/openshift/openshift.local.volumes/pods/033508b6-1ecd-11e5-bf8e-fa163e86a6a9
+# tree . > before
+
+
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 --confirm
+IMAGE     STREAMS
+sha256:dc7299fd780ba7ea84db49cb6efbe02a031e47166f171221a925b5975518a32b
+
+
+On node:
+# pwd
+/var/lib/openshift/openshift.local.volumes/pods/033508b6-1ecd-11e5-bf8e-fa163e86a6a9
+# tree . > after
+
+
+# diff before after
+No any difference
+
+@Tomas, could you help double-confirm if my step is correct?
+If my step is correct, I would move this bug to "ASSIGNED" status.
+For this output:
+
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 
+Dry run enabled - no modifications will be made.
+IMAGE     STREAMS
+sha256:dc7299fd780ba7ea84db49cb6efbe02a031e47166f171221a925b5975518a32b
+
+That means that pruning has detected an image that is no longer in use, but all layers are still in use. If this is the case, then I would not expect any layers to be deleted.
+
+Let me run this setup locally to see what results I get.
+Ok, this is happening because you've deleted the image stream. We currently need the image stream to remain if you want to be able to prune layers.
+
+Would you be ok repurposing this bz to be about the issue I did fix (authorization), and create a new bz for the root cause (layers won't be pruned if the image stream is deleted)?
+> Would you be ok repurposing this bz to be about the issue I did fix
+> (authorization), 
+
+# rpm -q openshift
+openshift-3.0.0.1-1.git.4.eab4c86.el7ose.x86_64
+
+# docker tag -f fedora  172.30.178.156:5000/jialiu/bbox
+# docker push 172.30.178.156:5000/jialiu/bbox
+
+# docker tag -f busybox  172.30.178.156:5000/jialiu/bbox
+# docker push 172.30.178.156:5000/jialiu/bbox
+
+# oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 --confirm
+IMAGE                                                                     STREAMS
+sha256:10ffe733d3683ee7e76c8f1b956c147be830717ce2a8b5580862e837562356fb   172.30.178.156:5000/jialiu/bbox
+
+REGISTRY              STREAM        LAYER
+172.30.178.156:5000   jialiu/bbox   sha256:c97bed1a83ef1029397df34ba0bd26021532ad6591fd6e9ef845933dcbebb7fa
+
+No authorization error is seen now. 
+
+One more question:
+if user is running prune command in client which unable to access sdn network, would encounter the following issue:
+(client)$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 --confirm
+E0701 00:45:55.902127    2754 imagepruner.go:463] error pruning manifest for registry "172.30.178.156:5000", repo "jialiu/bbox", image "sha256:d1b1f251df37910e73d4e38968d4f35f1d3d87a30c815c86c5a95bb959d8ef7c": error sending request: dial tcp 172.30.178.156:5000: connection timed out
+
+How to deal with such case? Or "oadm prune" command is allowed to run only on master/node where could access sdn network?
+
+> and create a new bz for the root cause (layers won't be
+> pruned if the image stream is deleted)?
+File a new bug - 1237271 to track this issue.
+Ideally I think the registry needs to be exposed via a route (if that's desirable/desired), and then you can use the --registry-url flag to specify the route. Otherwise, you need to run prune from some system that has access to the sdn.
+(In reply to Johnny Liu from comment #12)
+> @Tomas, could you help double-confirm if my step is correct?
+
+Yes, that is the original issue I was reporting.
+(In reply to Andy Goldstein from comment #16)
+> Ideally I think the registry needs to be exposed via a route (if that's
+> desirable/desired), and then you can use the --registry-url flag to specify
+> the route. Otherwise, you need to run prune from some system that has access
+> to the sdn.
+
+Thanks. Indeed add a route is a solution.
+
+On master:
+Add a route for docker-registry service.
+# oc expose service docker-registry --hostname=registry.jialiu.com
+NAME              HOST/PORT             PATH      SERVICE           LABELS
+docker-registry   registry.jialiu.com             docker-registry   docker-registry=default
+
+On node:
+# docker tag -f fedora  172.30.178.156:5000/jialiu/bbox
+# docker push 172.30.178.156:5000/jialiu/bbox
+
+# docker tag -f busybox  172.30.178.156:5000/jialiu/bbox
+# docker push 172.30.178.156:5000/jialiu/bbox
+
+On client:
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1
+Dry run enabled - no modifications will be made.
+IMAGE                                                                     STREAMS
+sha256:10ffe733d3683ee7e76c8f1b956c147be830717ce2a8b5580862e837562356fb   172.30.222.140:5000/jialiu/bbox
+
+REGISTRY              STREAM        LAYER
+172.30.222.140:5000   jialiu/bbox   sha256:c97bed1a83ef1029397df34ba0bd26021532ad6591fd6e9ef845933dcbebb7fa
+
+On node:
+# pwd
+/var/lib/openshift/openshift.local.volumes/pods/b41e9f01-1fc9-11e5-bfee-fa163e980b3d/volumes/kubernetes.io~empty-dir/registry-storage/docker/registry/v2
+# tree .>before
+
+On client:
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1 --confirm --registry-url=registry.jialiu.com
+IMAGE                                                                     STREAMS
+sha256:10ffe733d3683ee7e76c8f1b956c147be830717ce2a8b5580862e837562356fb   172.30.222.140:5000/jialiu/bbox
+
+REGISTRY              STREAM        LAYER
+registry.jialiu.com   jialiu/bbox   sha256:c97bed1a83ef1029397df34ba0bd26021532ad6591fd6e9ef845933dcbebb7fa
+
+$ oadm prune images --keep-younger-than=0 --keep-tag-revisions=1
+Dry run enabled - no modifications will be made.
+
+On node:
+# pwd
+/var/lib/openshift/openshift.local.volumes/pods/b41e9f01-1fc9-11e5-bfee-fa163e980b3d/volumes/kubernetes.io~empty-dir/registry-storage/docker/registry/v2
+# tree .>after
+
+# sdiff before after
+<--snip-->
+|       `-- c9							|       `-- c9
+|           `-- c97bed1a83ef1029397df34ba0bd26021532ad6591fd6 <
+|               `-- data				      <
+`-- repositories						`-- repositories
+    `-- jialiu							    `-- jialiu
+        `-- bbox						        `-- bbox
+            |-- _layers						            |-- _layers
+            |   `-- sha256					            |   `-- sha256
+            |       |-- 1db09adb5ddd7f1a07b6d585a7db747a51c7b	            |       |-- 1db09adb5ddd7f1a07b6d585a7db747a51c7b
+            |       |   `-- link				            |       |   `-- link
+            |       |-- a3ed95caeb02ffe68cdd9fd84406680ae93d6 |	            |       `-- a3ed95caeb02ffe68cdd9fd84406680ae93d6
+            |       |   `-- link			      <
+            |       `-- c97bed1a83ef1029397df34ba0bd26021532a <
+            |           `-- link				            |           `-- link
+            |-- _manifests					            |-- _manifests
+            |   `-- revisions					            |   `-- revisions
+            |       `-- sha256					            |       `-- sha256
+            |           |-- 10ffe733d3683ee7e76c8f1b956c147be <
+            |           |   `-- signatures		      <
+            |           |       `-- sha256		      <
+            |           |           |-- 5005b2c574a42d7275e6f <
+            |           |           |   `-- link	      <
+            |           |           `-- ab08517f301a726ad3958 <
+            |           |               `-- link	      <
+            |           `-- d1b1f251df37910e73d4e38968d4f35f1	            |           `-- d1b1f251df37910e73d4e38968d4f35f1
+            |               `-- signatures			            |               `-- signatures
+            |                   `-- sha256			            |                   `-- sha256
+            |                       `-- 7c902e7cad277c3b3d333	            |                       `-- 7c902e7cad277c3b3d333
+            |                           `-- link		            |                           `-- link
+            `-- _uploads					            `-- _uploads
+<--snip-->
+<--snip-->
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://access.redhat.com/errata/RHBA-2015:1209

@@ -1,0 +1,4 @@
+The IMac DV+ (and probably some other machines) incorrectly identify their video
+hardware, but it is possible to work around the problem.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/powerpc/012_imacdv.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,8 @@
+Created attachment 1042000
+Proposed patch to add OSGi MANIFEST.MF with exports in it
+
+Description of problem:
+
+Eclipse needs some packages exported from jnr-x86asm via its MANIFEST.MF.
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10188334
+Built.

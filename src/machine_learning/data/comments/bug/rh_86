@@ -1,0 +1,25 @@
+Description of problem:
+Sugar 0.105/6 introcdue a brightness manager.  This has a helper which uses polkit to gain permissions to set the brightness without the user needing to be root.
+
+However, fedora does not ship with this policy.  The patch provides information on how this policy is outputted:  https://github.com/sugarlabs/sugar/pull/504
+
+Version-Release number of selected component (if applicable):
+Sugar 0.105.2?
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Launch sugar (sugar-runner)
+
+Actual results:
+A popup appears asking you for your root password to authenticate.
+
+Expected results:
+The brightness manager should be automatically authenticated by polkit.
+It should be installed as part of the "make install" process, that ensures it's installed with the correct permissions and installed into the correct location depending on the distro. We don't randomly copy stuff around, this needs to be fixed upstream and ultimately should have happened as part of the original landing upstream
+No, this is done upstream.  The file is copied into "$(datadir)/polkit-1/actions".  See the section in the Makefile:  https://github.com/sugarlabs/sugar/blob/master/data/Makefile.am#L69-74
+This is actually fixed in 0.106 which I've just pushed to rawhide with no packaging changes
+
+$ rpm -qlp sugar-0.106.0-1.fc23.noarch.rpm | grep polkit
+/usr/share/polkit-1/actions/org.sugar.brightness.policy

@@ -1,0 +1,34 @@
+Created attachment 1043343
+anaconda temp log
+
+Description of problem:
+Similar to bugs: 516279,957060,1003103
+Anaconda misreads the BIOS type.I have UEFI not BIOS.This is a 64bit ROG ASUS BIOS.The drives are set for SATA mode not legacy mode.
+
+I keep getting told to "insert 1MB boot partition for BIOS booting". This is not necessary as UEFI boots differently(requires /boot/efi as vfat). I specify to overwrite the existing UEFI bootloader when I get this image.Fedora ISOs didnt used to have this issue.Now Im getting it with everything from Fedora to Korora to the (now defunct) Chapeau.
+
+Im in an unworkable state between 21 and 22 and am trying to resolve by installing 21.I choose to format EFI, swap, and / but leave /home alone. 
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.boot livecd
+2. attempt to install some form of Fedora.
+
+Actual results:
+I keep getting an error I shouldnt be getting.Wrong BIOS boot method is detected.See anaconda log.
+
+Expected results:
+Installation should proceed as normal.
+Did you boot the installer using UEFI? Please attach /tmp/syslog from the installer environment.
+Will have to reinstall to get that particular file.Yes, I booted UEFI. There is an option to disable?
+
+Ive noted this also:Installer uses anaconda version 21.48.22-1 or older. This seems to cause this bug to appear.ALSO: The installer keeps flip-flopping between UEFI/GPT and MSDOS bootloaders requiring (a backup set and) a reformat of the ENTIRE volume to install Fedora. Due to a BIOS BUG, the BIOS is looking for sda4 to be bootable in msdos mode, resulting in non-bootable disk.This does not happen with Fedora using UEFI/GPT but has been noted to happen with Debian when using UEFI.Im using the latest BIOS available.
+
+
+The install proceeds but ONLY IF you follow the directions given. Newer versions of anaconda dont flip flop, detect the UEFI system correctly, however have another bug that appears at 100% completion.You only get the newer anaconda version if you respin, as the spinning process pulls updates along with the packages requested. Need to re-release Fedora21 with the newer updates.It mostly squishes this bug.The version available here is a TAD out of date: http://download.fedoraproject.org/pub/fedora/linux/releases/21/Workstation/x86_64/iso/Fedora-Live-Workstation-x86_64-21-5.iso
+I can confirm. Bug squished in recent releases.We need to update and re-release any v21 ISOs.The version on the webserver is severely out of date.

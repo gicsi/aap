@@ -1,0 +1,82 @@
+Description of problem:
+el sistema estaba suspendido y al tratar de iniciar de nuevo se quedo bloqueado
+
+Version-Release number of selected component:
+audacious-3.6.2-1.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        audacious
+crash_function: exit
+executable:     /usr/bin/audacious
+global_pid:     9526
+kernel:         4.0.4-303.fc22.i686+PAE
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #22 exit at exit.c:104
+ #23 gdk_x_io_error at gdkmain-x11.c:544
+ #24 _XIOError at XlibInt.c:1464
+ #26 XGetSelectionOwner at GetSOwner.c:41
+ #27 check_manager_window at xsettings-client.c:430
+ #28 _gdk_xsettings_client_process_event at xsettings-client.c:597
+ #29 gdk_xsettings_client_event_filter at gdkevents-x11.c:3115
+ #30 gdk_event_apply_filters at gdkevents-x11.c:371
+ #31 gdk_event_translate at gdkevents-x11.c:1074
+ #32 _gdk_events_queue at gdkevents-x11.c:2358
+Created attachment 1040893
+File: backtrace
+Created attachment 1040894
+File: cgroup
+Created attachment 1040895
+File: core_backtrace
+Created attachment 1040896
+File: dso_list
+Created attachment 1040897
+File: environ
+Created attachment 1040898
+File: limits
+Created attachment 1040899
+File: maps
+Created attachment 1040900
+File: mountinfo
+Created attachment 1040901
+File: namespaces
+Created attachment 1040902
+File: open_fds
+Created attachment 1040903
+File: proc_pid_status
+Created attachment 1040904
+File: var_log_messages
+Another user experienced a similar problem:
+
+el sistema estaba suspendido y al tratar de iniciar de nuevo se quedo bloqueado
+
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        audacious
+crash_function: exit
+executable:     /usr/bin/audacious
+global_pid:     16936
+kernel:         4.0.4-303.fc22.i686+PAE
+package:        audacious-3.6.2-1.fc22
+reason:         audacious killed by SIGSEGV
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+> el sistema estaba suspendido y al tratar de iniciar de nuevo se quedo bloqueado
+
+It is rude to write in Spanish. The primary project language is English.
+
+  https://lists.fedoraproject.org/mailman/listinfo/es-users
+  ( Fedora discussions in Spanish )
+
+
+I've tried to translate that sentence via online services. Troubles with Suspend/Resume are outside the scope of Audacious.
+
+
+jun 19 04:08:27 localhost.localdomain audacious.desktop[9526]: audacious: Fatal IO error 11 (Recurso no disponible temporalmente) on X server :1.

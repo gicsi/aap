@@ -1,0 +1,149 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_pf.patch
+
+Then build and install a new kernel.
+
+--- sys/net/pf.c	20 Feb 2008 23:40:13 -0000	1.567
++++ sys/net/pf.c	10 Apr 2009 22:47:49 -0000
+@@ -5620,6 +5620,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
+ 		break;
+ 	}
+ 
++#ifdef INET6
++	case IPPROTO_ICMPV6: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
++		goto done;
++	}
++#endif
++
+ 	default:
+ 		action = pf_test_state_other(&s, dir, kif, &pd);
+ 		if (action == PF_PASS) {
+@@ -5969,6 +5978,13 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
+ 			action = pf_test_rule(&r, &s, dir, kif,
+ 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+ 		break;
++	}
++
++	case IPPROTO_ICMP: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv6 packet with ICMPv4 payload\n"));
++		goto done;
+ 	}
+ 
+ 	case IPPROTO_ICMPV6: {
+
+This is version 2 of this patch.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 012_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+	make obj
+        make depend
+	make includes
+	make
+        make install
+	cd ../../sbin
+	make obj
+        make depend
+	make
+	make install
+
+Index: lib/libssl/src/crypto/asn1/asn1.h
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1.h,v
+retrieving revision 1.9
+diff -u -p -r1.9 asn1.h
+--- lib/libssl/src/crypto/asn1/asn1.h	27 Jun 2006 05:07:00 -0000	1.9
++++ lib/libssl/src/crypto/asn1/asn1.h	7 Apr 2009 07:37:49 -0000
+@@ -1037,6 +1037,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_BAD_OBJECT_HEADER			 102
+ #define ASN1_R_BAD_PASSWORD_READ			 103
+ #define ASN1_R_BAD_TAG					 104
++#define ASN1_R_BMPSTRING_IS_WRONG_LENGTH		 210
+ #define ASN1_R_BN_LIB					 105
+ #define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 106
+ #define ASN1_R_BUFFER_TOO_SMALL				 107
+@@ -1096,6 +1097,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 157
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 158
+ #define ASN1_R_UNEXPECTED_EOC				 159
++#define ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH		 211
+ #define ASN1_R_UNKNOWN_FORMAT				 160
+ #define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 161
+ #define ASN1_R_UNKNOWN_OBJECT_TYPE			 162
+Index: lib/libssl/src/crypto/asn1/asn1_err.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1_err.c,v
+retrieving revision 1.8
+diff -u -p -r1.8 asn1_err.c
+--- lib/libssl/src/crypto/asn1/asn1_err.c	27 Jun 2006 05:07:00 -0000	1.8
++++ lib/libssl/src/crypto/asn1/asn1_err.c	7 Apr 2009 07:37:50 -0000
+@@ -164,6 +164,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_BAD_OBJECT_HEADER)    ,"bad object header"},
+ {ERR_REASON(ASN1_R_BAD_PASSWORD_READ)    ,"bad password read"},
+ {ERR_REASON(ASN1_R_BAD_TAG)              ,"bad tag"},
++{ERR_REASON(ASN1_R_BMPSTRING_IS_WRONG_LENGTH),"bmpstring is wrong length"},
+ {ERR_REASON(ASN1_R_BN_LIB)               ,"bn lib"},
+ {ERR_REASON(ASN1_R_BOOLEAN_IS_WRONG_LENGTH),"boolean is wrong length"},
+ {ERR_REASON(ASN1_R_BUFFER_TOO_SMALL)     ,"buffer too small"},
+@@ -223,6 +224,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY),"unable to decode rsa key"},
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY),"unable to decode rsa private key"},
+ {ERR_REASON(ASN1_R_UNEXPECTED_EOC)       ,"unexpected eoc"},
++{ERR_REASON(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH),"universalstring is wrong length"},
+ {ERR_REASON(ASN1_R_UNKNOWN_FORMAT)       ,"unknown format"},
+ {ERR_REASON(ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM),"unknown message digest algorithm"},
+ {ERR_REASON(ASN1_R_UNKNOWN_OBJECT_TYPE)  ,"unknown object type"},
+Index: lib/libssl/src/crypto/asn1/tasn_dec.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/tasn_dec.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 tasn_dec.c
+--- lib/libssl/src/crypto/asn1/tasn_dec.c	4 Oct 2006 07:10:32 -0000	1.6
++++ lib/libssl/src/crypto/asn1/tasn_dec.c	7 Apr 2009 07:37:50 -0000
+@@ -474,7 +474,6 @@ static int asn1_template_ex_d2i(ASN1_VAL
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ }
+ 
+@@ -574,7 +573,6 @@ static int asn1_template_noexp_d2i(ASN1_
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ }
+ 
+@@ -768,6 +766,18 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsig
+ 		case V_ASN1_SET:
+ 		case V_ASN1_SEQUENCE:
+ 		default:
++		if (utype == V_ASN1_BMPSTRING && (len & 1))
++			{
++			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
++					ASN1_R_BMPSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
++		if (utype == V_ASN1_UNIVERSALSTRING && (len & 3))
++			{
++			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
++					ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
+ 		/* All based on ASN1_STRING and handled the same */
+ 		if(!*pval) {
+ 			stmp = ASN1_STRING_type_new(utype);
+

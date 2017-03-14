@@ -1,0 +1,29 @@
+Latest upstream release: 1.0.0e
+Current version/release in rawhide: 1.0.0c-2.fc23
+URL: http://www.gaia-gis.it/gaia-sins/readosm-sources/
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1043106
+[patch] Update to 1.0.0e (#1235673)
+Scratch build succeeded http://koji.fedoraproject.org/koji/taskinfo?taskID=10211461
+volter's readosm-1.0.0e-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=665264
+readosm-1.0.0e-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/readosm-1.0.0e-1.fc22
+readosm-1.0.0e-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/readosm-1.0.0e-1.fc21
+Package readosm-1.0.0e-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing readosm-1.0.0e-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10789/readosm-1.0.0e-1.fc21
+then log in and leave karma (feedback).
+readosm-1.0.0e-1.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.
+readosm-1.0.0e-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

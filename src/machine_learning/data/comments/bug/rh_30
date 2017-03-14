@@ -1,0 +1,124 @@
+Description of problem:
+The problem of radosgw deploy.
+
+
+Version-Release number of selected component (if applicable):
+Red Hat Enterprise Linux Server release 7.1 (Maipo)
+ceph-1.3-rhel-7(ceph version 0.94.1)
+
+
+Steps to Reproduce:
+1. run rgw create command
+$ceph-deploy --overwrite-conf rgw create rgw105 rgw106 rgw107
+
+Actual results:
+----------------------------------------------------------
+[rgw107][DEBUG ] connected to host: rgw107 
+[rgw107][DEBUG ] detect platform information from remote host
+[rgw107][DEBUG ] detect machine type
+[ceph_deploy.rgw][INFO  ] Distro info: Red Hat Enterprise Linux Server 7.1 Maipo
+[ceph_deploy.rgw][DEBUG ] remote host will use sysvinit
+[ceph_deploy.rgw][DEBUG ] deploying rgw bootstrap to rgw107
+[rgw107][DEBUG ] write cluster configuration to /etc/ceph/{cluster}.conf
+[rgw107][DEBUG ] create path recursively if it doesn't exist
+[rgw107][INFO  ] Running command: ceph --cluster ceph --name client.bootstrap-rgw --keyring /var/lib/ceph/bootstrap-rgw/ceph.keyring auth get-or-create client.rgw.rgw107 osd allow rwx mon allow rw -o /var/lib/ceph/radosgw/ceph-rgw.rgw107/keyring
+[rgw107][INFO  ] Running command: service ceph-radosgw start
+[rgw107][DEBUG ] Starting ceph-radosgw (via systemctl):  [FAILED]
+[rgw107][WARNIN] Failed to issue method call: Unit ceph-radosgw.service failed to load: No such file or directory.
+[rgw107][ERROR ] RuntimeError: command returned non-zero exit status: 6
+[ceph_deploy.rgw][ERROR ] Failed to execute command: service ceph-radosgw start
+[ceph_deploy][ERROR ] GenericError: Failed to create 3 RGWs
+--------------------------------------------------------------
+
+Go to host rgw107 and try systemctl command：
+$systemctl status ceph-radosgw
+--------------------------------------------------------------
+[root@rgw107 ~]# systemctl status ceph-radosgw
+ceph-radosgw.service
+   Loaded: not-found (Reason: No such file or directory)
+   Active: active (exited) since 一 2015-07-06 17:22:32 CST; 2 days ago
+
+rgw107 ceph-radosgw[22861]: Starting radosgw instance(s)...
+rgw107 ceph-radosgw[22861]: Running as unit run-22877.service.
+rgw107 ceph-radosgw[22861]: Starting client.radosgw.gateway...
+rgw107 ceph-radosgw[22861]: /bin/radosgw is running.
+rgw107 systemd[1]: Started LSB: radosgw RESTful rados gateway.
+rgw107 systemd[1]: Reloading LSB: radosgw RESTful rados gateway.
+rgw107 ceph-radosgw[2669]: [41B blob data]
+rgw107 systemd[1]: Reloaded LSB: radosgw RESTful rados gateway.
+-----------------------------------------------------------------
+
+
+Additional info:
+Similar BUG：
+https://bugzilla.redhat.com/show_bug.cgi?id=1231278&GoAheadAndLogIn=1
+Did you first install RGW with the command:
+
+ceph-deploy install --rgw rgw105 rgw106 rgw107  ?
+
+If you did not, that would explain it.
+
+Note that in order to install RGW on those nodes, they will need to be subscribed to the ceph-tools repo.
+Dear Travis,
+Thank you for your help.
+That step of install rgw already done.
+Full steps：
+1.On each rgw nodes,
+#subscription-manager repos --enable=rhel-7-server-rhceph-1.3-tools-rpms
+
+2.install radosgw
+#ceph-deploy install --rgw rgw105 rgw106 rgw107
+
+3.deploy radosgw
+#ceph-deploy rgw create rgw105 rgw106 rgw107
+
+So I need install ceph-tools on every nodes？
+ceph-tools has to be enabled on every node that is going to run rgw, yes.
+
+Can you double check what verion of rgw is installed on rgw105, rgw106, and rgw107 with the command:  "rpm -q ceph-radosgw" ?
+Thank you. I will try.
+
+Result of rpm -q:
+ceph-radosgw-0.94.1-13.el7cp.x86_64
+Dear Travis,
+After push config for all nodes that add admin keyring and rgw section in ceph.conf. Problem have been solved.
+Thank for your help again.
+---------------------------------------------------
+[client.admin]
+keyring = /etc/ceph/ceph.client.admin.keyring
+
+[client.rgw.rgw105]
+rgw_frontends = "civetweb port=8085"
+hostname = rgw105
+rgw dns name = melon.cloud.com
+rgw print continue = false
+
+[client.rgw.rgw106]
+rgw_frontends = "civetweb port=8085"
+hostname = rgw106
+rgw dns name = melon.cloud.com
+rgw print continue = false
+
+[client.rgw.rgw107]
+rgw_frontends = "civetweb port=8085"
+hostname = rgw107
+rgw dns name = melon.cloud.com
+rgw print continue = false
+-----------------------------------------------------
+
+
+Result of systemctl status：
+-----------------------------------------------------
+[root@rgw107 ~]# systemctl status ceph-radosgw
+ceph-radosgw.service - LSB: radosgw RESTful rados gateway
+   Loaded: loaded (/etc/rc.d/init.d/ceph-radosgw)
+   Active: active (exited) since Thu 2015-07-09 11:36:16 CST; 46s ago
+  Process: 32447 ExecStop=/etc/rc.d/init.d/ceph-radosgw stop (code=exited, status=0/SUCCESS)
+  Process: 32472 ExecStart=/etc/rc.d/init.d/ceph-radosgw start (code=exited, status=0/SUCCESS)
+
+rgw107 ceph-radosgw[32472]: Starting client.rgw.rgw107...
+rgw107 ceph-radosgw[32472]: Running as unit run-32496.service.
+rgw107 systemd[1]: Started LSB: radosgw RESTful rados gateway.
+----------------------------------------------------------
+Add admin keyring because when I use command "radosgw -d --debug-rgw 20 --debug-ms 1 start". The result of debug tells "admin keyring missing".
+I don't know this a bug or not. But I think this may need added in manual or somewhere.

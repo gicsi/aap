@@ -1,0 +1,74 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93wEejUGmz92sB0ToJaIU1xxqkfbYdkLQIS7ZC5C5Db0ArXT0rwRTmPJdNTxFHGZmIEDMQva/MW8VOM3pkl1C/Ak=
+
+OpenBSD 5.5 errata 24, March 19, 2015
+
+Fix two possible crash causing defects.
+CVE-2015-0286 - Apply fix from OpenSSL for ASN1_TYPE_cmp.
+CVE-2015-0292 - Backport existing fix for Base64 decoding.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 024_openssl.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+Then build and install libcrypto
+
+    cd /usr/src/lib/libcrypto/crypto
+    make obj
+    make
+    make install
+
+
+Index: lib/libssl/src/crypto/asn1/a_type.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/a_type.c,v
+retrieving revision 1.9
+diff -u -p -r1.9 a_type.c
+--- lib/libssl/src/crypto/asn1/a_type.c	1 Oct 2010 22:58:53 -0000	1.9
++++ lib/libssl/src/crypto/asn1/a_type.c	18 Mar 2015 06:34:52 -0000
+@@ -124,6 +124,9 @@ int ASN1_TYPE_cmp(ASN1_TYPE *a, ASN1_TYP
+ 	case V_ASN1_OBJECT:
+ 		result = OBJ_cmp(a->value.object, b->value.object);
+ 		break;
++	case V_ASN1_BOOLEAN:
++		result = a->value.boolean - b->value.boolean;
++		break;
+ 	case V_ASN1_NULL:
+ 		result = 0;	/* They do not have content. */
+ 		break;
+Index: lib/libssl/src/crypto/evp/encode.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/evp/encode.c,v
+retrieving revision 1.10
+diff -u -p -r1.10 encode.c
+--- lib/libssl/src/crypto/evp/encode.c	3 Nov 2011 02:34:32 -0000	1.10
++++ lib/libssl/src/crypto/evp/encode.c	18 Mar 2015 06:43:35 -0000
+@@ -269,6 +269,13 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx
+ 			goto end;
+ 			}
+ 
++		/* There should not be base64 data after padding. */
++		if (eof && tmp != '=' && tmp != '\r' && tmp != '\n' &&
++		    v != B64_EOF) {
++			rv = -1;
++			goto end;
++		}
++
+ 		/* have we seen a '=' which is 'definitly' the last
+ 		 * input line.  seof will point to the character that
+ 		 * holds it. and eof will hold how many characters to
+@@ -278,6 +285,12 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx
+ 			if (seof == -1) seof=n;
+ 			eof++;
+ 			}
++
++		/* There should be no more than two padding markers. */
++		if (eof > 2) {
++			rv = -1;
++			goto end;
++		}
+ 
+ 		if (v == B64_CR)
+ 			{
+

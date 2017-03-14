@@ -1,0 +1,12 @@
+Your package perl-Test-Vars failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10134011
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047670
+build.log
+Created attachment 1047671
+root.log
+Created attachment 1047672
+state.log
+*** This bug has been marked as a duplicate of bug 1230754 ***

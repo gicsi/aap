@@ -1,0 +1,60 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_isakmpd.patch
+	cd sbin/isakmpd
+	make obj && make cleandir && make depend && make && make install
+
+Finally, kill and restart isakmpd.  No configuration changes are necessary.
+
+Index: sbin/isakmpd/ike_quick_mode.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/ike_quick_mode.c,v
+retrieving revision 1.34
+diff -u -r1.34 ike_quick_mode.c
+--- sbin/isakmpd/ike_quick_mode.c	2000/04/07 22:05:19	1.34
++++ sbin/isakmpd/ike_quick_mode.c	2000/06/09 20:55:03
+@@ -118,6 +118,7 @@
+   X509_NAME *subject;
+   RSA *key;
+ #endif
++  extern char *policy_callback(char *);
+ 
+   /* If there is no policy setup, everything fails.  */
+   if (keynote_sessid < 0)
+@@ -128,6 +129,9 @@
+   policy_sa = sa;
+   policy_isakmp_sa = isakmp_sa;
+ 
++  /* Reset information */
++  policy_callback(KEYNOTE_CALLBACK_INITIALIZE);
++
+   /* Set the return values; true/false for now at least.  */
+   return_values[0] = "false"; /* Order of values in array is important.  */
+   return_values[1] = "true";
+@@ -243,6 +247,7 @@
+ 
+   /* Ask policy.  */
+   result = LK (kn_do_query, (keynote_sessid, return_values, RETVALUES_NUM));
++  policy_callback(KEYNOTE_CALLBACK_CLEANUP); /* Just to make sure */
+ 
+   /* Remove authorizer from the session.  */
+   LK (kn_remove_authorizer, (keynote_sessid, principal));
+Index: sbin/isakmpd/policy.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/policy.c,v
+retrieving revision 1.12
+diff -u -r1.12 policy.c
+--- sbin/isakmpd/policy.c	2000/05/02 14:35:27	1.12
++++ sbin/isakmpd/policy.c	2000/06/09 20:55:05
+@@ -146,7 +146,7 @@
+   return dst;
+ }
+ 
+-static char *
++char *
+ policy_callback (char *name)
+ {
+   struct proto *proto;
+
+
+

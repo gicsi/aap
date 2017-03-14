@@ -1,0 +1,14 @@
+Your package cpio failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10083115
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046569
+build.log
+Created attachment 1046570
+root.log
+Created attachment 1046571
+state.log
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10299946 -> closing RAWHIDE.
+Upstream report:
+http://lists.gnu.org/archive/html/bug-cpio/2015-06/msg00000.html

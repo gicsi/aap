@@ -1,0 +1,32 @@
+Description of problem:
+RequestTracker requires write access to /var/lib/rt for cache and session state information.
+
+Error from audit.log:
+type=AVC msg=audit(1435994355.726:771): avc:  denied  { getattr } for  pid=6386 comm="/usr/sbin/rt-se" path="/var/cache/rt/mason_data/obj/.__obj_create_marker" dev="vda2" ino=662318 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:var_t:s0 tclass=file permissive=0
+type=AVC msg=audit(1435994355.726:772): avc:  denied  { write } for  pid=6386 comm="/usr/sbin/rt-se" name=".__obj_create_marker" dev="vda2" ino=662318 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:var_t:s0 tclass=file permissive=0
+
+How reproducible: 100%
+
+Steps to Reproduce:
+1. Take a working rt installation.
+2. Reset labels on /var/lib/rt to defaults.
+3. Go to website in browser.
+
+Actual results:
+An error message about an internal error.
+
+Expected results:
+A working system.
+
+Additional info:
+Problem can be fixed by running:
+# chcon -R -t httpd_sys_rw_content_t /var/cache/rt
+However, this only hold until the next relabel/restorecon.
+Note that selinux policy issues should be filed against selinux-policy.  There is, however, a longstanding ticket on this already.
+
+Also, a note that you can make the context change permanent with
+
+semanage fcontext -a -t httpd_sys_rw_content_t ' /var/cache/rt(/.*)?'
+restorecon -R -v /var/cache/rt
+
+*** This bug has been marked as a duplicate of bug 1185500 ***

@@ -1,0 +1,3 @@
+Bad ESP/AH packets could cause a crash under certain conditions.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/024_ipsec.patch"><br>
+A source code patch exists which remedies this problem.</a>

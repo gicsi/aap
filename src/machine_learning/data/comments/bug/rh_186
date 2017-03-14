@@ -1,0 +1,51 @@
+Version-Release number of selected component:
+gvfs-mtp-1.18.4-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/libexec/gvfsd-mtp --spawner :1.3 /org/gtk/gvfs/exec_spaw/2
+crash_function: strcmp
+executable:     /usr/libexec/gvfsd-mtp
+kernel:         4.0.4-101.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Tue 2014-09-02 18:55:50 CEST, end at Sun 2015-07-05 11:29:16 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (9 frames)
+ #0 strcmp at ../sysdeps/x86_64/strcmp.S:209
+ #1 g_mount_spec_get at gmountspec.c:394
+ #2 g_mount_spec_get_type at gmountspec.c:404
+ #3 g_mount_spec_to_string at gmountspec.c:417
+ #4 g_vfs_backend_add_auto_info at gvfsbackend.c:576
+ #5 g_vfs_job_enumerate_add_info at gvfsjobenumerate.c:195
+ #6 do_enumerate at gvfsbackendmtp.c:1145
+ #7 g_vfs_job_run at gvfsjob.c:197
+ #9 g_thread_proxy at gthread.c:798
+
+Potential duplicate: bug 882520
+Created attachment 1046180
+File: backtrace
+Created attachment 1046181
+File: cgroup
+Created attachment 1046182
+File: core_backtrace
+Created attachment 1046183
+File: dso_list
+Created attachment 1046184
+File: environ
+Created attachment 1046185
+File: exploitable
+Created attachment 1046186
+File: limits
+Created attachment 1046187
+File: maps
+Created attachment 1046188
+File: open_fds
+Created attachment 1046189
+File: proc_pid_status
+Fedora 20 is no longer maintained, however this bug affects also Fedora 21, so I mark the bug as duplicate of the bug for Fedora 21. Feel free to add comments there. Could you provide more info how this happened? Can you reproduce the crash?
+
+*** This bug has been marked as a duplicate of bug 1173533 ***

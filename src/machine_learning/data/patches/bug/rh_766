@@ -1,0 +1,36 @@
+From c4c71db6e95431a919c35293d1a4cf5dc9b7dfe1 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 19 Jun 2015 01:25:44 +0000
+Subject: [PATCH] Update to 1.7037 (#1233456)
+
+---
+ perl-App-cpanminus.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-App-cpanminus.spec b/perl-App-cpanminus.spec
+index fd61c5d..18d8d0c 100644
+--- a/perl-App-cpanminus.spec
++++ b/perl-App-cpanminus.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-App-cpanminus
+-Version:        1.7036
+-Release:        3%{?dist}
++Version:        1.7037
++Release:        1%{?dist}
+ Summary:        Get, unpack, build and install CPAN modules
+ License:        GPL+ or Artistic
+ Group:          Development/Libraries
+@@ -136,6 +136,9 @@ make test
+ %{_bindir}/cpanm
+ 
+ %changelog
++* Fri Jun 19 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.7037-1
++- Update to 1.7037 (#1233456)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.7036-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

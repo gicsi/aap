@@ -1,0 +1,14 @@
+Document URL: https://docs.openshift.com/enterprise/3.0/admin_guide/install/quick_install.html#installing-openshift
+
+Section Number and Name: Whats Next
+
+Describe the issue: 
+After completing the quick install, the next logical step for the user should be to configure authentication. So perhaps we should move that section to the top. 
+
+Suggestions for improvement: 
+
+Additional information:
+https://github.com/openshift/openshift-docs/pull/706/files
+Fixed in https://github.com/openshift/openshift-docs/pull/706 (merged).
+
+Will show up in the Origin docs nightly build, and the OSE build in the next publish.

@@ -1,0 +1,15 @@
+This bug is created as a clone of upstream ticket:
+https://fedorahosted.org/389/ticket/48140
+
+MEP expects that the only time it will create a managed entry is on the addition of the entry. Modifying an existing entry and then having it retrospectively add the managed entry is not supported.
+
+Currently, if one creates an object such as:
+
+objectClass: top
+objectClass: account
+uid: foo
+sn: bar
+
+Followed by a mod operation to add posixAttributes, in a standard MEP with user -> group template, the group is not created, because the operation isn't considered unless it's an add.
+
+This attached patch adds support and dynamic plugin tests to allow MEP to create managed entries if a mod operation would bring an entry into a state where it now satisfies the criteria of the template.

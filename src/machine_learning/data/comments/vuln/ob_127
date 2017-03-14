@@ -1,0 +1,5 @@
+A race condition between the ptrace(2) and execve(2) system calls allows
+an attacker to modify the memory contents of suid/sgid processes which
+could lead to compromise of the super-user account.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/012_ptrace.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,76 @@
+From 75c579db6f87732c5cf8863565a84a407247290d Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 01:24:39 +0000
+Subject: [PATCH] Update to 18.0 (#1235096)
+
+---
+ python-setuptools.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-setuptools.spec b/python-setuptools.spec
+index 4f14e20..2094443 100644
+--- a/python-setuptools.spec
++++ b/python-setuptools.spec
+@@ -26,8 +26,8 @@
+ %endif
+ 
+ Name:           python-setuptools
+-Version:        17.1.1
+-Release:        3%{?dist}
++Version:        18.0
++Release:        1%{?dist}
+ Summary:        Easily build and distribute Python packages
+ 
+ Group:          Applications/System
+@@ -203,6 +203,9 @@ popd
+ %endif # with_python3
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 18.0-1
++- Update to 18.0 (#1235096)
++
+ * Sat Jun 20 2015 Kevin Fenzi <kevin@scrye.com> 17.1.1-3
+ - Drop no longer needed Requires/BuildRequires on python-backports-ssl_match_hostname
+ - Fixes bug #1231325
+-- 
+1.8.3.1
+
+
+From 40d3a183b51efb9827947bdb7577daf9eeb87d7c Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 01:22:17 +0000
+Subject: [PATCH] Update to 18.0.1 (#1235096)
+
+---
+ python-setuptools.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-setuptools.spec b/python-setuptools.spec
+index 4f14e20..d31a07b 100644
+--- a/python-setuptools.spec
++++ b/python-setuptools.spec
+@@ -26,8 +26,8 @@
+ %endif
+ 
+ Name:           python-setuptools
+-Version:        17.1.1
+-Release:        3%{?dist}
++Version:        18.0.1
++Release:        1%{?dist}
+ Summary:        Easily build and distribute Python packages
+ 
+ Group:          Applications/System
+@@ -203,6 +203,9 @@ popd
+ %endif # with_python3
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 18.0.1-1
++- Update to 18.0.1 (#1235096)
++
+ * Sat Jun 20 2015 Kevin Fenzi <kevin@scrye.com> 17.1.1-3
+ - Drop no longer needed Requires/BuildRequires on python-backports-ssl_match_hostname
+ - Fixes bug #1231325
+-- 
+1.8.3.1
+
+

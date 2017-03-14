@@ -1,0 +1,73 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 022_cvs.patch
+
+And then rebuild and install cvs:
+	cd gnu/usr.bin/cvs
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: gnu/usr.bin/cvs/src/client.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/cvs/src/client.c,v
+retrieving revision 1.10
+retrieving revision 1.10.4.1
+diff -u -p -r1.10 -r1.10.4.1
+--- gnu/usr.bin/cvs/src/client.c	6 Jul 2002 04:41:29 -0000	1.10
++++ gnu/usr.bin/cvs/src/client.c	1 May 2004 00:17:34 -0000	1.10.4.1
+@@ -1003,6 +1003,20 @@ call_in_directory (pathname, func, data)
+     char *rdirp;
+     int reposdirname_absolute;
+ 
++    /*
++     * For security reasons, if PATHNAME is absolute or attempts to
++     * ascend outside of the current sandbox, we abort.  The server should not
++     * send us anything but relative paths which remain inside the sandbox
++     * here.  Anything less means a trojan CVS server could create and edit
++     * arbitrary files on the client.
++     */
++    if (isabsolute (pathname) || pathname_levels (pathname) > 0)
++    {
++        error (0, 0,
++               "Server attempted to update a file via an invalid pathname:");
++        error (1, 0, "`%s'.", pathname);
++    }
++
+     reposname = NULL;
+     read_line (&reposname);
+     assert (reposname != NULL);
+Index: gnu/usr.bin/cvs/src/modules.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/cvs/src/modules.c,v
+retrieving revision 1.1.1.14
+retrieving revision 1.1.1.14.8.2
+diff -u -p -r1.1.1.14 -r1.1.1.14.8.2
+--- gnu/usr.bin/cvs/src/modules.c	28 Sep 2001 22:45:38 -0000	1.1.1.14
++++ gnu/usr.bin/cvs/src/modules.c	1 May 2004 00:17:35 -0000	1.1.1.14.8.2
+@@ -159,6 +159,24 @@ do_module (db, mname, m_type, msg, callb
+     }
+ #endif
+ 
++    /* Don't process absolute directories.  Anything else could be a security
++     * problem.  Before this check was put in place:
++     *
++     *   $ cvs -d:fork:/cvsroot co /foo
++     *   cvs server: warning: cannot make directory CVS in /: Permission denied
++     *   cvs [server aborted]: cannot make directory /foo: Permission denied
++     *   $
++     */
++    if (isabsolute (mname))
++	error (1, 0, "Absolute module reference invalid: `%s'", mname);
++
++    /* Similarly for directories that attempt to step above the root of the
++     * repository.
++     */
++    if (pathname_levels (mname) > 0)
++	error (1, 0, "up-level in module reference (`..') invalid: `%s'.",
++               mname);
++
+     /* if this is a directory to ignore, add it to that list */
+     if (mname[0] == '!' && mname[1] != '\0')
+     {
+

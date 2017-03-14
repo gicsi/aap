@@ -1,0 +1,113 @@
+Description of problem:
+I had 3 controllers and 1 ceph node. I tried to scale up to 3 ceph so I ran the command:
+
+openstack overcloud deploy --ceph-storage-scale 3 --plan-uuid 22e3f973-7cf9-407c-a612-32ddd5cab433
+
+The stack update failed and I saw that 2 controllers were deleted. Also the tuskar plan showed that the controllers counter went down to 1:
+
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Controller-1::count                     
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Ceph-Storage-1::count                   
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Compute-1::count                        
+parameter_type=number                        
+value=1                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Swift-Storage-1::count                  
+parameter_type=number                        
+value=0                                      
+                                             
+constraints=[{u'definition': {u'min': u'0'}, ...
+default=None                                 
+description=None                             
+hidden=None                                  
+label=None                                   
+name=Cinder-Storage-1::count                 
+parameter_type=number                        
+value=0                                       
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-13.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Deploy with 3 controllers and 1 ceph
+2. Try to scale up to 3 ceph by: "openstack overcloud deploy --ceph-storage-scale 3 --plan-uuid <...>"
+
+
+Actual results:
+Controller count went down to 1
+
+
+Expected results:
+Only the ceph count should have changed. Don't rely on the user to remember to always pass the same counters of all the other roles just to keep on to what is already deployed.
+*** Bug 1236686 has been marked as a duplicate of this bug. ***
+If you provide the other scaling arguments, are the scaled nodes unaltered?
+This sounds like a CLI bug, so I'm moving it over there to investigate.
+Also, Tuskar folks: Isn't the preferred way to scale out a tuskar deployment something like
+
+$ openstack management plan set bbfd2fae-6900-4fff-9c93-8db989e8225b -S Compute-1=2
+
+and then
+
+$ openstack overcloud deploy --plan-uuid bbfd2fae-6900-4fff-9c93-8db989e8225b
+
+?
+
+I think we need to clear up the docs on this, but I thought if you deployed with a tuskar plan, then you were obligated to update that plan rather than using the CLI scale args. Not great UX, but that's how I thought it worked...
+.
+(In reply to Hugh Brock from comment #6)
+> Also, Tuskar folks: Isn't the preferred way to scale out a tuskar deployment
+> something like
+> 
+> $ openstack management plan set bbfd2fae-6900-4fff-9c93-8db989e8225b -S
+> Compute-1=2
+> 
+> and then
+> 
+> $ openstack overcloud deploy --plan-uuid bbfd2fae-6900-4fff-9c93-8db989e8225b
+> 
+> ?
+
+Yup, that is right - the idea workflow is that users should think about planning and update the plan and then deploy.
+
+> 
+> I think we need to clear up the docs on this, but I thought if you deployed
+> with a tuskar plan, then you were obligated to update that plan rather than
+> using the CLI scale args. Not great UX, but that's how I thought it worked...
+> .
+
+Yeah, so to reduce the confusion here, there is a bug which has the CLI update the Tuskar plan if these parameters are passed in. The downside is that we now have two ways to set these values. However, it avoids problems like this coming up.
+
+So, this is essentially a duplicate of https://bugzilla.redhat.com/show_bug.cgi?id=1193922
+In reply to Chris Alfonso, comment #4: When providing the scaled parameters to all roles, the existing nodes (whose scale didn't change) are unaltered.
+*** This bug has been marked as a duplicate of bug 1193922 ***

@@ -1,0 +1,14 @@
+Your package phonon failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10136096
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047682
+build.log
+Created attachment 1047683
+root.log
+Created attachment 1047684
+state.log
+%changelog
+* Mon Jul 06 2015 Rex Dieter <rdieter@fedoraproject.org> 4.8.3-6
+- backport upstream fixes, mostly for Qt5-fPIC-related FTBFS (#1239789)

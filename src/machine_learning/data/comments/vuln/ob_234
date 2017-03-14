@@ -1,0 +1,4 @@
+Do not allow users to trick suid programs into re-opening files via /dev/fd.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.7/common/008_fd.patch">
+A source code patch exists which remedies this problem.</a>

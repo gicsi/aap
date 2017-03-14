@@ -1,0 +1,4 @@
+Incorrect argument checking in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=setitimer&amp;sektion=2">setitimer(2)</a> system call may allow an attacker to write to kernel memory.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/015_kerntime.patch">
+A source code patch exists which remedies this problem.</a>

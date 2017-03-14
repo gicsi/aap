@@ -1,0 +1,8 @@
+A format string vulnerability exists in the pw_error(3) function.  This
+manifests itself as a security hole in the chpass utility.  As a workaround
+which disables its functionality, do
+<pre>
+# chmod u-s /usr/bin/chpass
+</pre>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/025_pw_error.patch">
+A source code patch exists which remedies this problem.</a>

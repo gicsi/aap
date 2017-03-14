@@ -1,0 +1,179 @@
+Description of problem:
+Using the puddle 2015-06-17.2 on a VM, trying to deploy a default deployment of 1 compute and 1 controller, I get:
+
+ERROR: openstack Heat Stack create failed.
+
+I deployed on a virtualized setup with 8 nodes. This is what I get from "nova list" and "ironic node-list":
+
+[stack@instack ~]$ nova list
++--------------+------------------------+--------+------------+-------------+----------+
+| ID           | Name                   | Status | Task State | Power State | Networks |
++--------------+------------------------+--------+------------+-------------+----------+
+| 10a2e3ad-... | overcloud-compute-0    | ERROR  | -          | NOSTATE     |          |
+| 9b473345-... | overcloud-controller-0 | ERROR  | -          | NOSTATE     |          |
++--------------+------------------------+--------+------------+-------------+----------+
+[stack@instack ~]$ ironic node-list
++--------------+------+---------------+-------------+-----------------+-------------+
+| UUID         | Name | Instance UUID | Power State | Provision State | Maintenance |
++--------------+------+---------------+-------------+-----------------+-------------+
+| dc71c364-... | None | None          | power off   | available       | False       |
+| 9dc440d5-... | None | None          | power off   | available       | False       |
+| 5030b8bc-... | None | None          | power off   | available       | False       |
+| bee58cdb-... | None | None          | power off   | available       | False       |
+| 8d60f7ea-... | None | None          | power off   | available       | False       |
+| 42ac75b4-... | None | None          | power off   | available       | False       |
+| b4879e9e-... | None | None          | power off   | available       | False       |
+| d67fbfd0-... | None | None          | power off   | available       | False       |
++--------------+------+---------------+-------------+-----------------+-------------+
+
+
+When checking the FAILED resources in the stack:
+
+[stack@instack ~]$ heat resource-list -n 5 overcloud |grep FAIL
+| Compute     | f47c515a-4df9-452f-9799-e8af95494452 | OS::Heat::ResourceGroup | CREATE_FAILED | 2015-06-18T10:33:17Z |            |
+| Controller  | 797e3927-e4e5-4c31-9679-d4d26f0873fc | OS::Heat::ResourceGroup | CREATE_FAILED | 2015-06-18T10:33:17Z |            |
+| 0           | 6ca8f0c2-a790-4243-9da4-14d68f69cbdc | Tuskar::Compute-1       | CREATE_FAILED | 2015-06-18T10:33:28Z | Compute    |
+| 0           | 0251fd3d-00ba-4bb8-b5fa-5b407c716c12 | Tuskar::Controller-1    | CREATE_FAILED | 2015-06-18T10:33:29Z | Controller |
+| NovaCompute | 10a2e3ad-b90c-4ff8-84a2-5a0b4d317d35 | OS::Nova::Server        | CREATE_FAILED | 2015-06-18T10:33:32Z | 0          |
+| Controller  | 9b473345-9535-4eff-ab02-ede7a0694fd7 | OS::Nova::Server        | CREATE_FAILED | 2015-06-18T10:33:34Z | 0          |
+
+
+The stated reason for the failed nodes:
+
+ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource CREATE failed: ResourceInError: Went to status ERROR due to "Message: No valid host was found. There are not enough hosts available., Code: 500""
+
+
+Version-Release number of selected component (if applicable):
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-1.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-tripleo-0.0.6-0.1.git812abe0.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-9.el7ost.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy with "openstack overcloud deploy --plan-uuid 3fc93b74-04b1-4027-b434-22e9014e842f"
+
+
+Additional info:
+I tried other deployments as well, with different numbers for compute, controller and ceph roles, and always get the same failure.
+The "no valid hosts" error is almost always because we have a mismatch between what is in the Nova flavor, and what is in the Ironic node.
+
+In this case, we were missing the properties/capabilities:'boot_option:local' from the Ironic nodes.
+
+The step that adds this is `openstack baremetal configure boot`.
+
+In this case, I think we just missed this step.
+Ok, so appears like user error.  
+
+Udi, if this reproduces, please re-open.
+[stack@instack ~]$ openstack overcloud deploy --plan-uuid "b5237ff2-874c-4e89-ae17-a89e49864f62"
+The following templates will be written:
+/tmp/tmpDOtzYF/puppet/manifests/overcloud_volume.pp
+/tmp/tmpDOtzYF/hieradata/object.yaml
+/tmp/tmpDOtzYF/puppet/hieradata/common.yaml
+/tmp/tmpDOtzYF/provider-Swift-Storage-1.yaml
+/tmp/tmpDOtzYF/network/ports/net_ip_map.yaml
+/tmp/tmpDOtzYF/provider-Cinder-Storage-1.yaml
+/tmp/tmpDOtzYF/provider-Compute-1.yaml
+/tmp/tmpDOtzYF/network/noop.yaml
+/tmp/tmpDOtzYF/puppet/bootstrap-config.yaml
+/tmp/tmpDOtzYF/net-config-bridge.yaml
+/tmp/tmpDOtzYF/provider-Ceph-Storage-1.yaml
+/tmp/tmpDOtzYF/puppet/controller-post-puppet.yaml
+/tmp/tmpDOtzYF/puppet/cinder-storage-puppet.yaml
+/tmp/tmpDOtzYF/puppet/manifests/overcloud_cephstorage.pp
+/tmp/tmpDOtzYF/puppet/hieradata/object.yaml
+/tmp/tmpDOtzYF/puppet/controller-puppet.yaml
+/tmp/tmpDOtzYF/puppet/manifests/overcloud_compute.pp
+/tmp/tmpDOtzYF/puppet/cinder-storage-post.yaml
+/tmp/tmpDOtzYF/puppet/swift-storage-post.yaml
+/tmp/tmpDOtzYF/provider-Controller-1.yaml
+/tmp/tmpDOtzYF/network/networks.yaml
+/tmp/tmpDOtzYF/puppet/manifests/overcloud_object.pp
+/tmp/tmpDOtzYF/hieradata/controller.yaml
+/tmp/tmpDOtzYF/network/ports/ctlplane_vip.yaml
+/tmp/tmpDOtzYF/hieradata/volume.yaml
+/tmp/tmpDOtzYF/puppet/compute-post-puppet.yaml
+/tmp/tmpDOtzYF/extraconfig/tasks/yum_update.yaml
+/tmp/tmpDOtzYF/puppet/swift-storage-puppet.yaml
+/tmp/tmpDOtzYF/extraconfig/tasks/yum_update.sh
+/tmp/tmpDOtzYF/puppet/swift-devices-and-proxy-config.yaml
+/tmp/tmpDOtzYF/puppet/controller-config-pacemaker.yaml
+/tmp/tmpDOtzYF/puppet/compute-puppet.yaml
+/tmp/tmpDOtzYF/puppet/hieradata/volume.yaml
+/tmp/tmpDOtzYF/puppet/ceph-storage-post-puppet.yaml
+/tmp/tmpDOtzYF/extraconfig/controller/noop.yaml
+/tmp/tmpDOtzYF/network/ports/noop.yaml
+/tmp/tmpDOtzYF/puppet/ceph-cluster-config.yaml
+/tmp/tmpDOtzYF/puppet/ceph-storage-puppet.yaml
+/tmp/tmpDOtzYF/puppet/hieradata/ceph.yaml
+/tmp/tmpDOtzYF/puppet/vip-config.yaml
+/tmp/tmpDOtzYF/puppet/hieradata/controller.yaml
+/tmp/tmpDOtzYF/plan.yaml
+/tmp/tmpDOtzYF/environment.yaml
+/tmp/tmpDOtzYF/network/ports/net_ip_list_map.yaml
+/tmp/tmpDOtzYF/hieradata/compute.yaml
+/tmp/tmpDOtzYF/puppet/hieradata/compute.yaml
+/tmp/tmpDOtzYF/hieradata/ceph.yaml
+/tmp/tmpDOtzYF/puppet/manifests/overcloud_controller_pacemaker.pp
+/tmp/tmpDOtzYF/hieradata/common.yaml
+/tmp/tmpDOtzYF/puppet/manifests/ringbuilder.pp
+/tmp/tmpDOtzYF/firstboot/userdata_default.yaml
+/tmp/tmpDOtzYF/net-config-noop.yaml
+/tmp/tmpDOtzYF/puppet/all-nodes-config.yaml
+/tmp/tmpDOtzYF/extraconfig/post_deploy/default.yaml
+ERROR: openstack Heat Stack update failed.
+
+
+$ heat stack-list
++--------------------------------------+------------+---------------+----------------------+
+| id                                   | stack_name | stack_status  | creation_time        |
++--------------------------------------+------------+---------------+----------------------+
+| bb2537a1-b2d7-472f-a2d7-f5334d83189b | overcloud  | UPDATE_FAILED | 2015-06-28T18:09:05Z |
++--------------------------------------+------------+---------------+----------------------+
+
+$ heat stack-show bb2537a1-b2d7-472f-a2d7-f5334d83189b
+ stack_status_reason   | ResourceUnknownStatus: Resource failed - Unknown status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|                       | FAILED due to "ResourceUnknownStatus: Resource failed -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|                       | Unknown status FAILED due to "ResourceInError: Went to                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|                       | status ERROR due to "Message: No valid host was found.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|                       | There are not enough hosts available., Code: 500"""
+note that comment 4 its an initial installation and not an update even though the status is UPDATE_FAILED.
+
+During this time heat log shows:
+http://pastebin.test.redhat.com/293267
+
+Nova log in the same time:
+http://pastebin.test.redhat.com/293269
+
+Are these issues related?
+(I can make the rest of logs available, but with DEBUG on they are large so contact me if you need the whole thing)
+Please make sure you followed https://repos.fedorapeople.org/repos/openstack-m/docs/master/troubleshooting/troubleshooting-overcloud.html#no-valid-host-found-error
+
+Please add your findings here, if it does not help.
+I success to deploy overcloud when I run this command : openstack overcloud deploy --plan-uuid "38157d76-1aae-4e97-b7e2-3293280ae549" --control-scale 1 --compute-scale 1--ceph-storage-scale 0 --block-storage-scale 0 --swift-storage-scale 0 
+
+
+when I used the command as written in the guide it fails. 
+openstack overcloud deploy --plan-uuid "38157d76-1aae-4e97-b7e2-3293280ae549"
+((default of 1 compute and 1 control)
+
+I saw the when I using the command from the guide it create ceph vm when it should not . 
+according to Marius .C.  there is a bug that by default "openstack overcloud deploy --plan-uuid" not create only compute & controller as  we expected. 
+
+Also I enable  nested virtualization 
+$ echo "options kvm_amd nested=1" > /etc/modprobe.d/kvm_amd.conf
+$ modprobe -r kvm_amd
+$ modprobe kvm_amd
+@Eran, if so, please open a bug on the documentation or the script. one of those should change.
+2nd, this is actually an important bug because it just means that installing it WITH ceph makes something break.
+@Eran how many nodes did you set to be working ?
+This is a dup of a bug that is in POST.
+Amit I set 2 nodes = default value
+https://bugzilla.redhat.com/show_bug.cgi?id=1235994 
+it's happens due this bug .
+*** This bug has been marked as a duplicate of bug 1235994 ***

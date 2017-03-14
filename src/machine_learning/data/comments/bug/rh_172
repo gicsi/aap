@@ -1,0 +1,13 @@
+Your package automake failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10079304
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046458
+build.log
+Created attachment 1046459
+root.log
+Created attachment 1046460
+state.log
+http://debbugs.gnu.org/cgi/bugreport.cgi?bug=21001
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10310055

@@ -1,0 +1,4 @@
+The crypto subsystem could incorrectly fail to run certain software ciphers,
+if a hardware card existed in the machine.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/011_hwcrypto.patch">
+A source code patch exists which remedies this problem.</a>

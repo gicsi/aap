@@ -1,0 +1,1084 @@
+OpenBSD 5.4 errata 14, August 9, 2014:
+
+This patch contains backported fixes for OpenSSL issues.
+
+Refer to https://www.openssl.org/news/secadv_20140806.txt
+
+Apply patch using:
+
+    cat 014_openssl.patch.sig | (cd /usr/src && patch -p0)
+
+Then build and install libcrypto and libssl
+
+    cd /usr/src/lib/libssl/crypto
+    make obj
+    make
+    make install
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+Then restart services which depend on OpenSSL.
+
+Index: lib/libssl/src/crypto/asn1/a_object.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/a_object.c,v
+retrieving revision 1.9
+diff -u -p -r1.9 a_object.c
+--- lib/libssl/src/crypto/asn1/a_object.c	3 Nov 2011 02:34:32 -0000	1.9
++++ lib/libssl/src/crypto/asn1/a_object.c	8 Aug 2014 14:02:03 -0000
+@@ -283,17 +283,29 @@ err:
+ 	ASN1err(ASN1_F_D2I_ASN1_OBJECT,i);
+ 	return(NULL);
+ }
++
+ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
+ 	     long len)
+ 	{
+ 	ASN1_OBJECT *ret=NULL;
+ 	const unsigned char *p;
+ 	unsigned char *data;
+-	int i;
+-	/* Sanity check OID encoding: can't have leading 0x80 in
+-	 * subidentifiers, see: X.690 8.19.2
++	int i, length;
++
++	/* Sanity check OID encoding.
++	 * Need at least one content octet.
++	 * MSB must be clear in the last octet.
++	 * can't have leading 0x80 in subidentifiers, see: X.690 8.19.2
+ 	 */
+-	for (i = 0, p = *pp; i < len; i++, p++)
++	if (len <= 0 || len > INT_MAX || pp == NULL || (p = *pp) == NULL ||
++	    p[len - 1] & 0x80)
++		{
++		ASN1err(ASN1_F_C2I_ASN1_OBJECT,ASN1_R_INVALID_OBJECT_ENCODING);
++		return NULL;
++		}
++	/* Now 0 < len <= INT_MAX, so the cast is safe. */
++	length = (int)len;
++	for (i = 0; i < length; i++, p++)
+ 		{
+ 		if (*p == 0x80 && (!i || !(p[-1] & 0x80)))
+ 			{
+@@ -316,23 +328,23 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT
+ 	data = (unsigned char *)ret->data;
+ 	ret->data = NULL;
+ 	/* once detached we can change it */
+-	if ((data == NULL) || (ret->length < len))
++	if ((data == NULL) || (ret->length < length))
+ 		{
+ 		ret->length=0;
+ 		if (data != NULL) OPENSSL_free(data);
+-		data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
++		data=(unsigned char *)OPENSSL_malloc(length);
+ 		if (data == NULL)
+ 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
+ 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
+ 		}
+-	memcpy(data,p,(int)len);
++	memcpy(data,p,length);
+ 	/* reattach data to object, after which it remains const */
+ 	ret->data  =data;
+-	ret->length=(int)len;
++	ret->length=length;
+ 	ret->sn=NULL;
+ 	ret->ln=NULL;
+ 	/* ret->flags=ASN1_OBJECT_FLAG_DYNAMIC; we know it is dynamic */
+-	p+=len;
++	p+=length;
+ 
+ 	if (a != NULL) (*a)=ret;
+ 	*pp=p;
+Index: lib/libssl/src/crypto/ec/ec_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/ec/ec_lib.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 ec_lib.c
+--- lib/libssl/src/crypto/ec/ec_lib.c	13 Oct 2012 21:25:13 -0000	1.6
++++ lib/libssl/src/crypto/ec/ec_lib.c	8 Aug 2014 14:02:03 -0000
+@@ -942,7 +942,7 @@ int EC_POINT_dbl(const EC_GROUP *group, 
+ 
+ int EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx)
+ 	{
+-	if (group->meth->dbl == 0)
++	if (group->meth->invert == 0)
+ 		{
+ 		ECerr(EC_F_EC_POINT_INVERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+ 		return 0;
+Index: lib/libssl/src/crypto/ec/ecp_smpl.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/ec/ecp_smpl.c,v
+retrieving revision 1.5
+diff -u -p -r1.5 ecp_smpl.c
+--- lib/libssl/src/crypto/ec/ecp_smpl.c	13 Oct 2012 21:25:13 -0000	1.5
++++ lib/libssl/src/crypto/ec/ecp_smpl.c	8 Aug 2014 14:02:03 -0000
+@@ -1181,9 +1181,8 @@ int ec_GFp_simple_make_affine(const EC_G
+ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_CTX *ctx)
+ 	{
+ 	BN_CTX *new_ctx = NULL;
+-	BIGNUM *tmp0, *tmp1;
+-	size_t pow2 = 0;
+-	BIGNUM **heap = NULL;
++	BIGNUM *tmp, *tmp_Z;
++	BIGNUM **prod_Z = NULL;
+ 	size_t i;
+ 	int ret = 0;
+ 
+@@ -1198,124 +1197,104 @@ int ec_GFp_simple_points_make_affine(con
+ 		}
+ 
+ 	BN_CTX_start(ctx);
+-	tmp0 = BN_CTX_get(ctx);
+-	tmp1 = BN_CTX_get(ctx);
+-	if (tmp0  == NULL || tmp1 == NULL) goto err;
+-
+-	/* Before converting the individual points, compute inverses of all Z values.
+-	 * Modular inversion is rather slow, but luckily we can do with a single
+-	 * explicit inversion, plus about 3 multiplications per input value.
+-	 */
+-
+-	pow2 = 1;
+-	while (num > pow2)
+-		pow2 <<= 1;
+-	/* Now pow2 is the smallest power of 2 satifsying pow2 >= num.
+-	 * We need twice that. */
+-	pow2 <<= 1;
+-
+-	heap = OPENSSL_malloc(pow2 * sizeof heap[0]);
+-	if (heap == NULL) goto err;
+-	
+-	/* The array is used as a binary tree, exactly as in heapsort:
+-	 *
+-	 *                               heap[1]
+-	 *                 heap[2]                     heap[3]
+-	 *          heap[4]       heap[5]       heap[6]       heap[7]
+-	 *   heap[8]heap[9] heap[10]heap[11] heap[12]heap[13] heap[14] heap[15]
+-	 *
+-	 * We put the Z's in the last line;
+-	 * then we set each other node to the product of its two child-nodes (where
+-	 * empty or 0 entries are treated as ones);
+-	 * then we invert heap[1];
+-	 * then we invert each other node by replacing it by the product of its
+-	 * parent (after inversion) and its sibling (before inversion).
+-	 */
+-	heap[0] = NULL;
+-	for (i = pow2/2 - 1; i > 0; i--)
+-		heap[i] = NULL;
++	tmp = BN_CTX_get(ctx);
++	tmp_Z = BN_CTX_get(ctx);
++	if (tmp == NULL || tmp_Z == NULL) goto err;
++
++	prod_Z = OPENSSL_malloc(num * sizeof prod_Z[0]);
++	if (prod_Z == NULL) goto err;
+ 	for (i = 0; i < num; i++)
+-		heap[pow2/2 + i] = &points[i]->Z;
+-	for (i = pow2/2 + num; i < pow2; i++)
+-		heap[i] = NULL;
+-	
+-	/* set each node to the product of its children */
+-	for (i = pow2/2 - 1; i > 0; i--)
+-		{
+-		heap[i] = BN_new();
+-		if (heap[i] == NULL) goto err;
+-		
+-		if (heap[2*i] != NULL)
++		{
++		prod_Z[i] = BN_new();
++		if (prod_Z[i] == NULL) goto err;
++		}
++
++	/* Set each prod_Z[i] to the product of points[0]->Z .. points[i]->Z,
++	 * skipping any zero-valued inputs (pretend that they're 1). */
++
++	if (!BN_is_zero(&points[0]->Z))
++		{
++		if (!BN_copy(prod_Z[0], &points[0]->Z)) goto err;
++		}
++	else
++		{
++		if (group->meth->field_set_to_one != 0)
+ 			{
+-			if ((heap[2*i + 1] == NULL) || BN_is_zero(heap[2*i + 1]))
+-				{
+-				if (!BN_copy(heap[i], heap[2*i])) goto err;
+-				}
+-			else
+-				{
+-				if (BN_is_zero(heap[2*i]))
+-					{
+-					if (!BN_copy(heap[i], heap[2*i + 1])) goto err;
+-					}
+-				else
+-					{
+-					if (!group->meth->field_mul(group, heap[i],
+-						heap[2*i], heap[2*i + 1], ctx)) goto err;
+-					}
+-				}
++			if (!group->meth->field_set_to_one(group, prod_Z[0], ctx)) goto err;
++			}
++		else
++			{
++			if (!BN_one(prod_Z[0])) goto err;
+ 			}
+ 		}
+ 
+-	/* invert heap[1] */
+-	if (!BN_is_zero(heap[1]))
++	for (i = 1; i < num; i++)
+ 		{
+-		if (!BN_mod_inverse(heap[1], heap[1], &group->field, ctx))
++		if (!BN_is_zero(&points[i]->Z))
+ 			{
+-			ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
+-			goto err;
++			if (!group->meth->field_mul(group, prod_Z[i], prod_Z[i - 1], &points[i]->Z, ctx)) goto err;
+ 			}
++		else
++			{
++			if (!BN_copy(prod_Z[i], prod_Z[i - 1])) goto err;
++			}
++		}
++
++	/* Now use a single explicit inversion to replace every
++	 * non-zero points[i]->Z by its inverse. */
++
++	if (!BN_mod_inverse(tmp, prod_Z[num - 1], &group->field, ctx))
++		{
++		ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
++		goto err;
+ 		}
+ 	if (group->meth->field_encode != 0)
+ 		{
+-		/* in the Montgomery case, we just turned  R*H  (representing H)
++		/* In the Montgomery case, we just turned  R*H  (representing H)
+ 		 * into  1/(R*H),  but we need  R*(1/H)  (representing 1/H);
+-		 * i.e. we have need to multiply by the Montgomery factor twice */
+-		if (!group->meth->field_encode(group, heap[1], heap[1], ctx)) goto err;
+-		if (!group->meth->field_encode(group, heap[1], heap[1], ctx)) goto err;
++		 * i.e. we need to multiply by the Montgomery factor twice. */
++		if (!group->meth->field_encode(group, tmp, tmp, ctx)) goto err;
++		if (!group->meth->field_encode(group, tmp, tmp, ctx)) goto err;
+ 		}
+ 
+-	/* set other heap[i]'s to their inverses */
+-	for (i = 2; i < pow2/2 + num; i += 2)
++	for (i = num - 1; i > 0; --i)
+ 		{
+-		/* i is even */
+-		if ((heap[i + 1] != NULL) && !BN_is_zero(heap[i + 1]))
+-			{
+-			if (!group->meth->field_mul(group, tmp0, heap[i/2], heap[i + 1], ctx)) goto err;
+-			if (!group->meth->field_mul(group, tmp1, heap[i/2], heap[i], ctx)) goto err;
+-			if (!BN_copy(heap[i], tmp0)) goto err;
+-			if (!BN_copy(heap[i + 1], tmp1)) goto err;
+-			}
+-		else
++		/* Loop invariant: tmp is the product of the inverses of
++		 * points[0]->Z .. points[i]->Z (zero-valued inputs skipped). */
++		if (!BN_is_zero(&points[i]->Z))
+ 			{
+-			if (!BN_copy(heap[i], heap[i/2])) goto err;
++			/* Set tmp_Z to the inverse of points[i]->Z (as product
++			 * of Z inverses 0 .. i, Z values 0 .. i - 1). */
++			if (!group->meth->field_mul(group, tmp_Z, prod_Z[i - 1], tmp, ctx)) goto err;
++			/* Update tmp to satisfy the loop invariant for i - 1. */
++			if (!group->meth->field_mul(group, tmp, tmp, &points[i]->Z, ctx)) goto err;
++			/* Replace points[i]->Z by its inverse. */
++			if (!BN_copy(&points[i]->Z, tmp_Z)) goto err;
+ 			}
+ 		}
+ 
+-	/* we have replaced all non-zero Z's by their inverses, now fix up all the points */
++	if (!BN_is_zero(&points[0]->Z))
++		{
++		/* Replace points[0]->Z by its inverse. */
++		if (!BN_copy(&points[0]->Z, tmp)) goto err;
++		}
++
++	/* Finally, fix up the X and Y coordinates for all points. */
++
+ 	for (i = 0; i < num; i++)
+ 		{
+ 		EC_POINT *p = points[i];
+-		
++
+ 		if (!BN_is_zero(&p->Z))
+ 			{
+ 			/* turn  (X, Y, 1/Z)  into  (X/Z^2, Y/Z^3, 1) */
+ 
+-			if (!group->meth->field_sqr(group, tmp1, &p->Z, ctx)) goto err;
+-			if (!group->meth->field_mul(group, &p->X, &p->X, tmp1, ctx)) goto err;
++			if (!group->meth->field_sqr(group, tmp, &p->Z, ctx)) goto err;
++			if (!group->meth->field_mul(group, &p->X, &p->X, tmp, ctx)) goto err;
++
++			if (!group->meth->field_mul(group, tmp, tmp, &p->Z, ctx)) goto err;
++			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp, ctx)) goto err;
+ 
+-			if (!group->meth->field_mul(group, tmp1, tmp1, &p->Z, ctx)) goto err;
+-			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp1, ctx)) goto err;
+-		
+ 			if (group->meth->field_set_to_one != 0)
+ 				{
+ 				if (!group->meth->field_set_to_one(group, &p->Z, ctx)) goto err;
+@@ -1329,20 +1308,19 @@ int ec_GFp_simple_points_make_affine(con
+ 		}
+ 
+ 	ret = 1;
+-		
++
+  err:
+ 	BN_CTX_end(ctx);
+ 	if (new_ctx != NULL)
+ 		BN_CTX_free(new_ctx);
+-	if (heap != NULL)
++	if (prod_Z != NULL)
+ 		{
+-		/* heap[pow2/2] .. heap[pow2-1] have not been allocated locally! */
+-		for (i = pow2/2 - 1; i > 0; i--)
++		for (i = 0; i < num; i++)
+ 			{
+-			if (heap[i] != NULL)
+-				BN_clear_free(heap[i]);
++			if (prod_Z[i] != NULL)
++				BN_clear_free(prod_Z[i]);
+ 			}
+-		OPENSSL_free(heap);
++		OPENSSL_free(prod_Z);
+ 		}
+ 	return ret;
+ 	}
+Index: lib/libssl/src/ssl/d1_both.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_both.c,v
+retrieving revision 1.2.4.3
+diff -u -p -r1.2.4.3 d1_both.c
+--- lib/libssl/src/ssl/d1_both.c	5 Jun 2014 20:16:56 -0000	1.2.4.3
++++ lib/libssl/src/ssl/d1_both.c	8 Aug 2014 14:02:03 -0000
+@@ -587,29 +587,32 @@ dtls1_retrieve_buffered_fragment(SSL *s,
+ 		return 0;
+ 	}
+ 
++/* dtls1_max_handshake_message_len returns the maximum number of bytes
++ * permitted in a DTLS handshake message for |s|. The minimum is 16KB, but may
++ * be greater if the maximum certificate list size requires it. */
++static unsigned long dtls1_max_handshake_message_len(const SSL *s)
++	{
++	unsigned long max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
++	if (max_len < (unsigned long)s->max_cert_list)
++		return s->max_cert_list;
++	return max_len;
++	}
+ 
+ static int
+-dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
++dtls1_reassemble_fragment(SSL *s, const struct hm_header_st* msg_hdr, int *ok)
+ 	{
+ 	hm_fragment *frag = NULL;
+ 	pitem *item = NULL;
+ 	int i = -1, is_complete;
+ 	unsigned char seq64be[8];
+-	unsigned long frag_len = msg_hdr->frag_len, max_len;
++	unsigned long frag_len = msg_hdr->frag_len;
+ 
+-	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len)
++	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len ||
++	    msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
+ 		goto err;
+ 
+-	/* Determine maximum allowed message size. Depends on (user set)
+-	 * maximum certificate length, but 16k is minimum.
+-	 */
+-	if (DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH < s->max_cert_list)
+-		max_len = s->max_cert_list;
+-	else
+-		max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
+-
+-	if ((msg_hdr->frag_off+frag_len) > max_len)
+-		goto err;
++	if (frag_len == 0)
++		return DTLS1_HM_FRAGMENT_RETRY;
+ 
+ 	/* Try to find item in queue */
+ 	memset(seq64be,0,sizeof(seq64be));
+@@ -636,7 +639,8 @@ dtls1_reassemble_fragment(SSL *s, struct
+ 	}
+ 
+ 	/* If message is already reassembled, this must be a
+-	 * retransmit and can be dropped.
++	 * retransmit and can be dropped. In this case item != NULL and so frag
++	 * does not need to be freed.
+ 	 */
+ 	if (frag->reassembly == NULL)
+ 		{
+@@ -656,7 +660,9 @@ dtls1_reassemble_fragment(SSL *s, struct
+ 	/* read the body of the fragment (header has already been read */
+ 	i = s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
+ 		frag->fragment + msg_hdr->frag_off,frag_len,0);
+-	if (i<=0 || (unsigned long)i!=frag_len)
++	if ((unsigned long)i!=frag_len)
++		i=-1;
++	if (i<=0)
+ 		goto err;
+ 
+ 	RSMBLY_BITMASK_MARK(frag->reassembly, (long)msg_hdr->frag_off,
+@@ -673,10 +679,6 @@ dtls1_reassemble_fragment(SSL *s, struct
+ 
+ 	if (item == NULL)
+ 		{
+-		memset(seq64be,0,sizeof(seq64be));
+-		seq64be[6] = (unsigned char)(msg_hdr->seq>>8);
+-		seq64be[7] = (unsigned char)(msg_hdr->seq);
+-
+ 		item = pitem_new(seq64be, frag);
+ 		if (item == NULL)
+ 			{
+@@ -684,21 +686,25 @@ dtls1_reassemble_fragment(SSL *s, struct
+ 			i = -1;
+ 			}
+ 
+-		pqueue_insert(s->d1->buffered_messages, item);
++		item = pqueue_insert(s->d1->buffered_messages, item);
++		/* pqueue_insert fails iff a duplicate item is inserted.
++		 * However, |item| cannot be a duplicate. If it were,
++		 * |pqueue_find|, above, would have returned it and control
++		 * would never have reached this branch. */
++		OPENSSL_assert(item != NULL);
+ 		}
+ 
+ 	return DTLS1_HM_FRAGMENT_RETRY;
+ 
+ err:
+-	if (frag != NULL) dtls1_hm_fragment_free(frag);
+-	if (item != NULL) OPENSSL_free(item);
++	if (frag != NULL && item == NULL) dtls1_hm_fragment_free(frag);
+ 	*ok = 0;
+ 	return i;
+ 	}
+ 
+ 
+ static int
+-dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
++dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st* msg_hdr, int *ok)
+ {
+ 	int i=-1;
+ 	hm_fragment *frag = NULL;
+@@ -718,7 +724,7 @@ dtls1_process_out_of_seq_message(SSL *s,
+ 	/* If we already have an entry and this one is a fragment,
+ 	 * don't discard it and rather try to reassemble it.
+ 	 */
+-	if (item != NULL && frag_len < msg_hdr->msg_len)
++	if (item != NULL && frag_len != msg_hdr->msg_len)
+ 		item = NULL;
+ 
+ 	/* Discard the message if sequence number was already there, is
+@@ -743,9 +749,12 @@ dtls1_process_out_of_seq_message(SSL *s,
+ 		}
+ 	else
+ 		{
+-		if (frag_len && frag_len < msg_hdr->msg_len)
++		if (frag_len != msg_hdr->msg_len)
+ 			return dtls1_reassemble_fragment(s, msg_hdr, ok);
+ 
++		if (frag_len > dtls1_max_handshake_message_len(s))
++			goto err;
++
+ 		frag = dtls1_hm_fragment_new(frag_len, 0);
+ 		if ( frag == NULL)
+ 			goto err;
+@@ -757,26 +766,31 @@ dtls1_process_out_of_seq_message(SSL *s,
+ 			/* read the body of the fragment (header has already been read */
+ 			i = s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
+ 				frag->fragment,frag_len,0);
+-			if (i<=0 || (unsigned long)i!=frag_len)
++			if ((unsigned long)i!=frag_len)
++				i = -1;
++			if (i<=0)
+ 				goto err;
+ 			}
+ 
+-		memset(seq64be,0,sizeof(seq64be));
+-		seq64be[6] = (unsigned char)(msg_hdr->seq>>8);
+-		seq64be[7] = (unsigned char)(msg_hdr->seq);
+-
+ 		item = pitem_new(seq64be, frag);
+ 		if ( item == NULL)
+ 			goto err;
+ 
+-		pqueue_insert(s->d1->buffered_messages, item);
++		item = pqueue_insert(s->d1->buffered_messages, item);
++		/* pqueue_insert fails iff a duplicate item is inserted.
++		 * However, |item| cannot be a duplicate. If it were,
++		 * |pqueue_find|, above, would have returned it. Then, either
++		 * |frag_len| != |msg_hdr->msg_len| in which case |item| is set
++		 * to NULL and it will have been processed with
++		 * |dtls1_reassemble_fragment|, above, or the record will have
++		 * been discarded. */
++		OPENSSL_assert(item != NULL);
+ 		}
+ 
+ 	return DTLS1_HM_FRAGMENT_RETRY;
+ 
+ err:
+-	if ( frag != NULL) dtls1_hm_fragment_free(frag);
+-	if ( item != NULL) OPENSSL_free(item);
++	if (frag != NULL && item == NULL) dtls1_hm_fragment_free(frag);
+ 	*ok = 0;
+ 	return i;
+ 	}
+@@ -1177,6 +1191,8 @@ dtls1_buffer_message(SSL *s, int is_ccs)
+ 	OPENSSL_assert(s->init_off == 0);
+ 
+ 	frag = dtls1_hm_fragment_new(s->init_num, 0);
++	if (!frag)
++		return 0;
+ 
+ 	memcpy(frag->fragment, s->init_buf->data, s->init_num);
+ 
+Index: lib/libssl/src/ssl/d1_clnt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_clnt.c,v
+retrieving revision 1.5
+diff -u -p -r1.5 d1_clnt.c
+--- lib/libssl/src/ssl/d1_clnt.c	13 Oct 2012 21:25:14 -0000	1.5
++++ lib/libssl/src/ssl/d1_clnt.c	8 Aug 2014 14:02:03 -0000
+@@ -868,12 +868,18 @@ int dtls1_client_hello(SSL *s)
+ 		*(p++)=0; /* Add the NULL method */
+ 
+ #ifndef OPENSSL_NO_TLSEXT
++		/* TLS extensions*/
++		if (ssl_prepare_clienthello_tlsext(s) <= 0)
++			{
++			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
++			goto err;
++			}
+ 		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+ 			{
+ 			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
+ 			goto err;
+ 			}
+-#endif		
++#endif
+ 
+ 		l=(p-d);
+ 		d=buf;
+@@ -982,6 +988,13 @@ int dtls1_send_client_key_exchange(SSL *
+ 			RSA *rsa;
+ 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+ 
++			if (s->session->sess_cert == NULL)
++				{
++				/* We should always have a server certificate with SSL_kRSA. */
++				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
++				goto err;
++				}
++
+ 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
+ 				rsa=s->session->sess_cert->peer_rsa_tmp;
+ 			else
+@@ -1172,6 +1185,13 @@ int dtls1_send_client_key_exchange(SSL *
+ 			{
+ 			DH *dh_srvr,*dh_clnt;
+ 
++			if (s->session->sess_cert == NULL)
++				{
++				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
++				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
++				goto err;
++				}
++
+ 			if (s->session->sess_cert->peer_dh_tmp != NULL)
+ 				dh_srvr=s->session->sess_cert->peer_dh_tmp;
+ 			else
+@@ -1231,6 +1251,13 @@ int dtls1_send_client_key_exchange(SSL *
+ 			int ecdh_clnt_cert = 0;
+ 			int field_size = 0;
+ 
++			if (s->session->sess_cert == NULL)
++				{
++				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
++				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
++				goto err;
++				}
++
+ 			/* Did we send out the client's
+ 			 * ECDH share for use in premaster
+ 			 * computation as part of client certificate?
+@@ -1706,5 +1733,3 @@ int dtls1_send_client_certificate(SSL *s
+ 	/* SSL3_ST_CW_CERT_D */
+ 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
+ 	}
+-
+-
+Index: lib/libssl/src/ssl/d1_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_srvr.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 d1_srvr.c
+--- lib/libssl/src/ssl/d1_srvr.c	13 Oct 2012 21:25:14 -0000	1.6
++++ lib/libssl/src/ssl/d1_srvr.c	8 Aug 2014 14:02:03 -0000
+@@ -597,10 +597,11 @@ int dtls1_accept(SSL *s)
+ 				s->state = SSL3_ST_SR_CLNT_HELLO_C;
+ 				}
+ 			else {
+-				/* could be sent for a DH cert, even if we
+-				 * have not asked for it :-) */
+-				ret=ssl3_get_client_certificate(s);
+-				if (ret <= 0) goto end;
++				if (s->s3->tmp.cert_request)
++					{
++					ret=ssl3_get_client_certificate(s);
++					if (ret <= 0) goto end;
++					}
+ 				s->init_num=0;
+ 				s->state=SSL3_ST_SR_KEY_EXCH_A;
+ 			}
+@@ -969,6 +970,11 @@ int dtls1_send_server_hello(SSL *s)
+ #endif
+ 
+ #ifndef OPENSSL_NO_TLSEXT
++		if (ssl_prepare_serverhello_tlsext(s) <= 0)
++			{
++			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO,SSL_R_SERVERHELLO_TLSEXT);
++			return -1;
++			}
+ 		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+ 			{
+ 			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
+Index: lib/libssl/src/ssl/s23_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s23_lib.c,v
+retrieving revision 1.9
+diff -u -p -r1.9 s23_lib.c
+--- lib/libssl/src/ssl/s23_lib.c	3 Nov 2011 02:34:33 -0000	1.9
++++ lib/libssl/src/ssl/s23_lib.c	8 Aug 2014 14:02:03 -0000
+@@ -107,6 +107,13 @@ int ssl23_put_cipher_by_char(const SSL_C
+ 	long l;
+ 
+ 	/* We can write SSLv2 and SSLv3 ciphers */
++	/* but no ECC ciphers */
++	if (c->algorithm_mkey == SSL_kECDHr ||
++		c->algorithm_mkey == SSL_kECDHe ||
++		c->algorithm_mkey == SSL_kEECDH ||
++		c->algorithm_auth == SSL_aECDH ||
++		c->algorithm_auth == SSL_aECDSA)
++		return 0;
+ 	if (p != NULL)
+ 		{
+ 		l=c->id;
+Index: lib/libssl/src/ssl/s23_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s23_srvr.c,v
+retrieving revision 1.14
+diff -u -p -r1.14 s23_srvr.c
+--- lib/libssl/src/ssl/s23_srvr.c	13 Oct 2012 21:25:14 -0000	1.14
++++ lib/libssl/src/ssl/s23_srvr.c	8 Aug 2014 14:02:03 -0000
+@@ -348,23 +348,19 @@ int ssl23_get_client_hello(SSL *s)
+ 			 * Client Hello message, this would be difficult, and we'd have
+ 			 * to read more records to find out.
+ 			 * No known SSL 3.0 client fragments ClientHello like this,
+-			 * so we simply assume TLS 1.0 to avoid protocol version downgrade
+-			 * attacks. */
++			 * so we simply reject such connections to avoid
++			 * protocol version downgrade attacks. */
+ 			if (p[3] == 0 && p[4] < 6)
+ 				{
+-#if 0
+ 				SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_TOO_SMALL);
+ 				goto err;
+-#else
+-				v[1] = TLS1_VERSION_MINOR;
+-#endif
+ 				}
+ 			/* if major version number > 3 set minor to a value
+ 			 * which will use the highest version 3 we support.
+ 			 * If TLS 2.0 ever appears we will need to revise
+ 			 * this....
+ 			 */
+-			else if (p[9] > SSL3_VERSION_MAJOR)
++			if (p[9] > SSL3_VERSION_MAJOR)
+ 				v[1]=0xff;
+ 			else
+ 				v[1]=p[10]; /* minor version according to client_version */
+@@ -444,14 +440,34 @@ int ssl23_get_client_hello(SSL *s)
+ 		v[0] = p[3]; /* == SSL3_VERSION_MAJOR */
+ 		v[1] = p[4];
+ 
++		/* An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
++		 * header is sent directly on the wire, not wrapped as a TLS
++		 * record. It's format is:
++		 * Byte  Content
++		 * 0-1   msg_length
++		 * 2     msg_type
++		 * 3-4   version
++		 * 5-6   cipher_spec_length
++		 * 7-8   session_id_length
++		 * 9-10  challenge_length
++		 * ...   ...
++		 */
+ 		n=((p[0]&0x7f)<<8)|p[1];
+ 		if (n > (1024*4))
+ 			{
+ 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_TOO_LARGE);
+ 			goto err;
+ 			}
++		if (n < 9)
++			{
++			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_LENGTH_MISMATCH);
++			goto err;
++			}
+ 
+ 		j=ssl23_read_bytes(s,n+2);
++		/* We previously read 11 bytes, so if j > 0, we must have
++		 * j == n+2 == s->packet_length. We have at least 11 valid
++		 * packet bytes. */
+ 		if (j <= 0) return(j);
+ 
+ 		ssl3_finish_mac(s, s->packet+2, s->packet_length-2);
+Index: lib/libssl/src/ssl/s3_clnt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_clnt.c,v
+retrieving revision 1.26.8.2
+diff -u -p -r1.26.8.2 s3_clnt.c
+--- lib/libssl/src/ssl/s3_clnt.c	5 Jun 2014 20:09:30 -0000	1.26.8.2
++++ lib/libssl/src/ssl/s3_clnt.c	8 Aug 2014 14:02:03 -0000
+@@ -511,6 +511,7 @@ int ssl3_connect(SSL *s)
+ 				s->method->ssl3_enc->client_finished_label,
+ 				s->method->ssl3_enc->client_finished_label_len);
+ 			if (ret <= 0) goto end;
++			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 			s->state=SSL3_ST_CW_FLUSH;
+ 
+ 			/* clear flags */
+@@ -902,6 +903,7 @@ int ssl3_get_server_hello(SSL *s)
+ 			{
+ 			s->session->cipher = pref_cipher ?
+ 				pref_cipher : ssl_get_cipher_by_char(s, p+j);
++	    		s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 			}
+ 		}
+ #endif /* OPENSSL_NO_TLSEXT */
+@@ -953,6 +955,15 @@ int ssl3_get_server_hello(SSL *s)
+ 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
+ 		goto f_err;
+ 		}
++#ifndef OPENSSL_NO_SRP
++	if (((c->algorithm_mkey & SSL_kSRP) || (c->algorithm_auth & SSL_aSRP)) &&
++		    !(s->srp_ctx.srp_Mask & SSL_kSRP))
++		{
++		al=SSL_AD_ILLEGAL_PARAMETER;
++		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
++		goto f_err;
++		}
++#endif /* OPENSSL_NO_SRP */
+ 	p+=ssl_put_cipher_by_char(s,NULL,NULL);
+ 
+ 	sk=ssl_get_ciphers_by_id(s);
+@@ -1456,6 +1467,12 @@ int ssl3_get_key_exchange(SSL *s)
+ 		p+=i;
+ 		n-=param_len;
+ 
++		if (!srp_verify_server_param(s, &al))
++			{
++			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_WRONG_CIPHER_RETURNED);
++			goto f_err;
++			}
++
+ /* We must check if there is a certificate */
+ #ifndef OPENSSL_NO_RSA
+ 		if (alg_a & SSL_aRSA)
+@@ -2248,6 +2265,13 @@ int ssl3_send_client_key_exchange(SSL *s
+ 			{
+ 			RSA *rsa;
+ 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
++
++			if (s->session->sess_cert == NULL)
++				{
++				/* We should always have a server certificate with SSL_kRSA. */
++				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
++				goto err;
++				}
+ 
+ 			if (s->session->sess_cert->peer_rsa_tmp != NULL)
+ 				rsa=s->session->sess_cert->peer_rsa_tmp;
+Index: lib/libssl/src/ssl/s3_enc.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_enc.c,v
+retrieving revision 1.18
+diff -u -p -r1.18 s3_enc.c
+--- lib/libssl/src/ssl/s3_enc.c	14 Feb 2013 15:11:43 -0000	1.18
++++ lib/libssl/src/ssl/s3_enc.c	8 Aug 2014 14:02:03 -0000
+@@ -642,10 +642,18 @@ int ssl3_cert_verify_mac(SSL *s, int md_
+ int ssl3_final_finish_mac(SSL *s, 
+ 	     const char *sender, int len, unsigned char *p)
+ 	{
+-	int ret;
++	int ret, sha1len;
+ 	ret=ssl3_handshake_mac(s,NID_md5,sender,len,p);
++	if(ret == 0)
++		return 0;
++
+ 	p+=ret;
+-	ret+=ssl3_handshake_mac(s,NID_sha1,sender,len,p);
++
++	sha1len=ssl3_handshake_mac(s,NID_sha1,sender,len,p);
++	if(sha1len == 0)
++		return 0;
++
++	ret+=sha1len;
+ 	return(ret);
+ 	}
+ static int ssl3_handshake_mac(SSL *s, int md_nid,
+Index: lib/libssl/src/ssl/s3_pkt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_pkt.c,v
+retrieving revision 1.20.4.3
+diff -u -p -r1.20.4.3 s3_pkt.c
+--- lib/libssl/src/ssl/s3_pkt.c	5 Jun 2014 17:05:16 -0000	1.20.4.3
++++ lib/libssl/src/ssl/s3_pkt.c	8 Aug 2014 14:02:03 -0000
+@@ -952,7 +952,7 @@ int ssl3_read_bytes(SSL *s, int type, un
+ 		if (!ssl3_setup_read_buffer(s))
+ 			return(-1);
+ 
+-	if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE) && type) ||
++	if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE)) ||
+ 	    (peek && (type != SSL3_RT_APPLICATION_DATA)))
+ 		{
+ 		SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
+Index: lib/libssl/src/ssl/s3_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_srvr.c,v
+retrieving revision 1.29.8.1
+diff -u -p -r1.29.8.1 s3_srvr.c
+--- lib/libssl/src/ssl/s3_srvr.c	5 Jun 2014 17:05:16 -0000	1.29.8.1
++++ lib/libssl/src/ssl/s3_srvr.c	8 Aug 2014 14:02:03 -0000
+@@ -2781,6 +2781,13 @@ int ssl3_get_client_key_exchange(SSL *s)
+ 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_BN_LIB);
+ 				goto err;
+ 				}
++			if (BN_ucmp(s->srp_ctx.A, s->srp_ctx.N) >= 0
++				|| BN_is_zero(s->srp_ctx.A))
++				{
++				al=SSL_AD_ILLEGAL_PARAMETER;
++				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_WRONG_CIPHER_RETURNED);
++				goto f_err;
++				}
+ 			if (s->session->srp_username != NULL)
+ 				OPENSSL_free(s->session->srp_username);
+ 			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
+Index: lib/libssl/src/ssl/ssl_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/ssl_lib.c,v
+retrieving revision 1.24
+diff -u -p -r1.24 ssl_lib.c
+--- lib/libssl/src/ssl/ssl_lib.c	13 Oct 2012 21:25:14 -0000	1.24
++++ lib/libssl/src/ssl/ssl_lib.c	8 Aug 2014 14:02:03 -0000
+@@ -1397,6 +1397,11 @@ int ssl_cipher_list_to_bytes(SSL *s,STAC
+ 		    s->psk_client_callback == NULL)
+ 			continue;
+ #endif /* OPENSSL_NO_PSK */
++#ifndef OPENSSL_NO_SRP
++		if (((c->algorithm_mkey & SSL_kSRP) || (c->algorithm_auth & SSL_aSRP)) &&
++		    !(s->srp_ctx.srp_Mask & SSL_kSRP))
++		    continue;
++#endif /* OPENSSL_NO_SRP */
+ 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
+ 		p+=j;
+ 		}
+Index: lib/libssl/src/ssl/t1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/t1_lib.c,v
+retrieving revision 1.12.8.1
+diff -u -p -r1.12.8.1 t1_lib.c
+--- lib/libssl/src/ssl/t1_lib.c	8 Apr 2014 00:55:39 -0000	1.12.8.1
++++ lib/libssl/src/ssl/t1_lib.c	8 Aug 2014 14:02:03 -0000
+@@ -360,15 +360,16 @@ int tls12_get_req_sig_algs(SSL *s, unsig
+ 	return (int)slen;
+ 	}
+ 
+-unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
++unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf, unsigned char *limit)
+ 	{
+ 	int extdatalen=0;
+-	unsigned char *ret = p;
++	unsigned char *orig = buf;
++	unsigned char *ret = buf;
+ 
+ 	/* don't add extensions for SSLv3 unless doing secure renegotiation */
+ 	if (s->client_version == SSL3_VERSION
+ 					&& !s->s3->send_connection_binding)
+-		return p;
++		return orig;
+ 
+ 	ret+=2;
+ 
+@@ -417,7 +418,7 @@ unsigned char *ssl_add_clienthello_tlsex
+               return NULL;
+               }
+ 
+-          if((limit - p - 4 - el) < 0) return NULL;
++          if((limit - ret - 4 - el) < 0) return NULL;
+           
+           s2n(TLSEXT_TYPE_renegotiate,ret);
+           s2n(el,ret);
+@@ -460,8 +461,7 @@ unsigned char *ssl_add_clienthello_tlsex
+ #endif
+ 
+ #ifndef OPENSSL_NO_EC
+-	if (s->tlsext_ecpointformatlist != NULL &&
+-	    s->version != DTLS1_VERSION)
++	if (s->tlsext_ecpointformatlist != NULL)
+ 		{
+ 		/* Add TLS extension ECPointFormats to the ClientHello message */
+ 		long lenmax; 
+@@ -480,8 +480,7 @@ unsigned char *ssl_add_clienthello_tlsex
+ 		memcpy(ret, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
+ 		ret+=s->tlsext_ecpointformatlist_length;
+ 		}
+-	if (s->tlsext_ellipticcurvelist != NULL &&
+-	    s->version != DTLS1_VERSION)
++	if (s->tlsext_ellipticcurvelist != NULL)
+ 		{
+ 		/* Add TLS extension EllipticCurves to the ClientHello message */
+ 		long lenmax; 
+@@ -655,7 +654,7 @@ unsigned char *ssl_add_clienthello_tlsex
+ 
+                 ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
+                 
+-                if((limit - p - 4 - el) < 0) return NULL;
++                if((limit - ret - 4 - el) < 0) return NULL;
+ 
+                 s2n(TLSEXT_TYPE_use_srtp,ret);
+                 s2n(el,ret);
+@@ -668,24 +667,25 @@ unsigned char *ssl_add_clienthello_tlsex
+                 ret += el;
+                 }
+ 
+-	if ((extdatalen = ret-p-2)== 0) 
+-		return p;
++	if ((extdatalen = ret-orig-2)== 0) 
++		return orig;
+ 
+-	s2n(extdatalen,p);
++	s2n(extdatalen, orig);
+ 	return ret;
+ 	}
+ 
+-unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
++unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf, unsigned char *limit)
+ 	{
+ 	int extdatalen=0;
+-	unsigned char *ret = p;
++	unsigned char *orig = buf;
++	unsigned char *ret = buf;
+ #ifndef OPENSSL_NO_NEXTPROTONEG
+ 	int next_proto_neg_seen;
+ #endif
+ 
+ 	/* don't add extensions for SSLv3, unless doing secure renegotiation */
+ 	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
+-		return p;
++		return orig;
+ 	
+ 	ret+=2;
+ 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
+@@ -708,7 +708,7 @@ unsigned char *ssl_add_serverhello_tlsex
+               return NULL;
+               }
+ 
+-          if((limit - p - 4 - el) < 0) return NULL;
++          if((limit - ret - 4 - el) < 0) return NULL;
+           
+           s2n(TLSEXT_TYPE_renegotiate,ret);
+           s2n(el,ret);
+@@ -723,8 +723,7 @@ unsigned char *ssl_add_serverhello_tlsex
+         }
+ 
+ #ifndef OPENSSL_NO_EC
+-	if (s->tlsext_ecpointformatlist != NULL &&
+-	    s->version != DTLS1_VERSION)
++	if (s->tlsext_ecpointformatlist != NULL)
+ 		{
+ 		/* Add TLS extension ECPointFormats to the ServerHello message */
+ 		long lenmax; 
+@@ -787,7 +786,7 @@ unsigned char *ssl_add_serverhello_tlsex
+ 
+                 ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
+                 
+-                if((limit - p - 4 - el) < 0) return NULL;
++                if((limit - ret - 4 - el) < 0) return NULL;
+ 
+                 s2n(TLSEXT_TYPE_use_srtp,ret);
+                 s2n(el,ret);
+@@ -855,10 +854,10 @@ unsigned char *ssl_add_serverhello_tlsex
+ 		}
+ #endif
+ 
+-	if ((extdatalen = ret-p-2)== 0) 
+-		return p;
++	if ((extdatalen = ret-orig-2)== 0) 
++		return orig;
+ 
+-	s2n(extdatalen,p);
++	s2n(extdatalen, orig);
+ 	return ret;
+ 	}
+ 
+@@ -1035,8 +1034,7 @@ int ssl_parse_clienthello_tlsext(SSL *s,
+ #endif
+ 
+ #ifndef OPENSSL_NO_EC
+-		else if (type == TLSEXT_TYPE_ec_point_formats &&
+-	             s->version != DTLS1_VERSION)
++		else if (type == TLSEXT_TYPE_ec_point_formats)
+ 			{
+ 			unsigned char *sdata = data;
+ 			int ecpointformatlist_length = *(sdata++);
+@@ -1070,8 +1068,7 @@ int ssl_parse_clienthello_tlsext(SSL *s,
+ 			fprintf(stderr,"\n");
+ #endif
+ 			}
+-		else if (type == TLSEXT_TYPE_elliptic_curves &&
+-	             s->version != DTLS1_VERSION)
++		else if (type == TLSEXT_TYPE_elliptic_curves)
+ 			{
+ 			unsigned char *sdata = data;
+ 			int ellipticcurvelist_length = (*(sdata++) << 8);
+@@ -1427,8 +1424,7 @@ int ssl_parse_serverhello_tlsext(SSL *s,
+ 			}
+ 
+ #ifndef OPENSSL_NO_EC
+-		else if (type == TLSEXT_TYPE_ec_point_formats &&
+-	             s->version != DTLS1_VERSION)
++		else if (type == TLSEXT_TYPE_ec_point_formats)
+ 			{
+ 			unsigned char *sdata = data;
+ 			int ecpointformatlist_length = *(sdata++);
+@@ -1438,15 +1434,18 @@ int ssl_parse_serverhello_tlsext(SSL *s,
+ 				*al = TLS1_AD_DECODE_ERROR;
+ 				return 0;
+ 				}
+-			s->session->tlsext_ecpointformatlist_length = 0;
+-			if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
+-			if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
++			if (!s->hit)
+ 				{
+-				*al = TLS1_AD_INTERNAL_ERROR;
+-				return 0;
++				s->session->tlsext_ecpointformatlist_length = 0;
++				if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
++				if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
++					{
++					*al = TLS1_AD_INTERNAL_ERROR;
++					return 0;
++					}
++				s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
++				memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
+ 				}
+-			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
+-			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
+ #if 0
+ 			fprintf(stderr,"ssl_parse_serverhello_tlsext s->session->tlsext_ecpointformatlist ");
+ 			sdata = s->session->tlsext_ecpointformatlist;
+

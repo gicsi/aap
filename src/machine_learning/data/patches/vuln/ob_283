@@ -1,0 +1,52 @@
+This is the second revision of this patch.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 010_m_dup1.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/uipc_mbuf2.c
+===================================================================
+RCS file: /cvs/src/sys/kern/uipc_mbuf2.c,v
+retrieving revision 1.24
+retrieving revision 1.24.2.2
+diff -u -p -r1.24 -r1.24.2.2
+--- sys/kern/uipc_mbuf2.c	17 Mar 2006 04:15:51 -0000	1.24
++++ sys/kern/uipc_mbuf2.c	17 Mar 2007 20:50:50 -0000	1.24.2.2
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: uipc_mbuf2.c,v 1.24 2006/03/17 04:15:51 brad Exp $	*/
++/*	$OpenBSD: uipc_mbuf2.c,v 1.24.2.2 2007/03/17 20:50:50 henning Exp $	*/
+ /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
+ /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
+ 
+@@ -226,16 +226,16 @@ m_dup1(struct mbuf *m, int off, int len,
+ {
+ 	struct mbuf *n;
+ 	int l;
+-	int copyhdr;
+ 
+ 	if (len > MCLBYTES)
+ 		return (NULL);
+ 	if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
+-		copyhdr = 1;
+ 		MGETHDR(n, wait, m->m_type);
++		if (n == NULL)
++			return (NULL);
++		M_DUP_PKTHDR(n, m);
+ 		l = MHLEN;
+ 	} else {
+-		copyhdr = 0;
+ 		MGET(n, wait, m->m_type);
+ 		l = MLEN;
+ 	}
+@@ -249,8 +249,6 @@ m_dup1(struct mbuf *m, int off, int len,
+ 	if (!n)
+ 		return (NULL);
+ 
+-	if (copyhdr)
+-		M_DUP_PKTHDR(n, m);
+ 	m_copydata(m, off, len, mtod(n, caddr_t));
+ 	n->m_len = len;
+ 
+

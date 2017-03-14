@@ -1,0 +1,9 @@
+The OpenSSL libraries did not correctly check the return value from
+certain verification functions, allowing validation to be bypassed and
+permitting a remote attacker to conduct a "man in the middle attack"
+against SSL/TLS connections if the server is configured with a DSA or ECDSA
+certificate.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-5077">CVE-2008-5077</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/007_openssl.patch">
+A source code patch exists which remedies this problem.</a>

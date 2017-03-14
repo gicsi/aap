@@ -1,0 +1,9 @@
+The CD insert documentation has an incorrect example for package installation.<br>
+Where it is written:<p>
+<strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+# pkg_add http://ftp.openbsd.org/pub/OpenBSD/3.4/packages/i386</strong><p>
+It should instead read:<p>
+<strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+# pkg_add http://ftp.openbsd.org/pub/OpenBSD/3.4/packages/i386/</strong><p>
+The extra <strong>/</strong> at the end is important.  We do not make
+patch files available for things printed on paper.

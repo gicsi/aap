@@ -1,0 +1,28 @@
+Description of problem:
+
+We've fixed FUSEJON-110 and FUSEJON-111 for our customers. We need to release a new version of the plugin pack.
+
+
+Version-Release number of selected component (if applicable):
+
+May be 7.4.1, however, 7.4 has not been release and it may be easier to put thi sin its place 
+
+
+How reproducible:
+
+N/A
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+https://issues.jboss.org/browse/PATCH-797 has details from Fuse QE test results on various issues. Patch has cleared QE and only needs to be released. It was also tested with 3.1.2 which is the customer requires urgently.

@@ -1,0 +1,7 @@
+Constrain
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=i386_set_ioperm&amp;arch=i386&amp;sektion=2">i386_set_ioperm(2)</a>
+so even root is blocked from accessing the ioports
+unless the machine is running at lower securelevels or with an open X11 aperture.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.7/i386/010_i386machdep.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,71 @@
+This is an automatically created tracking bug!  It was created to ensure
+that one or more security vulnerabilities are fixed in affected versions
+of Fedora.
+
+For comments that are specific to the vulnerability please use bugs filed
+against the "Security Response" product referenced in the "Blocks" field.
+
+For more information see:
+http://fedoraproject.org/wiki/Security/TrackingBugs
+
+When submitting as an update, use the fedpkg template provided in the next
+comment(s).  This will include the bug IDs of this tracking bug as well as
+the relevant top-level CVE bugs.
+
+Please also mention the CVE IDs being fixed in the RPM changelog and the
+fedpkg commit message.
+
+NOTE: this issue affects multiple supported versions of Fedora. While only
+one tracking bug has been filed, please correct all affected versions at
+the same time.  If you need to fix the versions independent of each other,
+you may clone this bug as appropriate.
+
+[bug automatically created by: add-tracking-bugs]
+Use the following template to for the 'fedpkg update' request to submit an
+update for this issue as it contains the top-level parent bug(s) as well as
+this tracking bug.  This will ensure that all associated bugs get updated
+when new packages are pushed to stable.
+
+=====
+
+# bugfix, security, enhancement, newpackage (required)
+type=security
+
+# testing, stable
+request=testing
+
+# Bug numbers: 1234,9876
+bugs=1233327,1233340
+
+# Description of your update
+notes=Security fix for CVE-2015-3224
+
+# Enable request automation based on the stable/unstable karma thresholds
+autokarma=True
+stable_karma=3
+unstable_karma=-3
+
+# Automatically close bugs when this marked as stable
+close_bugs=True
+
+# Suggest that users restart after update
+suggest_reboot=False
+
+======
+
+Additionally, you may opt to use the bodhi update submission link instead:
+
+https://admin.fedoraproject.org/updates/new/?type_=security&bugs=1233327,1233340
+rubygem-web-console-2.1.3-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/rubygem-web-console-2.1.3-1.fc22
+Package rubygem-web-console-2.1.3-1.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing rubygem-web-console-2.1.3-1.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10128/rubygem-web-console-2.1.3-1.fc22
+then log in and leave karma (feedback).
+rubygem-web-console-2.1.3-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

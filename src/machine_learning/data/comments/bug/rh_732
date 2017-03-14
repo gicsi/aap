@@ -1,0 +1,6 @@
+Description of problem:
+=======================
+VT2 and VT3 are not working on the F22 netinstall images. Both server and workstation.
+
+Shitching to those VTs should present a shell. Instead there's only a blinking cursor.
+*** This bug has been marked as a duplicate of bug 1222413 ***

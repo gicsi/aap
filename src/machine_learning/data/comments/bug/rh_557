@@ -1,0 +1,55 @@
+Description of problem:
+docker-compose up
+SELinux is preventing /usr/sbin/xtables-multi from 'read' accesses on the file file.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If cree que de manera predeterminada, xtables-multi debería permitir acceso read sobre  file file.     
+Then debería reportar esto como un error.
+Puede generar un módulo de política local para permitir este acceso.
+Do
+permita el acceso momentáneamente executando:
+# grep iptables /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:iptables_t:s0
+Target Context                system_u:object_r:unlabeled_t:s0
+Target Objects                file [ file ]
+Source                        iptables
+Source Path                   /usr/sbin/xtables-multi
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           iptables-1.4.21-14.fc22.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.5-300.fc22.x86_64 #1 SMP Mon
+                              Jun 8 16:15:26 UTC 2015 x86_64 x86_64
+Alert Count                   3
+First Seen                    2015-06-23 10:05:59 CEST
+Last Seen                     2015-06-23 10:05:59 CEST
+Local ID                      b85bd90b-e34b-4c82-a1b9-6898639786a7
+
+Raw Audit Messages
+type=AVC msg=audit(1435046759.539:1978): avc:  denied  { read } for  pid=24779 comm="iptables" path="net:[4026531957]" dev="nsfs" ino=4026531957 scontext=system_u:system_r:iptables_t:s0 tcontext=system_u:object_r:unlabeled_t:s0 tclass=file permissive=0
+
+
+type=SYSCALL msg=audit(1435046759.539:1978): arch=x86_64 syscall=execve success=yes exit=0 a0=c208a0c6a0 a1=c2086b3440 a2=c2087fa960 a3=0 items=0 ppid=915 pid=24779 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=iptables exe=/usr/sbin/xtables-multi subj=system_u:system_r:iptables_t:s0 key=(null)
+
+Hash: iptables,iptables_t,unlabeled_t,file,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.5-300.fc22.x86_64
+type:           libreport
+Hi, 
+
+This is probably misslabeled machine. Please use restorecon to fix your issue.

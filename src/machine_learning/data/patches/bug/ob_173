@@ -1,0 +1,55 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_pool.patch
+And then rebuild your kernel.
+
+Index: sys/kern/subr_pool.c
+===================================================================
+RCS file: /cvs/src/sys/kern/subr_pool.c,v
+retrieving revision 1.32
+retrieving revision 1.32.2.1
+diff -u -r1.32 -r1.32.2.1
+--- sys/kern/subr_pool.c	23 Jul 2002 15:31:36 -0000	1.32
++++ sys/kern/subr_pool.c	4 Nov 2002 15:30:36 -0000	1.32.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: subr_pool.c,v 1.32 2002/07/23 15:31:36 art Exp $	*/
++/*	$OpenBSD: subr_pool.c,v 1.32.2.1 2002/11/04 15:30:36 jason Exp $	*/
+ /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
+ 
+ /*-
+@@ -1947,6 +1947,7 @@
+ 				if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
+ 					return (res);
+ 			}
++			break;
+ 		}
+ 		s = splvm();
+ 		simple_lock(&pa->pa_slock);
+@@ -1961,12 +1962,15 @@
+ pool_allocator_free(struct pool *pp, void *v)
+ {
+ 	struct pool_allocator *pa = pp->pr_alloc;
++	int s;
+ 
+ 	(*pa->pa_free)(pp, v);
+ 
++	s = splvm();
+ 	simple_lock(&pa->pa_slock);
+ 	if ((pa->pa_flags & PA_WANT) == 0) {
+ 		simple_unlock(&pa->pa_slock);
++		splx(s);
+ 		return;
+ 	}
+ 
+@@ -1978,9 +1982,9 @@
+ 		}
+ 		simple_unlock(&pp->pr_slock);
+ 	}
+-	wakeup(pa);
+ 	pa->pa_flags &= ~PA_WANT;
+ 	simple_unlock(&pa->pa_slock);
++	splx(s);
+ }
+ 
+ /*
+

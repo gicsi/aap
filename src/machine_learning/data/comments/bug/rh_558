@@ -1,0 +1,18 @@
+Description of problem:
+After installing python-rdomanager-oscplugin we run the command "openstack undercloud install" to install the undercloud. The command doesn't show any output, which makes it seem like it is not working at all, and it is very tempting to terminate it. Please provide some progress report or output to the user.
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-4.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Additional info:
+It looks like this: 
+
+[stack@instack ~]$ openstack undercloud install
+There is also no logging at all to .instack/ - this should be fixed in the next puddle.
+*** This bug has been marked as a duplicate of bug 1234926 ***

@@ -1,0 +1,199 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhhcQzk50iDb9jtB3DvlObjxHn0QDC6hfnpV6u5yV2tQ/+rLMwWzn5GEOATHGwSPr1vDwCilHhHeklZ8/hIBm7AY=
+
+OpenBSD 5.6 errata 21, Apr 19, 2015
+
+Incorrect logic in smtpd(8) can lead to unexpected client disconnect, invalid
+certificate in SNI negotiation or server crash.
+
+Apply by doing:
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 021_smtpd.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+And then rebuild and install smtpd:
+    cd /usr/src/usr.sbin/smtpd
+    make clean
+    make obj
+    make
+    make install
+
+Index: usr.sbin/smtpd/smtp_session.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/smtp_session.c,v
+retrieving revision 1.215
+diff -u -p -r1.215 smtp_session.c
+--- usr.sbin/smtpd/smtp_session.c	9 Jul 2014 12:44:54 -0000	1.215
++++ usr.sbin/smtpd/smtp_session.c	16 Apr 2015 21:54:44 -0000
+@@ -184,6 +184,7 @@ static uint8_t dsn_notify_str_to_uint8(c
+ static void smtp_auth_failure_pause(struct smtp_session *);
+ static void smtp_auth_failure_resume(int, short, void *);
+ static int smtp_sni_callback(SSL *, int *, void *);
++static const char *smtp_sni_get_servername(struct smtp_session *);
+ 
+ static void smtp_filter_connect(struct smtp_session *, struct sockaddr *);
+ static void smtp_filter_rset(struct smtp_session *);
+@@ -597,7 +598,7 @@ smtp_session_imsg(struct mproc *p, struc
+ 			pkiname = s->smtpname;
+ 		ssl_ctx = dict_get(env->sc_ssl_dict, pkiname);
+ 
+-		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback, s);
++		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback);
+ 		io_set_read(&s->io);
+ 		io_start_tls(&s->io, ssl);
+ 
+@@ -776,6 +777,7 @@ smtp_io(struct io *io, int evt)
+ {
+ 	struct ca_cert_req_msg	req_ca_cert;
+ 	struct smtp_session    *s = io->arg;
++	const char	       *sn;
+ 	char		       *line;
+ 	size_t			len, i;
+ 	X509		       *x;
+@@ -793,6 +795,14 @@ smtp_io(struct io *io, int evt)
+ 		s->kickcount = 0;
+ 		s->phase = PHASE_INIT;
+ 
++		sn = smtp_sni_get_servername(s);
++		if (sn) {
++			if (strlcpy(s->sni, sn, sizeof s->sni) >= sizeof s->sni) {
++				smtp_free(s, "client SNI exceeds max hostname length");
++				return;
++			}
++		}
++
+ 		if (smtp_verify_certificate(s)) {
+ 			io_pause(&s->io, IO_PAUSE_IN);
+ 			break;
+@@ -1877,26 +1887,24 @@ smtp_auth_failure_pause(struct smtp_sess
+ 	evtimer_add(&s->pause, &tv);
+ }
+ 
++static const char *
++smtp_sni_get_servername(struct smtp_session *s)
++{
++	return SSL_get_servername(s->io.ssl, TLSEXT_NAMETYPE_host_name);
++}
++
+ static int
+ smtp_sni_callback(SSL *ssl, int *ad, void *arg)
+ {
+ 	const char		*sn;
+-	struct smtp_session	*s = arg;
+ 	void			*ssl_ctx;
+ 
+ 	sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+ 	if (sn == NULL)
+ 		return SSL_TLSEXT_ERR_NOACK;
+-	if (strlcpy(s->sni, sn, sizeof s->sni) >= sizeof s->sni) {
+-		log_warnx("warn: client SNI exceeds max hostname length");
+-		return SSL_TLSEXT_ERR_NOACK;
+-	}
+ 	ssl_ctx = dict_get(env->sc_ssl_dict, sn);
+-	if (ssl_ctx == NULL) {
+-		log_info("smtp-in: No PKI entry for requested SNI \"%s\""
+-		    "on session %016"PRIx64, sn, s->id);
++	if (ssl_ctx == NULL)
+ 		return SSL_TLSEXT_ERR_NOACK;
+-	}
+ 	SSL_set_SSL_CTX(ssl, ssl_ctx);
+ 	return SSL_TLSEXT_ERR_OK;
+ }
+Index: usr.sbin/smtpd/smtpd.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/smtpd.h,v
+retrieving revision 1.468
+diff -u -p -r1.468 smtpd.h
+--- usr.sbin/smtpd/smtpd.h	10 Jul 2014 14:45:02 -0000	1.468
++++ usr.sbin/smtpd/smtpd.h	16 Apr 2015 21:54:44 -0000
+@@ -1319,7 +1319,7 @@ int fork_proc_backend(const char *, cons
+ 
+ /* ssl_smtpd.c */
+ void   *ssl_mta_init(void *, char *, off_t);
+-void   *ssl_smtp_init(void *, void *, void *);
++void   *ssl_smtp_init(void *, void *);
+ 
+ 
+ /* stat_backend.c */
+Index: usr.sbin/smtpd/ssl_smtpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/ssl_smtpd.c,v
+retrieving revision 1.7
+diff -u -p -r1.7 ssl_smtpd.c
+--- usr.sbin/smtpd/ssl_smtpd.c	29 Apr 2014 19:13:14 -0000	1.7
++++ usr.sbin/smtpd/ssl_smtpd.c	16 Apr 2015 21:54:44 -0000
+@@ -81,7 +81,7 @@ dummy_verify(int ok, X509_STORE_CTX *sto
+ }
+ 
+ void *
+-ssl_smtp_init(void *ssl_ctx, void *sni, void *arg)
++ssl_smtp_init(void *ssl_ctx, void *sni)
+ {
+ 	SSL	*ssl = NULL;
+ 	int	(*cb)(SSL *,int *,void *) = sni;
+@@ -90,10 +90,8 @@ ssl_smtp_init(void *ssl_ctx, void *sni, 
+ 
+ 	SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, dummy_verify);
+ 
+-	if (cb) {
++	if (cb)
+ 		SSL_CTX_set_tlsext_servername_callback(ssl_ctx, cb);
+-		SSL_CTX_set_tlsext_servername_arg(ssl_ctx, arg);
+-	}
+ 
+ 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+ 		goto err;
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhlveFcs8F9nZMBGMjTEtoUSm8vL2xxyv44i4Vuli01myjf4HHVzdDv5lAl93JembgC+xicnA0X5GHGqvWBOhWAc=
+
+OpenBSD 5.6 errata 22, Apr 30, 2015:
+
+Logging to a log file is only possible after the logging system was
+initialized. Trying to log too early allows a remote user to crash
+httpd.
+
+Apply by doing:
+    cd /usr/src
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 022_httpd.patch.sig -m - | \
+        patch -p0
+
+And then rebuild and install httpd:
+    cd usr.sbin/httpd
+    make obj
+    make
+    make install
+
+Index: usr.sbin/httpd/server.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/server.c,v
+retrieving revision 1.39.2.1
+diff -u -p -r1.39.2.1 server.c
+--- usr.sbin/httpd/server.c	20 Nov 2014 07:48:45 -0000	1.39.2.1
++++ usr.sbin/httpd/server.c	23 Apr 2015 17:32:37 -0000
+@@ -836,6 +836,11 @@ server_accept(int fd, short event, void 
+ 	if ((clt = calloc(1, sizeof(*clt))) == NULL)
+ 		goto err;
+ 
++	/* Pre-allocate log buffer */
++	clt->clt_log = evbuffer_new();
++	if (clt->clt_log == NULL)
++		goto err;
++
+ 	clt->clt_s = s;
+ 	clt->clt_fd = -1;
+ 	clt->clt_toread = TOREAD_UNLIMITED;
+@@ -880,13 +885,6 @@ server_accept(int fd, short event, void 
+ 	clt->clt_output = evbuffer_new();
+ 	if (clt->clt_output == NULL) {
+ 		server_close(clt, "failed to allocate output buffer");
+-		return;
+-	}
+-
+-	/* Pre-allocate log buffer */
+-	clt->clt_log = evbuffer_new();
+-	if (clt->clt_log == NULL) {
+-		server_close(clt, "failed to allocate log buffer");
+ 		return;
+ 	}
+ 
+

@@ -1,0 +1,62 @@
+Description of problem:
+
+
+I have installed the 32bit drivers (which Brother says are for even 64bit Fedora like I'm using) that I've successfully used on Ubuntu-14.04 and F20-64bit previously.
+
+tcpdump shows the IPP job flowing over the network to my local CentOS6 cups server - but nothing prints
+
+No error - just disappears
+ 
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+every time
+
+Steps to Reproduce:
+1. create printer using the gnome app, insert server hostname and the Brother queue on it show up. Choose the queue, check the settings for sanity and print
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+This could be a server-side problem I guess, but the server works with Macs, Windows, Ubuntu and even Android via their Cloud print service - it's only this new install of Fedora-22 that is having a problem
+
+The error_log on the server shows no error either :-/
+If you run the printing troubleshooter, does that show up any problems?
+
+https://fedoraproject.org/wiki/How_to_debug_printing_problems#Printing_troubleshooter
+
+It should at least leave you with a diagnostic report that you can attach to this bug report.
+Created attachment 1041703
+debug output from system-config-printer
+
+attached. The only error is a permission denied because I was running that as non-root and it couldn't read /var/spool/cups/tmp. I checked as root and it exists and is writable by lp
+Thanks. Could you please attach the output of 'journalctl CUPS_JOB_ID=18'?
+Created attachment 1042098
+cups-18 journal entry
+Does the CentOS 6 CUPS server have the Brother driver installed as well? If so, can you try setting your local queue to be raw, i.e. no driver?
+
+lpadmin -p MFC7340 -m raw
+
+That way, the server does all the document processing. There is a CUPS design issue that causes issues for some types of driver when both the client and server want to do the document processing.
+That did the trick! The moment I stopped Fedora fiddling with the print job by using lpadmin, it worked
+
+Thanks for that. I've never understood why printing is so hard. Why can't cupsd just publish all printers as generic postscript (because all clients support postscript) and then all the "huffing and puffing" can be done by the printer server admin. Rhethorical question I guess
+
+This is still a bug isn't it? I can't recall having such a problem before...
+(In reply to Jason Haar from comment #6)
+> Why can't cupsd just publish all printers as generic postscript
+
+It does.
+
+The whole thing about the client set-up is that you shouldn't explicitly set up a queue. Applications should use libcups, and they will automatically discover CUPS queues (using DNS-SD).
+
+The only reason to do any more than that (e.g. using cups-browsed, or setting up local queues explicitly) is to work around problems elsewhere such as applications doing their own thing instead of using libcups.

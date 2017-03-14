@@ -1,0 +1,69 @@
+According to everything I've seen, the Fujitsu Scansnap S510 should be completely supported.  Various info around the web indicates that it was plug-n-play as of 2008.  I had one laying around the office, so I plugged it in and the various scanning tools (xsane, gscan2pdf, scanimage -L) don't detect it.  sane-find-scanner finds the scanner but also has some errors.
+
+Note that I've tried with two different scanners of the same model, two different USB cables, and on both F21 and F22 machines (though the three machines I tried have the same motherboard) on both USB3 and USB2 connectors, with and without hubs.  At this point I'm suspecting that some change in behavior relating to the kernel or libusb has caused things to break.  Here's all of the information I can think to provide.
+
+Starting from the bottom up, udev seems to see the scanner and sets it up properly according to the rules I could find there.  udevadm info shows libsane_matched=yes and TAGS=:seat:uaccess:.  (Full output at the end.)
+
+As sane-find-scanner has some odd output:
+
+could not fetch string descriptor: Pipe error
+could not fetch string descriptor: Pipe error
+found USB scanner (vendor=0x04c5, product=0x1155) at libusb:001:101
+
+If I run it as root, the pipe error appears seven times instead of two.
+
+When the device is connected and powered on, the kernel log shows:
+[Jul 1 19:27] usb 1-2: new high-speed USB device number 101 using xhci_hcd
+[  +0.168482] usb 1-2: New USB device found, idVendor=04c5, idProduct=1155
+[  +0.000002] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  +0.000001] usb 1-2: Product: ScanSnap S510
+[  +0.000001] usb 1-2: Manufacturer: Fujitsu
+[  +0.000957] usb 1-2: ep 0x81 - rounding interval to 128 microframes, ep desc says 255 microframes
+[  +0.000003] usb 1-2: ep 0x2 - rounding interval to 128 microframes, ep desc says 255 microframes
+
+And here's the full udevadm output:
+
+> udevadm info /dev/bus/usb/001/101
+P: /devices/pci0000:00/0000:00:14.0/usb1/1-2
+N: bus/usb/001/101
+E: BUSNUM=001
+E: DEVNAME=/dev/bus/usb/001/101
+E: DEVNUM=101
+E: DEVPATH=/devices/pci0000:00/0000:00:14.0/usb1/1-2
+E: DEVTYPE=usb_device
+E: DRIVER=usb
+E: ID_BUS=usb
+E: ID_FOR_SEAT=usb-pci-0000_00_14_0-usb-0_2
+E: ID_MODEL=ScanSnap_S510
+E: ID_MODEL_ENC=ScanSnap\x20S510
+E: ID_MODEL_ID=1155
+E: ID_PATH=pci-0000:00:14.0-usb-0:2
+E: ID_PATH_TAG=pci-0000_00_14_0-usb-0_2
+E: ID_REVISION=0100
+E: ID_SERIAL=Fujitsu_ScanSnap_S510
+E: ID_USB_INTERFACES=:ffffff:
+E: ID_VENDOR=Fujitsu
+E: ID_VENDOR_ENC=Fujitsu\x20
+E: ID_VENDOR_FROM_DATABASE=Fujitsu, Ltd
+E: ID_VENDOR_ID=04c5
+E: MAJOR=189
+E: MINOR=100
+E: PRODUCT=4c5/1155/100
+E: SUBSYSTEM=usb
+E: TAGS=:seat:uaccess:
+E: TYPE=0/0/0
+E: USEC_INITIALIZED=8581839470535
+E: libsane_matched=yes
+I trust this is with the current release of the package, sane-backends-1.0.24-14.fc22?
+
+In that case, please run the following command and paste the output here (or attach if it's too long) to check what goes wrong when scanimage tries to enumerate devices:
+
+SANE_DEBUG_FUJITSU=5 scanimage -L
+Please ignore me.  It seems I didn't have sane-backends-drivers-scanners installed.  For some reason I thought that would be a dependency.
+
+Unfortunately the only thing that gave me any useful info was using SANE_DEBUG_DLL=100, which noted a whole bunch of file not found errors, leading me to notice that /usr/lib64/sane was empty.
+
+I guess if there's a bug here it's that nothing  to tell me that I had no drivers at all.  But that bug isn't this one.
+
+Sorry for the bother.
+Yeah it's unfortunate, but we don't want to have a hard dep on drivers because some core components need the libraries :/.

@@ -1,0 +1,28 @@
+When attempting to do an overcloud deploy specifying an ntp server e.g.
+
+
+openstack overcloud deploy --control-scale 1 --compute-scale 1 --ceph-storage-scale 0 --block-storage-scale 0 --swift-storage-scale 0 --neutron-public-interface eth1 --nodes-json instackenv.json --overcloud_nameserver 192.168.1.1 --floating-ip-cidr 192.168.1.0/24 --floating-ip-start 192.168.1.230 --floating-ip-end 192.168.1.240 --bm-network-gateway 192.168.1.1 --use-tripleo-heat-templates --tripleo-root /home/stack/openstack-deployment/openstack-tripleo-heat-templates --ntp-server 0.au.pool.ntp.org
+
+It fails with the following error
+
+    "deploy_stderr": "\u001b[1;31mWarning: The package type's allow_virtual parameter will be changing its default value from false to true in a future release. If you do not want to allow virtual packages, please explicitly set allow_virtual to false.\n   (at /usr/share/ruby/vendor_ruby/puppet/type.rb:816:in `set_default')\u001b[0m\n\u001b[1;31mError: Could not start Service[ntp]: Execution of '/usr/bin/systemctl start ntpd' returned 6: Failed to issue method call: Unit ntpd.service failed to load: No such file or directory.\nWrapped exception:\nExecution of '/usr/bin/systemctl start ntpd' returned 6: Failed to issue method call: Unit ntpd.service failed to load: No such file or directory.\u001b[0m\n\u001b[1;31mError: /Stage[main]/Ntp::Service/Service[ntp]/ensure: change from stopped to running failed: Could not start Service[ntp]: Execution of '/usr/bin/systemctl start ntpd' returned 6: Failed to issue method call: Unit ntpd.service failed to load: No such file or directory.\u001b[0m\n\u001b[1;31mWarning: /Stage[main]/Ntp/Anchor[ntp::end]: Skipping because of failed dependencies\u001b[0m\n", 
+    "deploy_status_code": 6
+  }
+
+Hard to read but the important part is
+
+Failed to issue method call: Unit ntpd.service failed to load: No such file or directory
+
+can we please make sure ntpd is installed and configured on the overcloud images? Likewise, maybe we should be looking at using systemds timedatectl and chrony instead?
+
+Cheers,
+
+Graeme
+Can you please make sure you list relevant package versions or at least puddle/poodle that you're using?
+
+In this case, I'm going to assume that you're using the 29.1 puddle which did not yet have bug 1233916 fixed
+
+*** This bug has been marked as a duplicate of bug 1233916 ***
+Sorry yeah I was using 29.1 in which case this duplication is correct.
+
+I'll make sure to put the puddle/poodle in the future

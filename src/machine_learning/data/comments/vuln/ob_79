@@ -1,0 +1,8 @@
+The readline library shipped with OpenBSD allows history files creation
+with a permissive
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=umask&amp;sektion=2">umask(2)</a>.
+This can lead to the leakage of sensitive information in applications
+that use passwords and the like during user interaction (one such
+application is mysql).<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/024_readline.patch">
+A source code patch exists which remedies this problem.</a>

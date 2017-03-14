@@ -1,0 +1,2 @@
+There is no english translations in qt5-qttranslations package, fedora 22. Is this new feature? In fedora 21 this package contains qtbase_en.qm and other similiar english files.
+sorry, previous packages also doesn't have qtbase_en.qm

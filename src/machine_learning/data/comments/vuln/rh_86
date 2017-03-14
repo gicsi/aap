@@ -1,0 +1,84 @@
+Description of problem:
+
+Koji build kexec-tools in rawhide create a wrong binary with extra cflags. Local build is ok.
+
+> We updated Fedora kexec-tools to 2.0.9, plan to move to 2.0.10 soon.
+>
+> But I see below error:
+> R_X86_64_29
+> Unhandled rela relocation: R_X86_64_29
+> 
+> There was a similar report before:
+> http://lists.infradead.org/pipermail/kexec/2015-February/013305.html
+> 
+> The strange thing is local build works for me, but koji build server
+> build does not work. 2.0.10 koji build also fails to load.
+>
+
+It should be koji build system problem, I found it adds -fexceptions and
+-fstack-protetor-strong, the cmdline is like below (copied from a test build log):
+
+gcc -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong
+--param=ssp-buffer-size=4 -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -m64 -mtune=generic
+-fno-strict-aliasing -Wall -Wstrict-prototypes -fno-zero-initialized-in-bss -mcmodel=small -Os -fno-builtin -ffreestanding
+-fno-zero-initialized-in-bss -fno-PIC -fno-PIE -fno-stack-protector -fno-exceptions -fno-asynchronous-unwind-tables
+-mcmodel=small -I./purgatory/include -I./purgatory/arch/x86_64/include -I./util_lib/include -I./include -Iinclude
+-I/usr/lib/gcc/x86_64-redhat-linux/5.1.1/include  -c -MD -o purgatory/purgatory.o purgatory/purgatory.c
+
+(-mcmodel=small is added by me for testing it does not help)
+Explain a bit about purgatory build, purgatory is some code which is run in kernel space during kexec loading so some flags does not work for it like -fexceptions -fstack-protector** etc.
+Do you properly have installed "redhat-rpm-config" rpm installed
+when trying local build? koji build (or mock build) always make
+this rpm installed, and it changes %optflags (or it is recommended
+to install "fedora-packager" rpm when trying local build).
+
+Try installing "redhat-rpm-config" rpm if not installed and then
+try what
+$ rpm --eval %optflags
+shows.
+Hi,
+
+On my laptop, the command executed output below results:
+
+➜  kexec-tools git:(master) ✗ rpm --eval %optflags
+-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches  -m64 -mtune=generic
+
+Thanks
+Baoquan
+If you add the following line to the top of the rpm spec file it will remove all the extra hardening flags and take you back to the F-22 equivilent
+
+%undefine _hardened_build
+(In reply to Peter Robinson from comment #4)
+> If you add the following line to the top of the rpm spec file it will remove
+> all the extra hardening flags and take you back to the F-22 equivilent
+> 
+> %undefine _hardened_build
+
+Peter, thanks a lot, it works for me.
+
+Dave
+Just for clarification here:
+
+kexec-tools-2.0.9-2.fc23
+------------------------
+* Thu Jul 02 2015 Dave Young <dyoung@redhat.com> - 2.0.9-2
+- Resolve bug 1236456, kexec load fail because koji add extra gcc flags.
+- Remove -FPIC for makedumpfile since it is not necessary without harden build
+
+koji doesn't do anything with gcc flags what so ever, they are added by rpmbuild when the redhat-rpm-config package is installed. This is part of the build root core packages. You can install it on local machines and the same will happen when using rpmbuild locally or within mock.
+(In reply to Peter Robinson from comment #6)
+> Just for clarification here:
+> 
+> kexec-tools-2.0.9-2.fc23
+> ------------------------
+> * Thu Jul 02 2015 Dave Young <dyoung@redhat.com> - 2.0.9-2
+> - Resolve bug 1236456, kexec load fail because koji add extra gcc flags.
+> - Remove -FPIC for makedumpfile since it is not necessary without harden
+> build
+> 
+> koji doesn't do anything with gcc flags what so ever, they are added by
+> rpmbuild when the redhat-rpm-config package is installed. This is part of
+> the build root core packages. You can install it on local machines and the
+> same will happen when using rpmbuild locally or within mock.
+
+I checked local rpmbuild gcc flags, they are exactly same with koji used, but it is odd local build works, koji build does not.

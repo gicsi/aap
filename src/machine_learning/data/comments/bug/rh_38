@@ -1,0 +1,42 @@
+Created attachment 1049666
+storage.log
+
+I'm using kickstart with following storage information:
+
+# Disk partitioning information
+part /boot --fstype="xfs" --onpart=LABEL=boot
+part luks --fstype="luks" --onpart=UUID=4833c4b4-5038-4df7-bcc0-be10f41b719e --noformat
+volgroup vg --useexisting --noformat # --pesize=4096 pv.528
+logvol swap  --fstype="swap" --name=swap --vgname=vg --useexisting
+logvol /  --fstype="xfs" --label="fedora" --name=fedora --vgname=vg --useexisting
+
+as you can see I've got lvm vg on luks partition, before setup I run:
+
+cryptsetup luksOpen /dev/sda3 lvm
+
+so I can see my vg's and lv's:
+
+[root@localhost liveuser]# lvs
+  LV     VG   Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  fedora vg   -wi-a----- 15.00g                                                    
+  swap   vg   -wi-a-----  4.00g                                                    
+[root@localhost liveuser]# pvs
+  PV              VG   Fmt  Attr PSize  PFree
+  /dev/mapper/lvm vg   lvm2 a--  19.00g 4.00m
+
+when I run anaconda, I'm getting an error:
+
+storage configuration failed: The following problem occurred on line 36 of the kickstart file:
+
+Volume group "vg" given in volgroup command does not exist.
+
+I'm attaching storage.log which was generated.
+
+It appears as if anaconda doesn't scan PV's that are in /dev/mapper, can you please confirm? And if so, would it be possible to use drives in /dev/mapper during anaconda kickstart?
+
+Many thanks.
+It was because I was opening my luks drive with:
+cryptsetup luksOpen /dev/sda3 lvm
+
+I should have used
+cryptsetup luksOpen /dev/sda3 luks-$UUID

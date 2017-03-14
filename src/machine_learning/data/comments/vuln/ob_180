@@ -1,0 +1,6 @@
+Several message handling flaws in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">isakmpd(8)</a>
+have been reported by Thomas Walpuski. These allow an attacker to delete arbitrary SAs.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/014_isakmpd.patch">
+A source code patch exists which remedies this problem.</a>

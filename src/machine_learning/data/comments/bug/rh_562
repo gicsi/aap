@@ -1,0 +1,34 @@
+Description of problem:
+Ctrl+K shortcut for Firefox no longer goes to the search box when the caret is inside an <input> in any page.
+
+
+Version-Release number of selected component (if applicable):
+firefox-38.0.5-2.fc22.x86_64
+
+
+How reproducible:
+Always.
+
+
+Steps to Reproduce:
+1. Go to any page that has an <input>.
+2. Select that input.
+3. Press Ctrl+K.
+
+
+Actual results:
+Nothing happens.
+
+
+Expected results:
+Select search box (https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly?redirectlocale=en-US&redirectslug=Keyboard+shortcuts#w_search)
+
+
+Additional info:
+Ctrl+J works fine.
+Ctrl+K works in Windows on same FF version.
+When in the address bar, Ctrl+K clears it (It should act as Ctrl+J).
+I could get used to Ctrl+J, but this seems a bug anyway. Ctrl+K should work everywhere as it has been always, not just outside inputs.
+Unfortunately that's a Gtk3 bug and we can't fix that (at least I don't know how). See Bug 1224605 for workaround.
+
+*** This bug has been marked as a duplicate of bug 1224605 ***

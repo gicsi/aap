@@ -1,0 +1,6 @@
+In
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ssl&amp;sektion=8">ssl(8)</a> an information leak can occur via timing by performing a MAC computation
+even if incorrect block cipher padding has been found, this is a
+countermeasure. Also, check for negative sizes in memory allocation routines.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/007_ssl.patch">A
+source code patch exists which fixes these two issues</a>.

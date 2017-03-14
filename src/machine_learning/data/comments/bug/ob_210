@@ -1,0 +1,10 @@
+When updating sensors showing the state of RAID volumes
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=mpi&sektion=4">mpi(4)</a>
+allocates temporary memory and then returns it to the kernel as
+device memory.
+This causes kernel memory usage to be misrepresented, eventually
+leading to a denial of service when a resource limit is apparently
+reached.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.6/common/009_mpi.patch">
+A source code patch exists which remedies this problem.</a>

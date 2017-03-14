@@ -1,0 +1,207 @@
+Description of problem:
+
+I am having MySQL standalone server in Fedora 20 Heisenbug.MySQL is getting restarted automatically by the below kernel error in dmesg. Could you please help me how to fix this issue.
+
+OS : Fedora 20 Heisenbug
+Bit : 64bit
+Kernel : 3.11.6-301.fc20.x86_64
+CPU : 10Ghz
+RAM : 45GB
+HDD : 530GB
+MySQL Version : 5.6.15
+
+
+[63361.672628] mysqld invoked oom-killer: gfp_mask=0x10200da, order=0, oom_score_adj=0
+[63361.672651] mysqld cpuset=/ mems_allowed=0
+[63361.676334] CPU: 0 PID: 1356 Comm: mysqld Not tainted 3.11.6-301.fc20.x86_64 #1
+[63361.676345] Hardware name: QEMU prabhu, BIOS Bochs 01/01/2011
+[63361.676358]  0000000000000000 ffff880b3e7cf870 ffffffff816488fb ffff880b3f2f1e80
+[63361.676390]  ffff880b3e7cf8d8 ffffffff8164592f 0000000001320122 0000000000000002
+[63361.676399]  0000000000000000 ffff880b7ffc3b38 ffff880b00000000 0000000000000206
+[63361.676410] Call Trace:
+[63361.678291]  [<ffffffff816488fb>] dump_stack+0x45/0x56
+[63361.679321]  [<ffffffff8164592f>] dump_header+0x7a/0x1b6
+[63361.680200]  [<ffffffff8113f69e>] oom_kill_process+0x1be/0x310
+[63361.680380]  [<ffffffff8113fe79>] out_of_memory+0x439/0x480
+[63361.680484]  [<ffffffff81145d1e>] __alloc_pages_nodemask+0xa0e/0xa20
+[63361.680788]  [<ffffffff81183099>] alloc_pages_current+0xa9/0x170
+[63361.680793]  [<ffffffff8113c297>] __page_cache_alloc+0xc7/0xf0
+[63361.680796]  [<ffffffff8113c9ff>] grab_cache_page_write_begin+0x6f/0xd0
+[63361.681365]  [<ffffffff8122ed84>] ext4_da_write_begin+0x94/0x300
+[63361.681823]  [<ffffffff8122f84a>] ? ext4_da_write_end+0xba/0x250
+[63361.681827]  [<ffffffff8113bec3>] generic_file_buffered_write+0x103/0x270
+[63361.681831]  [<ffffffff8113df41>] __generic_file_aio_write+0x1c1/0x3d0
+[63361.681835]  [<ffffffff8113e1ad>] generic_file_aio_write+0x5d/0xc0
+[63361.681838]  [<ffffffff812250b9>] ext4_file_write+0x99/0x3f0
+[63361.682319]  [<ffffffff811bb706>] ? core_sys_select+0x236/0x2e0
+[63361.682335]  [<ffffffff8164d10a>] ? __schedule+0x2ba/0x750
+[63361.682525]  [<ffffffff811a7a10>] do_sync_write+0x80/0xb0
+[63361.682531]  [<ffffffff811a811d>] vfs_write+0xbd/0x1e0
+[63361.682535]  [<ffffffff811a8cd2>] SyS_pwrite64+0x72/0xb0
+[63361.682726]  [<ffffffff81657b19>] system_call_fastpath+0x16/0x1b
+[63361.682734] Mem-Info:
+[63361.682742] Node 0 DMA per-cpu:
+[63361.682846] CPU    0: hi:    0, btch:   1 usd:   0
+[63361.682849] CPU    1: hi:    0, btch:   1 usd:   0
+[63361.682851] CPU    2: hi:    0, btch:   1 usd:   0
+[63361.682852] CPU    3: hi:    0, btch:   1 usd:   0
+[63361.682854] CPU    4: hi:    0, btch:   1 usd:   0
+[63361.682856] CPU    5: hi:    0, btch:   1 usd:   0
+[63361.682857] CPU    6: hi:    0, btch:   1 usd:   0
+[63361.682859] CPU    7: hi:    0, btch:   1 usd:   0
+[63361.682861] CPU    8: hi:    0, btch:   1 usd:   0
+[63361.682862] CPU    9: hi:    0, btch:   1 usd:   0
+[63361.682864] Node 0 DMA32 per-cpu:
+[63361.682866] CPU    0: hi:  186, btch:  31 usd:  51
+[63361.682868] CPU    1: hi:  186, btch:  31 usd:  18
+[63361.682870] CPU    2: hi:  186, btch:  31 usd:   5
+[63361.682872] CPU    3: hi:  186, btch:  31 usd:   0
+[63361.682874] CPU    4: hi:  186, btch:  31 usd:  36
+[63361.682876] CPU    5: hi:  186, btch:  31 usd:   0
+[63361.682877] CPU    6: hi:  186, btch:  31 usd:  70
+[63361.682879] CPU    7: hi:  186, btch:  31 usd:   0
+[63361.682881] CPU    8: hi:  186, btch:  31 usd:  33
+[63361.682882] CPU    9: hi:  186, btch:  31 usd:  96
+[63361.682884] Node 0 Normal per-cpu:
+[63361.682885] CPU    0: hi:  186, btch:  31 usd:  20
+[63361.682887] CPU    1: hi:  186, btch:  31 usd:  15
+[63361.682889] CPU    2: hi:  186, btch:  31 usd:  47
+[63361.682890] CPU    3: hi:  186, btch:  31 usd:  29
+[63361.682892] CPU    4: hi:  186, btch:  31 usd: 159
+[63361.682893] CPU    5: hi:  186, btch:  31 usd:   0
+[63361.682895] CPU    6: hi:  186, btch:  31 usd: 173
+[63361.682896] CPU    7: hi:  186, btch:  31 usd:   0
+[63361.682898] CPU    8: hi:  186, btch:  31 usd:  81
+[63361.682899] CPU    9: hi:  186, btch:  31 usd: 114
+[63361.683078] active_anon:10733788 inactive_anon:636409 isolated_anon:0
+ active_file:165 inactive_file:8362 isolated_file:64
+ unevictable:0 dirty:5091 writeback:0 unstable:0
+ free:63074 slab_reclaimable:5172 slab_unreclaimable:41395
+ mapped:992 shmem:36 pagetables:24581 bounce:0
+ free_cma:0
+[63361.683094] Node 0 DMA free:15908kB min:20kB low:24kB high:28kB active_anon:0kB inactive_anon:0kB active_file:0kB inactive_file:0kB unevictable:0kB isolated(anon):0kB isolated(file):0kB present:15992kB managed:15908kB mlocked:0kB dirty:0kB writeback:0kB mapped:0kB shmem:0kB slab_reclaimable:0kB slab_unreclaimable:0kB kernel_stack:0kB pagetables:0kB unstable:0kB bounce:0kB free_cma:0kB writeback_tmp:0kB pages_scanned:0 all_unreclaimable? yes
+[63361.683105] lowmem_reserve[]: 0 2976 45262 45262
+[63361.683109] Node 0 DMA32 free:173532kB min:4440kB low:5548kB high:6660kB active_anon:2289960kB inactive_anon:573544kB active_file:16kB inactive_file:3316kB unevictable:0kB isolated(anon):0kB isolated(file):0kB present:3129332kB managed:3051800kB mlocked:0kB dirty:2876kB writeback:0kB mapped:8kB shmem:8kB slab_reclaimable:656kB slab_unreclaimable:4860kB kernel_stack:88kB pagetables:4260kB unstable:0kB bounce:0kB free_cma:0kB writeback_tmp:0kB pages_scanned:824 all_unreclaimable? yes
+[63361.683114] lowmem_reserve[]: 0 0 42286 42286
+[63361.683117] Node 0 Normal free:62856kB min:63116kB low:78892kB high:94672kB active_anon:40645192kB inactive_anon:1972092kB active_file:644kB inactive_file:30132kB unevictable:0kB isolated(anon):0kB isolated(file):256kB present:44040192kB managed:43300888kB mlocked:0kB dirty:17488kB writeback:0kB mapped:3960kB shmem:136kB slab_reclaimable:20032kB slab_unreclaimable:160720kB kernel_stack:2152kB pagetables:94064kB unstable:0kB bounce:0kB free_cma:0kB writeback_tmp:0kB pages_scanned:16914 all_unreclaimable? yes
+[63361.683122] lowmem_reserve[]: 0 0 0 0
+[63361.683125] Node 0 DMA: 1*4kB (U) 0*8kB 0*16kB 1*32kB (U) 2*64kB (U) 1*128kB (U) 1*256kB (U) 0*512kB 1*1024kB (U) 1*2048kB (R) 3*4096kB (M) = 15908kB
+[63361.683345] Node 0 DMA32: 147*4kB (UE) 54*8kB (UEM) 3017*16kB (UEM) 1300*32kB (UEM) 382*64kB (UEM) 107*128kB (UEM) 48*256kB (UEM) 27*512kB (UEM) 18*1024kB (UEM) 0*2048kB 0*4096kB = 173580kB
+[63361.683356] Node 0 Normal: 436*4kB (UEM) 521*8kB (UEM) 351*16kB (UE) 488*32kB (UE) 265*64kB (UEM) 72*128kB (UEM) 21*256kB (UEM) 2*512kB (UM) 3*1024kB (M) 0*2048kB 0*4096kB = 62792kB
+[63361.685489] Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+[63361.685494] 43835 total pagecache pages
+[63361.685497] 35127 pages in swap cache
+[63361.685704] Swap cache stats: add 1465011, delete 1429884, find 394537/470251
+[63361.685706] Free swap  = 0kB
+[63361.685707] Total swap = 2129916kB
+[63421.719169] INFO: rcu_sched self-detected stall on CPU { 0}  (t=60000 jiffies g=1860809 c=1860808 q=71887)
+[63421.719169] sending NMI to all CPUs:
+[63421.719169] NMI backtrace for cpu 0
+[63421.719169] CPU: 0 PID: 1356 Comm: mysqld Not tainted 3.11.6-301.fc20.x86_64 #1
+[63421.719169] Hardware name: QEMU CloudSigma, BIOS Bochs 01/01/2011
+[63421.719169] task: ffff880b3f2f1e80 ti: ffff880b3e7ce000 task.ti: ffff880b3e7ce000
+[63421.719169] RIP: 0010:[<ffffffff8104c2da>]  [<ffffffff8104c2da>] native_write_msr_safe+0xa/0x10
+[63421.719169] RSP: 0018:ffff880b52003d88  EFLAGS: 00000046
+[63421.719169] RAX: 0000000000000400 RBX: 0000000000000000 RCX: 0000000000000830
+[63421.719169] RDX: 0000000000000000 RSI: 0000000000000400 RDI: 0000000000000830
+[63421.719169] RBP: ffff880b52003d88 R08: ffffffff81cece40 R09: 0000000000000297
+[63421.719169] R10: 0000000000000000 R11: ffff880b52003b2e R12: ffffffff81cece40
+[63421.719169] R13: 0000000000000000 R14: 000000000000b03a R15: 0000000000000002
+[63421.719169] FS:  00007fb550abc700(0000) GS:ffff880b52000000(0000) knlGS:0000000000000000
+[63421.719169] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[63421.719169] CR2: 000000009a7c4000 CR3: 0000000b3e085000 CR4: 00000000000006f0
+[63421.719169] Stack:
+[63421.719169]  ffff880b52003dd8 ffffffff81045bcc 0000000000000092 0000000000000002
+[63421.719169]  0008000052003df8 0000000000002710 ffffffff81c50280 ffffffff81c50280
+[63421.719169]  ffff880b5200eb80 00000000000118cf ffff880b52003de8 ffffffff81045c0c
+[63421.719169] Call Trace:
+[63421.719169]  <IRQ> 
+
+[63421.719169]  [<ffffffff81045bcc>] __x2apic_send_IPI_mask+0xac/0xd0
+[63421.719169]  [<ffffffff81045c0c>] x2apic_send_IPI_all+0x1c/0x20
+[63421.719169]  [<ffffffff8104261b>] arch_trigger_all_cpu_backtrace+0x5b/0x90
+[63421.719169]  [<ffffffff810feb5d>] rcu_check_callbacks+0x30d/0x5f0
+[63421.719169]  [<ffffffff810749a7>] update_process_times+0x47/0x80
+[63421.719169]  [<ffffffff810c0d55>] tick_sched_handle.isra.15+0x25/0x60
+[63421.719169]  [<ffffffff810c0dd1>] tick_sched_timer+0x41/0x60
+[63421.719169]  [<ffffffff8108bc63>] __run_hrtimer+0x73/0x1d0
+[63421.719169]  [<ffffffff810c0d90>] ? tick_sched_handle.isra.15+0x60/0x60
+[63421.719169]  [<ffffffff8108c477>] hrtimer_interrupt+0xf7/0x240
+[63421.719169]  [<ffffffff81040a57>] local_apic_timer_interrupt+0x37/0x60
+[63421.719169]  [<ffffffff81659d7f>] smp_apic_timer_interrupt+0x3f/0x60
+[63421.719169]  [<ffffffff8165871d>] apic_timer_interrupt+0x6d/0x80
+[63421.719169]  <EOI> 
+
+[63421.719169]  [<ffffffff81300ed5>] ? show_mem+0xe5/0x1e0
+[63421.719169]  [<ffffffff81300f9e>] ? show_mem+0x1ae/0x1e0
+[63421.719169]  [<ffffffff8164594b>] dump_header+0x96/0x1b6
+[63421.719169]  [<ffffffff8113f69e>] oom_kill_process+0x1be/0x310
+[63421.719169]  [<ffffffff8113fe79>] out_of_memory+0x439/0x480
+[63421.719169]  [<ffffffff81145d1e>] __alloc_pages_nodemask+0xa0e/0xa20
+[63421.719169]  [<ffffffff81183099>] alloc_pages_current+0xa9/0x170
+[63421.719169]  [<ffffffff8113c297>] __page_cache_alloc+0xc7/0xf0
+[63421.719169]  [<ffffffff8113c9ff>] grab_cache_page_write_begin+0x6f/0xd0
+[63421.719169]  [<ffffffff8122ed84>] ext4_da_write_begin+0x94/0x300
+[63421.719169]  [<ffffffff8122f84a>] ? ext4_da_write_end+0xba/0x250
+[63421.719169]  [<ffffffff8113bec3>] generic_file_buffered_write+0x103/0x270
+[63421.719169]  [<ffffffff8113df41>] __generic_file_aio_write+0x1c1/0x3d0
+[63421.719169]  [<ffffffff8113e1ad>] generic_file_aio_write+0x5d/0xc0
+[63421.719169]  [<ffffffff812250b9>] ext4_file_write+0x99/0x3f0
+[63421.719169]  [<ffffffff811bb706>] ? core_sys_select+0x236/0x2e0
+[63421.719169]  [<ffffffff8164d10a>] ? __schedule+0x2ba/0x750
+[63421.719169]  [<ffffffff811a7a10>] do_sync_write+0x80/0xb0
+[63421.719169]  [<ffffffff811a811d>] vfs_write+0xbd/0x1e0
+[63421.719169]  [<ffffffff811a8cd2>] SyS_pwrite64+0x72/0xb0
+[63421.719169]  [<ffffffff81657b19>] system_call_fastpath+0x16/0x1b
+[63421.719169] Code: 00 55 89 f9 48 89 e5 0f 32 31 c9 89 c0 48 c1 e2 20 89 0e 48 09 c2 48 89 d0 5d c3 66 0f 1f 44 00 00 55 89 f0 89 f9 48 89 e5 0f 30 <31> c0 5d c3 66 90 55 89 f9 48 89 e5 0f 33 89 c0 48 c1 e2 20 48 
+[63421.729882] NMI backtrace for cpu 3
+[63421.729891] CPU: 3 PID: 1344 Comm: mysqld Not tainted 3.11.6-301.fc20.x86_64 #1
+[63421.729893] Hardware name: QEMU CloudSigma, BIOS Bochs 01/01/2011
+[63421.729897] task: ffff880b3da9e320 ti: ffff880a0978a000 task.ti: ffff880a0978a000
+[63421.729899] RIP: 0010:[<ffffffff8164f322>]  [<ffffffff8164f322>] _raw_spin_lock+0x22/0x30
+[63421.729910] RSP: 0000:ffff880a0978b850  EFLAGS: 00000293
+[63421.729912] RAX: 000000000000000d RBX: ffff880b3c931c10 RCX: ffff880a0978bfd8
+[63421.729914] RDX: 000000000000000f RSI: 0000000000000080 RDI: ffff880b3c931c80
+[63421.729916] RBP: ffff880a0978b850 R08: 0000000000000080 R09: 0000000000000340
+[63421.729918] R10: 0000000000000001 R11: 0000000000000001 R12: ffff880a0978ba28
+[63421.729920] R13: ffff880b3d66ec00 R14: ffff880b3c931800 R15: 0000000000004160
+[63421.729927] FS:  00007fb5532c1700(0000) GS:ffff880b52180000(0000) knlGS:0000000000000000
+[63421.729930] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[63421.729932] CR2: 00007fc031617644 CR3: 0000000b3e085000 CR4: 00000000000006e0
+[63421.729946] Stack:
+[63421.729949]  ffff880a0978b8b0 ffffffff81265adf ffff880b3d034280 0000000000000000
+[63421.729956]  0000008000000000 ffff880a0978b878 ffff880a0978b878 ffff880b3c931be0
+[63421.729974]  ffff880a0978ba28 ffff880b3d66ec00 0000000000004160 0000000000004160
+[63421.729978] Call Trace:
+
+Hardware :
+#cat /proc/cpuinfo
+
+processor	: 0
+vendor_id	: AuthenticAMD
+cpu family	: 15
+model		: 6
+model name	: Common KVM processor
+stepping	: 1
+microcode	: 0x1000065
+cpu MHz		: 2499.934
+cache size	: 512 KB
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 5
+wp		: yes
+flags		: fpu de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 syscall nx lm rep_good nopl extd_apicid pni cx16 x2apic hypervisor
+bogomips	: 4999.86
+TLB size	: 1024 4K pages
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 40 bits physical, 48 bits virtual
+power management:
+
+
+Please help me to fix this issue.It is in production and daily MySQL is getting restarted automatically.
+
+
+Regards,
+Prabhu
+Reassigning to 'kernel' component.  Note that F20 is end of life.

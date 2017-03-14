@@ -1,0 +1,38 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 010_fifofs.patch
+
+And then rebuild your kernel.
+
+Index: sys/miscfs/fifofs/fifo_vnops.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/fifofs/fifo_vnops.c,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- sys/miscfs/fifofs/fifo_vnops.c	2 Mar 2004 04:42:52 -0000	1.19
++++ sys/miscfs/fifofs/fifo_vnops.c	26 May 2004 20:27:43 -0000	1.19.2.1
+@@ -191,18 +191,20 @@ fifo_open(v)
+ 		rso->so_state |= SS_CANTRCVMORE;
+ 	}
+ 	if (ap->a_mode & FREAD) {
+-		if (fip->fi_readers++ == 0) {
++		fip->fi_readers++;
++		if (fip->fi_readers == 1) {
+ 			fip->fi_writesock->so_state &= ~SS_CANTSENDMORE;
+ 			if (fip->fi_writers > 0)
+ 				wakeup(&fip->fi_writers);
+ 		}
+ 	}
+ 	if (ap->a_mode & FWRITE) {
++		fip->fi_writers++;
+ 		if ((ap->a_mode & O_NONBLOCK) && fip->fi_readers == 0) {
+ 			error = ENXIO;
+ 			goto bad;
+ 		}
+-		if (fip->fi_writers++ == 0) {
++		if (fip->fi_writers == 1) {
+ 			fip->fi_readsock->so_state &= ~SS_CANTRCVMORE;
+ 			if (fip->fi_readers > 0)
+ 				wakeup(&fip->fi_readers);
+

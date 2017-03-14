@@ -1,0 +1,8 @@
+'git am'able fix attached, let me know if you'd like me to push and
+build this for devel.
+Created attachment 1044661
+Install bash completion
+
+- Ship LICENSE.txt as %license where available
+LGTM. Feel free to go ahead with this. Thanks!
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10252507

@@ -1,0 +1,77 @@
+Created attachment 1040822
+the old uuid name still exist.
+
+Description of problem:
+The old uuid name can't be replaced after enabled the hypervisor_id
+
+Version-Release number of selected component (if applicable):
+ - RHEL6.7-20150617.0-Server-x86_64 + rhevm-3.5.3 (RHEVM mode) against Stage Candlepin
+ - libvirt-0.10.2-54.el6.x86_64
+ - virt-who-0.12-10.el6.noarch
+ - subscription-manager-1.14.10-1.el6.x86_64
+
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. don't set hypervisor_id option, check the Name on stage candlepin
+# vi /etc/virt-who.d/virt_rhevm
+[test-rhevm]
+type=rhevm
+server=https://10.66.79.1:443
+username=admin@internal
+password=redhat
+owner=7616313
+env=7616313
+
+# tail -f /var/log/rhsm/rhsm.log
+2015-06-19 17:11:54,459 [INFO]  @subscriptionmanager.py:124 - Sending update in hosts-to-guests mapping: {'b06477df-4c6d-4843-8f91-f91b138cd245': [], 'ae4db90e-6b97-4c5f-892d-2cec78bc6490': ['bdd11d83-9b28-458f-9a4f-899ef5d25a41', 'aff0c98d-d090-433d-beb5-25f120281d9e']}
+2015-06-19 17:11:54,460 [DEBUG]  @subscriptionmanager.py:76 - Authenticating with certificate: /etc/pki/consumer/cert.pem
+2015-06-19 17:12:04,019 [INFO]  @virtwho.py:147 - virt-who host/guest association update successful
+
+The Name from candlepin web site is:
+b06477df-4c6d-4843-8f91-f91b138cd245
+ae4db90e-6b97-4c5f-892d-2cec78bc6490
+
+
+2.set hypervisor_id option, check the Name on stage candlepin
+# vi /etc/virt-who.d/virt_rhevm
+[test-rhevm]
+type=rhevm
+server=https://10.66.79.1:443
+username=admin@internal
+password=redhat
+owner=7616313
+env=7616313
+hypervisor_id=hostname
+
+# tail -f /var/log/rhsm/rhsm.log
+2015-06-19 17:37:04,467 [INFO]  @subscriptionmanager.py:124 - Sending update in hosts-to-guests mapping: {'10.66.144.3': [], '10.66.144.4': ['bdd11d83-9b28-458f-9a4f-899ef5d25a41', 'aff0c98d-d090-433d-beb5-25f120281d9e']}
+2015-06-19 17:37:04,468 [DEBUG]  @subscriptionmanager.py:72 - Authenticating with RHSM username virt-who-test
+2015-06-19 17:37:09,193 [INFO]  @virtwho.py:147 - virt-who host/guest association update successful
+
+The Name from candlepin web site is:
+b06477df-4c6d-4843-8f91-f91b138cd245
+ae4db90e-6b97-4c5f-892d-2cec78bc6490 
+10.66.144.3
+10.66.144.4
+
+
+Actual results:
+The old uuid name still exist, can't be replaced by the IP name.
+
+Expected results:
+if set hypervisor_id=hostname, the old uuid name can be replaced by the new name.
+
+Additional info:
+set hypervisor_id=hwuuid, also will create the new name, all the old Name still exist.
+From virt-who-config(5) man page:
+
+"This property is meant to be set up before initial run of virt-who. Changing it later will result in duplicated entries in the subscription manager."
+
+There is currently no way to change identification of hypervisor in the SAM server.
+
+Changing the hypervisor_id after initial run of virt-who is not supported. Duplicating the entries is expected and documented result.
+
+I'm closing this one as CANTFIX.

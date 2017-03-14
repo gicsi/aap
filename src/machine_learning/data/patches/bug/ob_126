@@ -1,0 +1,36 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_syspipe.patch
+And then rebuild your kernel.
+
+Index: sys/kern/uipc_syscalls.c
+===================================================================
+RCS file: /cvs/src/sys/kern/uipc_syscalls.c,v
+retrieving revision 1.42
+diff -u -r1.42 uipc_syscalls.c
+--- sys/kern/uipc_syscalls.c	20 Sep 2001 17:02:31 -0000	1.42
++++ sys/kern/uipc_syscalls.c	5 Feb 2002 19:20:55 -0000
+@@ -863,10 +863,7 @@
+ }
+ 
+ int
+-sys_pipe(p, v, retval)
+-	struct proc *p;
+-	void *v;
+-	register_t *retval;
++sys_pipe(struct proc *p, void *v, register_t *retval)
+ {
+ 	register struct sys_pipe_args /* {
+ 		syscallarg(int *) fdp;
+@@ -882,8 +879,8 @@
+ 	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),
+ 	    2 * sizeof (int));
+ 	if (error) {
+-		fdrelease(p, retval[0]);
+-		fdrelease(p, retval[1]);
++		fdrelease(p, fds[0]);
++		fdrelease(p, fds[1]);
+ 	}
+ 	return (error);
+ }
+

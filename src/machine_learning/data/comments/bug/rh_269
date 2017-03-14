@@ -1,0 +1,65 @@
+Description of problem:
+While removing CDROM from rhevm-shell, it shows successful message but from the 
+windows explorer, it is still there and accessible.
+
+--------------------------
+[RHEVM shell (connected)]# add cdrom --vm-identifier test-win7 --file-id rhev-hypervisor7-7.0-20150127.0.iso
+
+id     : 00000000-0000-0000-0000-000000000000
+file-id: rhev-hypervisor7-7.0-20150127.0.iso
+vm-id  : 4c771813-a544-40d5-b2fa-2f84b3e27801
+
+[RHEVM shell (connected)]# remove cdrom 00000000-0000-0000-0000-000000000000 --vm-identifier test-win7 --file-id rhev-hypervisor7-7.0-20150127.0.iso
+
+job-id      : 42e23f9c-5b2e-44e0-bb31-808b3cfe6f3d
+status-state: complete
+
+[RHEVM shell (connected)]# 
+--------------------------
+
+Version-Release number of selected component (if applicable):
+Red Hat Enterprise Virtualization 3.5.3
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Login to rhevm-shell.
+2. Remove the cdrom. 
+3. Access the windows guest and see the "My Computer"
+
+Actual results:
+CD is still attached and accessible in the guest.
+Because of this, one cannot put ISO Domain in maintenance.
+
+Expected results:
+CD must eject.
+Should be able to put ISO domain to maintenance.
+
+Additional info:
+As per the documentation, the symtax is wrong. This should be modified.
+
+https://documentation-devel.engineering.redhat.com/site/documentation/en-US/Red_Hat_Enterprise_Virtualization/3.5/html-single/Technical_Guide/index.html#cdrom
+
+The "RHEVM Shell" command option to remove 'cdrom' is not correct in Command Line Shell Guide
+https://access.redhat.com/solutions/794863
+The remove command detaches the CDROM from the VM so that it won't be available the *next* time the machine is started, it doesn't eject the CDROM currently attached. The way to eject the CDROM is to update it (not remove) using an empty string as the name of the file and the "current" parameter:
+
+  # update cdrom 00000000-0000-0000-0000-000000000000 --vm-identifier test-win7 --current true --file-id ""
+
+Please check if this works correctly, and open a different bug for the documentation issue.
+Hello Juan Hernández,
+
+This works perfectly fine. I will ask customer to do so and after that he should be able to put ISO domain in maintenance. 
+
+[RHEVM shell (connected)]# update cdrom 00000000-0000-0000-0000-000000000000 --vm-identifier test-win7 --current true --file-id ""
+
+id: 00000000-0000-0000-0000-000000000000
+file-id: 
+
+Thanks.
+I will update for any queries, else this can be closed.
+
+--
+Regards,
+Ulhas Surse

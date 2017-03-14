@@ -1,0 +1,16 @@
+Your package greenisland failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10094875
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046956
+build.log
+Created attachment 1046957
+root.log
+Created attachment 1046958
+state.log
+Package is really old and needs to be updated.
+I'm on it.
+Fixed
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10291581

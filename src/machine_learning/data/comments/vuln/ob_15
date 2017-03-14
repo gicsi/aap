@@ -1,0 +1,7 @@
+Some non-allocated file descriptors have implied uses according to
+system libraries, and hence setuid and setgid processes should not
+be executed with these descriptors unallocated.  A patch which forces
+setuid and setgid processes to have some descriptors in fd slots
+0, 1, and 2 is
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/fdalloc.patch">
+available here.</a>

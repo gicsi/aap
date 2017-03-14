@@ -1,0 +1,14 @@
+Your package sparkleshare failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10154353
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048372
+build.log
+Created attachment 1048373
+root.log
+Created attachment 1048374
+state.log
+The problem seems to be resolved
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10302231

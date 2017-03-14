@@ -1,0 +1,56 @@
+To apply:
+	cd /usr/src/sys/dev/atapi
+	patch -p0 < atapi.patch
+
+Index: acd.c
+===================================================================
+RCS file: /cvs/src/sys/dev/atapi/acd.c,v
+retrieving revision 1.29
+retrieving revision 1.32
+diff -u -r1.29 -r1.32
+--- acd.c	1997/10/18 10:37:06	1.29
++++ acd.c	1998/07/12 01:20:20	1.32
+@@ -1101,6 +1093,7 @@
+ {
+ 	struct atapi_read_cd_capacity_data rdcap;
+ 	struct atapi_read_cd_capacity cmd;
++	int result;
+ 
+ 	if (acd->ad_link->quirks & AQUIRK_NOCAPACITY) {
+ 		/*
+@@ -1125,8 +1118,15 @@
+ 	 * If the command works, interpret the result as a 4 byte
+ 	 * number of blocks and a blocksize
+ 	 */
+-	if (atapi_exec_cmd(acd->ad_link, &cmd, sizeof(cmd),
+-	    &rdcap, sizeof(rdcap), B_READ, 0) != 0) {
++	result = atapi_exec_cmd(acd->ad_link, &cmd, sizeof(cmd),
++				&rdcap, sizeof(rdcap), B_READ, 0);
++	if (result != 0) {
++		u_int8_t error = result >> 8;
++		/* Get the sense key and check for an illegal request */
++		if ((error >> 4) == ATAPI_SK_ILLEGAL_REQUEST) {
++			acd->ad_link->quirks |= AQUIRK_NOCAPACITY;
++			return acd_size(acd, flags);
++		}
+ 		ATAPI_DEBUG_PRINT(("ATAPI_READ_CD_CAPACITY failed\n"));
+ 		return 0;
+ 	}
+Index: atapiconf.c
+===================================================================
+RCS file: /cvs/src/sys/dev/atapi/atapiconf.c,v
+retrieving revision 1.21
+diff -u -r1.21 atapiconf.c
+--- atapiconf.c	1998/01/02 18:22:07	1.21
++++ atapiconf.c	1998/08/04 21:42:18
+@@ -354,6 +357,9 @@
+ 		if ((flags & A_POLLED) != 0)
+ 			atapi_free_pkt(pkt);
+ 	}
++
++	if ((pkt->status & ERROR) && (pkt->error))
++	     status |= pkt->error << 8;
+ 
+ 	return status;
+ }
+

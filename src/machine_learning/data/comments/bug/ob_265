@@ -1,0 +1,4 @@
+Incorrect RX ring computation leads to panics under load with bge(4), em(4) and ix(4).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.6/common/001_rxr.patch.sig">
+A source code patch exists which remedies this problem.</a>

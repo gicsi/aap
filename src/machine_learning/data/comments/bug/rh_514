@@ -1,0 +1,9 @@
+Created attachment 1042663
+build log
+
+Description of problem:
+With clear checkout of RH git in rhel-7.2 branch, I get attached FTBFS. What's wrong?
+
+Version-Release number of selected component (if applicable):
+libpeas-1.8.0-5.el7
+*** This bug has been marked as a duplicate of bug 1235221 ***

@@ -1,0 +1,6 @@
+See also https://bugzilla.redhat.com/show_bug.cgi?id=1233429
+
+The command `openstack overcloud scale stack` should accept the Tuskar plan as --plan and accept either the name or ID. The command should work without a Tuskar plan for users that want to scale a tripleo heat template deploy.
+I am not sure if this is worth doing however, as see this bug also: https://bugzilla.redhat.com/show_bug.cgi?id=1233201
+As there are now more general ways how to scale stack, the solution here would be to remove "openstack scale stack" command entirely instead of extending it, correct?
+Yeah, that probably would be the best approach - and since it looks like you agree  on the other bug we can close this one.

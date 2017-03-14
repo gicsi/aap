@@ -1,0 +1,61 @@
+Description of problem:
+On every page has to be downloaded insights.js - 60000 LOC, 3 MB file, even if Insights is not enabled. Causing regression - page anchors don't work.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. Have Insights disabled
+2. Go to $SAT/rhn/apidoc/handlers/SystemHandler.jsp#getEntitlements
+
+Actual results:
+insights.js is downloaded despite disabled service, anchor does not work because URL is malformed
+
+Expected results:
+insights.js is not required and page anchor works
+Insights.js must be loaded on each page. There is no way to determine if Insights is enabled otherwise. The page anchors not working was due to angular-ui-router being mis-configured. It is fixed in redhat-access-plugin-sat5-1.0.4-15.el6.
+(In reply to Chris Kyrouac from comment #1)
+> Insights.js must be loaded on each page. There is no way to determine if
+> Insights is enabled otherwise. The page anchors not working was due to
+> angular-ui-router being mis-configured. It is fixed in
+> redhat-access-plugin-sat5-1.0.4-15.el6.
+
+It's better now, if you click on link you will get on requested anchor but there is still redundant '/' slash in URL. (e.g. '/rhn/apidoc/handlers/SlaveHandler.jsp#/update'). So if you refresh page you will not be navigated to the same place.
+(In reply to Chris Kyrouac from comment #1)
+> Insights.js must be loaded on each page. There is no way to determine if
+> Insights is enabled otherwise.
+
+I do not agree here. Satellite serves over 630 pages. Pages really needed to run insights.js are how many - 10? The amount of pages that need to run the js is simply too low to burden all the pages with that specific script.
+
+There is always a better solution.
+Yes, with unlimited time we could solve a lot of problems. I agree loading the script on every page is unnecessary given there is no caching in place. For the GA release I will create a lightweight loader.js script which will simply determine if more code needs to be pulled in to the browser. loader.js will run on every page.
+Verified.
+spacewalk-java-2.3.8-106
+redhat-access-plugin-sat5-1.0.5-16
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHEA-2015-1179.html
+(In reply to Chris Kyrouac from comment #5)
+> I agree loading
+> the script on every page is unnecessary given there is no caching in place.
+> For the GA release I will create a lightweight loader.js script which will
+> simply determine if more code needs to be pulled in to the browser.
+> loader.js will run on every page.
+
+Thank you. Do you need a separate BZ to track and properly QA the change?
+Yes that would be great. I've made the changes, they will be in the next build.
+(In reply to Chris Kyrouac from comment #10)
+> Yes that would be great. I've made the changes, they will be in the next
+> build.
+
+Thanks, I opened Bug 1238743 for that purpose.

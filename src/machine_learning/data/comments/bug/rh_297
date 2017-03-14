@@ -1,0 +1,28 @@
+# rpm -q gdm
+gdm-3.14.2-3.el7.x86_64
+
+Jun 30 21:59:24 icarus gnome-session[1643]: (gnome-shell:1789): Gjs-WARNING **: JS ERROR: Exception in callback for signal: startup-prepared: Error: Expected type utf8 for Argument 'key' but got type 'undefined'
+Jun 30 21:59:24 icarus gnome-session[1643]: LoginDialog<._updateBanner@resource:///org/gnome/shell/gdm/loginDialog.js:732
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: LoginDialog<._init@resource:///org/gnome/shell/gdm/loginDialog.js:480
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: _Base.prototype._construct@resource:///org/gnome/gjs/modules/lang.js:110
+Jun 30 21:59:24 icarus gnome-session[1643]: Class.prototype._construct/newClass@resource:///org/gnome/gjs/modules/lang.js:204
+Jun 30 21:59:24 icarus gnome-session[1643]: ScreenShield<._ensureUnlockDialog@resource:///org/gnome/shell/ui/screenShield.js:972
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: ScreenShield<.showDialog@resource:///org/gnome/shell/ui/screenShield.js:913
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: _initializeUI/<@resource:///org/gnome/shell/ui/main.js:200
+Jun 30 21:59:24 icarus gnome-session[1643]: _emit@resource:///org/gnome/gjs/modules/signals.js:124
+Jun 30 21:59:24 icarus gnome-session[1643]: LayoutManager<._prepareStartupAnimation@resource:///org/gnome/shell/ui/layout.js:641
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: LayoutManager<._loadBackground/signalId<@resource:///org/gnome/shell/ui/layout.js:588
+Jun 30 21:59:24 icarus gnome-session[1643]: _emit@resource:///org/gnome/gjs/modules/signals.js:124
+Jun 30 21:59:24 icarus gnome-session[1643]: SystemBackground<._init/id<@resource:///org/gnome/shell/ui/background.js:488
+Jun 30 21:59:24 icarus dbus-daemon[972]: dbus[972]: [system] Rejected send message, 2 matched rules; type="method_call", sender=":1.37" (uid=42 pid=1789 comm="gnome-shell --mode=gdm ") interface="org.freedesktop.DBus.ObjectManager" member="GetManagedObjects" error name="(unset)" requested_reply="0" destination=":1.3" (uid=0 pid=986 comm="/usr/libexec/bluetooth/bluetoothd ")
+Jun 30 21:59:24 icarus dbus[972]: [system] Rejected send message, 2 matched rules; type="method_call", sender=":1.37" (uid=42 pid=1789 comm="gnome-shell --mode=gdm ") interface="org.freedesktop.DBus.ObjectManager" member="GetManagedObjects" error name="(unset)" requested_reply="0" destination=":1.3" (uid=0 pid=986 comm="/usr/libexec/bluetooth/bluetoothd ")
+Jun 30 21:59:24 icarus gnome-session[1643]: (gnome-shell:1789): Gjs-WARNING **: JS ERROR: TypeError: this._logoBin is undefined
+Jun 30 21:59:24 icarus gnome-session[1643]: LoginDialog<._onAllocate@resource:///org/gnome/shell/gdm/loginDialog.js:590
+Jun 30 21:59:24 icarus gnome-session[1643]: wrapper@resource:///org/gnome/gjs/modules/lang.js:169
+Jun 30 21:59:24 icarus gnome-session[1643]: LayoutManager<._init/<@resource:///org/gnome/shell/ui/layout.js:174
+someone from GSS accidentally tagged a test version of gnome-shell they were working on into the compose last week. you need either downgrade from -10.el7.sfdc01459302 to -10.el7 or upgrade to -11.el7

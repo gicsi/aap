@@ -1,0 +1,58 @@
+Prerequisites:
+	014_lpd.patch
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 017_lpd.patch
+
+And then rebuild and install lpd:
+	cd usr.sbin/lpr/lpd
+	make obj
+	make depend
+	make
+	make install
+
+If you are running lpd you will now need to kill and restart it.
+OpenBSD does not start lpd in the default install.
+
+Index: usr.sbin/lpr/lpd/recvjob.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/lpr/lpd/recvjob.c,v
+retrieving revision 1.13
+diff -u -r1.13 recvjob.c
+--- usr.sbin/lpr/lpd/recvjob.c	7 Feb 2001 20:40:46 -0000	1.13
++++ usr.sbin/lpr/lpd/recvjob.c	28 Nov 2001 18:57:29 -0000
+@@ -180,12 +180,11 @@
+ 			 */
+ 			strncpy(cp + 6, from, sizeof(line) + line - cp - 7);
+ 			line[sizeof(line) -1 ] = '\0';
++			if (strchr(cp, '/'))
++				frecverr("readjob: %s: illegal path name", cp);
+ 			strncpy(tfname, cp, sizeof tfname-1);
+ 			tfname[sizeof tfname-1] = '\0';
+ 			tfname[0] = 't';
+-			if (strchr(tfname, '/'))
+-				frecverr("readjob: %s: illegal path name",
+-				    tfname);
+ 			if (!chksize(size)) {
+ 				(void) write(1, "\2", 1);
+ 				continue;
+@@ -207,15 +206,14 @@
+ 				size = size * 10 + (*cp++ - '0');
+ 			if (*cp++ != ' ')
+ 				break;
++			if (strchr(cp, '/'))
++				frecverr("readjob: %s: illegal path name", cp);
+ 			if (!chksize(size)) {
+ 				(void) write(1, "\2", 1);
+ 				continue;
+ 			}
+ 			(void) strncpy(dfname, cp, sizeof dfname-1);
+ 			dfname[sizeof dfname-1] = '\0';
+-			if (strchr(dfname, '/'))
+-				frecverr("readjob: %s: illegal path name",
+-					dfname);
+ 			(void) readfile(dfname, size);
+ 			continue;
+ 		}
+

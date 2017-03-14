@@ -1,0 +1,53 @@
+Version-Release number of selected component:
+viking-1.6-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        viking
+crash_function: flush_matching
+executable:     /usr/bin/viking
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1001
+var_log_messages: [System Logs]:\n-- Logs begin at Tue 2015-05-05 02:04:11 KST, end at Sat 2015-06-20 23:47:14 KST. --
+
+Truncated backtrace:
+Thread no. 1 (5 frames)
+ #0 flush_matching at mapcache.c:224
+ #1 a_mapcache_remove_all_shrinkfactors at mapcache.c:257
+ #2 map_download_thread at vikmapslayer.c:1638
+ #3 thread_helper at background.c:136
+ #5 g_thread_proxy at gthread.c:798
+Created attachment 1041222
+File: backtrace
+Created attachment 1041223
+File: cgroup
+Created attachment 1041224
+File: core_backtrace
+Created attachment 1041225
+File: dso_list
+Created attachment 1041226
+File: environ
+Created attachment 1041227
+File: exploitable
+Created attachment 1041228
+File: limits
+Created attachment 1041229
+File: maps
+Created attachment 1041230
+File: open_fds
+Created attachment 1041231
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

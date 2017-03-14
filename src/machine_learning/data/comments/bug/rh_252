@@ -1,0 +1,7 @@
+I need python3-nose-xcover as dependency for a package I am working on. Please create a Python 3 module or approve my acl requests so I can build it myself.
+Sorry. I didn't saw your request earlier. Approved.
+built in rawhide, closing.
+
+ps. I've requested epel6 & epel7 branches in pkgdb. Think you need to approve? not sure as I never requested branches through pkgdb yet.
+python-nose-xcover-1.0.10-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/python-nose-xcover-1.0.10-1.fc22

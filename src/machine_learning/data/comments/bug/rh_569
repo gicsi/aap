@@ -1,0 +1,24 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html/Installation_Guide/sect-Red_Hat_Satellite-Installation_Guide-Red_Hat_Satellite_Capsule_Server_Prerequisites.html
+
+Section Number and Name: 
+6.2.1
+
+Describe the issue: 
+The term "channels" is still being used. This is a sat5 term and should be rephrased.
+
+Suggestions for improvement: 
+channels => repositories
+
+Additional information: 
+Do a grep on the full doc set on the phrase "channel" and rephrase accordingly.
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+Hello,
+
+Thank you for this feedback. This bug has been assigned to a writer and should make it into the next major release of the docs. 
+
+Please let me know if you have any questions. 
+
+Regards,
+Hayley Hudgeons

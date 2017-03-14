@@ -1,0 +1,188 @@
+From ce2bf25fb2af912cefe8a87e299199a91d0a1def Mon Sep 17 00:00:00 2001
+From: Michael Simacek <msimacek@redhat.com>
+Date: Mon, 22 Jun 2015 18:36:14 +0200
+Subject: [PATCH] Enable servlet environment
+
+---
+ 0001-Remove-gwtdev-environment.patch | 33 +++++++++++++
+ weld-core.spec                       | 89 ++++++++++++++++++------------------
+ 2 files changed, 78 insertions(+), 44 deletions(-)
+ create mode 100644 0001-Remove-gwtdev-environment.patch
+
+diff --git a/0001-Remove-gwtdev-environment.patch b/0001-Remove-gwtdev-environment.patch
+new file mode 100644
+index 0000000..cf9f6ed
+--- /dev/null
++++ b/0001-Remove-gwtdev-environment.patch
+@@ -0,0 +1,33 @@
++From b215f35b6f4d795e0b22eea6efcb66d9d0502568 Mon Sep 17 00:00:00 2001
++From: Michael Simacek <msimacek@redhat.com>
++Date: Mon, 22 Jun 2015 17:45:40 +0200
++Subject: [PATCH] Remove gwtdev environment
++
++---
++ .../java/org/jboss/weld/environment/servlet/WeldServletLifecycle.java  | 3 +--
++ 1 file changed, 1 insertion(+), 2 deletions(-)
++
++diff --git a/environments/servlet/core/src/main/java/org/jboss/weld/environment/servlet/WeldServletLifecycle.java b/environments/servlet/core/src/main/java/org/jboss/weld/environment/servlet/WeldServletLifecycle.java
++index 5a26c06..107c0d7 100644
++--- a/environments/servlet/core/src/main/java/org/jboss/weld/environment/servlet/WeldServletLifecycle.java
+++++ b/environments/servlet/core/src/main/java/org/jboss/weld/environment/servlet/WeldServletLifecycle.java
++@@ -40,7 +40,6 @@ import org.jboss.weld.environment.deployment.WeldDeployment;
++ import org.jboss.weld.environment.deployment.WeldResourceLoader;
++ import org.jboss.weld.environment.deployment.discovery.DiscoveryStrategy;
++ import org.jboss.weld.environment.deployment.discovery.DiscoveryStrategyFactory;
++-import org.jboss.weld.environment.gwtdev.GwtDevHostedModeContainer;
++ import org.jboss.weld.environment.jetty.JettyContainer;
++ import org.jboss.weld.environment.logging.CommonLogger;
++ import org.jboss.weld.environment.servlet.deployment.ServletContextBeanArchiveHandler;
++@@ -257,7 +256,7 @@ public class WeldServletLifecycle {
++             container = checkContainers(ctx, dump, extContainers);
++             if (container == null) {
++                 // 3. Built-in containers in predefined order
++-                container = checkContainers(ctx, dump, Arrays.asList(TomcatContainer.INSTANCE, JettyContainer.INSTANCE, GwtDevHostedModeContainer.INSTANCE));
+++                container = checkContainers(ctx, dump, Arrays.asList(TomcatContainer.INSTANCE, JettyContainer.INSTANCE));
++             }
++         }
++         return container;
++-- 
++2.1.0
++
+diff --git a/weld-core.spec b/weld-core.spec
+index a025043..264eab8 100644
+--- a/weld-core.spec
++++ b/weld-core.spec
+@@ -3,52 +3,50 @@
+ 
+ Name:       weld-core
+ Version:    2.2.6
+-Release:    3%{?dist}
++Release:    4%{?dist}
+ Summary:    Reference Implementation for JSR-299: Contexts and Dependency Injection (CDI)
+ License:    ASL 2.0 and LGPLv2+ and (CDDL or GPLv2 with exceptions)
+ URL:        http://seamframework.org/Weld
+ Source0:    https://github.com/weld/core/archive/%{namedversion}.tar.gz
+ 
+ Patch0:     0001-Add-support-for-newer-jboss-logging-tools.patch
++Patch1:     0001-Remove-gwtdev-environment.patch
+ 
+ BuildArch: noarch
+ 
+-BuildRequires: aether
+-BuildRequires: glassfish-el-api
+-BuildRequires: findbugs
+-BuildRequires: jpackage-utils
+-BuildRequires: java-devel
+-BuildRequires: jboss-logging-tools
+-BuildRequires: maven-local
+-BuildRequires: maven-clean-plugin
+-BuildRequires: maven-compiler-plugin
+-BuildRequires: maven-deploy-plugin
+-BuildRequires: maven-dependency-plugin
+-BuildRequires: maven-enforcer-plugin
+-BuildRequires: maven-install-plugin
+-BuildRequires: maven-jar-plugin
+-BuildRequires: maven-javadoc-plugin
+-BuildRequires: maven-shade-plugin
+-BuildRequires: maven-surefire-provider-junit
+-BuildRequires: maven-surefire-report-plugin
+-BuildRequires: maven-plugin-build-helper
+-BuildRequires: weld-api >= 2.1-0.1
+-BuildRequires: weld-parent
+-BuildRequires: cdi-api
+-BuildRequires: mvn(javax.faces:jsf-api)
+-BuildRequires: mvn(javax.persistence:persistence-api)
+-BuildRequires: mvn(javax.servlet.jsp:jsp-api)
+-BuildRequires: mvn(ch.qos.cal10n.plugins:maven-cal10n-plugin)
+-BuildRequires: mvn(org.jboss.spec.javax.el:jboss-el-api_3.0_spec)
+-BuildRequires: mvn(org.jboss.classfilewriter:jboss-classfilewriter)
+-BuildRequires: mvn(org.jboss.spec.javax.annotation:jboss-annotations-api_1.2_spec)
+-BuildRequires: mvn(org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.2_spec)
+-BuildRequires: mvn(org.jboss:jboss-vfs)
+-BuildRequires: mvn(org.jboss.spec.javax.faces:jboss-jsf-api_2.2_spec)
+-BuildRequires: mvn(org.jboss.shrinkwrap:shrinkwrap-impl-base)
+-BuildRequires: mvn(org.jboss:jandex)
+-BuildRequires: mvn(javax.transaction:jta)
+-BuildRequires: mvn(org.jboss.spec.javax.ejb:jboss-ejb-api_3.1_spec)
++BuildRequires:  maven-local
++BuildRequires:  mvn(org.eclipse.jetty:jetty-server:8.1.14.v20131031)
++BuildRequires:  mvn(org.eclipse.jetty:jetty-servlet:8.1.14.v20131031)
++BuildRequires:  mvn(org.eclipse.jetty:jetty-webapp:8.1.14.v20131031)
++BuildRequires:  mvn(com.google.guava:guava)
++BuildRequires:  mvn(javax.el:el-api)
++BuildRequires:  mvn(javax.enterprise:cdi-api)
++BuildRequires:  mvn(javax.faces:jsf-api)
++BuildRequires:  mvn(javax.persistence:persistence-api)
++BuildRequires:  mvn(javax.portlet:portlet-api)
++BuildRequires:  mvn(javax.servlet.jsp:jsp-api)
++BuildRequires:  mvn(javax.transaction:jta)
++BuildRequires:  mvn(junit:junit)
++BuildRequires:  mvn(net.sourceforge.findbugs:annotations)
++BuildRequires:  mvn(org.apache.maven.plugins:maven-shade-plugin)
++BuildRequires:  mvn(org.apache.maven.plugins:maven-source-plugin)
++BuildRequires:  mvn(org.apache.tomcat:tomcat-catalina)
++BuildRequires:  mvn(org.codehaus.groovy:groovy-all)
++BuildRequires:  mvn(org.eclipse.jetty:jetty-plus)
++BuildRequires:  mvn(org.jboss.classfilewriter:jboss-classfilewriter)
++BuildRequires:  mvn(org.jboss:jandex)
++BuildRequires:  mvn(org.jboss.logging:jboss-logging)
++BuildRequires:  mvn(org.jboss.logging:jboss-logging-processor)
++BuildRequires:  mvn(org.jboss.shrinkwrap:shrinkwrap-impl-base)
++BuildRequires:  mvn(org.jboss.spec.javax.annotation:jboss-annotations-api_1.2_spec)
++BuildRequires:  mvn(org.jboss.spec.javax.ejb:jboss-ejb-api_3.1_spec)
++BuildRequires:  mvn(org.jboss.spec.javax.el:jboss-el-api_3.0_spec)
++BuildRequires:  mvn(org.jboss.spec.javax.faces:jboss-jsf-api_2.2_spec)
++BuildRequires:  mvn(org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.2_spec)
++BuildRequires:  mvn(org.jboss.spec.javax.servlet:jboss-servlet-api_3.0_spec)
++BuildRequires:  mvn(org.jboss.weld:weld-api)
++BuildRequires:  mvn(org.jboss.weld:weld-parent:pom:)
++BuildRequires:  mvn(org.jboss.weld:weld-spi)
+ 
+ %description
+ Weld is the reference implementation (RI) for JSR-299: Java Contexts and
+@@ -67,6 +65,7 @@ This package contains the API documentation for %{name}.
+ %setup -q -n core-%{namedversion}
+ 
+ %patch0 -p1
++%patch1 -p1
+ 
+ find . -name '*.jar' -exec rm {} \;
+ find . -name '*.class' -exec rm {} \;
+@@ -80,17 +79,16 @@ find . -name '*.class' -exec rm {} \;
+ %pom_disable_module tests-arquillian
+ %pom_disable_module inject-tck-runner
+ %pom_disable_module jboss-tck-runner/1.1
++%pom_disable_module tests/base environments/servlet
++%pom_disable_module tests/jetty environments/servlet
++%pom_disable_module tests/tomcat environments/servlet
+ 
+ # Don't ship or run checkstyle configuration, see rhbz #825355
+ %pom_remove_plugin org.apache.maven.plugins:maven-checkstyle-plugin
+ 
+-# Disable envs that are not needed
+-%pom_disable_module environments/servlet
+-
+-# Remove unnecessary at this point environents
+-rm -rf environments/servlet/core/src/main/java/org/jboss/weld/environment/jetty
+-rm -rf environments/servlet/core/src/main/java/org/jboss/weld/environment/tomcat
+-rm -rf environments/servlet/core/src/main/java/org/jboss/weld/environment/tomcat7
++# Requires jetty6
++rm -rf environments/servlet/core/src/main/java/org/jboss/weld/environment/gwtdev
++%pom_remove_dep -r org.mortbay.jetty environments/servlet
+ 
+ # Used to compile test classes, but we do not execute tests at all
+ %pom_remove_plugin org.apache.maven.plugins:maven-compiler-plugin environments/se/core/pom.xml
+@@ -110,6 +108,9 @@ rm -rf environments/servlet/core/src/main/java/org/jboss/weld/environment/tomcat
+ %files javadoc -f .mfiles-javadoc
+ 
+ %changelog
++* Mon Jun 22 2015 Michael Simacek <msimacek@redhat.com> - 2.2.6-4
++- Enable servlet environment
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.2.6-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+2.1.0
+
+

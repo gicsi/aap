@@ -1,0 +1,133 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_fd.patch
+
+Rebuild your kernel.
+
+And then rebuild and install authpf:
+	cd usr.sbin/authpf
+	make obj
+	make
+	make install
+
+Index: sys/sys/proc.h
+===================================================================
+RCS file: /cvs/src/sys/sys/proc.h,v
+retrieving revision 1.79
+retrieving revision 1.79.2.1
+diff -u -p -r1.79 -r1.79.2.1
+--- sys/sys/proc.h	29 May 2005 03:20:42 -0000	1.79
++++ sys/sys/proc.h	22 Dec 2005 02:41:54 -0000	1.79.2.1
+@@ -144,7 +144,8 @@ struct	proc {
+ 	int	p_flag;			/* P_* flags. */
+ 	u_char	p_os;			/* OS tag */
+ 	char	p_stat;			/* S* process status. */
+-	char	p_pad1[2];
++	char	p_pad1[1];
++	u_char	p_descfd;		/* if not 255, fdesc permits this fd */
+ 
+ 	pid_t	p_pid;			/* Process identifier. */
+ 	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
+Index: sys/kern/kern_descrip.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_descrip.c,v
+retrieving revision 1.70
+retrieving revision 1.70.2.1
+diff -u -p -r1.70 -r1.70.2.1
+--- sys/kern/kern_descrip.c	3 Jul 2005 01:07:44 -0000	1.70
++++ sys/kern/kern_descrip.c	22 Dec 2005 02:41:54 -0000	1.70.2.1
+@@ -1222,6 +1222,17 @@ dupfdopen(fdp, indx, dfd, mode, error)
+ 	int error;
+ {
+ 	struct file *wfp;
++
++	/*
++	 * Assume that the filename was user-specified; applications do
++	 * not tend to opens of /dev/fd/# when they can just call dup()
++	 */
++	if ((curproc->p_flag & (P_SUGIDEXEC | P_SUGID))) {
++		if (curproc->p_descfd == 255)
++			return (EPERM);
++		if (curproc->p_descfd != curproc->p_dupfd)
++			return (EPERM);
++	}
+ 
+ 	/*
+ 	 * If the to-be-dup'd fd number is greater than the allowed number
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.95
+retrieving revision 1.95.2.1
+diff -u -p -r1.95 -r1.95.2.1
+--- sys/kern/kern_exec.c	14 Aug 2005 11:02:33 -0000	1.95
++++ sys/kern/kern_exec.c	22 Dec 2005 02:41:54 -0000	1.95.2.1
+@@ -637,6 +637,10 @@ sys_execve(p, v, retval)
+ 	if (p->p_emul && p->p_emul->e_proc_exit &&
+ 	    p->p_emul != pack.ep_emul)
+ 		(*p->p_emul->e_proc_exit)(p);
++
++	p->p_descfd = 255;
++	if ((pack.ep_flags & EXEC_HASFD) && pack.ep_fd < 255)
++		p->p_descfd = pack.ep_fd;
+ 
+ 	/*
+ 	 * Call exec hook. Emulation code may NOT store reference to anything
+Index: usr.sbin/authpf/authpf.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/authpf/authpf.c,v
+retrieving revision 1.91
+retrieving revision 1.91.2.1
+diff -u -p -r1.91 -r1.91.2.1
+--- usr.sbin/authpf/authpf.c	23 May 2005 22:50:23 -0000	1.91
++++ usr.sbin/authpf/authpf.c	18 Dec 2005 04:16:58 -0000	1.91.2.1
+@@ -92,6 +92,7 @@ main(int argc, char *argv[])
+ 	struct in6_addr	 ina;
+ 	struct passwd	*pw;
+ 	char		*cp;
++	gid_t		 gid;
+ 	uid_t		 uid;
+ 	char		*shell;
+ 	login_cap_t	*lc;
+@@ -256,13 +257,19 @@ main(int argc, char *argv[])
+ 		fclose(pidfp);
+ 	} while (1);
+ 
++	/* whack the group list */
++	gid = getegid();
++	if (setgroups(1, &gid) == -1) {
++		syslog(LOG_INFO, "setgroups: %s", strerror(errno));
++		do_death(0);
++	}
++
+ 	/* revoke privs */
+ 	uid = getuid();
+ 	if (setresuid(uid, uid, uid) == -1) {
+ 		syslog(LOG_INFO, "setresuid: %s", strerror(errno));
+ 		do_death(0);
+ 	}
+-
+ 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+ 
+ 	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser)) {
+@@ -635,6 +642,7 @@ change_filter(int add, const char *luser
+ 	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
+ 	char	*rsn = NULL, *fn = NULL;
+ 	pid_t	pid;
++	gid_t	gid;
+ 	int	s;
+ 
+ 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
+@@ -676,6 +684,11 @@ change_filter(int add, const char *luser
+ 	case -1:
+ 		err(1, "fork failed");
+ 	case 0:
++		/* revoke group privs before exec */
++		gid = getgid();
++		if (setregid(gid, gid) == -1) {
++			err(1, "setregid");
++		}
+ 		execvp(PATH_PFCTL, pargv);
+ 		warn("exec of %s failed", PATH_PFCTL);
+ 		_exit(1);
+

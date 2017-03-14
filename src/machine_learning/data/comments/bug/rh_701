@@ -1,0 +1,8 @@
+Hi,
+Why is Libreoffice not Updated to the currently version?
+
+It´ s the 4.2 release in the repo but 4.4 is aviable
+4.4 is currently too early in its life cycle (i.e. too buggy) to get into RHEL, but there's already a RFE for upgrading to 4.3 in RHEL7 -> duplicate
+
+*** This bug has been marked as a duplicate of bug 1205091 ***
+oh, i´ ve run 4.4 without any problems it´ s working fine for me

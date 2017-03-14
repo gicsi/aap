@@ -1,0 +1,8 @@
+A heap overflow in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=cvs&amp;apropos=0&amp;sektion=1&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">cvs(1)</a>
+server has been discovered that can be exploited by clients sending
+malformed requests, enabling these clients to run arbitrary code
+with the same privileges as the CVS server program.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/021_cvs2.patch">
+A source code patch exists which remedies this problem.</a>

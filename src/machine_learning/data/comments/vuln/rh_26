@@ -1,0 +1,106 @@
+We get the following while starting VM using node 3.5.4 (ovirt-node-3.2.3-10.el6.noarch, vdsm-4.16.21-1.el6ev.x86_64 , libvirt-0.10.2-54.el6.x86_64)
+
+
+.... (snap)
+                <system>
+                        <entry name="manufacturer">Red Hat</entry>
+                        <entry name="product">RHEV Hypervisor</entry>
+                        <entry name="version">6.7-20150702.56.el6ev</entry>
+                        <entry name="serial">4A17AFC5-E7EC-4CC9-9E9C-49618B02BA9E</entry>
+                        <entry name="uuid">7980a50e-9b3a-4270-b19e-e0e45b5166c4</entry>
+                </system>
+        </sysinfo>
+        <clock adjustment="0" offset="variable">
+                <timer name="rtc" tickpolicy="catchup"/>
+                <timer name="pit" tickpolicy="delay"/>
+                <timer name="hpet" present="no"/>
+        </clock>
+        <features>
+                <acpi/>
+        </features>
+        <cpu match="exact">
+                <model>Nehalem</model>
+                <topology cores="1" sockets="16" threads="1"/>
+        </cpu>
+</domain>
+
+Thread-109::DEBUG::2015-07-05 11:50:20,368::libvirtconnection::143::root::(wrapper) Unknown libvirterror: ecode: 67 edom: 10 level: 2 message: unsupported configuration: spice secure channel
+s set in XML configuration, but TLS port is not provided
+Thread-109::DEBUG::2015-07-05 11:50:20,368::vm::2307::vm.Vm::(_startUnderlyingVm) vmId=`7980a50e-9b3a-4270-b19e-e0e45b5166c4`::_ongoingCreations released
+Thread-109::ERROR::2015-07-05 11:50:20,368::vm::2344::vm.Vm::(_startUnderlyingVm) vmId=`7980a50e-9b3a-4270-b19e-e0e45b5166c4`::The vm start process failed
+Traceback (most recent call last):
+  File "/usr/share/vdsm/virt/vm.py", line 2284, in _startUnderlyingVm
+  File "/usr/share/vdsm/virt/vm.py", line 3348, in _run
+  File "/usr/lib/python2.6/site-packages/vdsm/libvirtconnection.py", line 111, in wrapper
+  File "/usr/lib64/python2.6/site-packages/libvirt.py", line 2709, in createXML
+libvirtError: unsupported configuration: spice secure channels set in XML configuration, but TLS port is not provided
+Thread-109::DEBUG::2015-07-05 11:50:20,370::vm::2799::vm.Vm::(setDownStatus) vmId=`7980a50e-9b3a-4270-b19e-e0e45b5166c4`::Changed state to Down: unsupported configuration: spice secure channels set in XML configuration, but TLS port is not provided (code=1)
+
+
+Although libvirtd.conf and qemu.conf modified as always by vdsm-tool:
+
+qemu.conf with:
+auto_dump_path="/var/log/core"
+dynamic_ownership=0
+lock_manager="sanlock"
+remote_display_port_max=6923
+remote_display_port_min=5900
+save_image_format="lzop"
+spice_tls=1
+spice_tls_x509_cert_dir="/etc/pki/vdsm/libvirt-spice"
+
+libvirtd.conf with:
+auth_unix_rw="sasl"
+ca_file="/etc/pki/vdsm/certs/cacert.pem"
+cert_file="/etc/pki/vdsm/certs/vdsmcert.pem"
+host_uuid="c704a8f2-41b0-41a9-9f49-719a9585cfff"
+keepalive_interval=-1
+key_file="/etc/pki/vdsm/keys/vdsmkey.pem"
+listen_addr="0.0.0.0"
+unix_sock_group="qemu"
+unix_sock_rw_perms="0770"
+
+
+Unless I miss something - those configurations are alright.
+please attach vdsm.log of the runVm
+your engine is set to use ssl with spice? (what is the result of: 'engine-config --get SSLEnabled' )
+[root@pc192-168-2-110 ~]# engine-config --get SSLEnabled
+SSLEnabled: true version: general
+Created attachment 1048749
+Logs from the Node side (vdsm, libvirt, pstree)
+
+Some findings:
+
+It looks like the libvirtd configuration is done, but vdsm fails to restart libirtd. That leaves libvirtd with the wrong (pre vdsm's changes) configuration, which will lead to the problem described in the initial description.
+
+This can be a regression of bug 1235350 - because this caused that a different flow is used during Node deployments, compared to 3.5.3.
+The pstree output shows:
+
+…
+|-libvirtd,13300 --daemon
+…
+|   `-vdsm,16593 /usr/share/vdsm/vdsm --pidfile /var/run/vdsm/vdsmd.pid
+…
+
+The lower pid of libvirtd (compared to vdsm), indicates that libvirt was not restarted after vdsm did it's changes to the libvirtd.conf.
+OTOH - vdsm is using initctl to reload the configuration:
+
+        def reloadConfiguration():
+            rc, out, err = utils.execCmd((INITCTL,
+                                          "reload-configuration"))
+
+(from the libvirtd configurator).
+
+Maybe this is not behaving as expected (reloading the configuration file).
+Correction on comment 5: reload-config will just reload the config of the daemon, not the service.
+So this does not help to reload the configuration of libvirtd.
+the cause is lack of libvirtd initctl instance - it happens due to wrong installation of the upstart script which lead to not stopping sysv instance. posting a fix in node side
+I'm closing this because it is closely related to bug 1235350.
+
+The problem was fixed by doing the fix for bug 1235350 different.
+Instead of installing the upstart file directly to /etc/init/ we are now temporarily installing it to /usr/share/ovirt-node/, then copy it to /usr/share/doc/libvirt-*/ during build time.
+This will allow vdsm to pick it up and put it into /etc/init itself.
+
+This will also allow vdsm to use the same flow on RHEL and RHEV-H.
+
+*** This bug has been marked as a duplicate of bug 1235350 ***

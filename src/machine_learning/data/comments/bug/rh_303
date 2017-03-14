@@ -1,0 +1,32 @@
+Description of problem:
+
+Smart card removal in KDE does not lock screen until timeout, but unlock requires smart card.
+
+Smart card removal in Gnome blanks screen but unlock does not work, reporting insufficient credentials een though all other smart-card suthentications work.
+
+Version-Release number of selected component (if applicable):
+7.1 RHEL
+
+How reproducible:
+Seems to be consistent behavior
+
+Steps to Reproduce:
+1.log in with KDE-Plasma and smart card
+2.Remove smart card--screen does not lock.
+3.Log in with GNOME-Classic and smart card.  
+4.Remove smart card and screen blanks
+5.use mouse and smart card to attempt unlocking and an insufficient credentials appears when PIN is typed in.
+
+Actual results:
+Screen eventually locks in KDE, after the set idle time and NOW requires smart card to unlock
+GNOME is unreachable--the only wakeup seems to be cold boot
+
+Expected results:
+KDE locks on card removal and requires smart card to unlock
+GNOME locks scr3een on smart card removal and can be unlocked with smart card and PIN.
+Additional info:
+
+These examples are without the setting "Smart Card required"  The settings of that exhibit the same locking behavior as described except a root password for maintenance and an # authconfig --disablesmartcardrequired --update in single mode is necessary to restore a semblance of sanity.
+GNOME does work properly and will unlock if one notices that it turns off the numlock and types the pin from the numeric keys on the keyboard instead of the pad.
+These are two separate bugs and should be reported against the respective desktop components. Authconfig can hardly do anything with that.
+closing by request on bug 1238342 comment 0

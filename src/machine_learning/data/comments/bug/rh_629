@@ -1,0 +1,20 @@
+Description of problem:
+When I try to access node details from the GUI, I get "the address wasn't understood" and my URL link changes to: horizon:infrastructure:nodes:detail
+
+Version-Release number of selected component (if applicable):
+2015-06-17.2 http://openstack.etherpad.corp.redhat.com/rhel-osp-director-puddle-2015-06-17-2
+
+How reproducible:
+100 %
+
+Steps to Reproduce:
+1. isntall undercloud and get the gui accessible
+2. register some nodes
+3. go to nodes tab and click on one of the nodes
+
+Actual results:
+unknown URL
+
+Expected results:
+Opened page with node details
+*** This bug has been marked as a duplicate of bug 1227013 ***

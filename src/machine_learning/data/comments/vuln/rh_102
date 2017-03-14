@@ -1,0 +1,96 @@
+Created attachment 1043139
+engine-logs
+
+Description of problem:
+engine-setup failed at cleaning zombie tasks due to missing sql functions. 
+
+[ INFO  ] Stage: Setup validation
+          During execution engine service will be stopped (OK, Cancel) [OK]: 
+[WARNING] Less than 16384MB of memory is available
+[ INFO  ] Cleaning stale zombie tasks and commands
+[ ERROR ] Failed to execute stage 'Setup validation': Failed to clear zombie commands. Please access support in attempt to resolve the problem
+[ INFO  ] Stage: Clean up
+          Log file is located at /var/log/ovirt-engine/setup/ovirt-engine-setup-20150625161817-d2625x.log
+[ INFO  ] Generating answer file '/var/lib/ovirt-engine/setup/answers/20150625161842-setup.conf'
+[ INFO  ] Stage: Pre-termination
+[ INFO  ] Stage: Termination
+[ ERROR ] Execution of setup failed
+
+in the setup log:
+ERROR:  function deleteallcommandswithzombietasks() does not exist
+LINE 1: SELECT DeleteAllCommandsWithZombieTasks();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+FATAL: Cannot execute sql command: --command=SELECT DeleteAllCommandsWithZombieTasks();
+
+2015-06-25 16:18:41 DEBUG otopi.context context._executeMethod:155 method exception
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/site-packages/otopi/context.py", line 145, in _executeMethod
+    method['method']()
+  File "/usr/share/ovirt-engine/setup/bin/../plugins/ovirt-engine-setup/ovirt-engine/upgrade/asynctasks.py", line 457, in _validateZombies
+    self._clearZombies()
+  File "/usr/share/ovirt-engine/setup/bin/../plugins/ovirt-engine-setup/ovirt-engine/upgrade/asynctasks.py", line 146, in _clearZombies
+    'Failed to clear zombie commands. '
+RuntimeError: Failed to clear zombie commands. Please access support in attempt to resolve the problem
+
+folder /usr/share/ovirt-engine/setup/dbutils/
+[root@en2 dbutils]# ls
+dbfunc-base.sh  encodingvalidator.sh  fkvalidator.sh  changedbowner.sh  taskcleaner.sh  unlock_entity.sh  unlock_entity.sql  validatedb.sh
+
+Version-Release number of selected component (if applicable):
+oVirt Engine Version: 3.6.0-0.0.master.20150624173726.git0568f1b.el6
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. clean engine with some hosts
+2. make engine-setup again
+
+Actual results:
+engine-setup fails on the same version and while upgrade from older to 20150624173726.git0568f1b
+
+Additional info:
+attached logs from engine
+Eli, what changed?
+It probably got broken there: 
+https://gerrit.ovirt.org/#/c/42655/
+
+In the upgrade procedure the user directly installs an upgraded version on the setup rpms only, the others are protected by versionlock and got updated by engine-setup after having updated the DB structure.
+
+The issue here is that everything under packaging/dbscripts folder will got packed in engine-dbscripts rpm which is under versionlock while everything under packaging/setup/dbutils/ will got in the setup rpm.
+
+Cause the the DeleteAllCommandsWithZombieTasks is needed to clean up the zombie table before upgrading (and so also before installing the new RPMs) moving it to dbscripts is not really a good idea otherwise it will not be available at setup time.
+
+Eli, could you please revert?
+(In reply to Simone Tiraboschi from comment #2)
+I had discussed that with Didi and he will handle on SUN what is needed to make  it working
+Thanks Eli, moving on Didi.
+(In reply to Simone Tiraboschi from comment #2)
+patch will be reverted soon since a fix for that requires a change in dbscripts which is locked
+*** This bug has been marked as a duplicate of bug 1080542 ***
+This was bug was already fixed in master branch, but broken in the second alpha build (ovirt-3.6.0-3, git hash 6f063c1).
+
+A workaround, needed for upgrading to the broken version:
+
+su -
+
+. /usr/share/ovirt-engine/bin/engine-prolog.sh
+export PGPASSWORD="${ENGINE_DB_PASSWORD}"
+
+cd /usr/share/ovirt-engine/dbscripts
+
+for f in fkvalidator_sp.sql taskcleaner_sp.sql; do psql -U "${ENGINE_DB_USER}" -h localhost -d "${ENGINE_DB_DATABASE}" < $f; done
+Correction to the above:
+
+su -
+
+. /usr/share/ovirt-engine/bin/engine-prolog.sh
+export PGPASSWORD="${ENGINE_DB_PASSWORD}"
+
+cd /tmp
+wget -O fkvalidator_sp.sql https://gerrit.ovirt.org/gitweb?p=ovirt-engine.git\;a=blob_plain\;f=packaging/dbscripts/fkvalidator_sp.sql\;h=d258ae4d8ae931ab27fc0b69919d69eeba6809fd\;hb=cab81c95b17a3352b67ef05fb0237783cda42f15
+wget -O taskcleaner_sp.sql https://gerrit.ovirt.org/gitweb?p=ovirt-engine.git\;a=blob_plain\;f=packaging/dbscripts/taskcleaner_sp.sql\;h=9305a277f3b459c881177a069b91f29cb0e028b3\;hb=cab81c95b17a3352b67ef05fb0237783cda42f15
+wget -O taskcleaner_sp_3_5.sql https://gerrit.ovirt.org/gitweb?p=ovirt-engine.git\;a=blob_plain\;f=packaging/setup/dbutils/taskcleaner_sp_3_5.sql\;hb=75bb36a5ef4ad4192c46cb392c76bde1d409428c
+
+for f in fkvalidator_sp.sql taskcleaner_sp.sql taskcleaner_sp_3_5.sql; do psql -U "${ENGINE_DB_USER}" -h localhost -d "${ENGINE_DB_DATABASE}" < $f; done

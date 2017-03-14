@@ -1,0 +1,8 @@
+Created attachment 1040619
+Patch for adding exported packages to MANIFEST.MF of jnr-unixsocket
+
+Description of problem:
+
+New Eclipse plugins require jnr-unixsocket and need the packages exported.
+Pushed to master.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=663674

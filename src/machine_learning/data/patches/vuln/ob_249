@@ -1,0 +1,28 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 011_dhcpd.patch
+
+And then rebuild and install dhcpd:
+	cd usr.sbin/dhcpd
+	make obj
+	make
+	make install
+
+Index: usr.sbin/dhcpd/memory.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/dhcpd/memory.c,v
+retrieving revision 1.10
+retrieving revision 1.10.4.1
+diff -u -p -r1.10 -r1.10.4.1
+--- usr.sbin/dhcpd/memory.c	21 Sep 2004 04:07:04 -0000	1.10
++++ usr.sbin/dhcpd/memory.c	10 Aug 2006 01:54:02 -0000	1.10.4.1
+@@ -495,7 +495,7 @@ supersede_lease(struct lease *comp, stru
+ 		/* Copy the data files, but not the linkages. */
+ 		comp->starts = lease->starts;
+ 		if (lease->uid) {
+-			if (lease->uid_len < sizeof (lease->uid_buf)) {
++			if (lease->uid_len <= sizeof (lease->uid_buf)) {
+ 				memcpy(comp->uid_buf, lease->uid, lease->uid_len);
+ 				comp->uid = &comp->uid_buf[0];
+ 				comp->uid_max = sizeof comp->uid_buf;
+

@@ -1,0 +1,123 @@
+Description of problem:
+
+$ vgchange --addtag MYVG ee
+  Volume group "ee" successfully changed
+
+$ lvs -a ee
+  LV        VG   Attr       LSize
+  [lvmlock] ee   -wi-ao---- 256.00m
+  lvol0     ee   -wi-a-----   4.00m
+
+$ lvremove ee/lvol0 @MYVG
+Will try to remove both lvol0 and lvmlock.  I think it should skip hidden LVs.
+The comment in process_each_lv_in_vg makes it fairly clear that the function
+intends to generally skip hidden lvs (unless named explicitly or --all is used).
+Using both an lv name and a VG tag would be an unusual command, so this has probably
+not been tested before.
+
+This was found because process-each-lv in the test suite fails with sanlock VGs because it runs an lvremove command like this, and sanlock VGs have a hidden lvmlock LV.
+
+This patch checks that the hidden LV is explicitly named before removing it, and it seems to work:
+
+diff --git a/tools/toollib.c b/tools/toollib.c
+index 15bfa513a005..c7bc7c13e2b9 100644
+--- a/tools/toollib.c
++++ b/tools/toollib.c
+@@ -2105,8 +2105,7 @@ int process_each_lv_in_vg(struct cmd_context *cmd, struct volume_group *vg,
+                goto_out;
+        }
+ 
+-       /* Process all LVs in this VG if no restrictions given 
+-        * or if VG tags match. */
++       /* Process all LVs in this VG if no restrictions given or if VG tags match. */
+        if ((!tags_supplied && !lvargs_supplied) ||
+            (tags_supplied && str_list_match_list(tags_in, &vg->tags, NULL)))
+                process_all = 1;
+@@ -2135,11 +2134,15 @@ int process_each_lv_in_vg(struct cmd_context *cmd, struct volume_group *vg,
+                }
+ 
+                /*
+-                * Only let hidden LVs through it --all was used or the LVs 
++                * Only let hidden LVs through if --all was used or the LVs 
+                 * were specifically named on the command line.
+                 */
+-               if (!lvargs_supplied && !lv_is_visible(lvl->lv) && !arg_count(cmd, all_ARG))
+-                       continue;
++               if (!lv_is_visible(lvl->lv) && !arg_count(cmd, all_ARG)) {
++                       if (!lvargs_supplied || !str_list_match_item(arg_lvnames, lvl->lv->name)) {
++                               log_verbose("Ignoring hidden logical volume %s.", display_lvname(lvl->lv));
++                               continue;
++                       }
++               }
+ 
+                /*
+                 * process the LV if one of the following:
+
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+I think you will need to use some LOCKED-like bit if you want to avoid any manipulation for LV which could be then removed only by some 'vgremove' command.
+
+I'd say the current tag processing is OK.
+Are you suggesting that lvremove should never be able to remove a hidden LV?
+lvremove <hidden_lv> still removes it (and is unrelated to tags).
+It looks like the hidden sanlock lv is a new special case.  Other hidden lvs are associated with a visible lv, and are removed as a result of removing the visible lv.  The sanlock lv is not associated with another visible lv, so attempting to remove it from 'lvremove vgname' or 'lvremove @vgtag' is a new situation.  Given that, it seems there's not any existing behavior that needs to change, and a patch only addressing the sanlock lv in process_each_lv_in_vg is needed, i.e.
+
+
+diff --git a/tools/toollib.c b/tools/toollib.c
+index 15bfa513a005..1503c0eaac70 100644
+--- a/tools/toollib.c
++++ b/tools/toollib.c
+@@ -2135,13 +2135,26 @@ int process_each_lv_in_vg(struct cmd_context *cmd, struct volume_group *vg,
+                }
+ 
+                /*
+-                * Only let hidden LVs through it --all was used or the LVs 
++                * Only let hidden LVs through if --all was used or the LVs 
+                 * were specifically named on the command line.
+                 */
+                if (!lvargs_supplied && !lv_is_visible(lvl->lv) && !arg_count(cmd, all_ARG))
+                        continue;
+ 
+                /*
++                * Only let sanlock LV through if --all was used or if
++                * it is named on the command line.
++                */
++               if (lv_is_lockd_sanlock_lv(lvl->lv)) {
++                       if (arg_count(cmd, all_ARG) ||
++                           (lvargs_supplied && str_list_match_item(arg_lvnames, lvl->lv->name))) {
++                               log_very_verbose("Processing lockd_sanlock_lv %s/%s.", vg->name, lvl->lv->name)
++                       } else {
++                               continue;
++                       }
++               }
++
++               /*
+                 * process the LV if one of the following:
+                 * - process_all is set
+                 * - LV name matches a supplied LV name
+Pushed out the patch in comment 4, leaving the existing behavior alone.
+I'm still not convinced this solution is OK.
+
+Removal of sanlock's LV should not be possible with any lvremove command - it should be only manipulated with some VG command - since the content is LV is purely VG related and is in fact attached to VG property.
+
+So 'lvremove --all' is currently not relevant API change -  since --all is implicit with lvremove.
+
+i.e.   'lvremove  vg'   removes all LVs in VG - but in the case of sanlock's LV must be immutable.

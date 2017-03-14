@@ -1,0 +1,16 @@
+Description of problem:
+Latest upstream release: 2.3.2
+URL: http://openvswitch.org/releases/
+openvswitch-2.3.2-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/openvswitch-2.3.2-1.fc21
+Package openvswitch-2.3.2-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing openvswitch-2.3.2-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10496/openvswitch-2.3.2-1.fc21
+then log in and leave karma (feedback).
+openvswitch-2.3.2-1.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

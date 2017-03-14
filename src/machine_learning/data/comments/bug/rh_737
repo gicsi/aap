@@ -1,0 +1,52 @@
+http://curl.haxx.se/docs/adv_20150617A.html
+
+VULNERABILITY
+
+libcurl can wrongly send HTTP credentials when re-using connections.
+
+libcurl allows applications to set credentials for the upcoming transfer with HTTP Basic authentication, like with CURLOPT_USERPWD for example. Name and password. Just like all other libcurl options the credentials are sticky and are kept associated with the "handle" until something is made to change the situation.
+
+Further, libcurl offers a curl_easy_reset() function that resets a handle back to its pristine state in terms of all settable options. A reset is of course also supposed to clear the credentials. A reset is typically used to clear up the handle and prepare it for a new, possibly unrelated, transfer.
+
+Within such a handle, libcurl can also store a set of previous connections in case a second transfer is requested to a host name for which an existing connection is already kept alive.
+
+With this flaw present, using the handle even after a reset would make libcurl accidentally use those credentials in a subseqent request if done to the same host name and connection as was previously accessed.
+
+An example case would be first requesting a password protected resource from one section of a web site, and then do a second request of a public resource from a completely different part of the site without authentication. This flaw would then inadvertently leak the credentials in the second request.
+
+We are not aware of any exploit of this flaw.
+INFO
+
+This flaw can also affect the curl command line tool if a similar operation series is made with that.
+
+The Common Vulnerabilities and Exposures (CVE) project has assigned the name CVE-2015-3236 to this issue.
+AFFECTED VERSIONS
+
+This flaw is relevant for
+
+    Affected versions: libcurl 7.40.0 to and including 7.42.1
+    Not affected versions: libcurl < 7.40.0 and libcurl >= 7.43.0
+
+libcurl is used by many applications, but not always advertised as such!
+THE SOLUTION
+
+In version 7.43.0, libcurl properly clears the credentials and prevents them from lingering around.
+
+A patch for this problem that changes the default is available at (URL will be updated in final advisory):
+
+http://curl.haxx.se/CVE-2015-3236.patch
+
+Acknowledgements:
+
+Red Hat would like to thank curl upstream for reporting this issue. Upstream acknowledges Tomas Tomecek and Kamil Dudka as the original reporters.
+Created curl tracking bugs for this issue:
+
+Affects: fedora-all [bug 1233818]
+curl-7.40.0-5.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+Looks like this was introduced in 7.40.0. Ceph and the RHELs do not ship a version >7.40.0 and I see no indication that we are affected by this particular flaw.
+
+Fedora is already fixed, so we can close this.
+
+Statement:
+
+This issue did not affect the versions of curl as shipped with Red Hat Enterprise Linux 5, 6, and 7.

@@ -1,0 +1,27 @@
+Description of problem:
+On an Lenovo T440p the scroll function of the touchpad don't work.
+
+Version-Release number of selected component (if applicable):
+xorg-x11-drv-libinput-0.10.0-5.fc22.x86_64
+
+How reproducible:
+Everytime
+
+Steps to Reproduce:
+1. dnf install xorg-x11-drv-libinput
+2. reboot
+
+
+Actual results:
+The scoll area of the touchpad don't work.
+
+Expected results:
+Working touchpad with scroll function.
+
+Additional info:
+Removing the package will restore the scroll function.
+two-finger scrolling or edge scrolling?
+
+if the latter, see: https://bugs.freedesktop.org/show_bug.cgi?id=89381
+Yes with edge scrolling.
+deferring to upstream for now then, need to implement it there first

@@ -1,0 +1,98 @@
+Created attachment 1044685
+dmesg output
+
+Description of problem:
+
+Running a KVM guest fails with lots of errors like:
+
+[  212.820766] BUG: sleeping function called from invalid context at kernel/locking/mutex.c:616
+[  212.820933] in_atomic(): 1, irqs_disabled(): 0, pid: 2887, name: qemu-system-x86
+[  212.821119] INFO: lockdep is turned off.
+[  212.821122] CPU: 4 PID: 2887 Comm: qemu-system-x86 Tainted: G        W I     4.2.0-0.rc0.git2.1.fc23.x86_64 #1
+[  212.821124] Hardware name: Dell Inc. Precision WorkStation T5500  /0D883F, BIOS A12 12/29/2011
+[  212.821125]  0000000000000000 00000000172259b3 ffff880fa627fc58 ffffffff81856f03
+[  212.821129]  0000000000000000 ffff8800d30bddc0 ffff880fa627fc88 ffffffff810d9f91
+[  212.821132]  0000000000000001 ffffffff81c7cdbe 0000000000000268 0000000000000000
+[  212.821135] Call Trace:
+[  212.821142]  [<ffffffff81856f03>] dump_stack+0x4c/0x65
+[  212.821146]  [<ffffffff810d9f91>] ___might_sleep+0x181/0x240
+[  212.821149]  [<ffffffff810da09d>] __might_sleep+0x4d/0x90
+[  212.821152]  [<ffffffff8185cade>] mutex_lock_nested+0x3e/0x3e0
+[  212.821156]  [<ffffffff81104e6d>] ? trace_hardirqs_on+0xd/0x10
+[  212.821173]  [<ffffffffa049af96>] ? vcpu_load+0x26/0x70 [kvm]
+[  212.821183]  [<ffffffffa049af96>] ? vcpu_load+0x26/0x70 [kvm]
+[  212.821186]  [<ffffffff811dcff4>] static_key_slow_inc+0x44/0xc0
+[  212.821188]  [<ffffffff810d8ead>] preempt_notifier_register+0x1d/0x60
+[  212.821197]  [<ffffffffa049afb5>] vcpu_load+0x45/0x70 [kvm]
+[  212.821206]  [<ffffffffa049b0a1>] kvm_vcpu_ioctl+0x81/0x820 [kvm]
+[  212.821209]  [<ffffffff810d4bed>] ? creds_are_invalid+0x1d/0x20
+[  212.821213]  [<ffffffff8139ccaa>] ? inode_has_perm.isra.46+0x2a/0xa0
+[  212.821216]  [<ffffffff8128316e>] do_vfs_ioctl+0x2ee/0x550
+[  212.821218]  [<ffffffff8128f475>] ? __fget+0x5/0x1f0
+[  212.821221]  [<ffffffff8139d37b>] ? selinux_file_ioctl+0x5b/0xf0
+[  212.821223]  [<ffffffff81283449>] SyS_ioctl+0x79/0x90
+[  212.821226]  [<ffffffff8186062e>] entry_SYSCALL_64_fastpath+0x12/0x76
+[  213.821575] BUG: sleeping function called from invalid context at kernel/cpu.c:94
+[  213.821736] in_atomic(): 1, irqs_disabled(): 0, pid: 2887, name: qemu-system-x86
+[  213.821963] INFO: lockdep is turned off.
+[  213.821966] CPU: 4 PID: 2887 Comm: qemu-system-x86 Tainted: G        W I     4.2.0-0.rc0.git2.1.fc23.x86_64 #1
+[  213.821968] Hardware name: Dell Inc. Precision WorkStation T5500  /0D883F, BIOS A12 12/29/2011
+[  213.821969]  0000000000000000 00000000172259b3 ffff880fa627fc18 ffffffff81856f03
+[  213.821972]  0000000000000000 ffff8800d30bddc0 ffff880fa627fc48 ffffffff810d9f91
+[  213.821975]  ffff880fa627fc58 ffffffff81c7967e 000000000000005e 0000000000000000
+[  213.821978] Call Trace:
+[  213.821982]  [<ffffffff81856f03>] dump_stack+0x4c/0x65
+[  213.821984]  [<ffffffff810d9f91>] ___might_sleep+0x181/0x240
+[  213.821986]  [<ffffffff810da09d>] __might_sleep+0x4d/0x90
+[  213.821990]  [<ffffffff810ab620>] get_online_cpus+0x20/0x80
+[  213.821993]  [<ffffffff810ab6c7>] ? put_online_cpus+0x47/0x90
+[  213.821997]  [<ffffffff810220fe>] arch_jump_label_transform+0x2e/0x120
+[  213.821999]  [<ffffffff811dcd68>] __jump_label_update+0x58/0x70
+[  213.822002]  [<ffffffff811dce1b>] jump_label_update+0x9b/0xb0
+[  213.822004]  [<ffffffff811dd0c1>] __static_key_slow_dec+0x51/0xb0
+[  213.822006]  [<ffffffff811dd146>] static_key_slow_dec+0x26/0x50
+[  213.822008]  [<ffffffff810d8ca3>] preempt_notifier_unregister+0x43/0x50
+[  213.822019]  [<ffffffffa049b006>] vcpu_put+0x26/0x40 [kvm]
+[  213.822028]  [<ffffffffa049b14d>] kvm_vcpu_ioctl+0x12d/0x820 [kvm]
+[  213.822031]  [<ffffffff810d4bed>] ? creds_are_invalid+0x1d/0x20
+[  213.822034]  [<ffffffff8139ccaa>] ? inode_has_perm.isra.46+0x2a/0xa0
+[  213.822036]  [<ffffffff8128316e>] do_vfs_ioctl+0x2ee/0x550
+[  213.822039]  [<ffffffff8128f475>] ? __fget+0x5/0x1f0
+[  213.822041]  [<ffffffff8139d37b>] ? selinux_file_ioctl+0x5b/0xf0
+[  213.822043]  [<ffffffff81283449>] SyS_ioctl+0x79/0x90
+[  213.822046]  [<ffffffff8186062e>] entry_SYSCALL_64_fastpath+0x12/0x76
+
+Version-Release number of selected component (if applicable):
+
+kernel 4.2.0-0.rc0.git2.1.fc23.x86_64
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. Run a KVM guest, or libguestfs-test-tool.
+
+Actual results:
+
+See attached dmesg.
+http://article.gmane.org/gmane.linux.kernel/1983762 is the fix I think.
+(The lockdep splats from the fib code have a fix elsewhere too I believe).
+(In reply to Josh Boyer from comment #1)
+> http://article.gmane.org/gmane.linux.kernel/1983762 is the fix I think.
+
+I added this patch to the git3 build I just started.  Please test when it is available.
+Josh, please revert the original patch instead.
+(In reply to Paolo Bonzini from comment #4)
+> Josh, please revert the original patch instead.
+
+Upstream seems to have fixed this with:
+
+commit 2ecd9d29abb171d6e97a4f3eb29d7456a11401b7
+Author: Peter Zijlstra <peterz@infradead.org>
+Date:   Fri Jul 3 18:53:58 2015 +0200
+
+    sched, preempt_notifier: separate notifier registration from static_key inc/
+dec
+
+That's in 4.2-rc1.  So if something needs to be reverted, it needs to be done upstream at this point.

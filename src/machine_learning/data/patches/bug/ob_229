@@ -1,0 +1,71 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 008_getcwd.patch
+
+And then rebuild and install libc:
+        cd lib/libc
+        make obj cleandir depend
+        make && make install
+
+Note that programs that are linked statically will not pick up the
+change unless they are rebuilt.  To rebuild the static binaries
+that use getcwd(3), run the following commands in the /usr/src/bin,
+/usr/src/sbin and /usr/src/usr.bin/ftp directories:
+	make obj cleandir depend
+	make && make install
+
+Index: lib/libc/gen/getcwd.c
+===================================================================
+RCS file: /cvs/src/lib/libc/gen/getcwd.c,v
+retrieving revision 1.9
+retrieving revision 1.10
+diff -u -p -r1.9 -r1.10
+--- lib/libc/gen/getcwd.c	11 Jun 2003 21:03:10 -0000	1.9
++++ lib/libc/gen/getcwd.c	5 Jan 2005 19:48:08 -0000	1.10
+@@ -74,7 +74,7 @@ getcwd(char *pt, size_t size)
+ 		}
+ 		ept = pt + size;
+ 	} else {
+-		if ((pt = malloc(ptsize = 1024 - 4)) == NULL)
++		if ((pt = malloc(ptsize = MAXPATHLEN)) == NULL)
+ 			return (NULL);
+ 		ept = pt + ptsize;
+ 	}
+@@ -82,13 +82,13 @@ getcwd(char *pt, size_t size)
+ 	*bpt = '\0';
+ 
+ 	/*
+-	 * Allocate bytes (1024 - malloc space) for the string of "../"'s.
++	 * Allocate bytes for the string of "../"'s.
+ 	 * Should always be enough (it's 340 levels).  If it's not, allocate
+ 	 * as necessary.  Special * case the first stat, it's ".", not "..".
+ 	 */
+-	if ((up = malloc(upsize = 1024 - 4)) == NULL)
++	if ((up = malloc(upsize = MAXPATHLEN)) == NULL)
+ 		goto err;
+-	eup = up + MAXPATHLEN;
++	eup = up + upsize;
+ 	bup = up;
+ 	up[0] = '.';
+ 	up[1] = '\0';
+@@ -133,8 +133,8 @@ getcwd(char *pt, size_t size)
+ 
+ 			if ((nup = realloc(up, upsize *= 2)) == NULL)
+ 				goto err;
++			bup = nup + (bup - up);
+ 			up = nup;
+-			bup = up;
+ 			eup = up + upsize;
+ 		}
+ 		*bup++ = '.';
+@@ -224,8 +224,7 @@ notfound:
+ err:
+ 	if (ptsize)
+ 		free(pt);
+-	if (up)
+-		free(up);
++	free(up);
+ 	if (dir)
+ 		(void)closedir(dir);
+ 	return (NULL);
+

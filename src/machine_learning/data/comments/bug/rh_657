@@ -1,0 +1,59 @@
+Description of problem:
+I logged into my "Guest" account [ Gnome 3 desktop on Fedora ], yelp started then promptly crashed
+
+Version-Release number of selected component:
+yelp-3.10.2-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        yelp --dont-steal-focus help:gnome-help/getting-started
+crash_function: isDRI2Connected
+executable:     /usr/bin/yelp
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1001
+var_log_messages: [System Logs]:\n-- Logs begin at Fri 2015-05-22 01:31:42 EAT, end at Mon 2015-06-22 09:43:11 EAT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #4 isDRI2Connected at dri2_util.c:199
+ #5 va_DRI2GetDriverName at va_x11.c:83
+ #6 va_DisplayContextGetDriverName at va_x11.c:142
+ #7 va_getDriverName at va.c:193
+ #8 vaInitialize at va.c:459
+ #9 gst_vaapi_display_create_unlocked at gstvaapidisplay.c:926
+ #10 gst_vaapi_display_create at gstvaapidisplay.c:957
+ #11 gst_vaapi_display_new at gstvaapidisplay.c:1117
+ #12 gst_vaapi_create_display at gstvaapipluginutil.c:103
+ #13 gst_vaapi_ensure_display at gstvaapipluginutil.c:130
+Created attachment 1041593
+File: backtrace
+Created attachment 1041594
+File: cgroup
+Created attachment 1041595
+File: core_backtrace
+Created attachment 1041596
+File: dso_list
+Created attachment 1041597
+File: environ
+Created attachment 1041598
+File: limits
+Created attachment 1041599
+File: maps
+Created attachment 1041600
+File: open_fds
+Created attachment 1041601
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

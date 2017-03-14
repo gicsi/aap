@@ -1,0 +1,4 @@
+XMM exceptions are not correctly handled resulting in a kernel panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.6/i386/002_xmm.patch">
+A source code patch exists which remedies this problem.</a>

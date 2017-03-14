@@ -1,0 +1,64 @@
+Description of problem:
+accessing file 'hello' on host from guest vm via 9p 
+SELinux is preventing pool from 'getattr' accesses on the file /home/vortexbox-storage/hello.
+
+*****  Plugin restorecon (99.5 confidence) suggests   ************************
+
+If you want to fix the label. 
+/home/vortexbox-storage/hello default label should be user_home_t.
+Then you can run restorecon.
+Do
+# /sbin/restorecon -v /home/vortexbox-storage/hello
+
+*****  Plugin catchall (1.49 confidence) suggests   **************************
+
+If you believe that pool should be allowed getattr access on the hello file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep pool /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:svirt_t:s0:c121,c587
+Target Context                unconfined_u:object_r:home_root_t:s0
+Target Objects                /home/vortexbox-storage/hello [ file ]
+Source                        pool
+Source Path                   pool
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-105.13.fc21.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-202.fc21.i686+PAE #1 SMP Wed
+                              May 27 22:51:47 UTC 2015 i686 i686
+Alert Count                   1
+First Seen                    2015-06-20 21:46:17 BST
+Last Seen                     2015-06-20 21:46:17 BST
+Local ID                      66d7647f-d4f2-41fb-9bc2-f631c8005059
+
+Raw Audit Messages
+type=AVC msg=audit(1434833177.24:533): avc:  denied  { getattr } for  pid=3551 comm="pool" path="/home/vortexbox-storage/hello" dev="dm-8" ino=1175042 scontext=system_u:system_r:svirt_t:s0:c121,c587 tcontext=unconfined_u:object_r:home_root_t:s0 tclass=file permissive=0
+
+
+Hash: pool,svirt_t,home_root_t,file,getattr
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-105.13.fc21.noarch
+
+Additional info:
+reporter:       libreport-2.3.0
+hashmarkername: setroubleshoot
+kernel:         4.0.4-202.fc21.i686+PAE
+type:           libreport
+Looks like you have virt storage in a weird location.
+
+I would probably label this as virt_var_lib_t.
+
+# semanage fcontext -a -t virt_var_lib_t '/home/vortexbox-storage(/.*)?'
+# restorecon -R -v /home

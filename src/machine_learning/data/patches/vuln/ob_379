@@ -1,0 +1,61 @@
+untrusted comment: signature from openbsd 5.7 base secret key
+RWSvUZXnw9gUby4OBLM0n2MCFo9TM/FWZlryKfa4mLnPMEgi87dSLa8HTEXN15Z0YumeDyfsnFVHyQHjtL6106R1LxIOtJ/6pww=
+
+OpenBSD 5.7 errata 6, Apr 30, 2015:
+
+Missing validity checks in the kernel ELF loader meant malformed binaries
+could trigger kernel panics or view kernel memory.
+
+Apply by doing:
+    cd /usr/src
+    signify -Vep /etc/signify/openbsd-57-base.pub -x 006_elf.patch.sig -m - | \
+        patch -p0
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/kern/exec_elf.c
+===================================================================
+RCS file: /cvs/src/sys/kern/exec_elf.c,v
+retrieving revision 1.112
+diff -u -p -r1.112 exec_elf.c
+--- sys/kern/exec_elf.c	10 Feb 2015 23:39:57 -0000	1.112
++++ sys/kern/exec_elf.c	30 Apr 2015 18:41:25 -0000
+@@ -362,6 +362,8 @@ ELFNAME(load_file)(struct proc *p, char 
+ 
+ 	for (i = 0; i < eh.e_phnum; i++) {
+ 		if (ph[i].p_type == PT_LOAD) {
++			if (ph[i].p_filesz > ph[i].p_memsz)
++				goto bad1;
+ 			loadmap[idx].vaddr = trunc_page(ph[i].p_vaddr);
+ 			loadmap[idx].memsz = round_page (ph[i].p_vaddr +
+ 			    ph[i].p_memsz - loadmap[idx].vaddr);
+@@ -549,14 +551,20 @@ ELFNAME2(exec,makecmds)(struct proc *p, 
+ 
+ 	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
+ 		if (pp->p_type == PT_INTERP && !interp) {
+-			if (pp->p_filesz >= MAXPATHLEN)
++			if (pp->p_filesz < 2 || pp->p_filesz > MAXPATHLEN)
+ 				goto bad;
+ 			interp = pool_get(&namei_pool, PR_WAITOK);
+ 			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
+ 			    pp->p_offset, interp, pp->p_filesz)) != 0) {
+ 				goto bad;
+ 			}
++			if (interp[pp->p_filesz - 1] != '\0')
++				goto bad;
+ 		} else if (pp->p_type == PT_LOAD) {
++			if (pp->p_filesz > pp->p_memsz) {
++				error = EINVAL;
++				goto bad;
++			}
+ 			if (base_ph == NULL)
+ 				base_ph = pp;
+ 		} else if (pp->p_type == PT_PHDR) {
+

@@ -1,0 +1,21 @@
+Please upgrade to greenlet 0.4.7. It is a bug fix release and looks to be suitable for all stable releases.
+
+https://pypi.python.org/pypi/greenlet
+
+https://github.com/python-greenlet/greenlet/blob/master/NEWS
+python-greenlet-0.4.7-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/python-greenlet-0.4.7-1.fc22
+python-greenlet-0.4.7-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/python-greenlet-0.4.7-1.fc21
+Package python-greenlet-0.4.7-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing python-greenlet-0.4.7-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10843/python-greenlet-0.4.7-1.fc21
+then log in and leave karma (feedback).
+python-greenlet-0.4.7-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+python-greenlet-0.4.7-1.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

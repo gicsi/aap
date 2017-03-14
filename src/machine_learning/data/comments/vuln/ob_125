@@ -1,0 +1,13 @@
+Under certain conditions, on systems using YP with netgroups in the password
+database, it is possible for the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=rexecd&amp;sektion=8">rexecd(8)</a>
+and
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=rshd&amp;sektion=8">rshd(8)</a>
+daemons to execute the shell from a different user's password entry.
+Due to a similar problem,
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=atrun&amp;sektion=8">atrun(8)</a>
+may change to the wrong home directory when running
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=at&amp;sektion=1">at(1)</a>
+jobs.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/016_approval.patch">
+A source code patch exists which remedies this problem.</a>

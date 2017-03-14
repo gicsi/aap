@@ -1,0 +1,79 @@
+As reported by 'thrice' on IRC, trying to de-select packages in a kickstart doesn't seem to work in Fedora 22.
+
+My test - create a kickstart with this %packages:
+
+%packages
+@core
+@^workstation-product-environment
+-gedit
+%end
+
+Run the install. Note these log messages:
+
+/tmp/packaging.log:
+
+14:06:30,995 INFO packaging: skipped removing nonexistant package: gedit
+14:06:39,656 INFO packaging: skipped removing nonexistant package: gedit
+
+/tmp/dnf.rpm.log:
+
+Jun 22 13:19:00 INFO Installed: gedit-2:3.16.1-1.fc22.x86_64
+
+(the DNF message actually comes after the packaging.log one, the clock just got changed by an hour in there somewhere).
+
+I believe I know why this happens. Here's what dnfpayload.py implements for de-selecting packages:
+
+    def _apply_selections(self):
+...
+        for pkg_name in self.data.packages.excludedList:
+            try:
+                self._remove_package(pkg_name)
+                log.info("removed package: %s", pkg_name)
+            except packaging.NoSuchPackage:
+                log.info("skipped removing nonexistant package: %s", pkg_name)
+
+That's where the 'removing nonexistant package' error comes from, so clearly we're hitting that NoSuchPackage exception. That comes from _remove_package():
+
+    def _remove_package(self, pkg_name):
+        try:
+            return self._base.remove(pkg_name)
+        except dnf.exceptions.PackagesNotInstalledError:
+            raise packaging.NoSuchPackage(pkg_name)
+
+so clearly what happens is that gets a PackagesNotInstalledError exception back from DNF. The problem is that DNF's 'remove()' function does not do what anaconda thinks it does. anaconda clearly thinks it means 'take this package out of the list of packages to be installed in this transaction', but that's not at all what it's for. Here it is:
+
+    def remove(self, pkg_spec, reponame=None):
+        """Mark the specified package for removal. #:api """
+
+        matches = dnf.subject.Subject(pkg_spec).get_best_query(self.sack)
+        installed = [
+            pkg for pkg in matches.installed()
+            if reponame is None or
+            self.yumdb.get_package(pkg).get('from_repo') == reponame]
+        if not installed:
+            raise dnf.exceptions.PackagesNotInstalledError(
+                'no package matched', pkg_spec)
+
+        clean_deps = self.conf.clean_requirements_on_remove
+        for pkg in installed:
+            self._goal.erase(pkg, clean_deps=clean_deps)
+        return len(installed)
+
+i.e. what it really means is 'in this transaction, mark this already-installed package to be erased'. If the package is *not* already installed, it raises the PackagesNotInstalledError exception. Of course, at this point, *no* package is already installed at all - so we're *always* going to get that exception.
+
+To summarize - the problem is that anaconda is asking DNF to uninstall the package, not removing it from the list of packages to be installed.
+
+I'm currently trying to figure out what would be the right way to do this. We could pass the excludedList through to DNF when doing group selections and have a bit of a code to check the excludedList when adding packages that are listed directly, but that's a bigger change than is strictly necessary, I guess?
+If this actually happens in rawhide, or if you disagree that https://github.com/rhinstaller/anaconda/commit/563f5c28f29ce9f261404294ceaf942d38be0d33 is "the right way to do this," please reopen and attach logs.
+Whoops - turns out I was on f22-branch in git and this is fixed in Rawhide. We should still document it for F22, though.
+
+*** This bug has been marked as a duplicate of bug 1185408 ***
+sorry, it's not a dupe of that at all.
+I ran in to this trying to install a custom F22 install; the unfortunate thing, is that "using a kickstart file" was the solution to anaconda removing the ability to select/deselect packages in the GUI.
+
+Is there any way to work around this in a kickstart file?  Explicitly listing packages seems very tedious :-(
+You can use the yum backend in F22 by adding inst.nodnf to the boot command line.
+That should work, yep. 
+
+Other than that, I did try to make an updates.img backporting the fix for this, but for some reason it doesn't seem to work for me in testing, though for all the world it looks like it *should*. I'll try and find some more time to look into that but unfortunately it's not #1 on my priority list.
+Thanks for the suggestion - unfortunately, if I understand correctly, that will also use a yumdb, etc. on the installed system, while I was hoping to use dnf from the beginning (and actually exclude yum* from the install).  I think I'll hold out for the possible updates.img to correct the issue - thanks for the explanation.

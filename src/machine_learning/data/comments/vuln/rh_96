@@ -1,0 +1,5 @@
+Created attachment 1043426
+Error log
+
+CDT version eclipse-cdt-8.7.0-2.fc23 when installed makes eclipse crash with the attached log.
+Seems to be fixed by one of the many later updates.

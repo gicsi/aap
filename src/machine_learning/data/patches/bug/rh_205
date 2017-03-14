@@ -1,0 +1,38 @@
+From 3b51fa08d996ca1866370f9489a49c3ad89c88a0 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 4 Jul 2015 01:38:58 +0000
+Subject: [PATCH] Update to 8.15.2 (#1239185)
+
+---
+ sendmail.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/sendmail.spec b/sendmail.spec
+index 3f69bb6..2ae61c2 100644
+--- a/sendmail.spec
++++ b/sendmail.spec
+@@ -20,8 +20,8 @@
+ 
+ Summary: A widely used Mail Transport Agent (MTA)
+ Name: sendmail
+-Version: 8.15.1
+-Release: 6%{?dist}
++Version: 8.15.2
++Release: 1%{?dist}
+ License: Sendmail
+ Group: System Environment/Daemons
+ URL: http://www.sendmail.org/
+@@ -704,6 +704,9 @@ fi
+ %endif
+ 
+ %changelog
++* Sat Jul 04 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 8.15.2-1
++- Update to 8.15.2 (#1239185)
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 8.15.1-6
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

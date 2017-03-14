@@ -1,0 +1,23 @@
+Description of problem:
+This package does not include a dist tag (e.g. '.fc23') in its release field, even though it is mandatory according the packaging guidelines:
+https://fedoraproject.org/wiki/Packaging:DistTag
+
+Our automated testing efforts are beginning to rely on having a dist tag in RPM file names:
+https://lists.fedoraproject.org/pipermail/packaging/2015-June/thread.html#10693
+
+Please adjust the package spec file and add '%{?dist}' at the end of the release field. Do this for all supported Fedora releases.
+
+It is not necessary to build a new package version immediately, but it should be prepared in the spec file so that a new package build in the future will contain the dist tag.
+
+Thank you.
+
+
+Version-Release number of selected component (if applicable):
+libalpm-0:4.2.1-1.i686
+libalpm-0:4.2.1-1.x86_64
+libalpm-devel-0:4.2.1-1.i686
+libalpm-devel-0:4.2.1-1.x86_64
+Version-Release number of selected component (if applicable):
+pacman-0:4.2.1-1.x86_64
+pacman-filesystem-0:4.2.1-1.noarch
+Oops, it seems I dropped it when going from a git snapshot to a released version. Fortunately only in rawhide. I'll rebuild the package, to be able to close this immediately.

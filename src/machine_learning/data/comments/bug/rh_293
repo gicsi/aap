@@ -1,0 +1,23 @@
+Description of problem:
+The openstack-config tool now executes crudini, which has more options than openstack-config had. However, the openstack-config man page still only mentions the original options, so for instance --list, which can be used to update a list of values, is missing. Consequently, anyone who wants to become familiar with openstack-config by reading the man page will be missing the actual possibilities.
+
+Version-Release number of selected component (if applicable):
+openstack-utils-2014.2-1.el7ost.noarch
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. man openstack-config
+
+Actual results:
+Outdated openstack-config man page.
+
+Expected results:
+The crudini man page.
+Well really this command is deprecated and provided for compat.
+It's better to use crudini directly. I've now mentioned that in the man page:
+
+https://github.com/redhat-openstack/openstack-utils/commit/5f55639cd5
+I wonder if you could modify the man page differently. For instance, you could use .so man1/crudini.1 to make man load the crudini man page. See http://www.tldp.org/HOWTO/Man-Page/q4.html for more information. (I wouldn't vote for a symlink because some rpm validators don't like dangling symlinks.)
+Good suggestion, though then there would be no opportunity to state that openstack-config is deprecated, so users might just add crudini options to the openstack-config command? Also most man page readers make it trivial to load the crudini(1) reference

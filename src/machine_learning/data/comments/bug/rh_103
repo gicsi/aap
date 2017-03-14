@@ -1,0 +1,14 @@
+Your package simon failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10153519
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048333
+build.log
+Created attachment 1048334
+root.log
+Created attachment 1048335
+state.log
+%changelog
+* Mon Jul 06 2015 Rex Dieter <rdieter@fedoraproject.org> 0.4.1-5
+- simon FTBFS (#1240006), USE_PLASMA=off on f22+

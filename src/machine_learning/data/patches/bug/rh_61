@@ -1,0 +1,35 @@
+From 594cbb29b9b7e68e10f760344e4fe8cd0c13ebc4 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Tue, 7 Jul 2015 00:14:08 +0000
+Subject: [PATCH] Update to 479 (#1240456)
+
+---
+ less.spec | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/less.spec b/less.spec
+index d736a2f..1a2a19b 100644
+--- a/less.spec
++++ b/less.spec
+@@ -1,6 +1,6 @@
+ Summary: A text file browser similar to more, but better
+ Name: less
+-Version: 478
++Version: 479
+ Release: 1%{?dist}
+ License: GPLv3+
+ Group: Applications/Text
+@@ -76,6 +76,9 @@ ls -la $RPM_BUILD_ROOT/etc/profile.d
+ rm -rf $RPM_BUILD_ROOT
+ 
+ %changelog
++* Tue Jul 07 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 479-1
++- Update to 479 (#1240456)
++
+ * Wed Jun 24 2015 Jozef Mlich <jmlich@redhat.com> - 478-1
+ - update to 478
+   http://greenwoodsoftware.com/less/news.478.html
+-- 
+1.8.3.1
+
+

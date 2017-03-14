@@ -1,0 +1,39 @@
+Description of problem:
+I was installing, I chose a root password, and pressed done several times, because it was a poor password, I don't know if this has anything to do with the bug.
+
+Version-Release number of selected component:
+anaconda-core-22.20.13-1.fc22.x86_64
+
+The following was filed automatically by anaconda:
+anaconda 22.20.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/nm.py", line 258, in nm_device_property
+    raise UnknownDeviceError(name, e)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/nm.py", line 406, in nm_device_type
+    return nm_device_property(name, "DeviceType")
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/nm.py", line 320, in nm_device_type_is_team
+    return nm_device_type(name) == NetworkManager.DeviceType.TEAM
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/network.py", line 1433, in <genexpr>
+    return any(nm.nm_device_type_is_team(d) for d in nm.nm_devices())
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/network.py", line 1433, in is_using_team_device
+    return any(nm.nm_device_type_is_team(d) for d in nm.nm_devices())
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/install.py", line 227, in doInstall
+    if network.is_using_team_device():
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+UnknownDeviceError: UnknownDeviceError('enp2s0', GLib.Error('GDBus.Error:org.freedesktop.NetworkManager.UnknownDevice: No device found for the requested iface.', 'g-io-error-quark', 36))
+
+Additional info:
+cmdline:        /usr/bin/python2  /sbin/anaconda --liveinst --method=livecd:///dev/mapper/live-base
+cmdline_file:   BOOT_IMAGE=vmlinuz0 initrd=initrd0.img root=live:CDLABEL=Fedora-Live-KDE-x86_64-22-3 rootfstype=auto ro rd.live.image quiet  rhgb rd.luks=0 rd.md=0 rd.dm=0 
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.4-301.fc22.x86_64
+other involved packages: python-libs-2.7.9-6.fc22.x86_64
+product:        Fedora
+release:        Fedora release 22 (Twenty Two)
+type:           anaconda
+version:        22
+*** This bug has been marked as a duplicate of bug 1086666 ***

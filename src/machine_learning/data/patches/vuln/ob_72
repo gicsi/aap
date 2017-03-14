@@ -1,0 +1,63 @@
+Prerequisites:
+	028_sendmail.patch must have already been applied
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 031_sendmail.patch
+
+And then rebuild, install and restart sendmail:
+	cd gnu/usr.sbin/sendmail
+	make obj
+	make depend
+	make
+	make install
+	kill -HUP `sed 1q /var/run/sendmail.pid`
+
+Index: gnu/usr.sbin/sendmail/sendmail/trace.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/trace.c,v
+retrieving revision 1.1.1.1.4.1
+diff -u -r1.1.1.1.4.1 trace.c
+--- gnu/usr.sbin/sendmail/sendmail/trace.c	2001/05/31 00:31:45	1.1.1.1.4.1
++++ gnu/usr.sbin/sendmail/sendmail/trace.c	2001/08/21 17:18:42
+@@ -63,7 +63,7 @@
+ tTflag(s)
+ 	register char *s;
+ {
+-	int first, last;
++	unsigned int first, last;
+ 	register unsigned int i;
+ 
+ 	if (*s == '\0')
+@@ -73,16 +73,28 @@
+ 	{
+ 		/* find first flag to set */
+ 		i = 0;
+-		while (isascii(*s) && isdigit(*s))
++		while (isascii(*s) && isdigit(*s) && i < tTsize)
+ 			i = i * 10 + (*s++ - '0');
++
++		/*
++		**  skip over rest of a too large number
++		**  Maybe we should complain if out-of-bounds values are used.
++		*/
++
++		while (isascii(*s) && isdigit(*s) && i >= tTsize)
++			s++;
+ 		first = i;
+ 
+ 		/* find last flag to set */
+ 		if (*s == '-')
+ 		{
+ 			i = 0;
+-			while (isascii(*++s) && isdigit(*s))
++			while (isascii(*++s) && isdigit(*s) && i < tTsize)
+ 				i = i * 10 + (*s - '0');
++
++			/* skip over rest of a too large number */
++			while (isascii(*s) && isdigit(*s) && i >= tTsize)
++				s++;
+ 		}
+ 		last = i;
+ 
+

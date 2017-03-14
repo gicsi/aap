@@ -1,0 +1,58 @@
+Description of problem:
+SELinux is preventing /usr/bin/bash from 'getattr' accesses on the directory /.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that bash should be allowed getattr access on the  directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep sh /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:cupsd_t:s0-s0:c0.c1023
+Target Context                system_u:object_r:samba_share_t:s0
+Target Objects                / [ dir ]
+Source                        sh
+Source Path                   /usr/bin/bash
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           bash-4.3.39-1.fc22.x86_64
+Target RPM Packages           filesystem-3.2-32.fc22.x86_64
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-303.fc22.x86_64 #1 SMP Thu
+                              May 28 12:37:06 UTC 2015 x86_64 x86_64
+Alert Count                   3
+First Seen                    2015-06-15 22:13:34 EEST
+Last Seen                     2015-06-21 17:12:09 EEST
+Local ID                      951b27c1-ad17-4942-9ba5-b18bde5ec777
+
+Raw Audit Messages
+type=AVC msg=audit(1434895929.19:1640): avc:  denied  { getattr } for  pid=6672 comm="sh" path="/" dev="dm-1" ino=2 scontext=system_u:system_r:cupsd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:samba_share_t:s0 tclass=dir permissive=1
+
+
+type=SYSCALL msg=audit(1434895929.19:1640): arch=x86_64 syscall=stat success=yes exit=0 a0=7f7d5d664d0b a1=7ffed14204d0 a2=7ffed14204d0 a3=0 items=0 ppid=6670 pid=6672 auid=4294967295 uid=4 gid=7 euid=4 suid=4 fsuid=4 egid=7 sgid=7 fsgid=7 tty=(none) ses=4294967295 comm=sh exe=/usr/bin/bash subj=system_u:system_r:cupsd_t:s0-s0:c0.c1023 key=(null)
+
+Hash: sh,cupsd_t,samba_share_t,dir,getattr
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.5.1
+hashmarkername: setroubleshoot
+kernel:         4.0.4-303.fc22.x86_64
+type:           libreport
+*** Bug 1234129 has been marked as a duplicate of this bug. ***
+Hi, 
+
+Please use: 
+# restorecon -R -v /
+
+This should fix labels in your system.

@@ -1,0 +1,62 @@
+Version-Release number of selected component:
+libreoffice-core-4.3.7.2-5.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/lib64/libreoffice/program/soffice.bin --calc file:///home/ariel/Documentos/Assertive/Equipos%20de%20C%C3%B3mputo/Inventario%20general%20de%20equipos.ods --splash-pipe=5
+crash_function: size
+executable:     /usr/lib64/libreoffice/program/soffice.bin
+kernel:         4.0.4-201.fc21.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at lun 2015-04-13 23:10:00 CDT, end at jue 2015-06-18 15:17:09 CDT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 size at /usr/include/c++/4.9.2/bits/stl_vector.h:655
+ #1 ScRangeList::ScRangeList at /usr/src/debug/libreoffice-4.3.7.2/sc/source/core/tool/rangelst.cxx:1015
+ #2 ScTable::FillAuto at /usr/src/debug/libreoffice-4.3.7.2/sc/source/core/data/table4.cxx:624
+ #3 ScTable::Fill at /usr/src/debug/libreoffice-4.3.7.2/sc/source/core/data/table4.cxx:1812
+ #4 ScDocument::Fill at /usr/src/debug/libreoffice-4.3.7.2/sc/source/core/data/documen3.cxx:1141
+ #5 ScDocFunc::FillAuto at /usr/src/debug/libreoffice-4.3.7.2/sc/source/ui/docshell/docfunc.cxx:4606
+ #7 ScViewFunc::FillAuto at /usr/src/debug/libreoffice-4.3.7.2/sc/source/ui/view/viewfun2.cxx:1256
+ #8 ScCellShell::ExecuteEdit at /usr/src/debug/libreoffice-4.3.7.2/sc/source/ui/view/cellsh1.cxx:885
+ #9 SfxShell::CallExec at /usr/src/debug/libreoffice-4.3.7.2/include/sfx2/shell.hxx:181
+ #10 SfxDispatcher::Call_Impl at /usr/src/debug/libreoffice-4.3.7.2/sfx2/source/control/dispatch.cxx:283
+Created attachment 1040656
+File: backtrace
+Created attachment 1040657
+File: cgroup
+Created attachment 1040658
+File: core_backtrace
+Created attachment 1040659
+File: dso_list
+Created attachment 1040660
+File: environ
+Created attachment 1040661
+File: exploitable
+Created attachment 1040662
+File: limits
+Created attachment 1040663
+File: maps
+Created attachment 1040664
+File: open_fds
+Created attachment 1040665
+File: proc_pid_status
+libreoffice-4.4.4.2-2.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/libreoffice-4.4.4.2-2.fc22
+Package libreoffice-4.4.4.2-2.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing libreoffice-4.4.4.2-2.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10436/libreoffice-4.4.4.2-2.fc22
+then log in and leave karma (feedback).
+libreoffice-4.4.4.2-3.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/libreoffice-4.4.4.2-3.fc22
+libreoffice-4.4.4.2-3.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

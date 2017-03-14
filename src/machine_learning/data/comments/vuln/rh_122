@@ -1,0 +1,27 @@
+Description of problem:
+While running "openstack baremetal introspection bulk start" the fifth node seems to miss the pxe service / file which in turn causes the node to hang on "no boot device found" error. The current method of working around this issue is a reboot of the effected node which will promptly start the introspection, as long as ironic is still within its timeout window.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Dmitry, can you look into this one and confirm if it's a dupe or not?
+Please provide $ sudo journalctl -u openstack-ironic-discoverd-dnsmasq
+Could it be related to https://bugzilla.redhat.com/show_bug.cgi?id=1235255 ?
+It's more likely to be a dup of https://bugzilla.redhat.com/show_bug.cgi?id=1234343
+Dmitry I agree that this is a duplicate of bz#1234343.
+*** This bug has been marked as a duplicate of bug 1234343 ***

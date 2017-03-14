@@ -1,0 +1,24 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-Proc-Fork/perl-Proc-Fork.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-Proc-Fork/perl-Proc-Fork-0.804-1.fc23.src.rpm
+Description:
+This module provides an intuitive, Perl-ish way to write forking
+programs by letting you use blocks to illustrate which code section
+executes in which fork. The code for the parent, child, retry handler
+and error handler are grouped together in a "fork block". The clauses
+may appear in any order, but they must be consecutive (without any other
+statements in between).
+
+Fedora Account System Username: jplesnik@redhat.com
+Consider adding a version constraint for Test::Script; the code requires 1.05+.
+
+No blockers.  Approving.
+New Package SCM Request
+=======================
+Package Name: perl-Proc-Fork
+Short Description: Simple, intuitive interface to the fork() system call
+Upstream URL: http://search.cpan.org/dist/Proc-Fork/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

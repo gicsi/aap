@@ -1,0 +1,61 @@
+Description of problem:
+
+When building in Koji, pbr attempts to download from PyPi and blows up.
+
++ /usr/bin/python3 setup.py build
+Download error on https://pypi.python.org/simple/pbr/: [Errno -3] Temporary failure in name resolution -- Some packages may not be found!
+Couldn't find index page for 'pbr' (maybe misspelled?)
+Download error on https://pypi.python.org/simple/: [Errno -3] Temporary failure in name resolution -- Some packages may not be found!
+No local packages or download links found for pbr
+Traceback (most recent call last):
+  File "setup.py", line 20, in <module>
+    setuptools.setup(setup_requires=['pbr'], pbr=True)
+  File "/usr/lib/python3.4/distutils/core.py", line 108, in setup
+    _setup_distribution = dist = klass(attrs)
+  File "/usr/lib/python3.4/site-packages/setuptools/dist.py", line 268, in __init__
+    self.fetch_build_eggs(attrs['setup_requires'])
+  File "/usr/lib/python3.4/site-packages/setuptools/dist.py", line 313, in fetch_build_eggs
+    replace_conflicting=True,
+  File "/usr/lib/python3.4/site-packages/pkg_resources/__init__.py", line 836, in resolve
+    dist = best[req.key] = env.best_match(req, ws, installer)
+  File "/usr/lib/python3.4/site-packages/pkg_resources/__init__.py", line 1081, in best_match
+    return self.obtain(req, installer)
+  File "/usr/lib/python3.4/site-packages/pkg_resources/__init__.py", line 1093, in obtain
+    return installer(requirement)
+  File "/usr/lib/python3.4/site-packages/setuptools/dist.py", line 380, in fetch_build_egg
+    return cmd.easy_install(req)
+  File "/usr/lib/python3.4/site-packages/setuptools/command/easy_install.py", line 623, in easy_install
+    raise DistutilsError(msg)
+distutils.errors.DistutilsError: Could not find suitable distribution for Requirement.parse('pbr')
+
+Version-Release number of selected component (if applicable):
+
+python-pbr-0.11.0-2.fc23.noarch
+
+How reproducible:
+
+Synchronous but may depend on package set etc.
+
+Steps to Reproduce:
+1. Write a spec of an OpenStack package with pbr (see attached)
+2. fedpkg srpm
+3. fedpkg --dist f23 build --scratch --srpm git-review-1.25.0-1.fc23.src.rpm
+
+Actual results:
+
+Crash
+
+Expected results:
+
+RPM is built
+
+Additional info:
+Created attachment 1048910
+git-review.spec
+
+This is the exact spec that caused the problem.
+Created attachment 1048914
+Full build.log from Koji
+Created attachment 1048923
+root.log from Koji
+it looks like you didn't use python3-pbr

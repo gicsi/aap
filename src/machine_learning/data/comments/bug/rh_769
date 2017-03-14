@@ -1,0 +1,36 @@
+Description of problem:
+tried a fresh install to reinstall some packages used from fc21, well the package NAMES anyways...and they are not found.
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. dnf/yum install <packagename>
+
+Actual results:
+packagename xyz not found
+
+Expected results:
+installation of package
+
+Additional info:
+examples are PySolFC, SimpleHTML, cardmanager, etc. which exist in fc21, and should be found in 22. they are not upgraded for some reason when using fedup from 21. some other non-free packages are also affected.
+$ dnf list PySolFC --releasever=21 --refresh
+...
+Available Packages
+PySolFC.noarch         2.0-10.fc21         fedora
+
+$ dnf list PySolFC --releasever=22 --refresh
+...
+Error: No matching Packages to list
+
+$ yum list PySolFC --releasever=22
+...
+Error: No matching Packages to list
+
+It seems like PySolFC was not build for f22 [1]. The same I expect with the other mentioned packages. You can ask the package maintainers why it's not there and id htey can make a possible builds. Or at your own risk you can install from koji packages targeted for different release.
+
+[1] http://koji.fedoraproject.org/koji/packageinfo?packageID=5179

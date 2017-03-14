@@ -1,0 +1,4 @@
+Main CDT package is required by many packages changelog, rpm, fedorapackager, valgring, oprofile, perf, ptp and so on. None of them benefits from the docker work but the docker-client rpm alone pulls in 77 packages on machine with Eclipse Platform, Mylyn, DLTK, EMF, EGit and so on and they already pull in way too many dependencies. That's why eclipse-cdt-docker should separate addon for people explicitly requesting it.
+Additionally docker-client.rpm dependencies are not sanitized and clean up and pull various tomcat*/jboss* EE apis which contain duplicate metadata that break xmvn and thus renders machine with it installed unusable for RPM building purposes and with it being dep of eclipse-cdt the pain is huge.
+Fix is in eclipse-cdt-8.7.0-3
+Verified.

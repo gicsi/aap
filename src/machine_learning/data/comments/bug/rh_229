@@ -1,0 +1,39 @@
+Created attachment 1045762
+Screen Shot of Error Message
+
+Description of problem:
+When I start firewall-config I receive an Error. "Action org.fedoraproject.FirewallD1.config.info is not registered"
+
+Version-Release number of selected component (if applicable):
+Name        : firewall-config
+Version     : 0.3.14.2
+Release     : 2.fc21
+
+How reproducible:
+
+Steps to Reproduce:
+1. Install Fedora Live Workstation to Hard Drive
+2. yum install firewall-config
+3. run firewall-config application by selecting icon from menu
+
+Actual results:
+Error Action org.fedoraproject.FirewallD1.config.info is not registered pops up and firewall-config is unusable.
+
+Expected results:
+No error, be able to configure firewall
+
+Additional info:
+Have tried running firewall-config as a privileged user and as root. No joy either way. firewalld is running.
+Same error occurs when using certain options with firewall-cmd while others work. Here are a few examples...
+
+[root@frodo ~]# firewall-cmd --list-ports
+Error: Action org.fedoraproject.FirewallD1.config.info is not registered
+[root@frodo ~]# firewall-cmd --list-services
+Error: Action org.fedoraproject.FirewallD1.config.info is not registered
+[root@frodo ~]# firewall-cmd --get-services
+amanda-client amanda-k5-client bacula bacula-client dhcp dhcpv6 dhcpv6-client dns dropbox-lansync freeipa-ldap freeipa-ldaps freeipa-replication ftp high-availability http https imaps ipp ipp-client ipsec iscsi-target kadmin kerberos kpasswd ldap ldaps libvirt libvirt-tls mdns mosh mountd ms-wbt mysql nfs ntp openvpn pmcd pmproxy pmwebapi pmwebapis pop3s postgresql privoxy proxy-dhcp ptp puppetmaster radius rpc-bind rsyncd samba samba-client sane smtp squid ssh synergy telnet tftp tftp-client tinc tor-socks transmission-client vdsm vnc-server wbem-https xmpp-bosh xmpp-client xmpp-local xmpp-server
+[root@frodo ~]# firewall-cmd --add-service=transmission-client
+success
+[root@frodo ~]# firewall-cmd --permanent --add-service=transmission-client
+success
+After reboot the problem has fixed itself. Closing bug, no need to investigate any further.

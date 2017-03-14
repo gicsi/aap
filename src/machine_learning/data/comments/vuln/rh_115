@@ -1,0 +1,46 @@
+Description of problem:
+ERROR: Could not create dir /var/lib/mock/fedora-21-x86_64/root/builddir/build/RPMS. Error: [Errno 13] Permission denied: '/var/lib/mock/fedora-21-x86_64/root/builddir/build'
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/site-packages/mockbuild/util.py", line 99, in mkdirIfAbsent
+    os.makedirs(dirName)
+  File "/usr/lib64/python2.6/os.py", line 150, in makedirs
+    makedirs(head, mode)
+  File "/usr/lib64/python2.6/os.py", line 157, in makedirs
+    mkdir(name, mode)
+OSError: [Errno 13] Permission denied: '/var/lib/mock/fedora-21-x86_64/root/builddir/build'
+ERROR: Could not create dir /var/lib/mock/fedora-21-x86_64/root/builddir/build/RPMS. Error: [Errno 13] Permission denied: '/var/lib/mock/fedora-21-x86_64/root/builddir/build'
+
+
+Version-Release number of selected component (if applicable):
+1.2.10
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.mock --init -r fedora-21-x86_64
+2.gives error
+3.
+
+Actual results:
+Fails to create directories
+
+Expected results:
+
+
+Additional info:
+user is in mock group
+drwxrwsr-x 12 root mock 4096 Jun 24 03:01 /var/lib/mock
+Build system was correctly working before update to 1.2.10
+update applied to build f22
+*** Bug 1235141 has been marked as a duplicate of this bug. ***
+Commenting out line 388 buildroot.py where it drops privileges fixes the problem as it needs privilegs to create directories when the builddir is 
+drwx------ 3 root mock 4096 Jun 24 20:16 /var/lib/mock/fedora-22-x86_64/root/builddir/
+I am really curious how you  created the directory as:
+  drwx------ 3 root mock
+It should be:
+  drwx--S--- 3 root mock
+
+An no matter how I am trying I could not get that directory without S attribute.
+
+Can you please provide more data so I can reproduce? Feel free to reopen once you have reproducer.

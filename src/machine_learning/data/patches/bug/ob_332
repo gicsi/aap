@@ -1,0 +1,558 @@
+Apply by doing:
+	/usr/src
+	patch -p0 < 007_rtsock.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/rtsock.c
+===================================================================
+RCS file: /cvs/src/sys/net/rtsock.c,v
+retrieving revision 1.105
+diff -u -p -r1.105 rtsock.c
+--- sys/net/rtsock.c	14 Jul 2010 20:56:35 -0000	1.105
++++ sys/net/rtsock.c	13 Jan 2011 14:59:27 -0000
+@@ -820,6 +820,8 @@ flush:
+ 			rtm->rtm_flags |= RTF_DONE;
+ 		}
+ 	}
++	if (dst)
++		route_proto.sp_protocol = dst->sa_family;
+ 	if (rt)
+ 		rtfree(rt);
+ 
+@@ -838,8 +840,6 @@ flush:
+ 	}
+ 	if (rp)
+ 		rp->rcb_proto.sp_family = 0; /* Avoid us */
+-	if (dst)
+-		route_proto.sp_protocol = dst->sa_family;
+ 	if (rtm) {
+ 		m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT);
+ 		if (m->m_pkthdr.len < rtm->rtm_msglen) {
+
+Apply by doing:
+	/usr/src
+	patch -p0 < 006_cbc.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/amd64/amd64/aesni.c
+===================================================================
+RCS file: /cvs/src/sys/arch/amd64/amd64/aesni.c,v
+retrieving revision 1.8
+diff -p -u -r1.8 aesni.c
+--- sys/arch/amd64/amd64/aesni.c	22 Jul 2010 12:47:40 -0000	1.8
++++ sys/arch/amd64/amd64/aesni.c	16 Dec 2010 23:57:00 -0000
+@@ -46,7 +46,6 @@ struct aesni_sess {
+ 	uint32_t		 ses_dkey[4 * (AES_MAXROUNDS + 1)];
+ 	uint32_t		 ses_klen;
+ 	uint8_t			 ses_nonce[AESCTR_NONCESIZE];
+-	uint8_t			 ses_iv[EALG_MAX_BLOCK_LEN];
+ 	int			 ses_sid;
+ 	int		 	 ses_used;
+ 	struct swcr_data	*ses_swd;
+@@ -165,7 +164,6 @@ aesni_newsession(u_int32_t *sidp, struct
+ 		switch (c->cri_alg) {
+ 		case CRYPTO_AES_CBC:
+ 			ses->ses_klen = c->cri_klen / 8;
+-			arc4random_buf(ses->ses_iv, 16);
+ 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
+ 			break;
+ 
+@@ -173,7 +171,6 @@ aesni_newsession(u_int32_t *sidp, struct
+ 			ses->ses_klen = c->cri_klen / 8 - AESCTR_NONCESIZE;
+ 			bcopy(c->cri_key + ses->ses_klen, ses->ses_nonce,
+ 			    AESCTR_NONCESIZE);
+-			arc4random_buf(ses->ses_iv, 8);
+ 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
+ 			break;
+ 
+@@ -343,7 +340,7 @@ aesni_encdec(struct cryptop *crp, struct
+ 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+ 			bcopy(crd->crd_iv, iv, ivlen);
+ 		else
+-			bcopy(ses->ses_iv, iv, ivlen);
++			arc4random_buf(iv, ivlen);
+ 
+ 		/* Do we need to write the IV */
+ 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+@@ -410,27 +407,6 @@ aesni_encdec(struct cryptop *crp, struct
+ 		    crd->crd_len, buf);
+ 	else
+ 		bcopy(buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
+-
+-	/*
+-	 * Copy out last block for use as next session IV for CBC,
+-	 * generate new IV for CTR.
+-	 */
+-	if (crd->crd_flags & CRD_F_ENCRYPT) {
+-		if (crd->crd_alg == CRYPTO_AES_CBC) {
+-			if (crp->crp_flags & CRYPTO_F_IMBUF)
+-				m_copydata((struct mbuf *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+-				    ses->ses_iv);
+-			else if (crp->crp_flags & CRYPTO_F_IOV)
+-				cuio_copydata((struct uio *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+-				    ses->ses_iv);
+-			else
+-				bcopy(crp->crp_buf + crd->crd_skip +
+-				    crd->crd_len - ivlen, ses->ses_iv, ivlen);
+-		} else if (crd->crd_alg == CRYPTO_AES_CTR)
+-			arc4random_buf(ses->ses_iv, ivlen);
+-	}
+ 
+ out:
+ 	bzero(buf, crd->crd_len);
+Index: sys/arch/amd64/amd64/via.c
+===================================================================
+RCS file: /cvs/src/sys/arch/amd64/amd64/via.c,v
+retrieving revision 1.7
+diff -p -u -r1.7 via.c
+--- sys/arch/amd64/amd64/via.c	6 Jul 2010 09:49:47 -0000	1.7
++++ sys/arch/amd64/amd64/via.c	16 Dec 2010 23:57:01 -0000
+@@ -64,7 +64,6 @@ void	viac3_rnd(void *);
+ struct viac3_session {
+ 	u_int32_t	ses_ekey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
+ 	u_int32_t	ses_dkey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
+-	u_int8_t	ses_iv[16];			/* 128 bit aligned */
+ 	u_int32_t	ses_cw0;
+ 	struct swcr_data *swd;
+ 	int		ses_klen;
+@@ -194,7 +193,6 @@ viac3_crypto_newsession(u_int32_t *sidp,
+ 			cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
+ 			    C3_CRYPT_CWLO_NORMAL;
+ 
+-			arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
+ 			ses->ses_klen = c->cri_klen;
+ 			ses->ses_cw0 = cw0;
+ 
+@@ -374,7 +372,7 @@ viac3_crypto_encdec(struct cryptop *crp,
+ 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+ 			bcopy(crd->crd_iv, sc->op_iv, 16);
+ 		else
+-			bcopy(ses->ses_iv, sc->op_iv, 16);
++			arc4random_buf(sc->op_iv, 16);
+ 
+ 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+ 			if (crp->crp_flags & CRYPTO_F_IMBUF)
+@@ -427,21 +425,6 @@ viac3_crypto_encdec(struct cryptop *crp,
+ 	else
+ 		bcopy(sc->op_buf, crp->crp_buf + crd->crd_skip,
+ 		    crd->crd_len);
+-
+-	/* copy out last block for use as next session IV */
+-	if (crd->crd_flags & CRD_F_ENCRYPT) {
+-		if (crp->crp_flags & CRYPTO_F_IMBUF)
+-			m_copydata((struct mbuf *)crp->crp_buf,
+-			    crd->crd_skip + crd->crd_len - 16, 16,
+-			    ses->ses_iv);
+-		else if (crp->crp_flags & CRYPTO_F_IOV)
+-			cuio_copydata((struct uio *)crp->crp_buf,
+-			    crd->crd_skip + crd->crd_len - 16, 16,
+-			    ses->ses_iv);
+-		else
+-			bcopy(crp->crp_buf + crd->crd_skip +
+-			    crd->crd_len - 16, ses->ses_iv, 16);
+-	}
+ 
+ 	if (sc->op_buf != NULL) {
+ 		bzero(sc->op_buf, crd->crd_len);
+Index: sys/arch/i386/i386/via.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/via.c,v
+retrieving revision 1.24
+diff -p -u -r1.24 via.c
+--- sys/arch/i386/i386/via.c	6 Jul 2010 09:49:47 -0000	1.24
++++ sys/arch/i386/i386/via.c	16 Dec 2010 23:57:02 -0000
+@@ -64,7 +64,6 @@ void	viac3_rnd(void *);
+ struct viac3_session {
+ 	u_int32_t	ses_ekey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
+ 	u_int32_t	ses_dkey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
+-	u_int8_t	ses_iv[16];			/* 128 bit aligned */
+ 	u_int32_t	ses_cw0;
+ 	struct swcr_data *swd;
+ 	int		ses_klen;
+@@ -195,7 +194,6 @@ viac3_crypto_newsession(u_int32_t *sidp,
+ 			cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
+ 			    C3_CRYPT_CWLO_NORMAL;
+ 
+-			arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
+ 			ses->ses_klen = c->cri_klen;
+ 			ses->ses_cw0 = cw0;
+ 
+@@ -375,7 +373,7 @@ viac3_crypto_encdec(struct cryptop *crp,
+ 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+ 			bcopy(crd->crd_iv, sc->op_iv, 16);
+ 		else
+-			bcopy(ses->ses_iv, sc->op_iv, 16);
++			arc4random_buf(sc->op_iv, 16);
+ 
+ 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+ 			if (crp->crp_flags & CRYPTO_F_IMBUF)
+@@ -428,21 +426,6 @@ viac3_crypto_encdec(struct cryptop *crp,
+ 	else
+ 		bcopy(sc->op_buf, crp->crp_buf + crd->crd_skip,
+ 		    crd->crd_len);
+-
+-	/* copy out last block for use as next session IV */
+-	if (crd->crd_flags & CRD_F_ENCRYPT) {
+-		if (crp->crp_flags & CRYPTO_F_IMBUF)
+-			m_copydata((struct mbuf *)crp->crp_buf,
+-			    crd->crd_skip + crd->crd_len - 16, 16,
+-			    ses->ses_iv);
+-		else if (crp->crp_flags & CRYPTO_F_IOV)
+-			cuio_copydata((struct uio *)crp->crp_buf,
+-			    crd->crd_skip + crd->crd_len - 16, 16,
+-			    ses->ses_iv);
+-		else
+-			bcopy(crp->crp_buf + crd->crd_skip +
+-			    crd->crd_len - 16, ses->ses_iv, 16);
+-	}
+ 
+ 	if (sc->op_buf != NULL) {
+ 		bzero(sc->op_buf, crd->crd_len);
+Index: sys/arch/i386/pci/glxsb.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/pci/glxsb.c,v
+retrieving revision 1.19
+diff -p -u -r1.19 glxsb.c
+--- sys/arch/i386/pci/glxsb.c	2 Jul 2010 02:40:15 -0000	1.19
++++ sys/arch/i386/pci/glxsb.c	16 Dec 2010 23:57:02 -0000
+@@ -150,7 +150,6 @@ struct glxsb_dma_map {
+ };
+ struct glxsb_session {
+ 	uint32_t	ses_key[4];
+-	uint8_t		ses_iv[SB_AES_BLOCK_SIZE];
+ 	int		ses_klen;
+ 	int		ses_used;
+ 	struct swcr_data *ses_swd_auth;
+@@ -394,7 +393,6 @@ glxsb_crypto_newsession(uint32_t *sidp, 
+ 				break;
+ 			}
+ 
+-			arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
+ 			ses->ses_klen = c->cri_klen;
+ 
+ 			/* Copy the key (Geode LX wants the primary key only) */
+@@ -618,7 +616,7 @@ glxsb_crypto_encdec(struct cryptop *crp,
+ {
+ 	char *op_src, *op_dst;
+ 	uint32_t op_psrc, op_pdst;
+-	uint8_t op_iv[SB_AES_BLOCK_SIZE], *piv;
++	uint8_t op_iv[SB_AES_BLOCK_SIZE];
+ 	int err = 0;
+ 	int len, tlen, xlen;
+ 	int offset;
+@@ -648,7 +646,7 @@ glxsb_crypto_encdec(struct cryptop *crp,
+ 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+ 			bcopy(crd->crd_iv, op_iv, sizeof(op_iv));
+ 		else
+-			bcopy(ses->ses_iv, op_iv, sizeof(op_iv));
++			arc4random_buf(op_iv, sizeof(op_iv));
+ 
+ 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+ 			if (crp->crp_flags & CRYPTO_F_IMBUF)
+@@ -681,7 +679,6 @@ glxsb_crypto_encdec(struct cryptop *crp,
+ 
+ 	offset = 0;
+ 	tlen = crd->crd_len;
+-	piv = op_iv;
+ 
+ 	/* Process the data in GLXSB_MAX_AES_LEN chunks */
+ 	while (tlen > 0) {
+@@ -717,26 +714,14 @@ glxsb_crypto_encdec(struct cryptop *crp,
+ 		offset += len;
+ 		tlen -= len;
+ 
+-		if (tlen <= 0) {	/* Ideally, just == 0 */
+-			/* Finished - put the IV in session IV */
+-			piv = ses->ses_iv;
+-		}
+-
+-		/*
+-		 * Copy out last block for use as next iteration/session IV.
+-		 *
+-		 * piv is set to op_iv[] before the loop starts, but is
+-		 * set to ses->ses_iv if we're going to exit the loop this
+-		 * time.
+-		 */
+-		if (crd->crd_flags & CRD_F_ENCRYPT) {
+-			bcopy(op_dst + len - sizeof(op_iv), piv, sizeof(op_iv));
+-		} else {
+-			/* Decryption, only need this if another iteration */
+-			if (tlen > 0) {
+-				bcopy(op_src + len - sizeof(op_iv), piv,
++		if (tlen > 0) {
++			/* Copy out last block for use as next iteration */
++			if (crd->crd_flags & CRD_F_ENCRYPT)
++				bcopy(op_dst + len - sizeof(op_iv), op_iv,
++				    sizeof(op_iv));
++			else
++				bcopy(op_src + len - sizeof(op_iv), op_iv,
+ 				    sizeof(op_iv));
+-			}
+ 		}
+ 	}
+ 
+Index: sys/dev/pci/hifn7751.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/hifn7751.c,v
+retrieving revision 1.162
+diff -p -u -r1.162 hifn7751.c
+--- sys/dev/pci/hifn7751.c	5 Jul 2010 11:07:56 -0000	1.162
++++ sys/dev/pci/hifn7751.c	16 Dec 2010 23:57:05 -0000
+@@ -1873,10 +1873,6 @@ hifn_newsession(u_int32_t *sidp, struct 
+ 		case CRYPTO_DES_CBC:
+ 		case CRYPTO_3DES_CBC:
+ 		case CRYPTO_AES_CBC:
+-			arc4random_buf(ses->hs_iv,
+-			    (c->cri_alg == CRYPTO_AES_CBC ?
+-			    HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH));
+-			/*FALLTHROUGH*/
+ 		case CRYPTO_ARC4:
+ 			if (cry)
+ 				return (EINVAL);
+@@ -2074,8 +2070,7 @@ hifn_process(struct cryptop *crp)
+ 				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+ 					bcopy(enccrd->crd_iv, cmd->iv, ivlen);
+ 				else
+-					bcopy(sc->sc_sessions[session].hs_iv,
+-					    cmd->iv, ivlen);
++					arc4random_buf(cmd->iv, ivlen);
+ 
+ 				if ((enccrd->crd_flags & CRD_F_IV_PRESENT)
+ 				    == 0) {
+@@ -2259,7 +2254,7 @@ hifn_callback(struct hifn_softc *sc, str
+ 	struct cryptop *crp = cmd->crp;
+ 	struct cryptodesc *crd;
+ 	struct mbuf *m;
+-	int totlen, i, u, ivlen;
++	int totlen, i, u;
+ 
+ 	if (cmd->src_map == cmd->dst_map)
+ 		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+@@ -2321,28 +2316,6 @@ hifn_callback(struct hifn_softc *sc, str
+ 	dma->dstk = i; dma->dstu = u;
+ 
+ 	hifnstats.hst_obytes += cmd->dst_map->dm_mapsize;
+-
+-	if ((cmd->base_masks & (HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE)) ==
+-	    HIFN_BASE_CMD_CRYPT) {
+-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+-			if (crd->crd_alg != CRYPTO_DES_CBC &&
+-			    crd->crd_alg != CRYPTO_3DES_CBC &&
+-			    crd->crd_alg != CRYPTO_AES_CBC)
+-				continue;
+-			ivlen = ((crd->crd_alg == CRYPTO_AES_CBC) ?
+-			    HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH);
+-			if (crp->crp_flags & CRYPTO_F_IMBUF)
+-				m_copydata((struct mbuf *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+-				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+-			else if (crp->crp_flags & CRYPTO_F_IOV) {
+-				cuio_copydata((struct uio *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - ivlen, ivlen,
+-				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+-			}
+-			break;
+-		}
+-	}
+ 
+ 	if (cmd->base_masks & HIFN_BASE_CMD_MAC) {
+ 		u_int8_t *macbuf;
+Index: sys/dev/pci/hifn7751var.h
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/hifn7751var.h,v
+retrieving revision 1.52
+diff -p -u -r1.52 hifn7751var.h
+--- sys/dev/pci/hifn7751var.h	20 Jan 2004 21:01:55 -0000	1.52
++++ sys/dev/pci/hifn7751var.h	16 Dec 2010 23:57:05 -0000
+@@ -104,7 +104,6 @@ struct hifn_dma {
+ 
+ struct hifn_session {
+ 	int hs_used;
+-	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
+ };
+ 
+ #define	HIFN_RING_SYNC(sc, r, i, f)					\
+Index: sys/dev/pci/safe.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/safe.c,v
+retrieving revision 1.29
+diff -p -u -r1.29 safe.c
+--- sys/dev/pci/safe.c	2 Jul 2010 02:40:16 -0000	1.29
++++ sys/dev/pci/safe.c	16 Dec 2010 23:57:06 -0000
+@@ -472,7 +472,8 @@ safe_process(struct cryptop *crp)
+ 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+ 				bcopy(enccrd->crd_iv, iv, ivsize);
+ 			else
+-				bcopy(ses->ses_iv, iv, ivsize);
++				arc4random_buf(iv, ivsize);
++
+ 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+ 				if (crp->crp_flags & CRYPTO_F_IMBUF)
+ 					m_copyback(re->re_src_m,
+@@ -485,7 +486,6 @@ safe_process(struct cryptop *crp)
+ 			for (i = 0; i < ivsize / sizeof(iv[0]); i++)
+ 				re->re_sastate.sa_saved_iv[i] = htole32(iv[i]);
+ 			cmd0 |= SAFE_SA_CMD0_IVLD_STATE | SAFE_SA_CMD0_SAVEIV;
+-			re->re_flags |= SAFE_QFLAGS_COPYOUTIV;
+ 		} else {
+ 			cmd0 |= SAFE_SA_CMD0_INBOUND;
+ 
+@@ -1362,9 +1362,6 @@ safe_newsession(u_int32_t *sidp, struct 
+ 	ses->ses_used = 1;
+ 
+ 	if (encini) {
+-		/* get an IV */
+-		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
+-
+ 		ses->ses_klen = encini->cri_klen;
+ 		bcopy(encini->cri_key, ses->ses_key, ses->ses_klen / 8);
+ 
+@@ -1673,33 +1670,6 @@ safe_callback(struct safe_softc *sc, str
+ 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && re->re_src_m != re->re_dst_m) {
+ 		m_freem(re->re_src_m);
+ 		crp->crp_buf = (caddr_t)re->re_dst_m;
+-	}
+-
+-	if (re->re_flags & SAFE_QFLAGS_COPYOUTIV) {
+-		/* copy out IV for future use */
+-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+-			int ivsize;
+-
+-			if (crd->crd_alg == CRYPTO_DES_CBC ||
+-			    crd->crd_alg == CRYPTO_3DES_CBC) {
+-				ivsize = 2*sizeof(u_int32_t);
+-			} else if (crd->crd_alg == CRYPTO_AES_CBC) {
+-				ivsize = 4*sizeof(u_int32_t);
+-			} else
+-				continue;
+-			if (crp->crp_flags & CRYPTO_F_IMBUF) {
+-				m_copydata((struct mbuf *)crp->crp_buf,
+-					crd->crd_skip + crd->crd_len - ivsize,
+-					ivsize,
+-					(caddr_t) sc->sc_sessions[re->re_sesn].ses_iv);
+-			} else if (crp->crp_flags & CRYPTO_F_IOV) {
+-				cuio_copydata((struct uio *)crp->crp_buf,
+-					crd->crd_skip + crd->crd_len - ivsize,
+-					ivsize,
+-					(caddr_t)sc->sc_sessions[re->re_sesn].ses_iv);
+-			}
+-			break;
+-		}
+ 	}
+ 
+ 	if (re->re_flags & SAFE_QFLAGS_COPYOUTICV) {
+Index: sys/dev/pci/safevar.h
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/safevar.h,v
+retrieving revision 1.6
+diff -p -u -r1.6 safevar.h
+--- sys/dev/pci/safevar.h	21 Jul 2008 04:12:21 -0000	1.6
++++ sys/dev/pci/safevar.h	16 Dec 2010 23:57:06 -0000
+@@ -113,8 +113,7 @@ struct safe_ringentry {
+ 
+ 	int			re_sesn;	/* crypto session ID */
+ 	int			re_flags;
+-#define	SAFE_QFLAGS_COPYOUTIV	0x1		/* copy back on completion */
+-#define	SAFE_QFLAGS_COPYOUTICV	0x2		/* copy back on completion */
++#define	SAFE_QFLAGS_COPYOUTICV	0x1		/* copy back on completion */
+ };
+ 
+ #define	re_src_m	re_src.u.m
+@@ -139,7 +138,6 @@ struct safe_session {
+ 	u_int32_t	ses_key[8];		/* DES/3DES/AES key */
+ 	u_int32_t	ses_hminner[5];		/* hmac inner state */
+ 	u_int32_t	ses_hmouter[5];		/* hmac outer state */
+-	u_int32_t	ses_iv[4];		/* DES/3DES/AES iv */
+ };
+ 
+ struct safe_pkq {
+Index: sys/dev/pci/ubsec.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/ubsec.c,v
+retrieving revision 1.147
+diff -p -u -r1.147 ubsec.c
+--- sys/dev/pci/ubsec.c	2 Jul 2010 02:40:16 -0000	1.147
++++ sys/dev/pci/ubsec.c	16 Dec 2010 23:57:07 -0000
+@@ -711,9 +711,6 @@ ubsec_newsession(u_int32_t *sidp, struct
+ 	bzero(ses, sizeof(struct ubsec_session));
+ 	ses->ses_used = 1;
+ 	if (encini) {
+-		/* get an IV, network byte order */
+-		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
+-
+ 		/* Go ahead and compute key in ubsec's byte order */
+ 		if (encini->cri_alg == CRYPTO_AES_CBC) {
+ 			bcopy(encini->cri_key, ses->ses_key,
+@@ -944,14 +941,10 @@ ubsec_process(struct cryptop *crp)
+ 		encoffset = enccrd->crd_skip;
+ 
+ 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
+-			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
+-
+ 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+ 				bcopy(enccrd->crd_iv, key.ses_iv, ivlen);
+-			else {
+-				for (i = 0; i < (ivlen / 4); i++)
+-					key.ses_iv[i] = ses->ses_iv[i];
+-			}
++			else
++				arc4random_buf(key.ses_iv, ivlen);
+ 
+ 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+ 				if (crp->crp_flags & CRYPTO_F_IMBUF)
+@@ -1434,26 +1427,6 @@ ubsec_callback(struct ubsec_softc *sc, s
+ 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
+ 		m_freem(q->q_src_m);
+ 		crp->crp_buf = (caddr_t)q->q_dst_m;
+-	}
+-
+-	/* copy out IV for future use */
+-	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
+-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+-			if (crd->crd_alg != CRYPTO_DES_CBC &&
+-			    crd->crd_alg != CRYPTO_3DES_CBC &&
+-			    crd->crd_alg != CRYPTO_AES_CBC)
+-				continue;
+-			if (crp->crp_flags & CRYPTO_F_IMBUF)
+-				m_copydata((struct mbuf *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - 8, 8,
+-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
+-			else if (crp->crp_flags & CRYPTO_F_IOV) {
+-				cuio_copydata((struct uio *)crp->crp_buf,
+-				    crd->crd_skip + crd->crd_len - 8, 8,
+-				    (caddr_t)sc->sc_sessions[q->q_sesn].ses_iv);
+-			}
+-			break;
+-		}
+ 	}
+ 
+ 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+Index: sys/dev/pci/ubsecvar.h
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/ubsecvar.h,v
+retrieving revision 1.38
+diff -p -u -r1.38 ubsecvar.h
+--- sys/dev/pci/ubsecvar.h	27 Mar 2009 13:31:30 -0000	1.38
++++ sys/dev/pci/ubsecvar.h	16 Dec 2010 23:57:07 -0000
+@@ -152,7 +152,6 @@ struct ubsec_q {
+ 	bus_dmamap_t			q_dst_map;
+ 
+ 	int				q_sesn;
+-	int				q_flags;
+ };
+ 
+ struct ubsec_softc {
+@@ -184,8 +183,6 @@ struct ubsec_softc {
+ 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
+ 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
+ };
+-
+-#define	UBSEC_QFLAGS_COPYOUTIV		0x1
+ 
+ struct ubsec_session {
+ 	u_int32_t	ses_used;
+

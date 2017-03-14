@@ -1,0 +1,229 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 014_sendmail.patch
+
+And then rebuild and install sendmail:
+	cd gnu/usr.sbin/sendmail
+	make depend
+	make
+	make install
+
+Restart sendmail if necessary:
+	kill -HUP `sed q /var/run/sendmail.pid`
+
+Index: gnu/usr.sbin/sendmail/cf/README
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/cf/README,v
+retrieving revision 1.15
+retrieving revision 1.15.2.1
+diff -u -r1.15 -r1.15.2.1
+--- gnu/usr.sbin/sendmail/cf/README	15 Sep 2002 02:23:35 -0000	1.15
++++ gnu/usr.sbin/sendmail/cf/README	31 Mar 2003 01:01:46 -0000	1.15.2.1
+@@ -3630,6 +3630,7 @@
+ confMAX_MIME_HEADER_LENGTH  MaxMimeHeaderLength
+ 					[undefined] Maximum length of
+ 					certain MIME header field values.
++					If not set, sendmail uses 2048/1024.
+ confCONNECTION_RATE_THROTTLE ConnectionRateThrottle
+ 					[undefined] The maximum number of
+ 					connections permitted per second per
+@@ -4311,4 +4312,4 @@
+    8	DNS based blacklists
+    9	special local rulesets (1 and 2)
+ 
+-$Revision: 1.15 $, Last updated $Date: 2002/09/15 02:23:35 $
++$Revision: 1.15.2.1 $, Last updated $Date: 2003/03/31 01:01:46 $
+Index: gnu/usr.sbin/sendmail/sendmail/README
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/README,v
+retrieving revision 1.14
+retrieving revision 1.14.2.1
+diff -u -r1.14 -r1.14.2.1
+--- gnu/usr.sbin/sendmail/sendmail/README	26 Jun 2002 04:48:55 -0000	1.14
++++ gnu/usr.sbin/sendmail/sendmail/README	31 Mar 2003 01:01:47 -0000	1.14.2.1
+@@ -475,6 +475,9 @@
+ 		parameter of main().
+ USE_DOUBLE_FORK By default this is on (1).  Set it to 0 to suppress the
+ 		extra fork() used to avoid intermediate zombies.
++ALLOW_255	Do not convert (char)0xff to (char)0x7f in headers etc.
++		This can also be done at runtime with the command line
++		option -d82.101.
+ 
+ 
+ +-----------------------+
+@@ -1768,4 +1771,4 @@
+ version.c	The version number and information about this
+ 		version of sendmail.
+ 
+-(Version $Revision: 1.14 $, last update $Date: 2002/06/26 04:48:55 $ )
++(Version $Revision: 1.14.2.1 $, last update $Date: 2003/03/31 01:01:47 $ )
+Index: gnu/usr.sbin/sendmail/sendmail/collect.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/collect.c,v
+retrieving revision 1.13
+retrieving revision 1.13.2.1
+diff -u -r1.13 -r1.13.2.1
+--- gnu/usr.sbin/sendmail/sendmail/collect.c	15 Sep 2002 02:23:35 -0000	1.13
++++ gnu/usr.sbin/sendmail/sendmail/collect.c	31 Mar 2003 01:01:47 -0000	1.13.2.1
+@@ -434,6 +434,7 @@
+ 					  OpMode != MD_ARPAFTP))
+ 
+ 				{
++					SM_ASSERT(pbp < peekbuf + sizeof(peekbuf));
+ 					*pbp++ = c;
+ 					c = '.';
+ 				}
+@@ -445,6 +446,7 @@
+ 				else
+ 				{
+ 					/* push back the ".\rx" */
++					SM_ASSERT(pbp < peekbuf + sizeof(peekbuf));
+ 					*pbp++ = c;
+ 					if (OpMode != MD_SMTP &&
+ 					    OpMode != MD_DAEMON &&
+@@ -615,6 +617,7 @@
+ 			}
+ 
+ 			/* trim off trailing CRLF or NL */
++			SM_ASSERT(bp > buf);
+ 			if (*--bp != '\n' || *--bp != '\r')
+ 				bp++;
+ 			*bp = '\0';
+Index: gnu/usr.sbin/sendmail/sendmail/conf.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/conf.c,v
+retrieving revision 1.16
+retrieving revision 1.16.2.1
+diff -u -r1.16 -r1.16.2.1
+--- gnu/usr.sbin/sendmail/sendmail/conf.c	15 Sep 2002 02:23:35 -0000	1.16
++++ gnu/usr.sbin/sendmail/sendmail/conf.c	31 Mar 2003 01:01:47 -0000	1.16.2.1
+@@ -330,6 +330,8 @@
+ 	DontProbeInterfaces = DPI_PROBEALL;
+ 	DoubleBounceAddr = "postmaster";
+ 	MaxHeadersLength = MAXHDRSLEN;
++	MaxMimeHeaderLength = MAXLINE;
++	MaxMimeFieldLength = MaxMimeHeaderLength / 2;
+ 	MaxForwardEntries = 0;
+ 	FastSplit = 1;
+ #if SASL
+Index: gnu/usr.sbin/sendmail/sendmail/deliver.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/deliver.c,v
+retrieving revision 1.16
+retrieving revision 1.16.2.1
+diff -u -r1.16 -r1.16.2.1
+--- gnu/usr.sbin/sendmail/sendmail/deliver.c	15 Sep 2002 02:23:35 -0000	1.16
++++ gnu/usr.sbin/sendmail/sendmail/deliver.c	31 Mar 2003 01:01:47 -0000	1.16.2.1
+@@ -1154,7 +1154,7 @@
+ 		/* Need to account for IPv6 bracketed addresses */
+ 		if (*a == '[')
+ 			braclev++;
+-		else if (*a == '[' && braclev > 0)
++		else if (*a == ']' && braclev > 0)
+ 			braclev--;
+ 		else if (*a == ':' && braclev <= 0)
+ 		{
+@@ -4700,7 +4700,11 @@
+ 				{
+ 					pos += bp - buf;
+ 					if (c != '\r')
++					{
++						SM_ASSERT(pbp < peekbuf +
++								sizeof(peekbuf));
+ 						*pbp++ = c;
++					}
+ 				}
+ 
+ 				bp = buf;
+@@ -4740,6 +4744,7 @@
+ 				}
+ 
+ 				/* had a naked carriage return */
++				SM_ASSERT(pbp < peekbuf + sizeof(peekbuf));
+ 				*pbp++ = c;
+ 				c = '\r';
+ 				ostate = OS_INLINE;
+@@ -4768,7 +4773,11 @@
+ 					else if ((d = sm_io_getc(e->e_dfp,
+ 								 SM_TIME_DEFAULT))
+ 						 != SM_IO_EOF)
++					{
++						SM_ASSERT(pbp < peekbuf +
++									sizeof(peekbuf));
+ 						*pbp++ = d;
++					}
+ 
+ 					if (d == '\n' || d == SM_IO_EOF)
+ 					{
+@@ -4818,6 +4827,8 @@
+ 								     mci->mci_mailer->m_eol);
+ 					}
+ 					ostate = OS_HEAD;
++					SM_ASSERT(pbp < peekbuf +
++							sizeof(peekbuf));
+ 					*pbp++ = c;
+ 					continue;
+ 				}
+Index: gnu/usr.sbin/sendmail/sendmail/parseaddr.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/parseaddr.c,v
+retrieving revision 1.13
+retrieving revision 1.13.2.2
+diff -u -r1.13 -r1.13.2.2
+--- gnu/usr.sbin/sendmail/sendmail/parseaddr.c	15 Sep 2002 02:23:36 -0000	1.13
++++ gnu/usr.sbin/sendmail/sendmail/parseaddr.c	31 Mar 2003 01:01:47 -0000	1.13.2.2
+@@ -608,7 +608,7 @@
+ };
+ 
+ 
+-#define NOCHAR		-1	/* signal nothing in lookahead token */
++#define NOCHAR		(-1)	/* signal nothing in lookahead token */
+ 
+ char **
+ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
+@@ -694,6 +694,7 @@
+ 				/* see if there is room */
+ 				if (q >= &pvpbuf[pvpbsize - 5])
+ 				{
++	addrtoolong:
+ 					usrerr("553 5.1.1 Address too long");
+ 					if (strlen(addr) > MAXNAME)
+ 						addr[MAXNAME] = '\0';
+@@ -705,11 +706,15 @@
+ 				}
+ 
+ 				/* squirrel it away */
++#if !ALLOW_255
++				if ((char) c == (char) -1 && !tTd(82, 101))
++					c &= 0x7f;
++#endif /* !ALLOW_255 */
+ 				*q++ = c;
+ 			}
+ 
+ 			/* read a new input character */
+-			c = *p++;
++			c = (*p++) & 0x00ff;
+ 			if (c == '\0')
+ 			{
+ 				/* diagnose and patch up bad syntax */
+@@ -764,6 +769,9 @@
+ 				}
+ 				else if (c != '!' || state == QST)
+ 				{
++					/* see if there is room */
++					if (q >= &pvpbuf[pvpbsize - 5])
++						goto addrtoolong;
+ 					*q++ = '\\';
+ 					continue;
+ 				}
+@@ -849,6 +857,9 @@
+ 		/* new token */
+ 		if (tok != q)
+ 		{
++			/* see if there is room */
++			if (q >= &pvpbuf[pvpbsize - 5])
++				goto addrtoolong;
+ 			*q++ = '\0';
+ 			if (tTd(22, 36))
+ 			{
+

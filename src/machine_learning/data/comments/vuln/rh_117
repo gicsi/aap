@@ -1,0 +1,73 @@
+Description of problem:
+
+dnf (or the fedora repositories) or installation process appears to be enabling updates-testing without reason. This has caused several packages to install from updates testing. This has happened on two systems that I have tried to rebuild this week. 
+
+Note that until I had problems with the installations (dependancies/bugs) I had not enabled the updates-testing repos. 
+
+Example packages picked up are:
+
+mesa-filesystem-10.6.0-1.fc22.x86_64
+NetworkManager-1:1.0.4-0.1.git20150618.8cffaf3bf5.fc22
+
+using 
+
+dnf downgrade NetworkManager*
+
+result in:
+
+No match for available package: NetworkManager-1:1.0.2-1.fc22.x86_64
+No match for available package: NetworkManager-adsl-1:1.0.2-1.fc22.x86_64
+...
+
+If I use yum-deprecated then at least the downgrade offers the correct packages to downgrade. Therefore I suspect in the first instance a dnf problem but it is just speculation. 
+
+Version-Release number of selected component (if applicable):
+
+dnf 1.0.1-2.fc22 (could have been earlier if this is not the release level)
+
+How reproducible:
+
+Very difficult
+
+Steps to Reproduce:
+1. Install Fedora 22 on system from live CD
+2. Update software using "dnf update -y"
+3. Install new software using "dnf install -y ..."
+
+Actual results:
+
+Dependency nightmares, bugs and test versions all over the place.
+
+
+Expected results:
+
+The karma of a nice Fedora 22 system.
+
+Additional info:
+Hello Paul,
+
+# dnf repolist
+
+will tell you what repositories are enabled.
+
+# dnf distro-sync
+
+should replace testing packages with the ones from enabled repos.
+
+You can also try
+
+# dnf history list mesa-filesystem
+
+to see the transaction which installed testing mesa-filesystem package.
+(Assuming it was installed via dnf.)
+Also
+
+# dnf info mesa-filesystem
+
+will tell you from which repository it was installed (again assuming that it was installed via DNF).
+
+(BTW, I've followed the reproducer but it didn't happen to me.)
+Closing as we are not able to reproduce it. Paul, if it still happens to you, reopen and post the output of this sequence, please:
+# dnf repolist
+# dnf install/update/downgrade <pkgname>
+# dnf info <pkgname>

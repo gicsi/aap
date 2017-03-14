@@ -1,0 +1,61 @@
+Description of problem:
+SELinux is preventing docker from read, write access on the file linkgraph.db.
+
+*****  Plugin catchall_labels (83.8 confidence) suggests   *******************
+
+If you want to allow docker to have read write access on the linkgraph.db file
+Then необходимо изменить метку на linkgraph.db
+Do
+# semanage fcontext -a -t FILE_TYPE 'linkgraph.db'
+где FILE_TYPE может принимать значения: afs_cache_t, cgroup_t, docker_config_t, docker_home_t, docker_lock_t, docker_log_t, docker_share_t, docker_tmp_t, docker_tmpfs_t, docker_var_lib_t, docker_var_run_t, initrc_tmp_t, puppet_tmp_t, svirt_sandbox_file_t, sysfs_t, systemd_passwd_var_run_t, unlabeled_t, user_cron_spool_t.
+Затем выполните: 
+restorecon -v 'linkgraph.db'
+
+
+*****  Plugin catchall (17.1 confidence) suggests   **************************
+
+If вы считаете, что docker следует разрешить доступ read write к linkgraph.db file по умолчанию.
+Then рекомендуется создать отчет об ошибке.
+Чтобы разрешить доступ, можно создать локальный модуль политики.
+Do
+чтобы разрешить доступ, выполните:
+# grep docker /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:docker_t:s0
+Target Context                system_u:object_r:default_t:s0
+Target Objects                linkgraph.db [ file ]
+Source                        docker
+Source Path                   docker
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   3
+First Seen                    2015-07-04 02:41:28 MSK
+Last Seen                     2015-07-04 17:32:52 MSK
+Local ID                      58e461f1-6433-44bc-86c6-d9ff447a2329
+
+Raw Audit Messages
+type=AVC msg=audit(1436020372.993:605): avc:  denied  { read write } for  pid=3635 comm="docker" name="linkgraph.db" dev="sdb1" ino=22020687 scontext=system_u:system_r:docker_t:s0 tcontext=system_u:object_r:default_t:s0 tclass=file permissive=1
+
+
+Hash: docker,docker_t,default_t,file,read,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1239241 ***

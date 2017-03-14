@@ -1,0 +1,60 @@
+Description of problem:
+
+Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-c3bbfecf-a6a5-479c-a4c6-7a5a8d2e8ab0)
+2015-07-01 07:53:19,136 32286 ERROR horizon.exceptions Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-d1d19306-fdf7-4f9f-bf49-3b26fc46e020)
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/infrastructure/overview/forms.py", line 455, in handle
+    pki_setup=False)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/keystone.py", line 141, in initialize
+    _create_roles(keystone_v2, timeout, poll_interval)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/keystone.py", line 433, in _create_roles
+    _create_role(keystone, 'admin')
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/keystone.py", line 208, in _create_role
+    role = keystone.roles.findall(name=name)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/base.py", line 263, in findall
+    for obj in self.list():
+  File "/usr/lib/python2.7/site-packages/keystoneclient/v2_0/roles.py", line 47, in list
+    return self._list("/OS-KSADM/roles", "roles")
+  File "/usr/lib/python2.7/site-packages/keystoneclient/base.py", line 113, in _list
+    resp, body = self.client.get(url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/adapter.py", line 170, in get
+    return self.request(url, 'GET', **kwargs)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/adapter.py", line 206, in request
+    resp = super(LegacyJsonAdapter, self).request(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/adapter.py", line 95, in request
+    return self.session.request(url, method, **kwargs)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/utils.py", line 318, in inner
+    return func(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/keystoneclient/session.py", line 397, in request
+    raise exceptions.from_response(resp, method, url)
+Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-d1d19306-fdf7-4f9f-bf49-3b26fc46e020)
+
+Version-Release number of selected component (if applicable):
+RHEL-OSP director puddle 7.0 RC - 2015-06-29.1
+[stack@instack ~]$ rpm -qa |grep tuskar
+python-tuskarclient-0.1.18-3.el7ost.noarch
+openstack-tuskar-0.4.18-3.el7ost.noarch
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tuskar-ui-0.3.0-6.el7ost.noarch
+
+How reproducible:
+100% 
+
+Steps to Reproduce:
+1. Deploy full ENV  undercloud & overcloud via CLI
+2. Connect to undercloud GUI
+3. Click on "Initialize button"
+3. Receive and  initialization error "Error: Unauthorized: Unable to initialize Overcloud. "
+
+Actual results:
+
+"Error: Unauthorized: Unable to initialize 
+Expected results:
+initialize button should be gray out in GUI when  we run  deployment via CLI.
+initialization already done when we run deployment via CLI.
+
+Additional info:
+https://bugzilla.redhat.com/show_bug.cgi?id=1193922
+When 1193922 is fixed, the Initialize button will not show up in the GUI after a CLI deployment.
+
+*** This bug has been marked as a duplicate of bug 1193922 ***

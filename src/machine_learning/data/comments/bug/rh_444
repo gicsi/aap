@@ -1,0 +1,44 @@
+Description of problem:
+
+With latest update (38.0.1-2.fc22.x86_64) Thunderbird crashes constantly at start, even in -safe-mode
+
+
+Version-Release number of selected component (if applicable):
+
+38.0.1-2.fc22.x86_64
+
+
+How reproducible:
+
+always
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+downgrading to version thunderbird-31.6.0-1.fc22.x86_64 fixed the problem.
+
+Please let me know if you need some specific log.
+Tracked this down as being a problem with FoxyProxy Basic extension:
+
+FoxyProxy settingsDir: /home/pantinor/.thunderbird/HelpDesk.default/foxyproxy.xml
+FoxyProxy settingsDir: /home/pantinor/.thunderbird/HelpDesk.default/foxyproxy.xml
+JavaScript error: chrome://emirror/content/libical.js, line 11: Error: couldn't open library libical.so.0
+*** Failed to get string forwardAsAttachments.label in bundle: chrome://forward/locale/forward.properties
+*** Failed to get string forwardAsAttachments.label in bundle: chrome://forward/locale/forward.properties
+*** Failed to get string forwardAsMenu.label in bundle: chrome://forward/locale/forward.properties
+*** Failed to get string forwardAsInline.label in bundle: chrome://forward/locale/forward.properties
+*** Failed to get string forwardAsAttachment.label in bundle: chrome://forward/locale/forward.properties
+
+
+Disabling it allows the instance to start correctly.

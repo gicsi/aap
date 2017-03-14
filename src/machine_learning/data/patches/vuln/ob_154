@@ -1,0 +1,28 @@
+Fix a bug in the BSD_AUTH access control handling
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 004_sshbsdauth.patch
+        cd usr.bin/ssh
+        make obj
+        make cleandir
+        make depend
+        make && make install
+
+Index: usr.bin/ssh/auth.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/auth.c,v
+retrieving revision 1.41
+diff -u -r1.41 auth.c
+--- usr.bin/ssh/auth.c	19 Mar 2002 15:31:47 -0000	1.41
++++ usr.bin/ssh/auth.c	22 May 2002 20:28:25 -0000
+@@ -410,7 +410,7 @@
+ 	}
+ #ifdef BSD_AUTH
+ 	if ((as = auth_open()) == NULL || auth_setpwd(as, pw) != 0 ||
+-	    auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
++	    auth_approval(as, lc, pw->pw_name, "ssh") <= 0) {
+ 		debug("Approval failure for %s", user);
+ 		pw = NULL;
+ 	}
+

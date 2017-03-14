@@ -1,0 +1,3 @@
+As shipped, unionfs had some serious problems.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/unionfs.patch">
+A patch is available to solve this</a>.

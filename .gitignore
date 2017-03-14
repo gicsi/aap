@@ -1,0 +1,10 @@
+*.log
+*.pot
+*.pyc
+*.sqlite3
+venv/
+settings.py
+migrations/
+.DS_Store
+nohup.out
+REPOSITORIES/

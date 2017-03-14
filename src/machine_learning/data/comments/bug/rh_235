@@ -1,0 +1,61 @@
+Description of problem:
+SELinux is preventing php-fpm from 'create' accesses on the directory gavrilovmv.
+
+*****  Plugin catchall_boolean (89.3 confidence) suggests   ******************
+
+If you want to allow httpd to unified
+Then you must tell SELinux about this by enabling the 'httpd_unified' boolean.
+You can read 'None' man page for more details.
+Do
+setsebool -P httpd_unified 1
+
+*****  Plugin catchall (11.6 confidence) suggests   **************************
+
+If you believe that php-fpm should be allowed create access on the gavrilovmv directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep php-fpm /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:httpd_t:s0
+Target Context                system_u:object_r:httpd_user_ra_content_t:s0
+Target Objects                gavrilovmv [ dir ]
+Source                        php-fpm
+Source Path                   php-fpm
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.4.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.7-300.fc22.x86_64+debug #1 SMP
+                              Mon Jun 29 21:56:44 UTC 2015 x86_64 x86_64
+Alert Count                   464
+First Seen                    2015-07-03 02:22:22 YEKT
+Last Seen                     2015-07-03 02:54:32 YEKT
+Local ID                      301e8dc3-2096-4ad6-b255-dc4e2251d2ae
+
+Raw Audit Messages
+type=AVC msg=audit(1435874072.640:2947): avc:  denied  { create } for  pid=24075 comm="php-fpm" name="gavrilovmv" scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:httpd_user_ra_content_t:s0 tclass=dir permissive=0
+
+
+Hash: php-fpm,httpd_t,httpd_user_ra_content_t,dir,create
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.4.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.7-300.fc22.x86_64+debug
+type:           libreport
+
+Potential duplicate: bug 927371
+Please check https://bugzilla.redhat.com/show_bug.cgi?id=927371
+*** Bug 1238995 has been marked as a duplicate of this bug. ***

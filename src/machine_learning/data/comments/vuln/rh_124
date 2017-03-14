@@ -1,0 +1,12 @@
+Scheme validation error in WebUI
+
+Upstream bug: https://code.google.com/p/chromium/issues/detail?id=464922 (private)
+
+External Reference:
+
+https://googlechromereleases.blogspot.com/2015/06/chrome-stable-update.html
+This issue has been addressed in the following products:
+
+  Supplementary for Red Hat Enterprise Linux 6
+
+Via RHSA-2015:1188 https://rhn.redhat.com/errata/RHSA-2015-1188.html

@@ -1,0 +1,37 @@
+From add8401474bf14bd625fa39e909abcb3c9686c26 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 4 Jul 2015 00:23:46 +0000
+Subject: [PATCH] Update to 8.24 (#1239178)
+
+---
+ coreutils.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/coreutils.spec b/coreutils.spec
+index 587648e..a677322 100644
+--- a/coreutils.spec
++++ b/coreutils.spec
+@@ -1,7 +1,7 @@
+ Summary: A set of basic GNU tools commonly used in shell scripts
+ Name:    coreutils
+-Version: 8.23
+-Release: 13%{?dist}
++Version: 8.24
++Release: 1%{?dist}
+ License: GPLv3+
+ Group:   System Environment/Base
+ Url:     http://www.gnu.org/software/coreutils/
+@@ -373,6 +373,9 @@ fi
+ %{_sbindir}/chroot
+ 
+ %changelog
++* Sat Jul 04 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 8.24-1
++- Update to 8.24 (#1239178)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 8.23-13
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

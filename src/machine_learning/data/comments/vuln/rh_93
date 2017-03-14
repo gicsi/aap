@@ -1,0 +1,257 @@
+Description of problem:
+Say one has nfs-ganesha cluster properly running on 4node cluster of rhgs.
+Now, you just shutdown/reboot a node, once the system comes back and services  such as pcsd nfs-ganesha started then failback should happen for nfs-ganesha but that does not happen
+
+Version-Release number of selected component (if applicable):
+glusterfs-3.7.1-5.el6rhs.x86_64
+nfs-ganesha-2.2.0-3.el6rhs.x86_64
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. create a volume of 6x2, start it
+2. configure nfs-ganesha
+3. mount the volume with vers=4 using VIP.
+4. start some io on mount-point
+5. shutdown/reboot node from where the mount is done.
+
+Actual results:
+step 4 result, i/o resume post failover, but sees ESTALE i.e. "Stale file 
+handle" after sometime.
+
+ 13994  2542471  3306515fsync: Stale file handle
+iozone: interrupted
+exiting iozone
+
+
+step 5. once the machine is back and running, the services pcsd and nfs-ganesha are brought back manually using the "service" command.
+The failback does not happen,
+
+from nfs11(the one that was rebooted)
+[root@nfs11 ~]# pcs status
+Error: cluster is not currently running on this node
+
+from nfs12, (one other node in the existint cluster)
+[root@nfs12 ~]# pcs status
+Cluster name: nozomer
+Last updated: Fri Jun 26 15:15:20 2015
+Last change: Thu Jun 25 17:03:59 2015
+Stack: cman
+Current DC: nfs12 - partition with quorum
+Version: 1.1.11-97629de
+4 Nodes configured
+16 Resources configured
+
+
+Node nfs11: OFFLINE (standby)
+Online: [ nfs12 nfs13 nfs14 ]
+
+Full list of resources:
+
+ Clone Set: nfs-mon-clone [nfs-mon]
+     Started: [ nfs12 nfs13 nfs14 ]
+     Stopped: [ nfs11 ]
+ Clone Set: nfs-grace-clone [nfs-grace]
+     Started: [ nfs12 nfs13 nfs14 ]
+     Stopped: [ nfs11 ]
+ nfs11-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs14 
+ nfs11-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs14 
+ nfs12-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs12 
+ nfs12-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs12 
+ nfs13-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs13 
+ nfs13-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs13 
+ nfs14-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs14 
+ nfs14-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs14 
+
+
+Expected results:
+1. The I/O should finish properly, no ESTALE to be seen.
+2. The failback should happen post reboot or bringing back back machine post shutdown.
+
+Additional info:
+from nfs14(the node where the failover happened),
+
+from /var/log/messages,
+Jun 26 14:48:38 nfs14 ntpd[4678]: Listen normally on 8 eth0 10.70.44.92 UDP 123
+Jun 26 14:48:41 nfs14 corosync[10783]:   [QUORUM] Members[3]: 2 3 4
+Jun 26 14:48:41 nfs14 corosync[10783]:   [TOTEM ] A processor joined or left the membership and a new membership was formed.
+Jun 26 14:48:41 nfs14 crmd[11078]:   notice: crm_update_peer_state: cman_event_callback: Node nfs11[1] - state is now lost (was member)
+Jun 26 14:48:41 nfs14 corosync[10783]:   [CPG   ] chosen downlist: sender r(0) ip(10.70.46.27) ; members(old:4 left:1)
+Jun 26 14:48:41 nfs14 corosync[10783]:   [MAIN  ] Completed service synchronization, ready to provide service.
+Jun 26 14:48:41 nfs14 kernel: dlm: closing connection to node 1
+Jun 26 14:50:14 nfs14 ganesha.nfsd[30012]: [2015-06-26 09:20:14.537609] C [rpc-clnt-ping.c:161:rpc_clnt_ping_timer_expired] 0-vol3-client-0: server 10.70.46.8:49167 has not responded in the last 42 seconds, disconnecting.
+Jun 26 14:56:38 nfs14 dhclient[1391]: DHCPREQUEST on eth0 to 10.70.34.2 port 67 (xid=0x5529b49a)
+Jun 26 14:56:38 nfs14 dhclient[1391]: DHCPACK from 10.70.34.2 (xid=0x5529b49a)
+Jun 26 14:56:40 nfs14 dhclient[1391]: bound to 10.70.46.29 -- renewal in 32577 seconds.
+
+
+
+from /var/log/ganesha.log
+25/06/2015 00:16:46 : epoch 558afae9 : nfs14 : ganesha.nfsd-30012[dbus_heartbeat] dbus_message_entrypoint :DBUS :MAJ :Method (RemoveExport) on (org.ganesha.nfsd.exportmgr) failed: name = (org.freedesktop.DBus.Error.InvalidArgs), message = (lookup_export failed with Export id not found)
+25/06/2015 00:17:02 : epoch 558afae9 : nfs14 : ganesha.nfsd-30012[reaper] nfs_in_grace :STATE :EVENT :NFS Server Now NOT IN GRACE
+25/06/2015 00:22:59 : epoch 558afae9 : nfs14 : ganesha.nfsd-30012[dbus_heartbeat] glusterfs_create_export :FSAL :EVENT :Volume vol2 exported at : '/'
+25/06/2015 14:31:47 : epoch 558afae9 : nfs14 : ganesha.nfsd-30012[dbus_heartbeat] glusterfs_create_export :FSAL :EVENT :Volume vol3 exported at : '/'
+26/06/2015 15:02:40 : epoch 558afae9 : nfs14 : ganesha.nfsd-30012[work-7] cache_inode_lookup_impl :INODE :EVENT :FSAL returned STALE from a lookup.
+Created attachment 1043451
+sosreport of nfs11
+Created attachment 1043452
+nfs14 ganesha.log
+Created attachment 1043453
+nfs14 messages
+I do not see this issue on my setup
+
+[root@clus1 ~]# pcs status
+Cluster name: ganesha-soumya
+Last updated: Wed Jul  1 18:09:20 2015
+Last change: Tue Jun 30 12:01:38 2015
+Stack: cman
+Current DC: clus1 - partition with quorum
+Version: 1.1.11-97629de
+2 Nodes configured
+8 Resources configured
+
+
+Online: [ clus1 clus2 ]
+
+Full list of resources:
+
+ Clone Set: nfs-mon-clone [nfs-mon]
+     Started: [ clus1 clus2 ]
+ Clone Set: nfs-grace-clone [nfs-grace]
+     Started: [ clus1 clus2 ]
+ clus1-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus1 
+ clus1-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus1 
+ clus2-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus2 
+ clus2-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus2 
+
+[root@clus1 ~]# 
+[root@clus1 ~]# 
+[root@clus1 ~]# reboot
+[root@clus1 ~]# 
+Broadcast message from root@clus1
+	(/dev/pts/0) at 18:09 ...
+
+The system is going down for reboot NOW!
+[root@clus1 ~]# Connection to soumya_clus1 closed by remote host.
+Connection to soumya_clus1 closed.
+
+[root@clus2 ~]# pcs status
+Cluster name: ganesha-soumya
+Last updated: Wed Jul  1 18:10:36 2015
+Last change: Tue Jun 30 12:01:38 2015
+Stack: cman
+Current DC: clus2 - partition with quorum
+Version: 1.1.11-97629de
+2 Nodes configured
+8 Resources configured
+
+
+Node clus1: OFFLINE (standby)
+Online: [ clus2 ]
+
+Full list of resources:
+
+ Clone Set: nfs-mon-clone [nfs-mon]
+     Started: [ clus2 ]
+     Stopped: [ clus1 ]
+ Clone Set: nfs-grace-clone [nfs-grace]
+     Started: [ clus2 ]
+     Stopped: [ clus1 ]
+ clus1-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus2 
+ clus1-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus2 
+ clus2-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus2 
+ clus2-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus2 
+
+[root@clus2 ~]# 
+
+
+[skoduri@skoduri ~]$ ssh -l root soumya_clus1
+root@soumya_clus1's password: 
+Last login: Wed Jul  1 17:36:38 2015 from dhcp35-217.lab.eng.blr.redhat.com
+[root@clus1 ~]# 
+[root@clus1 ~]# 
+[root@clus1 ~]# service pcs status
+pcs: unrecognized service
+[root@clus1 ~]# 
+[root@clus1 ~]# service pcsd status
+pcsd (pid  1270) is running...
+[root@clus1 ~]# 
+[root@clus1 ~]# service pacemaker status
+pacemakerd is stopped
+[root@clus1 ~]# 
+[root@clus1 ~]# service pacemaker start
+Starting cluster: 
+   Checking if cluster has been disabled at boot...        [  OK  ]
+   Checking Network Manager...                             [  OK  ]
+   Global setup...                                         [  OK  ]
+   Loading kernel modules...                               [  OK  ]
+   Mounting configfs...                                    [  OK  ]
+   Starting cman...                                        [  OK  ]
+   Waiting for quorum...                                   [  OK  ]
+   Starting fenced...                                      [  OK  ]
+   Starting dlm_controld...                                [  OK  ]
+   Tuning DLM kernel config...                             [  OK  ]
+   Starting gfs_controld...                                [  OK  ]
+   Unfencing self...                                       [  OK  ]
+   Joining fence domain...                                 [  OK  ]
+GFS2: no entries found in /etc/fstab
+Starting Pacemaker Cluster Manager                         [  OK  ]
+[root@clus1 ~]# service pacemaker status
+pacemakerd (pid  2106) is running...
+[root@clus1 ~]# service corosync status
+corosync (pid  1865) is running...
+[root@clus1 ~]# 
+[root@clus1 ~]# service nfs-ganesha status
+ganesha.nfsd is stopped
+[root@clus1 ~]# service nfs-ganesha start
+Starting ganesha.nfsd:                                     [  OK  ]
+[root@clus1 ~]# service nfs-ganesha status
+ganesha.nfsd (pid  2361) is running...
+[root@clus1 ~]# 
+[root@clus1 ~]# pcs status
+Cluster name: ganesha-soumya
+Last updated: Wed Jul  1 18:14:00 2015
+Last change: Wed Jul  1 18:11:07 2015
+Stack: cman
+Current DC: clus2 - partition with quorum
+Version: 1.1.11-97629de
+2 Nodes configured
+8 Resources configured
+
+
+Online: [ clus1 clus2 ]
+
+Full list of resources:
+
+ Clone Set: nfs-mon-clone [nfs-mon]
+     Started: [ clus1 clus2 ]
+ Clone Set: nfs-grace-clone [nfs-grace]
+     Started: [ clus1 clus2 ]
+ clus1-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus1 
+ clus1-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus1 
+ clus2-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started clus2 
+ clus2-trigger_ip-1	(ocf::heartbeat:Dummy):	Started clus2 
+
+[root@clus1 ~]# 
+
+
+Failback was successful even after reboot of the node followed by restart of the services.
+Saurabh,
+
+Could you please re-try the test and provide us the setup details in case you
+hit this issue again.
+After starting all the services, fail-back was successful. Please update the bug to log your findings.
+Thanks Meghana. Looks like services may not have started before starting nfs-ganesha services. Moving it to ON_QA.
+
+The steps would definitely need to be documented though.
+Earlier issue could have been seen because of not restarting the required services post reboot. The steps to be followed post reboot are
+* service pcsd start
+* service pacemaker start
+* service nfs-ganesha start
+
+This would trigger the failback as expected. 
+
+The above mentioned services are needed to manually started at present after reboot. This will be documented as known_issue as part of Bug1236017.
+
+Closing this bug as this works when followed the steps.

@@ -1,0 +1,7 @@
+REVIEW: http://review.gluster.org/11312 (quota: fix double accounting with rename operation) posted (#1) for review on release-3.7 by Vijaikumar Mallikarjuna (vmallika@redhat.com)
+This bug is getting closed because a release has been made available that should address the reported issue. In case the problem is still not fixed with glusterfs-3.7.2, please reopen this bug report.
+
+glusterfs-3.7.2 has been announced on the Gluster Packaging mailinglist [1], packages for several distributions should become available in the near future. Keep an eye on the Gluster Users mailinglist [2] and the update infrastructure for your distribution.
+
+[1] http://www.gluster.org/pipermail/packaging/2015-June/000006.html
+[2] http://thread.gmane.org/gmane.comp.file-systems.gluster.user

@@ -1,0 +1,11 @@
+Description of problem:
+=======================
+dnf --showmeyourlegs list python  # this fails as it should
+dnf list python --showmeyourlegs  # this works and it shouldn't
+ 
+Version-Release number of selected component:
+=============================================
+dnf-1.0.0-1.fc22.noarch
+Hello, this is a duplicate of the bug 1212693.
+
+*** This bug has been marked as a duplicate of bug 1212693 ***

@@ -1,0 +1,114 @@
+Hi,
+
+I've done a successful deployment of an overcloud using openstack-tripleo-heat-templates. E.g. deployed with
+
+openstack overcloud deploy --control-scale 1 --compute-scale 1 --ceph-storage-scale 0 --block-storage-scale 0 --swift-storage-scale 0 --use-tripleo-heat-templates --neutron-public-interface eth1 --ntp-server 2.fedora.pool.ntp.org --nodes-json instackenv.json --overcloud_nameserver 192.168.1.1 --floating-ip-cidr 192.168.1.0/24 --floating-ip-start 192.168.1.230 --floating-ip-end 192.168.1.240 --bm-network-gateway 192.168.1.1
+
+Everything deployed fine
+
+Now I edited
+
+/usr/share/openstack-tripleo-heat-templates/extraconfig/post_deploy/default.yaml
+
+to add in a softwareconfig and softwaredeployments to apply some extra puppet code to the environment (create a user and set some passwords).
+
+I used the same command above to try and deploy the update (as looking through the code it will detect if an overcloud us up and update it)
+
+This all works fine on the compute, but on the controller I get an update failed with the following error from the software deployment in step4
+
+| c67ed637-fc70-481b-a399-b8c75eb70442 | overcloud-ControllerNodesPostDeployment-7hhbusn47dql-ControllerOvercloudServicesDeployment_Step4-a66lm4qqillq        | UPDATE_FAILED   | 2015-07-06T02:15:32Z | ab3743a1-b847-4937-82c3-ead232f25ad7 |
+
+
+[stack@rhosdirector ~]$ heat stack-show c67ed637-fc70-481b-a399-b8c75eb70442
++-----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Property              | Value                                                                                                                                                                                                                      |
++-----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| capabilities          | []                                                                                                                                                                                                                         |
+| creation_time         | 2015-07-06T02:15:32Z                                                                                                                                                                                                       |
+| description           | No description                                                                                                                                                                                                             |
+| disable_rollback      | True                                                                                                                                                                                                                       |
+| id                    | c67ed637-fc70-481b-a399-b8c75eb70442                                                                                                                                                                                       |
+| links                 | http://192.0.2.1:8004/v1/c88211c24efc4c28bf61225f9161f6ca/stacks/overcloud-ControllerNodesPostDeployment-7hhbusn47dql-ControllerOvercloudServicesDeployment_Step4-a66lm4qqillq/c67ed637-fc70-481b-a399-b8c75eb70442 (self) |
+| notification_topics   | []                                                                                                                                                                                                                         |
+| outputs               | []                                                                                                                                                                                                                         |
+| parameters            | {                                                                                                                                                                                                                          |
+|                       |   "OS::project_id": "c88211c24efc4c28bf61225f9161f6ca",                                                                                                                                                                    |
+|                       |   "OS::stack_id": "c67ed637-fc70-481b-a399-b8c75eb70442",                                                                                                                                                                  |
+|                       |   "OS::stack_name": "overcloud-ControllerNodesPostDeployment-7hhbusn47dql-ControllerOvercloudServicesDeployment_Step4-a66lm4qqillq"                                                                                        |
+|                       | }                                                                                                                                                                                                                          |
+| parent                | ab3743a1-b847-4937-82c3-ead232f25ad7                                                                                                                                                                                       |
+| stack_name            | overcloud-ControllerNodesPostDeployment-7hhbusn47dql-ControllerOvercloudServicesDeployment_Step4-a66lm4qqillq                                                                                                              |
+| stack_owner           | admin                                                                                                                                                                                                                      |
+| stack_status          | UPDATE_FAILED                                                                                                                                                                                                              |
+| stack_status_reason   | Error: Deployment to server failed: deploy_status_code                                                                                                                                                                     |
+|                       | : Deployment exited with non-zero status code: 1                                                                                                                                                                           |
+| stack_user_project_id | 2710d8d610c246f5b8b3fbd927558eb5                                                                                                                                                                                           |
+| template_description  | No description                                                                                                                                                                                                             |
+| timeout_mins          | None                                                                                                                                                                                                                       |
+| updated_time          | 2015-07-06T03:29:24Z                                                                                                                                                                                                       |
++-----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+[stack@rhosdirector ~]$ heat resource-list c67ed637-fc70-481b-a399-b8c75eb70442
++---------------+--------------------------------------+--------------------------------+-----------------+----------------------+
+| resource_name | physical_resource_id                 | resource_type                  | resource_status | updated_time         |
++---------------+--------------------------------------+--------------------------------+-----------------+----------------------+
+| 0             | cb48fea8-2b3b-4cb2-8398-c271fd1f4f65 | OS::Heat::StructuredDeployment | CREATE_FAILED   | 2015-07-06T03:29:26Z |
++---------------+--------------------------------------+--------------------------------+-----------------+----------------------+
+[stack@rhosdirector ~]$ heat deployment-show cb48fea8-2b3b-4cb2-8398-c271fd1f4f65
+{
+  "status": "FAILED", 
+  "server_id": "349932d0-a2c2-4d4e-9e4d-1507cd9bda31", 
+  "config_id": "43c02183-c0d2-44a7-a6db-dc17e56f5832", 
+  "output_values": {
+    "deploy_stdout": "", 
+    "deploy_stderr": "\u001b[1;31mWarning: Scope(Class[Keystone]): Execution of db_sync does not depend on $enabled anymore. Please use sync_db instead.\u001b[0m\n\u001b[1;31mError: Could not find data item keystone_signing_certificate in any Hiera data file and no default supplied at /var/lib/heat-config/heat-config-puppet/43c02183-c0d2-44a7-a6db-dc17e56f5832.pp:426 on node overcloud-controller-0.localdomain\u001b[0m\n\u001b[1;31mError: Could not find data item keystone_signing_certificate in any Hiera data file and no default supplied at /var/lib/heat-config/heat-config-puppet/43c02183-c0d2-44a7-a6db-dc17e56f5832.pp:426 on node overcloud-controller-0.localdomain\u001b[0m\n", 
+    "deploy_status_code": 1
+  }, 
+  "creation_time": "2015-07-06T03:29:30Z", 
+  "updated_time": "2015-07-06T03:31:07Z", 
+  "input_values": {}, 
+  "action": "CREATE", 
+  "status_reason": "deploy_status_code : Deployment exited with non-zero status code: 1", 
+  "id": "cb48fea8-2b3b-4cb2-8398-c271fd1f4f65"
+}
+
+So it looks like the keystone signing certificate values are not getting populated into heira and thus it's bombing out.
+
+Also the process for updating an existing deployment should be better documented (maybe with an explicit --update flag?)
+
+Regards,
+
+Graeme
+I suspect this is more the templates than the cli.
+*** This bug has been marked as a duplicate of bug 1240101 ***
+Are we sure this is a duplicate of 1240101? I'm not sure I understand how having the hard coded paths causes an update deploy to fail?
+Having a closer look at this today.
+
+If I run the following on the controller node
+
+os-apply-config --key hiera.datafiles --type raw --key-default ''
+
+this prints out the values that get mapped into data files (from my understanding). I can see that all the keystone ssl settings are indeed blank, which isn't great.
+
+Working back through the heat templates I see the value comes from KeystoneSigningKey which should be passed as an initial parameter to the heat stack create.
+
+When I do a
+
+heat stack-show overcloud
+
+I see the variable being passed in as a parameter 
+
+"KeystoneSigningCertificate": "-----BEGIN CERTIFICATE-----\nMIIDJDCCAgygAwIBAgIBAjANBgkqhkiG9w0BAQUFADBTMQswCQYDVQQGEwJYWDEO\nMAwGA1UECBMFVW5zZXQxDjAMBgNVBAcTBVVuc2V0MQ4wDAYDVQQKEwVVbnNldDEU\nMBIGA1UEAxMLS2V5c3RvbmUgQ0EwHhcNMTUwNzA2MDUzNjQ5WhcNMjUwNzAzMDUz\nNjQ5WjBYMQswCQYDVQQGEwJYWDEOMAwGA1UECBMFVW5zZXQxDjAMBgNVBAcTBVVu\nc2V0MQ4wDAYDVQQKEwVVbnNldDEZMBcGA1UEAxMQS2V5c3RvbmUgU2lnbmluZzCC\nASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALnVp9z+sKx56LrQcbv6MsZh\nFJ3kQXxKbyF/lJER0rHAQ0s6rvbjrcyelXMmXXi9QCjgxRVoERroZPlU9yCj50EN\n+3+uI6bmGcEG8NgwvKGt+PVwqXwZpebdL5ZaoB+XYcSjxVHV+Cxw+LaYuAZa7pM/\ni0ADLlWs4B2g9Qkt9mD8G5nue769je0dknIn6bzDIdMZvN1ZMFEMGSm0KimF3CAN\n5ECicEPgsU3YM8QfNXd73/Fku4UlOqu33wB3ts2fpj0SnelUi42sX7tqEuVAdwFX\n5wN6Dgx7uf/BLjva9ghaqFoClUjp7wfXHrNwwNAxsyRv+wAoPtAi+erGj1TLidEC\nAwEAATANBgkqhkiG9w0BAQUFAAOCAQEALPAEkHKwqrihGPnLBIVbkFePRcv6yFcZ\nVqun+WLO7qh38YUo2GUeylLlbTj4SNkCpHHy+Hcqs42NSkyl5Y8rmWPvjvaCHjTi\nCsxAmD8TjnSghgwhU1LmxNDNcqPLIM4gsnNeVpBG9Lz7kkZ2BICDctDMNPvxF+4v\nZi8/PT/DS95ecpdieHu1U84dvJTwqKkAlBrg2QDWGvQofoyoBaECilOV7Qyy0iOm\nFPEuzeu9+7KOd86alhXvKLyVpJD4T5U7j5SqQTUwcU0UHFnxfNGZ7yABeR5UwKmc\nMcdroF1pOXDCHZuPn+QyaLQG9zWoRYZct9FQNgBVQ2tQmXEQViBh3Q==\n-----END CERTIFICATE-----\n"
+
+But for some reason it's not being picked up on the stack update
+
+I feel this is actually a bug either in the unified cli which is calling heat, or heat itself
+
+Regards,
+
+Graeme
+Submitted a fix that works for me
+
+https://review.gerrithub.io/#/c/238958/
+marking as a duplicate of bug 1240461.  They're fixed by the same patch
+
+*** This bug has been marked as a duplicate of bug 1240461 ***

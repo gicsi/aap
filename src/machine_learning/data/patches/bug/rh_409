@@ -1,0 +1,46 @@
+From 245fccc02e377164fcdd49c25378779b0fe289ce Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ville=20Skytt=C3=A4?= <ville.skytta@iki.fi>
+Date: Sat, 27 Jun 2015 20:36:17 +0300
+Subject: [PATCH] Don't strip binaries too early
+
+---
+ etcd.spec | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/etcd.spec b/etcd.spec
+index 5f6a04a..8cd3b68 100644
+--- a/etcd.spec
++++ b/etcd.spec
+@@ -27,7 +27,7 @@
+ 
+ Name:		%{repo}
+ Version:	2.0.13
+-Release:	1%{?dist}
++Release:	2%{?dist}
+ Summary:	A highly-available key value store for shared configuration
+ License:	ASL 2.0
+ URL:		https://%{import_path}
+@@ -143,9 +143,9 @@ export GOPATH=$(pwd):%{gopath}:$GOPATH
+ 
+ %if 0%{?with_debug}
+ # *** ERROR: No build ID note found in /.../BUILDROOT/etcd-2.0.0-1.rc1.fc22.x86_64/usr/bin/etcd
+-function gobuild { go build -a -ldflags "-B 0x$(head -c20 /dev/urandom|od -An -tx1|tr -d ' \n') -s -X %{import_path}/version.GitSHA %{shortcommit}" -v -x "$@"; }
++function gobuild { go build -a -ldflags "-B 0x$(head -c20 /dev/urandom|od -An -tx1|tr -d ' \n') -X %{import_path}/version.GitSHA %{shortcommit}" -v -x "$@"; }
+ %else
+-function gobuild { go build -a "$@" -ldflags "-s -X %{import_path}/version.GitSHA %{shortcommit}"; }
++function gobuild { go build -a "$@" -ldflags "-X %{import_path}/version.GitSHA %{shortcommit}"; }
+ %endif
+ 
+ gobuild -o bin/etcd %{import_path}
+@@ -262,6 +262,9 @@ getent passwd %{name} >/dev/null || useradd -r -g %{name} -d %{_sharedstatedir}/
+ %endif
+ 
+ %changelog
++* Sat Jun 27 2015 Ville Skyttä <ville.skytta@iki.fi> - 2.0.13-2
++- Don't strip binaries too early
++
+ * Fri Jun 26 2015 jchaloup <jchaloup@redhat.com> - 2.0.13-1
+ - Update to v2.0.13
+ 
+-- 
+2.4.3

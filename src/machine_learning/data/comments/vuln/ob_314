@@ -1,0 +1,5 @@
+Avoid possible hijacking of X11-forwarded connections with sshd(8)
+by refusing to listen on a port unless all address families bind
+successfully.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.3/common/002_openssh2.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,40 @@
+classifier: ./comments_NaiveBayes.pickle
+############################################################
+words: ['+++', '//', 'avoid', 'possible', 'buffer', 'overflow', 'would', 'allow', 'remote', 'attacker', '...']
+feats: {'//': True, '...': True, 'remote': True, 'allow': True, 'would': True, ('allow', 'remote'): True, 'buffer': True, 'avoid': True, ('remote', 'attacker'): True, 'possible': True, ('buffer', 'overflow'): True, ('avoid', 'possible'): True, 'attacker': True, ('possible', 'buffer'): True, ('//', 'avoid'): True, '+++': True, ('would', 'allow'): True, 'overflow': True, ('overflow', 'would'): True, ('attacker', '...'): True, ('+++', '//'): True}
+classified as: vuln
+
+words: ['+++', '//', 'fix', 'showing', 'calculation', 'results', 'better', ',', 'readalbe', 'way', '...']
+feats: {'//': True, '...': True, (',', 'readalbe'): True, ('calculation', 'results'): True, 'way': True, ('readalbe', 'way'): True, ('fix', 'showing'): True, 'calculation': True, 'fix': True, 'readalbe': True, 'results': True, ('results', 'better'): True, ',': True, 'better': True, ('+++', '//'): True, ('showing', 'calculation'): True, ('//', 'fix'): True, '+++': True, ('way', '...'): True, ('better', ','): True, 'showing': True}
+classified as: bug
+
+classifier: ./comments_DecisionTree.pickle
+############################################################
+words: ['+++', '//', 'avoid', 'possible', 'buffer', 'overflow', 'would', 'allow', 'remote', 'attacker', '...']
+feats: {'//': True, '...': True, 'remote': True, 'allow': True, 'would': True, ('allow', 'remote'): True, 'buffer': True, 'avoid': True, ('remote', 'attacker'): True, 'possible': True, ('buffer', 'overflow'): True, ('avoid', 'possible'): True, 'attacker': True, ('possible', 'buffer'): True, ('//', 'avoid'): True, '+++': True, ('would', 'allow'): True, 'overflow': True, ('overflow', 'would'): True, ('attacker', '...'): True, ('+++', '//'): True}
+classified as: bug
+
+words: ['+++', '//', 'fix', 'showing', 'calculation', 'results', 'better', ',', 'readalbe', 'way', '...']
+feats: {'//': True, '...': True, (',', 'readalbe'): True, ('calculation', 'results'): True, 'way': True, ('readalbe', 'way'): True, ('fix', 'showing'): True, 'calculation': True, 'fix': True, 'readalbe': True, 'results': True, ('results', 'better'): True, ',': True, 'better': True, ('+++', '//'): True, ('showing', 'calculation'): True, ('//', 'fix'): True, '+++': True, ('way', '...'): True, ('better', ','): True, 'showing': True}
+classified as: bug
+
+classifier: ./patches_NaiveBayes.pickle
+############################################################
+words: ['+++', '//', 'avoid', 'possible', 'buffer', 'overflow', 'would', 'allow', 'remote', 'attacker', '...']
+feats: {'//': True, '...': True, 'remote': True, 'allow': True, 'would': True, ('allow', 'remote'): True, 'buffer': True, 'avoid': True, ('remote', 'attacker'): True, 'possible': True, ('buffer', 'overflow'): True, ('avoid', 'possible'): True, 'attacker': True, ('possible', 'buffer'): True, ('//', 'avoid'): True, '+++': True, ('would', 'allow'): True, 'overflow': True, ('overflow', 'would'): True, ('attacker', '...'): True, ('+++', '//'): True}
+classified as: vuln
+
+words: ['+++', '//', 'fix', 'showing', 'calculation', 'results', 'better', ',', 'readalbe', 'way', '...']
+feats: {'//': True, '...': True, (',', 'readalbe'): True, ('calculation', 'results'): True, 'way': True, ('readalbe', 'way'): True, ('fix', 'showing'): True, 'calculation': True, 'fix': True, 'readalbe': True, 'results': True, ('results', 'better'): True, ',': True, 'better': True, ('+++', '//'): True, ('showing', 'calculation'): True, ('//', 'fix'): True, '+++': True, ('way', '...'): True, ('better', ','): True, 'showing': True}
+classified as: vuln
+
+classifier: ./patches_DecisionTree.pickle
+############################################################
+words: ['+++', '//', 'avoid', 'possible', 'buffer', 'overflow', 'would', 'allow', 'remote', 'attacker', '...']
+feats: {'//': True, '...': True, 'remote': True, 'allow': True, 'would': True, ('allow', 'remote'): True, 'buffer': True, 'avoid': True, ('remote', 'attacker'): True, 'possible': True, ('buffer', 'overflow'): True, ('avoid', 'possible'): True, 'attacker': True, ('possible', 'buffer'): True, ('//', 'avoid'): True, '+++': True, ('would', 'allow'): True, 'overflow': True, ('overflow', 'would'): True, ('attacker', '...'): True, ('+++', '//'): True}
+classified as: bug
+
+words: ['+++', '//', 'fix', 'showing', 'calculation', 'results', 'better', ',', 'readalbe', 'way', '...']
+feats: {'//': True, '...': True, (',', 'readalbe'): True, ('calculation', 'results'): True, 'way': True, ('readalbe', 'way'): True, ('fix', 'showing'): True, 'calculation': True, 'fix': True, 'readalbe': True, 'results': True, ('results', 'better'): True, ',': True, 'better': True, ('+++', '//'): True, ('showing', 'calculation'): True, ('//', 'fix'): True, '+++': True, ('way', '...'): True, ('better', ','): True, 'showing': True}
+classified as: bug
+

@@ -1,0 +1,4 @@
+If a user opened the brooktree device on a system where it did not exist,
+the kernel crashed.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/i386/013_brooktree.patch">
+A source code patch exists which remedies this problem.</a>

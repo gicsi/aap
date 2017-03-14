@@ -1,0 +1,25 @@
+This came up in relation to bug 1230163.
+
+For that bug, there was an issue in Ironic that caused Nova to have issues deleting nodes, which causes the Heat stack delete to fail.
+
+My concern is that there are other potential issues that would cause a stack delete to fail. In that bug, Udi mentioned that he had to reprovision the machine to get rid of the stack. That's not going to be acceptable to the shipped OSP-d product.
+
+It's possible that there is such an option in Heat that already exists, in which case this is a documentation bug.
+
+If it's an existing option supported by the Heat client, or if a new one is added, the unified CLI will need to be updated to support this flag. I'm not entirely sure how to handle that from a bugzilla point of view, but we can figure that out when we decide what the correct answer is in Heat.
+Heat has a 'stack-abandon' command which deletes the stack without deleting any of the underlying cloud resources, which sounds like what you would like.
+
+However the stack-abandon REST call is disabled by default due to bug 1353670. This bug doesn't really affect tripleo though since we have no intention of adopting an abandoned stack, so we should consider enabling abandon on the undercloud heat.
+
+To enable abandon and then abandon the overcloud, try the following:
+- on the undercloud /etc/heat/heat.conf set [DEFAULT]enable_stack_abandon=true
+- sudo systemctl restart openstack-heat-engine
+- heat stack-abandon overcloud > abandoned-overcloud.json
+- make other cli delete calls to clean up resources manually (nova delete, neutron port-delete, neutron port-list etc)
+
+puppet-heat has a parameter heat::enable_stack_abandon should we choose to enable abandon in the undercloud.
+
+Having said all that, I'd like to think that there would always be a way of deleting an ERRORed nova server.
+The way Heat works is that a stack essentially owns the resources it creates and is responsible for cleaning them up. If the resources can't be deleted then it's essentially never the right thing to do to just forget about them, as that leaks resources. The user always has the option of manually removing the resource from e.g. Nova, and a subsequent stack delete should recognise that the resource is gone and allow the stack to be deleted. If the server can't be deleted from the Nova API then Nova is the problem here, not Heat.
+
+Of course it's possible there could be a case where that Heat could fail to delete a resource in the case where it cannot be found (i.e. has already been deleted manually), but that would always be considered a bug in Heat and should be fixed rather than papering over it with a force delete option.

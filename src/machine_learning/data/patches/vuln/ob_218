@@ -1,0 +1,29 @@
+Apply by doing:
+	cd  /usr/XF4/xc/programs/xdm 
+	patch -p0 < 008_xdm.patch
+
+And then (re)build X and install xdm:
+	cd /usr/XF4
+	make compile
+	cd xc/programs/xdm
+	make install
+
+Index: socket.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/programs/xdm/socket.c,v
+retrieving revision 1.1.1.4
+retrieving revision 1.2
+diff -u -r1.1.1.4 -r1.2
+--- socket.c	13 Feb 2004 21:45:39 -0000	1.1.1.4
++++ socket.c	23 May 2004 08:24:49 -0000	1.2
+@@ -66,6 +66,9 @@
+     char *name = localHostname ();
+     registerHostname (name, strlen (name));
+ 
++    if (request_port == 0)
++	return;
++
+ #if defined(IPv6) && defined(AF_INET6)
+     chooserFd = socket (AF_INET6, SOCK_STREAM, 0);
+ #else
+

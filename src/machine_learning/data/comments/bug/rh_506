@@ -1,0 +1,14 @@
+When using HP iLO (https://en.wikipedia.org/wiki/HP_Integrated_Lights-Out)
+booting in legacy text mode makes it a lot simpler to debug.
+
+The question is:
+
+Does uefi bios support setting vga text mode?
+
+or
+
+Can the kernel set a text mode during boot
+after uefi boot?
+No, there's no such thing as VGA text mode on UEFI.  There are other debug options, such as earlyprintk=efi .
+Development Management has reviewed and declined this request.
+You may appeal this decision by reopening this request.

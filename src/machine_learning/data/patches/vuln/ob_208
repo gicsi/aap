@@ -1,0 +1,58 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 028_locore.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/i386/i386/locore.s
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/locore.s,v
+retrieving revision 1.77
+retrieving revision 1.77.2.1
+diff -u -p -U20 -r1.77 -r1.77.2.1
+--- sys/arch/i386/i386/locore.s	1 Feb 2004 19:05:23 -0000	1.77
++++ sys/arch/i386/i386/locore.s	27 Feb 2005 00:39:58 -0000	1.77.2.1
+@@ -1112,40 +1112,42 @@ ENTRY(copyoutstr)
+ #endif /* I386_CPU */
+ 
+ #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
+ 5:	movl	_C_LABEL(curpcb), %eax
+ 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
+ 	/*
+ 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
+ 	 */
+ 	movl	$VM_MAXUSER_ADDRESS,%eax
+ 	subl	%edi,%eax
+ 	cmpl	%edx,%eax
+ 	jae	1f
+ 	movl	%eax,%edx
+ 	movl	%eax,20(%esp)
+ 
+ 1:	incl	%edx
+ 	cld
+ 
+ 1:	decl	%edx
+ 	jz	2f
++	cmpl	$VM_MAXUSER_ADDRESS,%edi
++	jae	_C_LABEL(copystr_fault)
+ 	lodsb
+ 	stosb
+ 	testb	%al,%al
+ 	jnz	1b
+ 
+ 	/* Success -- 0 byte reached. */
+ 	decl	%edx
+ 	xorl	%eax,%eax
+ 	jmp	copystr_return
+ 
+ 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+ 	cmpl	$VM_MAXUSER_ADDRESS,%edi
+ 	jae	_C_LABEL(copystr_fault)
+ 	movl	$ENAMETOOLONG,%eax
+ 	jmp	copystr_return
+ #endif /* I486_CPU || I586_CPU || I686_CPU */
+ 
+ /*
+  * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+  * Copy a NUL-terminated string, at most maxlen characters long, from the
+

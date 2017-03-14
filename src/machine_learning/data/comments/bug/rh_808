@@ -1,0 +1,39 @@
+Created attachment 1040426
+Screenshot | Yum Extender | Python
+
+By clicking on the TaskCoach-starter-icon → nothing happens
+
+By typing "taskcoach" in terminal:
+
+$ taskcoach
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_boxed_type_register_static: assertion 'g_type_from_name (name) == 0' failed
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_type_set_qdata: assertion 'node != NULL' failed
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: cannot register existing type 'GtkWidget'
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_type_add_interface_static: assertion 'G_TYPE_IS_INSTANTIATABLE (instance_type)' failed
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: cannot register existing type 'GtkBuildable'
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_type_interface_add_prerequisite: assertion 'G_TYPE_IS_INTERFACE (interface_type)' failed
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_once_init_leave: assertion 'result != 0' failed
+  from gtk import _gtk
+
+/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py:40: Warning: g_type_register_static: assertion 'parent_type > 0' failed
+  from gtk import _gtk
+
+
+On its homepage, it's recomended to have python2.7 and wxPhyton 2.8.9.2-unicode (or newer).
+
+In attachment, you see my installed python-packeges
+
+wxPython and wxPython-devel are also installed with the version: 3.0.*
+*** This bug has been marked as a duplicate of bug 1187849 ***

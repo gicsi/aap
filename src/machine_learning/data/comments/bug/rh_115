@@ -1,0 +1,12 @@
+Your package python-tw2-sqla failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10146538
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047904
+build.log
+Created attachment 1047905
+root.log
+Created attachment 1047906
+state.log
+Built.

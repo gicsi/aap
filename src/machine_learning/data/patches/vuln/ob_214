@@ -1,0 +1,555 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 013_httpd.patch
+
+And then rebuild and install httpd and its modules:
+        cd usr.sbin/httpd
+        make -f Makefile.bsd-wrapper obj
+        make -f Makefile.bsd-wrapper cleandir
+        make -f Makefile.bsd-wrapper depend
+        make -f Makefile.bsd-wrapper
+        make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+        apachectl stop
+before running "make install", and
+        apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/include/http_core.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/include/http_core.h,v
+retrieving revision 1.8
+retrieving revision 1.8.4.1
+diff -u -p -r1.8 -r1.8.4.1
+--- usr.sbin/httpd/src/include/http_core.h	21 Aug 2003 13:11:35 -0000	1.8
++++ usr.sbin/httpd/src/include/http_core.h	10 Jun 2004 02:12:51 -0000	1.8.4.1
+@@ -162,6 +162,7 @@ typedef struct {
+      
+ API_EXPORT(const char *) ap_auth_type (request_rec *);
+ API_EXPORT(const char *) ap_auth_name (request_rec *);     
++API_EXPORT(const char *) ap_auth_nonce (request_rec *);
+ API_EXPORT(int) ap_satisfies (request_rec *r);
+ API_EXPORT(const array_header *) ap_requires (request_rec *);    
+ 
+@@ -354,6 +355,9 @@ typedef struct {
+      * direct command line parameters or argv elements?
+      */
+     ap_flag_e cgi_command_args;
++
++    /* Digest auth. */
++    char *ap_auth_nonce;
+ 
+ } core_dir_config;
+ 
+Index: usr.sbin/httpd/src/include/httpd.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/include/httpd.h,v
+retrieving revision 1.20
+retrieving revision 1.20.2.1
+diff -u -p -r1.20 -r1.20.2.1
+--- usr.sbin/httpd/src/include/httpd.h	17 Nov 2003 18:57:05 -0000	1.20
++++ usr.sbin/httpd/src/include/httpd.h	10 Jun 2004 02:09:05 -0000	1.20.2.1
+@@ -1072,6 +1072,8 @@ API_EXPORT(char *) ap_escape_html(pool *
+ API_EXPORT(char *) ap_construct_server(pool *p, const char *hostname,
+ 				    unsigned port, const request_rec *r);
+ API_EXPORT(char *) ap_escape_logitem(pool *p, const char *str);
++API_EXPORT(size_t) ap_escape_errorlog_item(char *dest, const char *source,
++                                           size_t buflen);
+ API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *s);
+ 
+ API_EXPORT(int) ap_count_dirs(const char *path);
+Index: usr.sbin/httpd/src/main/http_core.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/main/http_core.c,v
+retrieving revision 1.16
+retrieving revision 1.16.2.1
+diff -u -p -r1.16 -r1.16.2.1
+--- usr.sbin/httpd/src/main/http_core.c	17 Nov 2003 18:57:05 -0000	1.16
++++ usr.sbin/httpd/src/main/http_core.c	10 Jun 2004 02:12:51 -0000	1.16.2.1
+@@ -238,6 +238,9 @@ static void *merge_core_dir_configs(pool
+     if (new->ap_auth_name) {
+         conf->ap_auth_name = new->ap_auth_name;
+     }
++    if (new->ap_auth_nonce) {
++        conf->ap_auth_nonce = new->ap_auth_nonce;
++    }
+     if (new->ap_requires) {
+         conf->ap_requires = new->ap_requires;
+     }
+@@ -580,6 +583,31 @@ API_EXPORT(const char *) ap_auth_name(re
+     return conf->ap_auth_name;
+ }
+ 
++API_EXPORT(const char *) ap_auth_nonce(request_rec *r)
++{
++    core_dir_config *conf;
++    conf = (core_dir_config *)ap_get_module_config(r->per_dir_config,
++                                                   &core_module);
++    if (conf->ap_auth_nonce)
++       return conf->ap_auth_nonce;
++
++    /* Ideally we'd want to mix in some per-directory style
++     * information; as we are likely to want to detect replay
++     * across those boundaries and some randomness. But that
++     * is harder due to the adhoc nature of .htaccess memory
++     * structures, restarts and forks.
++     *
++     * But then again - you should use AuthDigestRealmSeed in your config
++     * file if you care. So the adhoc value should do.
++     */
++    return ap_psprintf(r->pool,"%pp%pp%pp%pp%pp",
++           (void *)&((r->connection->local_addr).sin_addr ),
++           (void *)ap_user_name,
++           (void *)ap_listeners,
++           (void *)ap_server_argv0,
++           (void *)ap_pid_fname);
++}
++
+ API_EXPORT(const char *) ap_default_type(request_rec *r)
+ {
+     core_dir_config *conf;
+@@ -2834,6 +2862,28 @@ static const char *set_authname(cmd_parm
+     return NULL;
+ }
+ 
++/*
++ * Load an authorisation nonce into our location configuration, and
++ * force it to be in the 0-9/A-Z realm.
++ */
++static const char *set_authnonce (cmd_parms *cmd, void *mconfig, char *word1)
++{
++    core_dir_config *aconfig = (core_dir_config *)mconfig;
++    size_t i;
++
++    aconfig->ap_auth_nonce = ap_escape_quotes(cmd->pool, word1);
++
++    if (strlen(aconfig->ap_auth_nonce) > 510)
++       return "AuthDigestRealmSeed length limited to 510 chars for browser compatibility";
++
++    for(i=0;i<strlen(aconfig->ap_auth_nonce );i++)
++       if (!ap_isalnum(aconfig->ap_auth_nonce [i]))
++         return "AuthDigestRealmSeed limited to 0-9 and A-Z range for browser compatibility";
++
++    return NULL;
++}
++
++
+ #ifdef _OSD_POSIX /* BS2000 Logon Passwd file */
+ static const char *set_bs2000_account(cmd_parms *cmd, void *dummy, char *name)
+ {
+@@ -3448,6 +3498,9 @@ static const command_rec core_cmds[] = {
+   "An HTTP authorization type (e.g., \"Basic\")" },
+ { "AuthName", set_authname, NULL, OR_AUTHCFG, TAKE1,
+   "The authentication realm (e.g. \"Members Only\")" },
++{ "AuthDigestRealmSeed", set_authnonce, NULL, OR_AUTHCFG, TAKE1,
++  "An authentication token which should be different for each logical realm. "\
++  "A random value or the servers IP may be a good choise.\n" },
+ { "Require", require, NULL, OR_AUTHCFG, RAW_ARGS,
+   "Selects which authenticated users or groups may access a protected space" },
+ { "Satisfy", satisfy, NULL, OR_AUTHCFG, TAKE1,
+Index: usr.sbin/httpd/src/main/http_log.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/main/http_log.c,v
+retrieving revision 1.14
+retrieving revision 1.14.4.1
+diff -u -p -r1.14 -r1.14.4.1
+--- usr.sbin/httpd/src/main/http_log.c	21 Aug 2003 13:11:35 -0000	1.14
++++ usr.sbin/httpd/src/main/http_log.c	10 Jun 2004 02:09:05 -0000	1.14.4.1
+@@ -316,6 +316,9 @@ static void log_error_core(const char *f
+ 			   const char *fmt, va_list args)
+ {
+     char errstr[MAX_STRING_LEN];
++#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
++    char scratch[MAX_STRING_LEN];
++#endif
+     size_t len;
+     int save_errno = errno;
+     FILE *logf;
+@@ -447,7 +450,14 @@ static void log_error_core(const char *f
+     }
+ #endif
+ 
++#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
++    if (ap_vsnprintf(scratch, sizeof(scratch) - len, fmt, args)) {
++        len += ap_escape_errorlog_item(errstr + len, scratch,
++                                       sizeof(errstr) - len);
++    }
++#else
+     len += ap_vsnprintf(errstr + len, sizeof(errstr) - len, fmt, args);
++#endif
+ 
+     /* NULL if we are logging to syslog */
+     if (logf) {
+Index: usr.sbin/httpd/src/main/http_protocol.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/main/http_protocol.c,v
+retrieving revision 1.25
+retrieving revision 1.25.2.1
+diff -u -p -r1.25 -r1.25.2.1
+--- usr.sbin/httpd/src/main/http_protocol.c	15 Jan 2004 12:17:18 -0000	1.25
++++ usr.sbin/httpd/src/main/http_protocol.c	10 Jun 2004 02:12:51 -0000	1.25.2.1
+@@ -77,6 +77,7 @@
+ #include "util_date.h"          /* For parseHTTPdate and BAD_DATE */
+ #include <stdarg.h>
+ #include "http_conf_globals.h"
++#include "util_md5.h"           /* For digestAuth */
+ #include "ap_sha1.h"
+ 
+ #define SET_BYTES_SENT(r) \
+@@ -1417,11 +1418,25 @@ API_EXPORT(void) ap_note_basic_auth_fail
+ 
+ API_EXPORT(void) ap_note_digest_auth_failure(request_rec *r)
+ {
++    /* We need to create a nonce which:
++     * a) changes all the time (see r->request_time)
++     *    below and
++     * b) of which we can verify that it is our own
++     *    fairly easily when it comes to veryfing
++     *    the digest coming back in the response.
++     * c) and which as a whole should not
++     *    be unlikely to be in use anywhere else.
++     */
++    char * nonce_prefix = ap_md5(r->pool,
++           (unsigned char *)
++           ap_psprintf(r->pool, "%s%lu",
++                       ap_auth_nonce(r), r->request_time));
++
+     ap_table_setn(r->err_headers_out,
+ 	    r->proxyreq == STD_PROXY ? "Proxy-Authenticate"
+ 		  : "WWW-Authenticate",
+-	    ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%lu\"",
+-		ap_auth_name(r), (unsigned long)r->request_time));
++           ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%s%lu\"",
++               ap_auth_name(r), nonce_prefix, r->request_time));
+ }
+ 
+ API_EXPORT(int) ap_get_basic_auth_pw(request_rec *r, const char **pw)
+Index: usr.sbin/httpd/src/main/util.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/main/util.c,v
+retrieving revision 1.15
+retrieving revision 1.15.4.1
+diff -u -p -r1.15 -r1.15.4.1
+--- usr.sbin/httpd/src/main/util.c	21 Aug 2003 13:11:35 -0000	1.15
++++ usr.sbin/httpd/src/main/util.c	10 Jun 2004 02:09:05 -0000	1.15.4.1
+@@ -1520,6 +1520,69 @@ API_EXPORT(char *) ap_escape_logitem(poo
+     return ret;
+ }
+ 
++API_EXPORT(size_t) ap_escape_errorlog_item(char *dest, const char *source,
++                                           size_t buflen)
++{
++    unsigned char *d, *ep;
++    const unsigned char *s;
++
++    if (!source || !buflen) { /* be safe */
++        return 0;
++    }
++
++    d = (unsigned char *)dest;
++    s = (const unsigned char *)source;
++    ep = d + buflen - 1;
++
++    for (; d < ep && *s; ++s) {
++
++        if (TEST_CHAR(*s, T_ESCAPE_LOGITEM)) {
++            *d++ = '\\';
++            if (d >= ep) {
++                --d;
++                break;
++            }
++
++            switch(*s) {
++            case '\b':
++                *d++ = 'b';
++                break;
++            case '\n':
++                *d++ = 'n';
++                break;
++            case '\r':
++                *d++ = 'r';
++                break;
++            case '\t':
++                *d++ = 't';
++                break;
++            case '\v':
++                *d++ = 'v';
++                break;
++            case '\\':
++                *d++ = *s;
++                break;
++            case '"': /* no need for this in error log */
++                d[-1] = *s;
++                break;
++            default:
++                if (d >= ep - 2) {
++                    ep = --d; /* break the for loop as well */
++                    break;
++                }
++                c2x(*s, d);
++                *d = 'x';
++                d += 3;
++            }
++        }
++        else {
++            *d++ = *s;
++        }
++    }
++    *d = '\0';
++
++    return (d - (unsigned char *)dest);
++}
+ 
+ API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *str)
+ {
+Index: usr.sbin/httpd/src/modules/proxy/proxy_http.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/proxy/proxy_http.c,v
+retrieving revision 1.13
+retrieving revision 1.13.4.1
+diff -u -p -r1.13 -r1.13.4.1
+--- usr.sbin/httpd/src/modules/proxy/proxy_http.c	21 Aug 2003 13:11:36 -0000	1.13
++++ usr.sbin/httpd/src/modules/proxy/proxy_http.c	11 Jun 2004 04:19:04 -0000	1.13.4.1
+@@ -561,6 +561,13 @@ int ap_proxy_http_handler(request_rec *r
+         content_length = ap_table_get(resp_hdrs, "Content-Length");
+         if (content_length != NULL) {
+             c->len = ap_strtol(content_length, NULL, 10);
++
++	    if (c->len < 0) {
++		ap_kill_timeout(r);
++		return ap_proxyerror(r, HTTP_BAD_GATEWAY, ap_pstrcat(r->pool,
++				     "Invalid Content-Length from remote server",
++                                      NULL));
++	    }
+         }
+ 
+     }
+Index: usr.sbin/httpd/src/modules/ssl/mod_ssl.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/ssl/mod_ssl.h,v
+retrieving revision 1.17
+retrieving revision 1.17.2.1
+diff -u -p -r1.17 -r1.17.2.1
+--- usr.sbin/httpd/src/modules/ssl/mod_ssl.h	17 Nov 2003 18:57:05 -0000	1.17
++++ usr.sbin/httpd/src/modules/ssl/mod_ssl.h	11 Jun 2004 08:36:17 -0000	1.17.2.1
+@@ -832,9 +832,6 @@ void         ssl_compat_variables(reques
+ /*  Utility Functions  */
+ char        *ssl_util_server_root_relative(pool *, char *, char *);
+ char        *ssl_util_vhostid(pool *, server_rec *);
+-void         ssl_util_strupper(char *);
+-void         ssl_util_uuencode(char *, const char *, BOOL);
+-void         ssl_util_uuencode_binary(unsigned char *, const unsigned char *, int, BOOL);
+ FILE        *ssl_util_ppopen(server_rec *, pool *, char *);
+ int          ssl_util_ppopen_child(void *, child_info *);
+ void         ssl_util_ppclose(server_rec *, pool *, FILE *);
+Index: usr.sbin/httpd/src/modules/ssl/ssl_engine_kernel.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/ssl/ssl_engine_kernel.c,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- usr.sbin/httpd/src/modules/ssl/ssl_engine_kernel.c	17 Nov 2003 18:57:06 -0000	1.19
++++ usr.sbin/httpd/src/modules/ssl/ssl_engine_kernel.c	11 Jun 2004 08:36:17 -0000	1.19.2.1
+@@ -334,6 +334,12 @@ void ssl_hook_NewConnection(conn_rec *co
+                 ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
+                 return;
+             }
++            else if (   (SSL_get_error(ssl, rc) == SSL_ERROR_WANT_READ  && BIO_should_retry(SSL_get_rbio(ssl)))
++                     || (SSL_get_error(ssl, rc) == SSL_ERROR_WANT_WRITE && BIO_should_retry(SSL_get_wbio(ssl)))) {
++                ssl_log(srvr, SSL_LOG_TRACE, "SSL handshake I/O retry (server %s, client %s)",
++                        cpVHostID, conn->remote_ip != NULL ? conn->remote_ip : "unknown");
++                continue;
++            }
+             else {
+                 /*
+                  * Ok, anything else is a fatal error
+@@ -1139,7 +1145,6 @@ int ssl_hook_Auth(request_rec *r)
+ {
+     SSLSrvConfigRec *sc = mySrvConfig(r->server);
+     SSLDirConfigRec *dc = myDirConfig(r);
+-    char b1[MAX_STRING_LEN], b2[MAX_STRING_LEN];
+     char *clientdn;
+     const char *cpAL;
+     const char *cpUN;
+@@ -1200,12 +1205,11 @@ int ssl_hook_Auth(request_rec *r)
+      * adding the string "xxj31ZMTZzkVA" as the password in the user file.
+      * This is just the crypted variant of the word "password" ;-)
+      */
+-    ap_snprintf(b1, sizeof(b1), "%s:password", clientdn);
+-    ssl_util_uuencode(b2, b1, FALSE);
+-    ap_snprintf(b1, sizeof(b1), "Basic %s", b2);
+-    ap_table_set(r->headers_in, "Authorization", b1);
++    cpAL = ap_pstrcat(r->pool, "Basic ", ap_pbase64encode(r->pool,
++        ap_pstrcat(r->pool, clientdn, ":password", NULL)), NULL);
++    ap_table_set(r->headers_in, "Authorization", cpAL);
+     ssl_log(r->server, SSL_LOG_INFO,
+-            "Faking HTTP Basic Auth header: \"Authorization: %s\"", b1);
++            "Faking HTTP Basic Auth header: \"Authorization: %s\"", cpAL);
+ 
+     return DECLINED;
+ }
+Index: usr.sbin/httpd/src/modules/ssl/ssl_engine_rand.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/ssl/ssl_engine_rand.c,v
+retrieving revision 1.9
+retrieving revision 1.9.2.1
+diff -u -p -r1.9 -r1.9.2.1
+--- usr.sbin/httpd/src/modules/ssl/ssl_engine_rand.c	17 Nov 2003 18:57:06 -0000	1.9
++++ usr.sbin/httpd/src/modules/ssl/ssl_engine_rand.c	11 Jun 2004 08:34:50 -0000	1.9.2.1
+@@ -71,7 +71,7 @@
+ **  _________________________________________________________________
+ */
+ 
+-static int ssl_rand_choosenum(int, int);
++static int ssl_rand_choosenum(int);
+ static int ssl_rand_feedfp(pool *, FILE *, int);
+ 
+ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
+@@ -155,7 +155,7 @@ int ssl_rand_seed(server_rec *s, pool *p
+                 /*
+                  * seed in some current state of the run-time stack (128 bytes)
+                  */
+-                n = ssl_rand_choosenum(0, sizeof(stackdata)-128-1);
++                n = ssl_rand_choosenum(sizeof(stackdata)-128-1);
+                 RAND_seed(stackdata+n, 128);
+                 nDone += 128;
+ 
+@@ -165,7 +165,7 @@ int ssl_rand_seed(server_rec *s, pool *p
+                 if (ap_scoreboard_image != NULL && SCOREBOARD_SIZE > 16) {
+                     if ((m = ((SCOREBOARD_SIZE / 2) - 1)) > 1024)
+                         m = 1024;
+-                    n = ssl_rand_choosenum(0, m);
++                    n = ssl_rand_choosenum(m);
+                     RAND_seed(((unsigned char *)ap_scoreboard_image)+n, m);
+                     nDone += m;
+                 }
+@@ -210,17 +210,9 @@ static int ssl_rand_feedfp(pool *p, FILE
+     return nDone;
+ }
+ 
+-static int ssl_rand_choosenum(int l, int h)
++/* Generate a random number in the range 1-h */
++static int ssl_rand_choosenum(int h)
+ {
+-    int i;
+-    char buf[50];
+-
+-    srand((unsigned int)time(NULL));
+-    ap_snprintf(buf, sizeof(buf), "%.0f",
+-                (((double)(rand()%RAND_MAX)/RAND_MAX)*(h-l)));
+-    i = atoi(buf)+1;
+-    if (i < l) i = l;
+-    if (i > h) i = h;
+-    return i;
++	return (int)(arc4random() / ((double)0xffffffffU + 1) * h + 1);
+ }
+ 
+Index: usr.sbin/httpd/src/modules/ssl/ssl_util.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/ssl/ssl_util.c,v
+retrieving revision 1.12
+retrieving revision 1.12.2.1
+diff -u -p -r1.12 -r1.12.2.1
+--- usr.sbin/httpd/src/modules/ssl/ssl_util.c	17 Nov 2003 18:57:06 -0000	1.12
++++ usr.sbin/httpd/src/modules/ssl/ssl_util.c	11 Jun 2004 08:36:17 -0000	1.12.2.1
+@@ -151,50 +151,6 @@ char *ssl_util_vhostid(pool *p, server_r
+     return id;
+ }
+ 
+-void ssl_util_strupper(char *s)
+-{
+-    for (; *s; ++s)
+-        *s = toupper(*s);
+-    return;
+-}
+-
+-static const char ssl_util_uuencode_six2pr[64+1] =
+-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+-
+-void ssl_util_uuencode(char *szTo, const char *szFrom, BOOL bPad)
+-{
+-    ssl_util_uuencode_binary((unsigned char *)szTo,
+-                             (const unsigned char *)szFrom,
+-                             strlen(szFrom), bPad);
+-}
+-
+-void ssl_util_uuencode_binary(
+-    unsigned char *szTo, const unsigned char *szFrom, int nLength, BOOL bPad)
+-{
+-    const unsigned char *s;
+-    int nPad = 0;
+-
+-    for (s = szFrom; nLength > 0; s += 3) {
+-        *szTo++ = ssl_util_uuencode_six2pr[s[0] >> 2];
+-        *szTo++ = ssl_util_uuencode_six2pr[(s[0] << 4 | s[1] >> 4) & 0x3f];
+-        if (--nLength == 0) {
+-            nPad = 2;
+-            break;
+-        }
+-        *szTo++ = ssl_util_uuencode_six2pr[(s[1] << 2 | s[2] >> 6) & 0x3f];
+-        if (--nLength == 0) {
+-            nPad = 1;
+-            break;
+-        }
+-        *szTo++ = ssl_util_uuencode_six2pr[s[2] & 0x3f];
+-        --nLength;
+-    }
+-    while(bPad && nPad--)
+-        *szTo++ = NUL;
+-    *szTo = NUL;
+-    return;
+-}
+-
+ FILE *ssl_util_ppopen(server_rec *s, pool *p, char *cmd)
+ {
+     FILE *fpout;
+Index: usr.sbin/httpd/src/modules/standard/mod_digest.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_digest.c,v
+retrieving revision 1.9
+retrieving revision 1.9.4.1
+diff -u -p -r1.9 -r1.9.4.1
+--- usr.sbin/httpd/src/modules/standard/mod_digest.c	21 Aug 2003 13:11:36 -0000	1.9
++++ usr.sbin/httpd/src/modules/standard/mod_digest.c	10 Jun 2004 02:12:51 -0000	1.9.4.1
+@@ -316,6 +316,23 @@ static int get_digest_rec(request_rec *r
+ 
+ /* The actual MD5 code... whee */
+ 
++/* Check that a given nonce is actually one which was
++ * issued by this server in the right context.
++ */
++static int check_nonce(pool *p, const char *prefix, const char *nonce) {
++    char *timestamp = (char *)nonce + 2 * MD5_DIGESTSIZE;
++    char *md5;
++
++    if (strlen(nonce) < MD5_DIGESTSIZE)
++       return AUTH_REQUIRED;
++
++    md5 = ap_md5(p, (unsigned char *)ap_pstrcat(p, prefix, timestamp, NULL));
++
++    return strncmp(md5, nonce, 2 * MD5_DIGESTSIZE);
++}
++
++/* Check the digest itself.
++ */
+ static char *find_digest(request_rec *r, digest_header_rec * h, char *a1)
+ {
+     return ap_md5(r->pool,
+@@ -355,6 +372,15 @@ static int authenticate_digest_user(requ
+ 
+     if (!sec->pwfile)
+ 	return DECLINED;
++
++    /* Check that the nonce was one we actually issued. */
++    if (check_nonce(r->pool, ap_auth_nonce(r), response->nonce)) {
++        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
++            "Client is using a nonce which was not issued by "
++            "this server for this context: %s", r->uri);
++        ap_note_digest_auth_failure(r);
++        return AUTH_REQUIRED;
++    }
+ 
+     if (!(a1 = get_hash(r, c->user, sec->pwfile))) {
+ 	ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+

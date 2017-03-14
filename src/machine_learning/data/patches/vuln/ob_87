@@ -1,0 +1,45 @@
+This patch fixes a buffer overrun in libkrb.
+
+Apply by doing:
+      cd /usr/src
+      patch -p0 < 009_kerberos2.patch
+
+And rebuild libkrb by doing:
+      cd kerberosIV/lib/krb
+      make obj
+      make
+      make install
+
+Since all 2.8 architectures use shared libraries, this fix does not
+require recompilation of binaries.  To effect this change, it may be
+neccessary to reboot the system, so that any utilities using libkrb
+which are currently running will restart.
+
+Index: kerberosIV/src/lib/krb/kdc_reply.c
+===================================================================
+RCS file: /cvs/src/kerberosIV/src/lib/krb/kdc_reply.c,v
+retrieving revision 1.1.1.2
+retrieving revision 1.1.1.3
+diff -u -w -r1.1.1.2 -r1.1.1.3
+--- kerberosIV/src/lib/krb/kdc_reply.c	2000/07/11 09:06:40	1.1.1.2
++++ kerberosIV/src/lib/krb/kdc_reply.c	2000/12/10 19:05:29	1.1.1.3
+@@ -33,7 +33,7 @@
+ 
+ #include "krb_locl.h"
+ 
+-RCSID("$KTH: kdc_reply.c,v 1.12.2.1 2000/06/23 03:30:42 assar Exp $");
++RCSID("$KTH: kdc_reply.c,v 1.12.2.2 2000/12/04 14:34:28 assar Exp $");
+ 
+ static int little_endian; /* XXX ugly */
+ 
+@@ -124,6 +124,9 @@
+     p += krb_get_int(p, &exp_date, 4, little_endian);
+     p++; /* master key version number */
+     p += krb_get_int(p, &clen, 2, little_endian);
++    if (reply->length - (p - reply->dat) < clen)
++	return INTK_PROT;
++
+     cip->length = clen;
+     memcpy(cip->dat, p, clen);
+     p += clen;
+

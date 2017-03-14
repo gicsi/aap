@@ -1,0 +1,54 @@
+Description of problem:
+trying to update existing stack with 'openstack overcloud stack update overcloud' command . Getting :ERROR: openstack No plan with name '' exists.
+
+Tried to run the command with UUID of the plan instead of the name and got:
+ERROR: openstack ERROR: The Stack (2e80f963-d05f-48bc-ab0d-2fd00ae7a8da) could not be found.
+
+
+Version-Release number of selected component (if applicable):
+
+python-rdomanager-oscplugin-0.0.8-1.el7ost.noarch
+rhos-release-0.62-1.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. deploy overcloud
+2.update stack by running "openstack overcloud stack update overcloud'
+3.
+
+Actual results:
+Error. the stack was not updated
+
+
+Expected results:
+Message of successful stack update
+
+Additional info:
+$ openstack management plan list
++--------------------------------------+-----------+-------------+------------------------------------------------------------------+
+| uuid                                 | name      | description | roles                                                            |
++--------------------------------------+-----------+-------------+------------------------------------------------------------------+
+| 2e80f963-d05f-48bc-ab0d-2fd00ae7a8da | overcloud | None        | Compute, Ceph-Storage, Cinder-Storage, Controller, Swift-Storage |
++--------------------------------------+-----------+-------------+------------------------------------------------------------------+
+$ nova list
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+| ID                                   | Name                    | Status | Task State | Power State | Networks            |
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+| 7aff7c7f-5834-4dc8-9883-1a018ed0be03 | overcloud-cephstorage-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.11 |
+| 7633d058-bfae-4731-a14b-8da6c225f2f2 | overcloud-compute-0     | ACTIVE | -          | Running     | ctlplane=192.0.2.10 |
+| 548085d2-3b74-42d4-868c-65b657839114 | overcloud-compute-1     | ACTIVE | -          | Running     | ctlplane=192.0.2.13 |
+| 454b0202-eff3-46bf-a75b-e49875354167 | overcloud-controller-0  | ACTIVE | -          | Running     | ctlplane=192.0.2.9  |
+| e747a12d-96cc-4f24-9f96-8e36947007ad | overcloud-controller-1  | ACTIVE | -          | Running     | ctlplane=192.0.2.12 |
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+could be related https://bugzilla.redhat.com/show_bug.cgi?id=1234117
+The command syntax is following:
+$ openstack help overcloud update stack 
+usage: openstack overcloud update stack [-h] [--plan PLAN] [-i] [-a] [stack]
+<snip>
+
+So the right command to use is:
+openstack overcloud update stack --plan overcloud overcloud
+
+(Switching to ON_QA as I don't think there is any fix required)

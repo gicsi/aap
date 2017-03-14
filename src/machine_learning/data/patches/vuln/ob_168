@@ -1,0 +1,72 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_lprm.patch
+
+And then rebuild and install lprm:
+	cd usr.sbin/lpr
+	make obj
+	make depend && make && make install
+
+Index: usr.sbin/lpr/common_source/rmjob.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/lpr/common_source/rmjob.c,v
+retrieving revision 1.14
+diff -u -r1.14 rmjob.c
+--- usr.sbin/lpr/common_source/rmjob.c	8 Jun 2002 01:53:43 -0000	1.14
++++ usr.sbin/lpr/common_source/rmjob.c	5 Mar 2003 00:31:41 -0000
+@@ -333,6 +333,7 @@
+ {
+ 	char *cp;
+ 	int i, rem;
++	size_t n;
+ 	char buf[BUFSIZ];
+ 
+ 	if (!remote)
+@@ -344,18 +345,26 @@
+ 	 */
+ 	fflush(stdout);
+ 
+-	(void)snprintf(buf, sizeof(buf)-2, "\5%s %s", RP, all ? "-all" : person);
+-	cp = buf + strlen(buf);
+-	for (i = 0; i < users && cp-buf+1+strlen(user[i]) < sizeof buf - 2; i++) {
+-		cp += strlen(cp);
++	/* the trailing space will be replaced with a newline later */
++	n = snprintf(buf, sizeof(buf), "\5%s %s ", RP, all ? "-all" : person);
++	if (n == -1 || n >= sizeof(buf))
++		goto bad;
++	cp = buf + n;
++	for (i = 0; i < users; i++) {
++		n = strlcpy(cp, user[i], sizeof(buf) - (cp - buf + 1));
++		if (n >= sizeof(buf) - (cp - buf + 1))
++			goto bad;
++		cp += n;
+ 		*cp++ = ' ';
+-		strcpy(cp, user[i]);
+ 	}
+-	for (i = 0; i < requests && cp-buf+10 < sizeof(buf) - 2; i++) {
+-		cp += strlen(cp);
+-		(void)sprintf(cp, " %d", requ[i]);
++	*cp = '\0';
++	for (i = 0; i < requests; i++) {
++		n = snprintf(cp, sizeof(buf) - (cp - buf), "%d ", requ[i]);
++		if (n == -1 || n >= sizeof(buf) - (cp - buf))
++			goto bad;
++		cp += n;
+ 	}
+-	strcat(cp, "\n");
++	cp[-1] = '\n';		/* replace space with newline, leave the NUL */
+ 	rem = getport(RM, 0);
+ 	if (rem < 0) {
+ 		if (from != host)
+@@ -380,6 +389,10 @@
+ 		(void)sigaction(SIGALRM, &osa, NULL);
+ 		(void)close(rem);
+ 	}
++	return;
++bad:
++	printf("remote buffer too large\n");
++	return;
+ }
+ 
+ static void
+

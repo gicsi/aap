@@ -1,0 +1,41 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 003_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+        make obj
+        make depend
+        make includes
+        make
+        make install
+        cd ../../sbin
+        make obj
+        make depend
+        make
+        make install
+
+Index: lib/libssl/src/ssl/s3_pkt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_pkt.c,v
+retrieving revision 1.14
+diff -p -u -p -u -r1.14 s3_pkt.c
+--- lib/libssl/src/ssl/s3_pkt.c	10 Nov 2009 09:09:40 -0000	1.14
++++ lib/libssl/src/ssl/s3_pkt.c	30 Mar 2010 17:41:20 -0000
+@@ -282,9 +282,10 @@ again:
+ 			if (version != s->version)
+ 				{
+ 				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
+-				/* Send back error using their
+-				 * version number :-) */
+-				s->version=version;
++                                if ((s->version & 0xFF00) == (version & 0xFF00))
++                                	/* Send back error using their
++					 * minor version number :-) */
++					s->version = (unsigned short)version;
+ 				al=SSL_AD_PROTOCOL_VERSION;
+ 				goto f_err;
+ 				}
+

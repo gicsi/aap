@@ -1,0 +1,59 @@
+Description of problem:
+I was replying to an email and decided to delete the data which was sent to me.  I highlighted it (placed cursor at beginning, hit shift-ctrl-end and then hit delete.
+(Restarted Evolution, repeated with same results.)
+Incoming email was quite large and contained an embedded picture.
+
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: size
+executable:     /usr/bin/evolution
+global_pid:     2824
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 size at Source/WTF/wtf/Vector.h:576
+ #1 find<WebCore::RenderBox*> at Source/WTF/wtf/Vector.h:807
+ #2 removeFloat at Source/WebCore/rendering/RootInlineBox.h:157
+ #3 WebCore::RenderBlockFlow::removeFloatingObject at Source/WebCore/rendering/RenderBlockFlow.cpp:2117
+ #4 WebCore::RenderBlockFlow::markAllDescendantsWithFloatsForLayout at Source/WebCore/rendering/RenderBlockFlow.cpp:2545
+ #7 WebCore::RenderBox::removeFloatingOrPositionedChildFromBlockLists at Source/WebCore/rendering/RenderBox.cpp:260
+ #8 WebCore::RenderElement::removeChildInternal at Source/WebCore/rendering/RenderElement.cpp:598
+ #9 WebCore::RenderObject::willBeDestroyed at Source/WebCore/rendering/RenderObject.cpp:1841
+ #10 WebCore::RenderObject::destroy at Source/WebCore/rendering/RenderObject.cpp:1962
+ #11 WebCore::RenderObject::destroyAndCleanupAnonymousWrappers at Source/WebCore/rendering/RenderObject.cpp:1950
+Created attachment 1043583
+File: backtrace
+Created attachment 1043584
+File: cgroup
+Created attachment 1043585
+File: core_backtrace
+Created attachment 1043586
+File: dso_list
+Created attachment 1043587
+File: environ
+Created attachment 1043588
+File: limits
+Created attachment 1043589
+File: maps
+Created attachment 1043590
+File: mountinfo
+Created attachment 1043591
+File: namespaces
+Created attachment 1043592
+File: open_fds
+Created attachment 1043593
+File: proc_pid_status
+Created attachment 1043594
+File: var_log_messages
+Thanks for a bug report. I moved this upstream as [1]. Please see [1] for any further updates. If possible, please CC yourself there, in case upstream developers will have additional questions.
+
+[1] https://bugzilla.gnome.org/show_bug.cgi?id=751629

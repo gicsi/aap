@@ -1,0 +1,29 @@
+Description of problem:
+ganesha-ha.sh has an option refresh--config that is essential for using changing parameters like ACL etc in the export config file. The refresh-config logic
+is not present in the script as of now. This is absolutely neccessary for
+customers to use security options, sub-directory export via NFS-Ganesha.
+
+Version-Release number of selected component (if applicable):
+nfs-ganesha-2.2.0-3+rhs-glusterfs 3.1
+
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1. Execute refresh--config using ganesha-ha.sh
+2.
+3.
+
+Actual results:
+Doesn't do anything
+
+
+Expected results:
+It should dynamically export and unexport the volume and thus refreshing the config of the specific volume.
+
+
+Additional info:
+This is an easy fix and a fix should be posted upstream by EOD today
+*** This bug has been marked as a duplicate of bug 1233033 ***

@@ -1,0 +1,35 @@
+From ef03ca52b503eea024cfb1b3c8f9a98d311ed4ba Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 20 Jun 2015 00:44:06 +0000
+Subject: [PATCH] Update to 2.03 (#1233997)
+
+---
+ perl-HTTP-BrowserDetect.spec | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/perl-HTTP-BrowserDetect.spec b/perl-HTTP-BrowserDetect.spec
+index 6bd8685..8996a28 100644
+--- a/perl-HTTP-BrowserDetect.spec
++++ b/perl-HTTP-BrowserDetect.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-HTTP-BrowserDetect
+ Summary:        Determine the Web browser, version, and platform from an HTTP user agent string
+-Version:        2.02
++Version:        2.03
+ Release:        1%{?dist}
+ License:        GPL+ or Artistic
+ Group:          Development/Libraries
+@@ -55,6 +55,9 @@ perl Build.PL installdirs=vendor
+ %{_mandir}/man3/HTTP::BrowserDetect.3pm*
+ 
+ %changelog
++* Sat Jun 20 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.03-1
++- Update to 2.03 (#1233997)
++
+ * Thu Jun 18 2015 Petr Šabata <contyk@redhat.com> - 2.02-1
+ - 2.02 bump
+ 
+-- 
+1.8.3.1
+
+

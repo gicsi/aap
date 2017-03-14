@@ -1,0 +1,28 @@
+Description of problem:
+Without me changing anything, a few days ago, authentication requests started to pop up when I'm logged in. After checking journal I found out, that abrt-applet apparently does not have access to some directory ABRT created. I think it is unexpected to have to authenticate myself in random situations, because ABRT applet is not able to do something.
+
+Version-Release number of selected component (if applicable):
+abrt-2.5.1-3.fc22.2.x86_64
+
+How reproducible:
+multiple times a day
+
+Steps to Reproduce:
+not sure, but I can provide further information
+
+Actual results:
+authentication requests from polkit in random situations, due to abrt-applet
+
+Expected results:
+NO authentication requests from polkit what so ever, due to abrt-applet
+
+Additional info:
+This is pretty annoying. Although I like ABRT and I'm using it a lot, I'm considering turning it off / remove it.
+
+Output from log:
+jún 26 09:43:05 unused-4-137.brq.redhat.com polkitd[1407]: Operator of unix-session:1 FAILED to authenticate to gain authorization for action org.freedesktop.problems.getall for system-bus-name::1.78 [abrt-applet] (owned by unix-user:thozza)
+jún 26 09:43:05 unused-4-137.brq.redhat.com gnome-session[3108]: abrt-applet: Can't chown '/var/tmp/abrt/oops-2015-06-26-09:42:56-1417-0': GDBus.Error:org.freedesktop.problems.AuthFailure: Not Authorized
+jún 26 09:43:05 unused-4-137.brq.redhat.com gnome-session[3108]: abrt-applet: '/var/tmp/abrt/oops-2015-06-26-09:42:56-1417-0' is not writable
+jún 26 09:43:05 unused-4-137.brq.redhat.com gnome-session[3108]: abrt-applet: Can't open directory for writing '/var/tmp/abrt/oops-2015-06-26-09:42:56-1417-0'
+Thank you for taking time to report this issue.
+Your problem is caused by the fact that you are using a combination of abrt 2.5.1 and libreport 2.6.0 which don't work well together due to security related changes. Please update abrt* packages to version 2.6.0.

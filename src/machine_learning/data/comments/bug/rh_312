@@ -1,0 +1,84 @@
+Description of problem:
+There are unmatched entries in the output for Kernel Audit, clamav, Dovecot, LVM, Named, Connections, Smartd, and SSHD.
+
+Version-Release number of selected component (if applicable):
+logwatch-7.4.1-2.20140924svn242.fc22.noarch
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. install logwatch
+2. scan email from logwatch
+
+Actual results:
+Here are examples of the Unmatched Entries:
+
+**Unmatched Entries** (Only first 100 out of 9495 are printed)
+  <audit-1130> pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=sa-update comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+  <audit-1101> pid=7873 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg='op=PAM:accounting 
+
+ **Unmatched Entries**
+ Limits: MaxEmbeddedPE limit set to 10485760 bytes.
+ Limits: MaxHTMLNormalize limit set to 10485760 bytes.
+ Limits: MaxHTMLNoTags limit set to 2097152 bytes.
+ Limits: MaxScriptNormalize limit set to 5242880 bytes.
+ Limits: MaxZipTypeRcg limit set to 1048576 bytes.
+ Limits: MaxPartitions limit set to 50.
+
+**Unmatched Entries**
+    dovecot: master: Dovecot v2.2.18 starting up for imap, pop3, lmtp (core dumps disabled): 1 Time(s)
+ 
+**Unmatched Entries**
+    1 logical volume(s) in volume group "joe-data" now active: 1 Time(s)
+    1 logical volume(s) in volume group "joe-data" unmonitored: 1 Time(s)
+    2 logical volume(s) in volume group "joe" monitored: 1 Time(s)
+    2 logical volume(s) in volume group "joe" now active: 1 Time(s)
+    2 logical volume(s) in volume group "joe" unmonitored: 1 Time(s)
+ 
+**Unmatched Entries**
+    REFUSED unexpected RCODE resolving '11.222.148.54.in-addr.arpa/PTR/IN': 204.13.251.31#53: 2 Time(s)
+    REFUSED unexpected RCODE resolving '11.222.148.54.in-addr.arpa/PTR/IN': 208.78.71.31#53: 2 Time(s)
+    REFUSED unexpected RCODE resolving '28.154.149.54.in-addr.arpa/PTR/IN': 204.13.251.31#53: 2 Time(s)
+    REFUSED unexpected RCODE resolving '28.154.149.54.in-addr.arpa/PTR/IN': 208.78.71.31#53: 2 Time(s)
+    REFUSED unexpected RCODE resolving '97.229.148.54.in-addr.arpa/PTR/IN': 204.13.251.31#53: 5 Time(s)
+    REFUSED unexpected RCODE resolving '97.229.148.54.in-addr.arpa/PTR/IN': 208.78.71.31#53: 7 Time(s)
+    REFUSED unexpected RCODE resolving 'dev.open-plc.org/A/IN': 78.108.102.201#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'ns2.open-plc.org/A/IN': 78.108.102.201#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'open-plc.org/A/IN': 78.108.102.201#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'open-plc.org/NS/IN': 78.108.102.201#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'pixel.ad/DS/IN': 204.152.184.64#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/A/IN': 184.171.240.112#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/A/IN': 184.171.243.14#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/A/IN': 184.171.247.194#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/A/IN': 198.136.63.7#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/NS/IN': 184.171.240.112#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/NS/IN': 184.171.243.14#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/NS/IN': 184.171.247.194#53: 1 Time(s)
+    REFUSED unexpected RCODE resolving 'vanillamist.com/NS/IN': 198.136.63.7#53: 1 Time(s)
+    SERVFAIL unexpected RCODE resolving 'weatherunlocked.com/NS/IN': 213.171.192.250#53: 2 Time(s)
+    SERVFAIL unexpected RCODE resolving 'weatherunlocked.com/NS/IN': 213.171.192.254#53: 2 Time(s)
+    SERVFAIL unexpected RCODE resolving 'weatherunlocked.com/NS/IN': 213.171.193.250#53: 2 Time(s)
+    dispatch 0x7f6184095af0: open_socket(0.0.0.0#2605) -> permission denied: continuing: 1 Time(s)
+    dispatch 0x7f6184096d50: open_socket(0.0.0.0#1935) -> permission denied: continuing: 1 Time(s)
+    dispatch 0x7f6184097990: open_socket(0.0.0.0#1935) -> permission denied: continuing: 1 Time(s)
+
+ **Unmatched Entries**
+    polkitd: Acquired the name org.freedesktop.PolicyKit1 on the system bus: 2 Time(s)
+    polkitd: Finished loading, compiling and executing 5 rules: 2 Time(s)
+    polkitd: Loading rules from directory /etc/polkit-1/rules.d: 2 Time(s)
+    polkitd: Loading rules from directory /usr/share/polkit-1/rules.d: 2 Time(s)
+    polkitd: Registered Authentication Agent for unix-process:28717:912122 (system bus name :1.238 [/usr/bin/pkttyagent --notify-fd 5 --fallback], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.UTF-8): 1 Time(s)
+    polkitd: Registered Authentication Agent for unix-process:28758:912963 (system bus name :1.239 [/usr/bin/pkttyagent 
+
+
+ **Unmatched Entries**
+ error: mm_request_receive: socket closed : 5 time(s)
+ Disconnected from 192.168.1.8 : 16 time(s)
+ Disconnected from 192.168.1.253 : 1 time(s)
+ Exiting on signal 15 : 1 time(s)
+
+
+Expected results:
+The Unmatched entries should be handled.
+*** This bug has been marked as a duplicate of bug 1231364 ***

@@ -1,0 +1,8 @@
+In server mode when in full-duplex mode (the default)
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=aucat&sektion=1">aucat(1)</a>
+will send each synchronization message twice, causing client applications
+to think that buffer underruns are occuring.  Depending on the
+application, this may cause the sound to stutter.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.5/common/004_aucat.patch">
+A source code patch exists which remedies this problem.</a>

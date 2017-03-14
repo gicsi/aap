@@ -1,0 +1,38 @@
+From 09788d861142126c44965fed5fce41fd7df89b22 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 01:17:15 +0000
+Subject: [PATCH] Update to 2.7.2 (#1235093)
+
+---
+ pytest.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/pytest.spec b/pytest.spec
+index c55ae18..c5f9f7f 100644
+--- a/pytest.spec
++++ b/pytest.spec
+@@ -10,8 +10,8 @@
+ %global pylib_version 1.4.26
+ 
+ Name:           pytest
+-Version:        2.7.1
+-Release:        2%{?dist}
++Version:        2.7.2
++Release:        1%{?dist}
+ Summary:        Simple powerful testing with Python
+ 
+ Group:          Development/Languages
+@@ -185,6 +185,9 @@ popd
+ 
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.7.2-1
++- Update to 2.7.2 (#1235093)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.7.1-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

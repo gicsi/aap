@@ -1,0 +1,16 @@
+Created attachment 1043119
+New Domain window
+
+Description of problem:
+Missing column for export path in "New Domain", see the attached screenshot
+
+Version-Release number of selected component (if applicable):
+oVirt Engine Version: 3.6.0-0.0.master.20150624173726.git0568f1b.el6
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. clean engine with host
+2. try add a storage domain
+*** This bug has been marked as a duplicate of bug 1235730 ***

@@ -1,0 +1,30 @@
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Created attachment 1041931
+patch to bump lxdm to latest version
+
+Consolekit has been retire so lxdm needs to get rid of this dependency.
+Looks good in testing here. 
+
+Built in rawhide: 
+
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10184274

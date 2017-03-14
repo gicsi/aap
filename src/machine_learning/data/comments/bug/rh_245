@@ -1,0 +1,81 @@
+Created attachment 1045639
+Install errors
+
+Description of problem:
+dnf update will not run due to the conflict, I have needed to exclude nss and pam to run it. I am not sure this is appropriate for a bug, but someone in #fedora-qa told me to file it here. I do not know how to diagnose this issue. I am also unsure what component should be tagged
+
+Version-Release number of selected component (if applicable):
+See attached file
+
+How reproducible:
+Unknown
+
+
+Actual results:
+Example:
+file /usr/share/locale/tr/LC_MESSAGES/Linux-PAM.mo from install of pam-1.2.1-1.fc23.i686 conflicts with file from package pam-1.2.0-1.fc23.x86_64
+
+
+Expected results:
+Update as normal
+
+
+Additional info:
+I believe that in a prior update, a cleanup phase failed for the package initial-setup, possibly preventing other packages from cleaning up.
+Steps to reproduce:
+
+1. install pam-1.2.0-2.fc23.x86_64 or package pam-1.2.0-1.fc23.x86_64
+2. install pam-1.2.1-1.fc23.i686
+
+
+DNF (or libsolv if you want) cannot discover the file conflicts beforehand. These conflicts need to be specified explicitly. Thus this is a bug in the pam package. It's maintainers should take a look in Fedora guidelines to resolve this issue. It depends on what introduced these conflicts. I believe that the use case is well described there.
+
+BTW, as a workaround, update your pam.x86_64.
+This is NOT a packaging bug in PAM. There is no conflict between x86_64 and i686 pam packages if the package is the same NVR. DNF must update simultaneously x86_64 and i686 packages if not explicitly asked to update only specified package+arch.
+Back to dnf.
+Since Tomas is not going to put an explicit conflict into the packages and DNF has no chance to discover the conflict beforehand, there is nothing DNF can do in this case. I'm afraid I need to dive into Fedora guidelines to find the truth.
+What was the command that gave you the conflict? Was it a simple 'dnf update' or something more complex?
+And if it was "dnf update", please follow these instructions: https://github.com/rpm-software-management/dnf/wiki/Bug-Reporting#dependency-resolution-problem since I strongly believe that DNF had some reason not to upgrade pam in that case.
+Created attachment 1045831
+Extended command sequence and results
+
+It was indeed a simple dnf update, attaching debugdata next
+Created attachment 1045833
+debugdata (in tar.xz)
+Sounds like a multilib issue with the repo, what is the output of "rpm -q nss pam"?
+Created attachment 1045921
+rpm -q
+
+This does look suspicious. If I understand this correctly, these are all currently installed. I don't know how this came to pass.
+Hmm, that is really bad. It might be manifestation of some dnf bug from a previous update but without a reproducer it would be really hard to tell.
+
+If you do 'rpm -e --justdb nss-3.19.2-3.fc23.x86_64 pam-1.2.1-1.fc23.x86_64' and then dnf update, does it work?
+Or what "package-cleanup --problems" shows? This really sounds as a problem that happened earlier and the current pam update only shows the symptoms.
+Created attachment 1049670
+package-cleanup
+
+I have run package cleanup first, after posting this, I will proceed with rpm -e
+Created attachment 1049671
+rpm -e --justdb
+I am still unable to proceed with the update
+What does "rpm -q nss-sysinit nss-tools" show?
+BTW, it's really a non-sense to put explicit conflicts into multilib packages. Sorry, Tomas.
+[root@intern ~]# rpm -q nss-sysinit nss-tools
+nss-sysinit-3.19.2-2.fc23.x86_64
+nss-sysinit-3.19.2-3.fc23.x86_64
+nss-tools-3.19.2-3.fc23.x86_64
+
+If it will make this process easier, I may be able to tar and compress the contents of the root file system (so excluding home). Just so long as it is within a couple hundred megabytes (which I understand may be difficult). I'm not sure what I should be removing for my own privacy though (other than /etc/shadow), so if anyone feels this might be helpful, I would appreciate some instructions.
+
+I would also like to reiterate something I said in my original bug report, because I'm not sure if people noticed it before, and it might have added critical information.
+It essentially said that I had to cancel a dnf update in the midst of the cleanup phase.
+I somehow overlooked that and yes, update interrupted when the package install/cleanup is in progress can cause such inconsistency. You basically need to find all duplicate package versions from the interrupted update and remove them with the rpm -e --justdb. The dnf and any other automated update tool such as yum cannot cope with such broken state.
+
+So it is pretty clear that this is NOTABUG.
+ok I have removed the duplicates with rpm -e --justdb, the dependency chain didn't seem to extend any further, and the update has now completed. My apologies for what seems to have been a wild goose chase. Thank you for the directions on how to fix this.
+Created attachment 1049799
+duplicates
+
+BTW, it seems to me that there is a lot of other duplicates. See this attachment. You can list them using "dnf repoquery --duplicated" (or "package-cleanup --dupes").
+
+I'd also recommend you to "dnf reinstall" the packages that were duplicated once you finish the cleanup.

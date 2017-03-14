@@ -1,0 +1,51 @@
+Description of problem:
+SELinux is preventing /usr/bin/touch from 'read' accesses on the lnk_file /var/log/mysqld.log.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If aby touch powinno mieć domyślnie read dostęp do mysqld.log lnk_file.
+Then proszę to zgłosić jako błąd.
+Można utworzyć lokalny moduł polityki, aby umożliwić ten dostęp.
+Do
+można tymczasowo zezwolić na ten dostęp wykonując polecenia:
+# grep touch /var/log/audit/audit.log | audit2allow -M mojapolityka
+# semodule -i mojapolityka.pp
+
+Additional Information:
+Source Context                system_u:system_r:mysqld_safe_t:s0
+Target Context                system_u:object_r:var_log_t:s0
+Target Objects                /var/log/mysqld.log [ lnk_file ]
+Source                        touch
+Source Path                   /usr/bin/touch
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           bash-4.3.39-1.fc21.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-105.13.fc21.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-202.fc21.x86_64 #1 SMP Wed
+                              May 27 22:28:42 UTC 2015 x86_64 x86_64
+Alert Count                   75
+First Seen                    2015-06-18 23:19:28 CEST
+Last Seen                     2015-06-19 19:52:26 CEST
+Local ID                      0efa8b56-9296-43d7-87d9-416489a32118
+
+Raw Audit Messages
+type=AVC msg=audit(1434736346.538:478): avc:  denied  { read } for  pid=7066 comm="mysqld_safe" name="mysqld.log" dev="dm-1" ino=1441934 scontext=system_u:system_r:mysqld_safe_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=lnk_file permissive=0
+
+
+type=SYSCALL msg=audit(1434736346.538:478): arch=x86_64 syscall=open success=no exit=EACCES a0=14972a0 a1=401 a2=1b6 a3=20 items=0 ppid=1 pid=7066 auid=4294967295 uid=27 gid=27 euid=27 suid=27 fsuid=27 egid=27 sgid=27 fsgid=27 tty=(none) ses=4294967295 comm=mysqld_safe exe=/usr/bin/bash subj=system_u:system_r:mysqld_safe_t:s0 key=(null)
+
+Hash: touch,mysqld_safe_t,var_log_t,lnk_file,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-105.13.fc21.noarch
+
+Additional info:
+reporter:       libreport-2.3.0
+hashmarkername: setroubleshoot
+kernel:         4.0.4-202.fc21.x86_64
+type:           libreport

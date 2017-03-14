@@ -1,0 +1,5 @@
+Insufficient protection of the trunk interface queues may cause
+LACP trunks to fail under load.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.6/common/012_trunklacp.patch">
+A source code patch exists which remedies this problem.</a>

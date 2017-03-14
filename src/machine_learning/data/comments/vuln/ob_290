@@ -1,0 +1,6 @@
+sshd(8) would execute ~/.ssh/rc even when a sshd_config(5) <em>ForceCommand</em>
+directive was in effect, allowing users with write access to this file to
+execute arbitrary commands. This behaviour was documented, but was an unsafe
+default and an extra hassle for administrators.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.1/common/015_openssh.patch">
+A source code patch exists which remedies this problem.</a>

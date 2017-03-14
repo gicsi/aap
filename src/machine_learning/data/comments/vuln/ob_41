@@ -1,0 +1,8 @@
+A misuse of ipf(8)
+<i>keep-state</i> rules can result in firewall rules being
+bypassed.
+This patch also includes fixes for an unaligned timestamp issue,
+and reliability fixes for ipmon and the in-kernel ftp proxy.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/023_ipf.patch">
+A source code patch exists which remedies this problem.</a>
+It updates ipf to version 3.3.16.

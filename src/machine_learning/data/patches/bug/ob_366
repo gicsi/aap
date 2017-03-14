@@ -1,0 +1,2650 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhgFKMGabOlUXoxAuey9xQyKcm0OULFMOSkyd3ReQHQjwA1psSBbqu1ex9j28D/nyEh6U8uj8f2oFZtXoHA7njAg=
+
+OpenBSD 5.6 errata 6, Nov 17, 2014:  Fix for relayd crash
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 006_relayd.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install relayd:
+
+    cd /usr/src/usr.sbin/relayd
+    make obj
+    make
+    make install
+
+Index: usr.sbin/relayd/relay_http.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/relayd/relay_http.c,v
+retrieving revision 1.32
+diff -u -p -r1.32 relay_http.c
+--- usr.sbin/relayd/relay_http.c	17 Jul 2014 11:35:26 -0000	1.32
++++ usr.sbin/relayd/relay_http.c	4 Nov 2014 22:24:48 -0000
+@@ -291,18 +291,20 @@ relay_read_http(struct bufferevent *bev,
+ 				goto fail;
+ 			}
+ 			desc->http_version = strchr(desc->http_path, ' ');
+-			if (desc->http_version != NULL)
+-				*desc->http_version++ = '\0';
++			if (desc->http_version == NULL) {
++				free(line);
++				goto fail;
++			}
++			*desc->http_version++ = '\0';
+ 			desc->http_query = strchr(desc->http_path, '?');
+ 			if (desc->http_query != NULL)
+ 				*desc->http_query++ = '\0';
+ 
+ 			/*
+ 			 * Have to allocate the strings because they could
+-			 * be changed independetly by the filters later.
++			 * be changed independently by the filters later.
+ 			 */
+-			if (desc->http_version != NULL &&
+-			    (desc->http_version =
++			if ((desc->http_version =
+ 			    strdup(desc->http_version)) == NULL) {
+ 				free(line);
+ 				goto fail;
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhiT16rKFHRYbuSpK1vdiNmGBgywhcRvG8QJELUKpjap89kh8i2BHuX2w2GtE4hnAukUcSOUaHHAg743QKHqdGgc=
+
+OpenBSD 5.6 errata 7, Nov 17, 2014:  A PF rule using an IPv4 address
+followed by an IPv6 address and then a dynamic address, e.g. "pass
+from {192.0.2.1 2001:db8::1} to (pppoe0)", will have an incorrect /32
+mask applied to the dynamic address.
+
+This is the 2nd version of this patch.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 007_pfctl.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install pfctl:
+    cd /usr/src/sbin/pfctl
+    make obj
+    make
+    make install
+
+Index: sbin/pfctl/parse.y
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/parse.y,v
+retrieving revision 1.636
+retrieving revision 1.636.4.1
+diff -u -p -r1.636 -r1.636.4.1
+--- sbin/pfctl/parse.y	2 Jul 2014 13:03:41 -0000	1.636
++++ sbin/pfctl/parse.y	29 Oct 2014 15:29:33 -0000	1.636.4.1
+@@ -4516,7 +4516,7 @@ expand_rule(struct pf_rule *r, int keepr
+ 	char			 tagname[PF_TAG_NAME_SIZE];
+ 	char			 match_tagname[PF_TAG_NAME_SIZE];
+ 	u_int8_t		 flags, flagset, keep_state;
+-	struct node_host	*srch, *dsth;
++	struct node_host	*srch, *dsth, *osrch, *odsth;
+ 	struct redirspec	 binat;
+ 	struct pf_rule		 rb;
+ 	int			 dir = r->direction;
+@@ -4607,6 +4607,18 @@ expand_rule(struct pf_rule *r, int keepr
+ 		    r->af, src_host, src_port, dst_host, dst_port,
+ 		    proto->proto);
+ 
++		osrch = odsth = NULL;
++		if (src_host->addr.type == PF_ADDR_DYNIFTL) {
++			osrch = src_host;
++			if ((src_host = gen_dynnode(src_host, r->af)) == NULL)
++				err(1, "expand_rule: calloc");
++		}
++		if (dst_host->addr.type == PF_ADDR_DYNIFTL) {
++			odsth = dst_host;
++			if ((dst_host = gen_dynnode(dst_host, r->af)) == NULL)
++				err(1, "expand_rule: calloc");
++		}
++
+ 		error += check_netmask(src_host, r->af);
+ 		error += check_netmask(dst_host, r->af);
+ 
+@@ -4757,6 +4769,14 @@ expand_rule(struct pf_rule *r, int keepr
+ 			    uid, gid, rcv, icmp_type, anchor_call);
+ 		}
+ 
++		if (osrch && src_host->addr.type == PF_ADDR_DYNIFTL) {
++			free(src_host);
++			src_host = osrch;
++		}
++		if (odsth && dst_host->addr.type == PF_ADDR_DYNIFTL) {
++			free(dst_host);
++			dst_host = odsth;
++		}
+ 	))))))))));
+ 
+ 	if (!keeprule) {
+Index: sbin/pfctl/pfctl_parser.c
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/pfctl_parser.c,v
+retrieving revision 1.298
+retrieving revision 1.298.6.1
+diff -u -p -r1.298 -r1.298.6.1
+--- sbin/pfctl/pfctl_parser.c	20 Jan 2014 02:59:13 -0000	1.298
++++ sbin/pfctl/pfctl_parser.c	29 Oct 2014 15:29:34 -0000	1.298.6.1
+@@ -1244,16 +1244,12 @@ int
+ check_netmask(struct node_host *h, sa_family_t af)
+ {
+ 	struct node_host	*n = NULL;
+-	struct pf_addr	*m;
++	struct pf_addr		*m;
+ 
+ 	for (n = h; n != NULL; n = n->next) {
+ 		if (h->addr.type == PF_ADDR_TABLE)
+ 			continue;
+ 		m = &h->addr.v.a.mask;
+-		/* fix up netmask for dynaddr */
+-		if (af == AF_INET && h->addr.type == PF_ADDR_DYNIFTL &&
+-		    unmask(m, AF_INET6) > 32)
+-			set_ipmask(n, 32);
+ 		/* netmasks > 32 bit are invalid on v4 */
+ 		if (af == AF_INET &&
+ 		    (m->addr32[1] || m->addr32[2] || m->addr32[3])) {
+@@ -1263,6 +1259,30 @@ check_netmask(struct node_host *h, sa_fa
+ 		}
+ 	}
+ 	return (0);
++}
++
++struct node_host *
++gen_dynnode(struct node_host *h, sa_family_t af)
++{
++	struct node_host	*n;
++	struct pf_addr		*m;
++
++	if (h->addr.type != PF_ADDR_DYNIFTL)
++		return (NULL);
++
++	if ((n = calloc(1, sizeof(*n))) == NULL)
++		return (NULL);
++	bcopy(h, n, sizeof(*n));
++	n->ifname = NULL;
++	n->next = NULL;
++	n->tail = NULL;
++
++	/* fix up netmask */
++	m = &n->addr.v.a.mask;
++	if (af == AF_INET && unmask(m, AF_INET6) > 32)
++		set_ipmask(n, 32);
++
++	return (n);
+ }
+ 
+ /* interface lookup routines */
+Index: sbin/pfctl/pfctl_parser.h
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/pfctl_parser.h,v
+retrieving revision 1.102
+retrieving revision 1.102.4.1
+diff -u -p -r1.102 -r1.102.4.1
+--- sbin/pfctl/pfctl_parser.h	19 Apr 2014 14:22:32 -0000	1.102
++++ sbin/pfctl/pfctl_parser.h	29 Oct 2014 15:29:34 -0000	1.102.4.1
+@@ -265,6 +265,7 @@ extern const struct pf_timeout pf_timeou
+ void			 set_ipmask(struct node_host *, u_int8_t);
+ int			 check_netmask(struct node_host *, sa_family_t);
+ int			 unmask(struct pf_addr *, sa_family_t);
++struct node_host	*gen_dynnode(struct node_host *, sa_family_t);
+ void			 ifa_load(void);
+ unsigned int		 ifa_nametoindex(const char *);
+ char			*ifa_indextoname(unsigned int, char *);
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhl31oIXbJYtUWXNHHNzHGhJ+v2XZAAlwH5TwYDkTp2NHqjhnrJayp37glapQejDsm/LDGm1M5bnpkmHh7FGNGQ4=
+
+OpenBSD 5.6 errata 8, Nov 17, 2014:  Querying an invalid hostname with
+gethostbyname(3) could cause a NULL deref.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 008_asr.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install libc
+
+    cd /usr/src/lib/libc
+    make obj
+    make depend
+    make
+    make install
+
+Also recompile any statically-linked binaries:
+
+    cd /usr/src/bin
+    make obj
+    make depend
+    make
+    make install
+
+    cd /usr/src/sbin
+    make obj
+    make depend
+    make
+    make install
+
+Index: lib/libc/asr/gethostnamadr_async.c
+===================================================================
+RCS file: /cvs/src/lib/libc/asr/gethostnamadr_async.c,v
+retrieving revision 1.30
+diff -u -p -r1.30 gethostnamadr_async.c
+--- lib/libc/asr/gethostnamadr_async.c	23 Jul 2014 21:26:25 -0000	1.30
++++ lib/libc/asr/gethostnamadr_async.c	6 Nov 2014 13:00:40 -0000
+@@ -357,13 +357,12 @@ gethostnamadr_async_run(struct asr_query
+ 		}
+ 
+ 		/*
+-		 * No address found in the dns packet. The blocking version
+-		 * reports this as an error.
++		 * No valid hostname or address found in the dns packet.
++		 * Ignore it.
+ 		 */
+ 		if ((as->as_type == ASR_GETHOSTBYNAME &&
+ 		     h->h.h_addr_list[0] == NULL) ||
+-		    (as->as_type == ASR_GETHOSTBYADDR &&
+-		     h->h.h_name == NULL)) {
++		    h->h.h_name == NULL) {
+ 			free(h);
+ 			async_set_state(as, ASR_STATE_NEXT_DB);
+ 			break;
+Index: lib/libc/asr/getnetnamadr_async.c
+===================================================================
+RCS file: /cvs/src/lib/libc/asr/getnetnamadr_async.c,v
+retrieving revision 1.16
+diff -u -p -r1.16 getnetnamadr_async.c
+--- lib/libc/asr/getnetnamadr_async.c	23 Jul 2014 21:26:25 -0000	1.16
++++ lib/libc/asr/getnetnamadr_async.c	6 Nov 2014 13:00:40 -0000
+@@ -239,11 +239,11 @@ getnetnamadr_async_run(struct asr_query 
+ 			n->n.n_net = as->as.netnamadr.addr;
+ 
+ 		/*
+-		 * No address found in the dns packet. The blocking version
+-		 * reports this as an error.
++		 * No valid hostname or address found in the dns packet.
++		 * Ignore it.
+ 		 */
+-		if (as->as_type == ASR_GETNETBYNAME && n->n.n_net == 0) {
+-			 /* XXX wrong */
++		if ((as->as_type == ASR_GETNETBYNAME && n->n.n_net == 0) ||
++		    n->n.n_name == NULL) {
+ 			free(n);
+ 			async_set_state(as, ASR_STATE_NEXT_DB);
+ 			break;
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhn3Gnfk2/2x+xII6do92zreKp/t5zOwfkVgsQAI4ZCPkWAazbbnWNV7Ptkle876f/kb6C2KuvnTqvwUItsyvogA=
+
+OpenBSD 5.6 errata 9, Nov 18, 2014:  httpd was developed very rapidly
+in the weeks before 5.6 release, and it has a few flaws.  It would be
+nice to get these flaws fully remediated before the next release, and
+that requires the community to want to use it.  Therefore here is a
+"jumbo" patch that brings in the most important fixes.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 009_httpd.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install httpd:
+
+    cd /usr/src/usr.sbin/httpd
+    make obj
+    make
+    make install
+
+Index: usr.sbin/httpd/config.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/config.c,v
+retrieving revision 1.21
+diff -u -p -r1.21 config.c
+--- usr.sbin/httpd/config.c	6 Aug 2014 18:21:14 -0000	1.21
++++ usr.sbin/httpd/config.c	18 Nov 2014 15:02:54 -0000
+@@ -223,7 +223,7 @@ config_getserver_config(struct httpd *en
+ #ifdef DEBUG
+ 	struct privsep		*ps = env->sc_ps;
+ #endif
+-	struct server_config	*srv_conf;
++	struct server_config	*srv_conf, *parent;
+ 	u_int8_t		*p = imsg->data;
+ 	u_int			 f;
+ 
+@@ -233,18 +233,28 @@ config_getserver_config(struct httpd *en
+ 	IMSG_SIZE_CHECK(imsg, srv_conf);
+ 	memcpy(srv_conf, p, sizeof(*srv_conf));
+ 
++	/* Reset these variables to avoid free'ing invalid pointers */
++	serverconfig_reset(srv_conf);
++
++	TAILQ_FOREACH(parent, &srv->srv_hosts, entry) {
++		if (strcmp(parent->name, srv_conf->name) == 0)
++			break;
++	}
++	if (parent == NULL)
++		parent = &srv->srv_conf;
++
+ 	if (srv_conf->flags & SRVFLAG_LOCATION) {
+ 		/* Inherit configuration from the parent */
+ 		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= srv->srv_conf.flags & f;
+-			(void)strlcpy(srv_conf->index, srv->srv_conf.index,
++			srv_conf->flags |= parent->flags & f;
++			(void)strlcpy(srv_conf->index, parent->index,
+ 			    sizeof(srv_conf->index));
+ 		}
+ 
+ 		f = SRVFLAG_AUTO_INDEX|SRVFLAG_NO_AUTO_INDEX;
+ 		if ((srv_conf->flags & f) == 0)
+-			srv_conf->flags |= srv->srv_conf.flags & f;
++			srv_conf->flags |= parent->flags & f;
+ 
+ 		f = SRVFLAG_SOCKET|SRVFLAG_FCGI;
+ 		if ((srv_conf->flags & f) == SRVFLAG_FCGI) {
+@@ -255,48 +265,48 @@ config_getserver_config(struct httpd *en
+ 
+ 		f = SRVFLAG_ROOT;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= srv->srv_conf.flags & f;
+-			(void)strlcpy(srv_conf->root, srv->srv_conf.root,
++			srv_conf->flags |= parent->flags & f;
++			(void)strlcpy(srv_conf->root, parent->root,
+ 			    sizeof(srv_conf->root));
+ 		}
+ 
+ 		f = SRVFLAG_FCGI|SRVFLAG_NO_FCGI;
+ 		if ((srv_conf->flags & f) == 0)
+-			srv_conf->flags |= srv->srv_conf.flags & f;
++			srv_conf->flags |= parent->flags & f;
+ 
+ 		f = SRVFLAG_LOG|SRVFLAG_NO_LOG;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= srv->srv_conf.flags & f;
+-			srv_conf->logformat = srv->srv_conf.logformat;
++			srv_conf->flags |= parent->flags & f;
++			srv_conf->logformat = parent->logformat;
+ 		}
+ 
+ 		f = SRVFLAG_SYSLOG|SRVFLAG_NO_SYSLOG;
+ 		if ((srv_conf->flags & f) == 0)
+-			srv_conf->flags |= srv->srv_conf.flags & f;
++			srv_conf->flags |= parent->flags & f;
+ 
+ 		f = SRVFLAG_SSL;
+-		srv_conf->flags |= srv->srv_conf.flags & f;
++		srv_conf->flags |= parent->flags & f;
+ 
+ 		f = SRVFLAG_ACCESS_LOG;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= srv->srv_conf.flags & f;
++			srv_conf->flags |= parent->flags & f;
+ 			(void)strlcpy(srv_conf->accesslog,
+-			    srv->srv_conf.accesslog,
++			    parent->accesslog,
+ 			    sizeof(srv_conf->accesslog));
+ 		}
+ 
+ 		f = SRVFLAG_ERROR_LOG;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= srv->srv_conf.flags & f;
++			srv_conf->flags |= parent->flags & f;
+ 			(void)strlcpy(srv_conf->errorlog,
+-			    srv->srv_conf.errorlog,
++			    parent->errorlog,
+ 			    sizeof(srv_conf->errorlog));
+ 		}
+ 
+-		memcpy(&srv_conf->timeout, &srv->srv_conf.timeout,
++		memcpy(&srv_conf->timeout, &parent->timeout,
+ 		    sizeof(srv_conf->timeout));
+-		srv_conf->maxrequests = srv->srv_conf.maxrequests;
+-		srv_conf->maxrequestbody = srv->srv_conf.maxrequestbody;
++		srv_conf->maxrequests = parent->maxrequests;
++		srv_conf->maxrequestbody = parent->maxrequestbody;
+ 
+ 		DPRINTF("%s: %s %d location \"%s\", "
+ 		    "parent \"%s\", flags: %s",
+@@ -330,6 +340,9 @@ config_getserver(struct httpd *env, stru
+ 	IMSG_SIZE_CHECK(imsg, &srv_conf);
+ 	memcpy(&srv_conf, p, sizeof(srv_conf));
+ 	s = sizeof(srv_conf);
++
++	/* Reset these variables to avoid free'ing invalid pointers */
++	serverconfig_reset(&srv_conf);
+ 
+ 	if ((u_int)(IMSG_DATA_SIZE(imsg) - s) <
+ 	    (srv_conf.ssl_cert_len + srv_conf.ssl_key_len)) {
+Index: usr.sbin/httpd/http.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/http.h,v
+retrieving revision 1.5
+diff -u -p -r1.5 http.h
+--- usr.sbin/httpd/http.h	3 Aug 2014 21:33:27 -0000	1.5
++++ usr.sbin/httpd/http.h	18 Nov 2014 15:02:54 -0000
+@@ -44,6 +44,32 @@ enum httpmethod {
+ 	HTTP_METHOD_LOCK,
+ 	HTTP_METHOD_UNLOCK,
+ 
++	/* WebDAV Versioning Extension, RFC 3253 */
++	HTTP_METHOD_VERSION_CONTROL,
++	HTTP_METHOD_REPORT,
++	HTTP_METHOD_CHECKOUT,
++	HTTP_METHOD_CHECKIN,
++	HTTP_METHOD_UNCHECKOUT,
++	HTTP_METHOD_MKWORKSPACE,
++	HTTP_METHOD_UPDATE,
++	HTTP_METHOD_LABEL,
++	HTTP_METHOD_MERGE,
++	HTTP_METHOD_BASELINE_CONTROL,
++	HTTP_METHOD_MKACTIVITY,
++
++	/* WebDAV Ordered Collections, RFC 3648 */
++	HTTP_METHOD_ORDERPATCH,
++
++	/* WebDAV Access Control, RFC 3744 */
++	HTTP_METHOD_ACL,
++
++	/* WebDAV Redirect Reference Resources, RFC 4437 */
++	HTTP_METHOD_MKREDIRECTREF,
++	HTTP_METHOD_UPDATEREDIRECTREF,
++
++	/* WebDAV Search, RFC 5323 */
++	HTTP_METHOD_SEARCH,
++
+ 	/* PATCH, RFC 5789 */
+ 	HTTP_METHOD_PATCH,
+ 
+@@ -71,6 +97,22 @@ struct http_method {
+ 	{ HTTP_METHOD_MOVE,		"MOVE" },	\
+ 	{ HTTP_METHOD_LOCK,		"LOCK" },	\
+ 	{ HTTP_METHOD_UNLOCK,		"UNLOCK" },	\
++	{ HTTP_METHOD_VERSION_CONTROL,	"VERSION-CONTROL" }, \
++	{ HTTP_METHOD_REPORT,		"REPORT" },	\
++	{ HTTP_METHOD_CHECKOUT,		"CHECKOUT" },	\
++	{ HTTP_METHOD_CHECKIN,		"CHECKIN" },	\
++	{ HTTP_METHOD_UNCHECKOUT,	"UNCHECKOUT" },	\
++	{ HTTP_METHOD_MKWORKSPACE,	"MKWORKSPACE" }, \
++	{ HTTP_METHOD_UPDATE,		"UPDATE" },	\
++	{ HTTP_METHOD_LABEL,		"LABEL" },	\
++	{ HTTP_METHOD_MERGE,		"MERGE" },	\
++	{ HTTP_METHOD_BASELINE_CONTROL,	"BASELINE-CONTROL" }, \
++	{ HTTP_METHOD_MKACTIVITY,	"MKACTIVITY" },	\
++	{ HTTP_METHOD_ORDERPATCH,	"ORDERPATCH" },	\
++	{ HTTP_METHOD_ACL,		"ACL" },	\
++	{ HTTP_METHOD_MKREDIRECTREF,	"MKREDIRECTREF" }, \
++	{ HTTP_METHOD_UPDATEREDIRECTREF, "UPDATEREDIRECTREF" }, \
++	{ HTTP_METHOD_SEARCH,		"SEARCH" },	\
+ 	{ HTTP_METHOD_PATCH,		"PATCH" },	\
+ 	{ HTTP_METHOD_NONE,		NULL }		\
+ }
+@@ -155,6 +197,9 @@ struct http_descriptor {
+ 	enum httpmethod		 http_method;
+ 	int			 http_chunked;
+ 	char			*http_version;
++
++	/* Rewritten path remains NULL if not used */
++	char			*http_path_alias;
+ 
+ 	/* A tree of headers and attached lists for repeated headers. */
+ 	struct kv		*http_lastheader;
+Index: usr.sbin/httpd/httpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/httpd.c,v
+retrieving revision 1.17
+diff -u -p -r1.17 httpd.c
+--- usr.sbin/httpd/httpd.c	5 Aug 2014 15:36:59 -0000	1.17
++++ usr.sbin/httpd/httpd.c	18 Nov 2014 15:02:54 -0000
+@@ -289,10 +289,20 @@ parent_configure(struct httpd *env)
+ 			fatal("send media");
+ 	}
+ 
++	/* First send the servers... */
+ 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
++		if (srv->srv_conf.flags & SRVFLAG_LOCATION)
++			continue;
+ 		if (config_setserver(env, srv) == -1)
+ 			fatal("send server");
+ 	}
++	/* ...and now send the locations */
++	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
++		if ((srv->srv_conf.flags & SRVFLAG_LOCATION) == 0)
++			continue;
++		if (config_setserver(env, srv) == -1)
++			fatal("send location");
++	}
+ 
+ 	/* The servers need to reload their config. */
+ 	env->sc_reload = env->sc_prefork_server + 1;
+@@ -526,6 +536,46 @@ canonicalize_host(const char *host, char
+ }
+ 
+ const char *
++url_decode(char *url)
++{
++	char	*p, *q;
++	char	 hex[3];
++	u_long	 x;
++
++	hex[2] = '\0';
++	p = q = url;
++
++	while (*p != '\0') {
++		switch (*p) {
++		case '%':
++			/* Encoding character is followed by two hex chars */
++			if (!(isxdigit(p[1]) && isxdigit(p[2])))
++				return (NULL);
++
++			hex[0] = p[1];
++			hex[1] = p[2];
++
++			/*
++			 * We don't have to validate "hex" because it is
++			 * guaranteed to include two hex chars followed by nul.
++			 */
++			x = strtoul(hex, NULL, 16);		
++			*q = (char)x;
++			p += 2;
++			break;
++		default:
++			*q = *p;
++			break;
++		}
++		p++;
++		q++;
++	}
++	*q = '\0';
++
++	return(url);
++}
++
++const char *
+ canonicalize_path(const char *input, char *path, size_t len)
+ {
+ 	const char	*i;
+@@ -580,28 +630,33 @@ canonicalize_path(const char *input, cha
+ 	return (path);
+ }
+ 
+-ssize_t
+-path_info(char *name)
++size_t
++path_info(char *path)
+ {
+-	char		*p, *start, *end;
+-	char		 path[MAXPATHLEN];
++	char		*p, *start, *end, ch;
+ 	struct stat	 st;
+-
+-	if (strlcpy(path, name, sizeof(path)) >= sizeof(path))
+-		return (-1);
++	int		 ret;
+ 
+ 	start = path;
+ 	end = start + strlen(path);
+ 
+ 	for (p = end; p > start; p--) {
+-		if (*p != '/')
++		/* Scan every path component from the end and at each '/' */
++		if (p < end && *p != '/')
+ 			continue;
+-		if (stat(path, &st) == 0)
+-			break;
++
++		/* Temporarily cut the path component out */
++		ch = *p;
+ 		*p = '\0';
++		ret = stat(path, &st);
++		*p = ch;
++
++		/* Break if the initial path component was found */
++		if (ret == 0)
++			break;
+ 	}
+ 
+-	return (strlen(path));
++	return (p - start);
+ }
+ 
+ void
+@@ -623,6 +678,40 @@ socket_rlimit(int maxfd)
+ 		rl.rlim_cur = MAX(rl.rlim_max, (rlim_t)maxfd);
+ 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
+ 		fatal("socket_rlimit: failed to set resource limit");
++}
++
++char *
++evbuffer_getline(struct evbuffer *evb)
++{
++	u_int8_t	*ptr = EVBUFFER_DATA(evb);
++	size_t		 len = EVBUFFER_LENGTH(evb);
++	char		*str;
++	u_int		 i;
++
++	/* Safe version of evbuffer_readline() */
++	if ((str = get_string(ptr, len)) == NULL)
++		return (NULL);
++
++	for (i = 0; str[i] != '\0'; i++) {
++		if (str[i] == '\r' || str[i] == '\n')
++			break;
++	}
++
++	if (i == len) {
++		free(str);
++		return (NULL);
++	}
++
++	str[i] = '\0';
++
++	if ((i + 1) < len) {
++		if (ptr[i] == '\r' && ptr[i + 1] == '\n')
++			i++;
++	}
++
++	evbuffer_drain(evb, ++i);
++
++	return (str);
+ }
+ 
+ char *
+Index: usr.sbin/httpd/httpd.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/httpd.h,v
+retrieving revision 1.51
+diff -u -p -r1.51 httpd.h
+--- usr.sbin/httpd/httpd.h	6 Aug 2014 18:21:14 -0000	1.51
++++ usr.sbin/httpd/httpd.h	18 Nov 2014 15:02:54 -0000
+@@ -276,7 +276,8 @@ struct client {
+ 	size_t			 clt_buflen;
+ 	struct evbuffer		*clt_output;
+ 	struct event		 clt_ev;
+-	void			*clt_desc;
++	void			*clt_descreq;
++	void			*clt_descresp;
+ 	int			 clt_sndbufsiz;
+ 
+ 	int			 clt_fd;
+@@ -294,6 +295,8 @@ struct client {
+ 	int			 clt_fcgi_toread;
+ 	int			 clt_fcgi_padding_len;
+ 	int			 clt_fcgi_type;
++	int			 clt_fcgi_chunked;
++	int			 clt_fcgi_end;
+ 	struct evbuffer		*clt_srvevb;
+ 
+ 	struct evbuffer		*clt_log;
+@@ -463,6 +466,8 @@ pid_t	 server(struct privsep *, struct p
+ int	 server_ssl_load_keypair(struct server *);
+ int	 server_privinit(struct server *);
+ void	 server_purge(struct server *);
++void	 serverconfig_free(struct server_config *);
++void	 serverconfig_reset(struct server_config *);
+ int	 server_socket_af(struct sockaddr_storage *, in_port_t);
+ in_port_t
+ 	 server_socket_getport(struct sockaddr_storage *);
+@@ -477,6 +482,8 @@ void	 server_sendlog(struct server_confi
+ void	 server_close(struct client *, const char *);
+ void	 server_dump(struct client *, const void *, size_t);
+ int	 server_client_cmp(struct client *, struct client *);
++int	 server_bufferevent_printf(struct client *, const char *, ...)
++	    __attribute__((__format__ (printf, 2, 3)));
+ int	 server_bufferevent_print(struct client *, const char *);
+ int	 server_bufferevent_write_buffer(struct client *,
+ 	    struct evbuffer *);
+@@ -508,17 +515,20 @@ const char
+ void	 server_read_httpcontent(struct bufferevent *, void *);
+ void	 server_read_httpchunks(struct bufferevent *, void *);
+ int	 server_writeheader_http(struct client *clt, struct kv *, void *);
+-int	 server_headers(struct client *,
++int	 server_headers(struct client *, void *,
+ 	    int (*)(struct client *, struct kv *, void *), void *);
+ int	 server_writeresponse_http(struct client *);
+ int	 server_response_http(struct client *, u_int, struct media_type *,
+-	    size_t);
++	    size_t, time_t);
+ void	 server_reset_http(struct client *);
+ void	 server_close_http(struct client *);
+ int	 server_response(struct httpd *, struct client *);
++struct server_config *
++	 server_getlocation(struct client *, const char *);
+ const char *
+ 	 server_http_host(struct sockaddr_storage *, char *, size_t);
+-void	 server_http_date(char *, size_t);
++char	*server_http_parsehost(char *, char *, size_t, int *);
++ssize_t	 server_http_time(time_t, char *, size_t);
+ int	 server_log_http(struct client *, u_int, size_t);
+ 
+ /* server_file.c */
+@@ -533,13 +543,15 @@ int	 fcgi_add_stdin(struct client *, str
+ void		 event_again(struct event *, int, short,
+ 		    void (*)(int, short, void *),
+ 		    struct timeval *, struct timeval *, void *);
++const char	*url_decode(char *);
+ const char	*canonicalize_host(const char *, char *, size_t);
+ const char	*canonicalize_path(const char *, char *, size_t);
+-ssize_t		 path_info(char *);
++size_t		 path_info(char *);
+ void		 imsg_event_add(struct imsgev *);
+ int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+ 		    pid_t, int, void *, u_int16_t);
+ void		 socket_rlimit(int);
++char		*evbuffer_getline(struct evbuffer *);
+ char		*get_string(u_int8_t *, size_t);
+ void		*get_data(u_int8_t *, size_t);
+ int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
+@@ -575,6 +587,7 @@ void	log_warn(const char *, ...) __attri
+ void	log_warnx(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+ void	log_info(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+ void	log_debug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
++void	logit(int, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
+ void	vlog(int, const char *, va_list) __attribute__((__format__ (printf, 2, 0)));
+ __dead void fatal(const char *);
+ __dead void fatalx(const char *);
+Index: usr.sbin/httpd/logger.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/logger.c,v
+retrieving revision 1.5
+diff -u -p -r1.5 logger.c
+--- usr.sbin/httpd/logger.c	6 Aug 2014 12:56:58 -0000	1.5
++++ usr.sbin/httpd/logger.c	18 Nov 2014 15:02:55 -0000
+@@ -194,6 +194,9 @@ logger_open(struct server *srv, struct s
+ {
+ 	struct log_file	*log, *logfile = NULL, *errfile = NULL;
+ 
++	if (srv_conf->flags & SRVFLAG_SYSLOG)
++		return(0);
++
+ 	/* disassociate */
+ 	srv_conf->logaccess = srv_conf->logerror = NULL;
+ 
+Index: usr.sbin/httpd/parse.y
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/parse.y,v
+retrieving revision 1.34
+diff -u -p -r1.34 parse.y
+--- usr.sbin/httpd/parse.y	6 Aug 2014 20:29:54 -0000	1.34
++++ usr.sbin/httpd/parse.y	18 Nov 2014 15:02:55 -0000
+@@ -180,7 +180,7 @@ main		: PREFORK NUMBER	{
+ 				break;
+ 			if ($2 <= 0 || $2 > SERVER_MAXPROC) {
+ 				yyerror("invalid number of preforked "
+-				    "servers: %d", $2);
++				    "servers: %lld", $2);
+ 				YYERROR;
+ 			}
+ 			conf->sc_prefork_server = $2;
+@@ -198,15 +198,6 @@ server		: SERVER STRING		{
+ 				YYACCEPT;
+ 			}
+ 
+-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
+-				if (!strcmp(s->srv_conf.name, $2))
+-					break;
+-			if (s != NULL) {
+-				yyerror("server %s defined twice", $2);
+-				free($2);
+-				YYERROR;
+-			}
+-
+ 			if ((s = calloc(1, sizeof (*s))) == NULL)
+ 				fatal("out of memory");
+ 
+@@ -252,18 +243,46 @@ server		: SERVER STRING		{
+ 			srv_conf = &srv->srv_conf;
+ 
+ 			SPLAY_INIT(&srv->srv_clients);
+-			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+ 		} '{' optnl serveropts_l '}'	{
++			struct server	*s = NULL;
++
++			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
++				if ((s->srv_conf.flags &
++				    SRVFLAG_LOCATION) == 0 &&
++				    strcmp(s->srv_conf.name,
++				    srv->srv_conf.name) == 0 &&
++				    s->srv_conf.port == srv->srv_conf.port &&
++				    sockaddr_cmp(
++				    (struct sockaddr *)&s->srv_conf.ss,
++				    (struct sockaddr *)&srv->srv_conf.ss,
++				    s->srv_conf.prefixlen) == 0)
++					break;
++			}
++			if (s != NULL) {
++				yyerror("server \"%s\" defined twice",
++				    srv->srv_conf.name);
++				serverconfig_free(srv_conf);
++				free(srv);
++				YYABORT;
++			}
++
+ 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+ 				yyerror("listen address not specified");
+-				free($2);
++				serverconfig_free(srv_conf);
++				free(srv);
+ 				YYERROR;
+ 			}
++
+ 			if (server_ssl_load_keypair(srv) == -1) {
+ 				yyerror("failed to load public/private keys "
+ 				    "for server %s", srv->srv_conf.name);
++				serverconfig_free(srv_conf);
++				free(srv);
+ 				YYERROR;
+ 			}
++
++			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
++
+ 			srv = NULL;
+ 			srv_conf = NULL;
+ 		}
+@@ -367,17 +386,6 @@ serveroptsl	: LISTEN ON STRING optssl po
+ 				YYACCEPT;
+ 			}
+ 
+-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
+-				if (strcmp(s->srv_conf.name,
+-				    srv->srv_conf.name) == 0 &&
+-				    strcmp(s->srv_conf.location, $2) == 0)
+-					break;
+-			if (s != NULL) {
+-				yyerror("location %s defined twice", $2);
+-				free($2);
+-				YYERROR;
+-			}
+-
+ 			if ((s = calloc(1, sizeof (*s))) == NULL)
+ 				fatal("out of memory");
+ 
+@@ -416,12 +424,31 @@ serveroptsl	: LISTEN ON STRING optssl po
+ 			srv = s;
+ 			srv_conf = &srv->srv_conf;
+ 			SPLAY_INIT(&srv->srv_clients);
+-			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+ 		} '{' optnl serveropts_l '}'	{
++			struct server	*s = NULL;
++
++			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
++				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
++				    s->srv_conf.id == srv_conf->id &&
++				    strcmp(s->srv_conf.location,
++				    srv_conf->location) == 0)
++					break;
++			}
++			if (s != NULL) {
++				yyerror("location \"%s\" defined twice",
++				    srv->srv_conf.location);
++				serverconfig_free(srv_conf);
++				free(srv);
++				YYABORT;
++			}
++
++			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
++
+ 			srv = parentsrv;
+ 			srv_conf = &parentsrv->srv_conf;
+ 			parentsrv = NULL;
+ 		}
++		| include
+ 		;
+ 
+ fastcgi		: NO FCGI		{
+@@ -623,7 +650,7 @@ tcpflags	: SACK			{ srv_conf->tcpflags |
+ 		}
+ 		| BACKLOG NUMBER	{
+ 			if ($2 < 0 || $2 > SERVER_MAX_CLIENTS) {
+-				yyerror("invalid backlog: %d", $2);
++				yyerror("invalid backlog: %lld", $2);
+ 				YYERROR;
+ 			}
+ 			srv_conf->tcpbacklog = $2;
+@@ -631,13 +658,13 @@ tcpflags	: SACK			{ srv_conf->tcpflags |
+ 		| SOCKET BUFFER NUMBER	{
+ 			srv_conf->tcpflags |= TCPFLAG_BUFSIZ;
+ 			if ((srv_conf->tcpbufsiz = $3) < 0) {
+-				yyerror("invalid socket buffer size: %d", $3);
++				yyerror("invalid socket buffer size: %lld", $3);
+ 				YYERROR;
+ 			}
+ 		}
+ 		| IP STRING NUMBER	{
+ 			if ($3 < 0) {
+-				yyerror("invalid ttl: %d", $3);
++				yyerror("invalid ttl: %lld", $3);
+ 				free($2);
+ 				YYERROR;
+ 			}
+@@ -694,6 +721,9 @@ medianamesl	: STRING				{
+ 			}
+ 			free($1);
+ 
++			if (!loadcfg)
++				break;
++
+ 			if (media_add(conf->sc_mediatypes, &media) == NULL) {
+ 				yyerror("failed to add media type");
+ 				YYERROR;
+@@ -729,7 +759,7 @@ port		: PORT STRING {
+ 		}
+ 		| PORT NUMBER {
+ 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
+-				yyerror("invalid port: %d", $2);
++				yyerror("invalid port: %lld", $2);
+ 				YYERROR;
+ 			}
+ 			$$.val[0] = htons($2);
+@@ -740,7 +770,7 @@ port		: PORT STRING {
+ timeout		: NUMBER
+ 		{
+ 			if ($1 < 0) {
+-				yyerror("invalid timeout: %d\n", $1);
++				yyerror("invalid timeout: %lld", $1);
+ 				YYERROR;
+ 			}
+ 			$$.tv_sec = $1;
+@@ -771,15 +801,15 @@ int
+ yyerror(const char *fmt, ...)
+ {
+ 	va_list		 ap;
+-	char		*nfmt;
++	char		*msg;
+ 
+ 	file->errors++;
+ 	va_start(ap, fmt);
+-	if (asprintf(&nfmt, "%s:%d: %s", file->name, yylval.lineno, fmt) == -1)
+-		fatalx("yyerror asprintf");
+-	vlog(LOG_CRIT, nfmt, ap);
++	if (vasprintf(&msg, fmt, ap) == -1)
++		fatalx("yyerror vasprintf");
+ 	va_end(ap);
+-	free(nfmt);
++	logit(LOG_CRIT, "%s:%d: %s", file->name, yylval.lineno, msg);
++	free(msg);
+ 	return (0);
+ }
+ 
+Index: usr.sbin/httpd/server.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/server.c,v
+retrieving revision 1.39
+diff -u -p -r1.39 server.c
+--- usr.sbin/httpd/server.c	6 Aug 2014 18:38:11 -0000	1.39
++++ usr.sbin/httpd/server.c	18 Nov 2014 15:02:55 -0000
+@@ -285,8 +285,7 @@ server_purge(struct server *srv)
+ 
+ 		/* It might point to our own "default" entry */
+ 		if (srv_conf != &srv->srv_conf) {
+-			free(srv_conf->ssl_cert);
+-			free(srv_conf->ssl_key);
++			serverconfig_free(srv_conf);
+ 			free(srv_conf);
+ 		}
+ 	}
+@@ -297,6 +296,22 @@ server_purge(struct server *srv)
+ 	free(srv);
+ }
+ 
++void
++serverconfig_free(struct server_config *srv_conf)
++{
++	free(srv_conf->ssl_cert_file);
++	free(srv_conf->ssl_cert);
++	free(srv_conf->ssl_key_file);
++	free(srv_conf->ssl_key);
++}
++
++void
++serverconfig_reset(struct server_config *srv_conf)
++{
++	srv_conf->ssl_cert_file = srv_conf->ssl_cert =
++	    srv_conf->ssl_key_file = srv_conf->ssl_key = NULL;
++}
++
+ struct server *
+ server_byaddr(struct sockaddr *addr, in_port_t port)
+ {
+@@ -750,23 +765,36 @@ void
+ server_error(struct bufferevent *bev, short error, void *arg)
+ {
+ 	struct client		*clt = arg;
++	struct evbuffer		*dst;
+ 
+ 	if (error & EVBUFFER_TIMEOUT) {
+ 		server_close(clt, "buffer event timeout");
+ 		return;
+ 	}
+-	if (error & EVBUFFER_ERROR && errno == EFBIG) {
+-		bufferevent_enable(bev, EV_READ);
++	if (error & EVBUFFER_ERROR) {
++		if (errno == EFBIG) {
++			bufferevent_enable(bev, EV_READ);
++			return;
++		}
++		server_close(clt, "buffer event error");
+ 		return;
+ 	}
+ 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
+ 		bufferevent_disable(bev, EV_READ|EV_WRITE);
+ 
+ 		clt->clt_done = 1;
++
++		dst = EVBUFFER_OUTPUT(clt->clt_bev);
++		if (EVBUFFER_LENGTH(dst)) {
++			/* Finish writing all data first */
++			bufferevent_enable(clt->clt_bev, EV_WRITE);
++			return;
++		}
++
+ 		server_close(clt, "done");
+ 		return;
+ 	}
+-	server_close(clt, "buffer event error");
++	server_close(clt, "unknown event error");
+ 	return;
+ }
+ 
+@@ -1109,6 +1137,26 @@ server_bufferevent_add(struct event *ev,
+ 	}
+ 
+ 	return (event_add(ev, ptv));
++}
++
++int
++server_bufferevent_printf(struct client *clt, const char *fmt, ...)
++{
++	int	 ret;
++	va_list	 ap;
++	char	*str;
++
++	va_start(ap, fmt);
++	ret = vasprintf(&str, fmt, ap);
++	va_end(ap);
++
++	if (ret == -1)
++		return (ret);
++
++	ret = server_bufferevent_print(clt, str);
++	free(str);
++
++	return (ret);
+ }
+ 
+ int
+Index: usr.sbin/httpd/server_fcgi.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/server_fcgi.c,v
+retrieving revision 1.29
+diff -u -p -r1.29 server_fcgi.c
+--- usr.sbin/httpd/server_fcgi.c	7 Aug 2014 12:43:22 -0000	1.29
++++ usr.sbin/httpd/server_fcgi.c	18 Nov 2014 15:02:55 -0000
+@@ -87,22 +87,24 @@ struct server_fcgi_param {
+ int	server_fcgi_header(struct client *, u_int);
+ void	server_fcgi_read(struct bufferevent *, void *);
+ int	server_fcgi_writeheader(struct client *, struct kv *, void *);
++int	server_fcgi_writechunk(struct client *);
++int	server_fcgi_getheaders(struct client *);
+ int	fcgi_add_param(struct server_fcgi_param *, const char *, const char *,
+ 	    struct client *);
+-int	get_status(struct evbuffer *);
+ 
+ int
+ server_fcgi(struct httpd *env, struct client *clt)
+ {
+ 	struct server_fcgi_param	 param;
+-	char				 hbuf[MAXHOSTNAMELEN];
+ 	struct server_config		*srv_conf = clt->clt_srv_conf;
+-	struct http_descriptor		*desc	= clt->clt_desc;
++	struct http_descriptor		*desc = clt->clt_descreq;
+ 	struct sockaddr_un		 sun;
+ 	struct fcgi_record_header	*h;
+ 	struct fcgi_begin_request_body	*begin;
+ 	size_t				 len;
+-	ssize_t				 scriptlen;
++	char				 hbuf[MAXHOSTNAMELEN];
++	size_t				 scriptlen;
++	int				 pathlen;
+ 	int				 fd = -1, ret;
+ 	const char			*errstr = NULL;
+ 	char				*str, *p, *script = NULL;
+@@ -189,14 +191,21 @@ server_fcgi(struct httpd *env, struct cl
+ 	h->type = FCGI_PARAMS;
+ 	h->content_len = param.total_len = 0;
+ 
+-	if (asprintf(&script, "%s%s", srv_conf->root,
+-	    desc->http_path) == -1 ||
+-	    (scriptlen = path_info(script)) == -1) {
++	if ((pathlen = asprintf(&script, "%s%s", srv_conf->root,
++	    desc->http_path_alias != NULL ?
++	    desc->http_path_alias : desc->http_path)) == -1) {
+ 		errstr = "failed to get script name";
+ 		goto fail;
+ 	}
+ 
+-	if (scriptlen) {
++	scriptlen = path_info(script);
++	/*
++	 * no part of root should show up in PATH_INFO.
++	 * therefore scriptlen should be >= strlen(root)
++	 */
++	if (scriptlen < strlen(srv_conf->root))
++		scriptlen = strlen(srv_conf->root);
++	if ((int)scriptlen < pathlen) {
+ 		if (fcgi_add_param(&param, "PATH_INFO",
+ 		    script + scriptlen, clt) == -1) {
+ 			errstr = "failed to encode param";
+@@ -239,7 +248,7 @@ server_fcgi(struct httpd *env, struct cl
+ 	}
+ 
+ 	/* Add HTTP_* headers */
+-	if (server_headers(clt, server_fcgi_writeheader, &param) == -1) {
++	if (server_headers(clt, desc, server_fcgi_writeheader, &param) == -1) {
+ 		errstr = "failed to encode param";
+ 		goto fail;
+ 	}
+@@ -337,11 +346,14 @@ server_fcgi(struct httpd *env, struct cl
+ 		fcgi_add_stdin(clt, NULL);
+ 	}
+ 
+-	/*
+-	 * persist is not supported yet because we don't get the
+-	 * Content-Length from slowcgi and don't support chunked encoding.
+-	 */
+-	clt->clt_persist = 0;
++	if (strcmp(desc->http_version, "HTTP/1.1") == 0) {
++		clt->clt_fcgi_chunked = 1;
++	} else {
++		/* HTTP/1.0 does not support chunked encoding */
++		clt->clt_fcgi_chunked = 0;
++		clt->clt_persist = 0;
++	}
++	clt->clt_fcgi_end = 0;
+ 	clt->clt_done = 0;
+ 
+ 	free(script);
+@@ -444,9 +456,9 @@ server_fcgi_read(struct bufferevent *bev
+ 	char				*ptr;
+ 
+ 	do {
+-		len = bufferevent_read(bev, &buf, clt->clt_fcgi_toread);
++		len = bufferevent_read(bev, buf, clt->clt_fcgi_toread);
+ 		/* XXX error handling */
+-		evbuffer_add(clt->clt_srvevb, &buf, len);
++		evbuffer_add(clt->clt_srvevb, buf, len);
+ 		clt->clt_fcgi_toread -= len;
+ 		DPRINTF("%s: len: %lu toread: %d state: %d", __func__, len,
+ 		    clt->clt_fcgi_toread, clt->clt_fcgi_state);
+@@ -478,9 +490,10 @@ server_fcgi_read(struct bufferevent *bev
+ 
+ 			/* fallthrough if content_len == 0 */
+ 		case FCGI_READ_CONTENT:
+-			if (clt->clt_fcgi_type == FCGI_STDERR &&
+-			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
+-				if ((ptr = get_string(
++			switch (clt->clt_fcgi_type) {
++			case FCGI_STDERR:
++				if (EVBUFFER_LENGTH(clt->clt_srvevb) > 0 &&
++				    (ptr = get_string(
+ 				    EVBUFFER_DATA(clt->clt_srvevb),
+ 				    EVBUFFER_LENGTH(clt->clt_srvevb)))
+ 				    != NULL) {
+@@ -488,14 +501,27 @@ server_fcgi_read(struct bufferevent *bev
+ 					    IMSG_LOG_ERROR, "%s", ptr);
+ 					free(ptr);
+ 				}
+-			}
+-			if (clt->clt_fcgi_type == FCGI_STDOUT &&
+-			    EVBUFFER_LENGTH(clt->clt_srvevb) > 0) {
+-				if (++clt->clt_chunk == 1)
+-					server_fcgi_header(clt,
+-					    get_status(clt->clt_srvevb));
+-				server_bufferevent_write_buffer(clt,
+-				    clt->clt_srvevb);
++				break;
++			case FCGI_STDOUT:
++				if (++clt->clt_chunk == 1) {
++					if (server_fcgi_header(clt,
++					    server_fcgi_getheaders(clt))
++					    == -1) {
++						server_abort_http(clt, 500,
++						    "malformed fcgi headers");
++						return;
++					}
++					if (!EVBUFFER_LENGTH(clt->clt_srvevb))
++						break;
++				}
++				/* FALLTHROUGH */
++			case FCGI_END_REQUEST:
++				if (server_fcgi_writechunk(clt) == -1) {
++					server_abort_http(clt, 500,
++					    "encoding error");
++					return;
++				}
++				break;
+ 			}
+ 			evbuffer_drain(clt->clt_srvevb,
+ 			    EVBUFFER_LENGTH(clt->clt_srvevb));
+@@ -523,9 +549,11 @@ server_fcgi_read(struct bufferevent *bev
+ int
+ server_fcgi_header(struct client *clt, u_int code)
+ {
+-	struct http_descriptor	*desc = clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
++	struct http_descriptor	*resp = clt->clt_descresp;
+ 	const char		*error;
+ 	char			 tmbuf[32];
++	struct kv		*kv, key;
+ 
+ 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
+ 		return (-1);
+@@ -533,34 +561,49 @@ server_fcgi_header(struct client *clt, u
+ 	if (server_log_http(clt, code, 0) == -1)
+ 		return (-1);
+ 
+-	kv_purge(&desc->http_headers);
+-
+ 	/* Add error codes */
+-	if (kv_setkey(&desc->http_pathquery, "%lu", code) == -1 ||
+-	    kv_set(&desc->http_pathquery, "%s", error) == -1)
++	if (kv_setkey(&resp->http_pathquery, "%lu", code) == -1 ||
++	    kv_set(&resp->http_pathquery, "%s", error) == -1)
+ 		return (-1);
+ 
+ 	/* Add headers */
+-	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
++	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
+ 		return (-1);
+ 
++	/* Set chunked encoding */
++	if (clt->clt_fcgi_chunked) {
++		/* XXX Should we keep and handle Content-Length instead? */
++		key.kv_key = "Content-Length";
++		if ((kv = kv_find(&resp->http_headers, &key)) != NULL)
++			kv_delete(&resp->http_headers, kv);
++
++		/*
++		 * XXX What if the FastCGI added some kind of Transfer-Encoding?
++		 * XXX like gzip, deflate or even "chunked"?
++		 */
++		if (kv_add(&resp->http_headers,
++		    "Transfer-Encoding", "chunked") == NULL)
++			return (-1);
++	}
++
+ 	/* Is it a persistent connection? */
+ 	if (clt->clt_persist) {
+-		if (kv_add(&desc->http_headers,
++		if (kv_add(&resp->http_headers,
+ 		    "Connection", "keep-alive") == NULL)
+ 			return (-1);
+-	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
++	} else if (kv_add(&resp->http_headers, "Connection", "close") == NULL)
+ 		return (-1);
+ 
+-	/* Date header is mandatory and should be added last */
+-	server_http_date(tmbuf, sizeof(tmbuf));
+-	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
++	/* Date header is mandatory and should be added as late as possible */
++	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
++	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL)
+ 		return (-1);
+ 
+ 	/* Write initial header (fcgi might append more) */
+ 	if (server_writeresponse_http(clt) == -1 ||
+ 	    server_bufferevent_print(clt, "\r\n") == -1 ||
+-	    server_headers(clt, server_writeheader_http, NULL) == -1)
++	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
++	    server_bufferevent_print(clt, "\r\n") == -1)
+ 		return (-1);
+ 
+ 	return (0);
+@@ -608,26 +651,63 @@ server_fcgi_writeheader(struct client *c
+ }
+ 
+ int
+-get_status(struct evbuffer *bev)
++server_fcgi_writechunk(struct client *clt)
+ {
+-	int code;
+-	char *statusline, *tok;
+-	const char *errstr;
+-
+-	/* XXX This is a hack. We need to parse the response header. */
+-	code = 200;
+-	if (strncmp(EVBUFFER_DATA(bev), "Status: ", strlen("Status: ")) == 0) {
+-		statusline = get_string(EVBUFFER_DATA(bev),
+-		    EVBUFFER_LENGTH(bev));
+-		if (strtok(statusline, " ") != NULL) {
+-			if ((tok = strtok(NULL, " ")) != NULL) {
+-				code = (int) strtonum(tok, 100, 600, &errstr);
+-				if (errstr != NULL || server_httperror_byid(
+-				   code) == NULL)
+-					code = 200;
+-			}
++	struct evbuffer *evb = clt->clt_srvevb;
++	size_t		 len;
++
++	if (clt->clt_fcgi_type == FCGI_END_REQUEST) {
++		len = 0;
++	} else
++		len = EVBUFFER_LENGTH(evb);
++
++	/* If len is 0, make sure to write the end marker only once */
++	if (len == 0 && clt->clt_fcgi_end++)
++		return (0);
++
++	if (clt->clt_fcgi_chunked) {
++		if (server_bufferevent_printf(clt, "%zx\r\n", len) == -1 ||
++		    server_bufferevent_write_chunk(clt, evb, len) == -1 ||
++		    server_bufferevent_print(clt, "\r\n") == -1)
++			return (-1);
++	} else
++		return (server_bufferevent_write_buffer(clt, evb));
++
++	return (0);
++}
++
++int
++server_fcgi_getheaders(struct client *clt)
++{
++	struct http_descriptor	*resp = clt->clt_descresp;
++	struct evbuffer		*evb = clt->clt_srvevb;
++	int			 code = 200;
++	char			*line, *key, *value;
++	const char		*errstr;
++
++	while ((line = evbuffer_getline(evb)) != NULL && *line != '\0') {
++		key = line;
++
++		if ((value = strchr(key, ':')) == NULL)
++			break;
++		if (*value == ':') {
++			*value++ = '\0';
++			value += strspn(value, " \t");
++		} else {
++			*value++ = '\0';
++		}
++
++		if (strcasecmp("Status", key) == 0) {
++			value[strcspn(value, " \t")] = '\0';
++			code = (int)strtonum(value, 100, 600, &errstr);
++			if (errstr != NULL || server_httperror_byid(
++			    code) == NULL)
++				code = 200;
++		} else {
++			(void)kv_add(&resp->http_headers, key, value);
+ 		}
+-		free(statusline);
++		free(line);
+ 	}
+-	return code;
++
++	return (code);
+ }
+Index: usr.sbin/httpd/server_file.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/server_file.c,v
+retrieving revision 1.31
+diff -u -p -r1.31 server_file.c
+--- usr.sbin/httpd/server_file.c	6 Aug 2014 11:24:12 -0000	1.31
++++ usr.sbin/httpd/server_file.c	18 Nov 2014 15:02:55 -0000
+@@ -46,42 +46,36 @@
+ #include "httpd.h"
+ #include "http.h"
+ 
+-int	 server_file_access(struct client *, char *, size_t,
++int	 server_file_access(struct httpd *, struct client *, char *, size_t);
++int	 server_file_request(struct httpd *, struct client *, char *,
+ 	    struct stat *);
+-int	 server_file_index(struct httpd *, struct client *);
++int	 server_file_index(struct httpd *, struct client *, struct stat *);
++int	 server_file_method(struct client *);
+ 
+ int
+-server_file_access(struct client *clt, char *path, size_t len,
+-    struct stat *st)
++server_file_access(struct httpd *env, struct client *clt,
++    char *path, size_t len)
+ {
+-	struct http_descriptor	*desc = clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
+ 	struct server_config	*srv_conf = clt->clt_srv_conf;
+-	struct stat		 stb;
++	struct stat		 st;
+ 	char			*newpath;
++	int			 ret;
+ 
+ 	errno = 0;
+ 
+-	switch (desc->http_method) {
+-	case HTTP_METHOD_GET:
+-	case HTTP_METHOD_HEAD:
+-		break;
+-	default:
+-		/* Other methods are not allowed */
+-		return (405);
+-	}
+-
+ 	if (access(path, R_OK) == -1) {
+ 		goto fail;
+-	} else if (stat(path, st) == -1) {
++	} else if (stat(path, &st) == -1) {
+ 		goto fail;
+-	} else if (S_ISDIR(st->st_mode)) {
++	} else if (S_ISDIR(st.st_mode)) {
+ 		/* Deny access if directory indexing is disabled */
+ 		if (srv_conf->flags & SRVFLAG_NO_INDEX) {
+ 			errno = EACCES;
+ 			goto fail;
+ 		}
+ 
+-		if (!len) {
++		if (desc->http_path_alias != NULL) {
+ 			/* Recursion - the index "file" is a directory? */
+ 			errno = EINVAL;
+ 			goto fail;
+@@ -93,21 +87,31 @@ server_file_access(struct client *clt, c
+ 			    srv_conf->flags & SRVFLAG_SSL ? "s" : "",
+ 			    desc->http_host, desc->http_path) == -1)
+ 				return (500);
+-			free(desc->http_path);
+-			desc->http_path = newpath;
++			/* Path alias will be used for the redirection */
++			desc->http_path_alias = newpath;
+ 
+ 			/* Indicate that the file has been moved */
+ 			return (301);
+ 		}
+ 
+-		/* Otherwise append the default index file */
++		/* Append the default index file to the location */
++		if (asprintf(&newpath, "%s%s", desc->http_path,
++		    srv_conf->index) == -1)
++			return (500);
++		desc->http_path_alias = newpath;
++		if (server_getlocation(clt, newpath) != srv_conf) {
++			/* The location has changed */
++			return (server_file(env, clt));
++		}
++
++		/* Otherwise append the default index file to the path */
+ 		if (strlcat(path, srv_conf->index, len) >= len) {
+ 			errno = EACCES;
+ 			goto fail;
+ 		}
+ 
+-		/* Check again but set len to 0 to avoid recursion */
+-		if (server_file_access(clt, path, 0, &stb) == 404) {
++		ret = server_file_access(env, clt, path, len);
++		if (ret == 404) {
+ 			/*
+ 			 * Index file not found; fail if auto-indexing is
+ 			 * not enabled, otherwise return success but
+@@ -118,17 +122,17 @@ server_file_access(struct client *clt, c
+ 				errno = EACCES;
+ 				goto fail;
+ 			}
+-		} else {
+-			/* return updated stat from index file */
+-			memcpy(st, &stb, sizeof(*st));
++
++			return (server_file_index(env, clt, &st));
+ 		}
+-	} else if (!S_ISREG(st->st_mode)) {
++		return (ret);
++	} else if (!S_ISREG(st.st_mode)) {
+ 		/* Don't follow symlinks and ignore special files */
+ 		errno = EACCES;
+ 		goto fail;
+ 	}
+ 
+-	return (0);
++	return (server_file_request(env, clt, path, &st));
+ 
+  fail:
+ 	switch (errno) {
+@@ -146,31 +150,69 @@ server_file_access(struct client *clt, c
+ int
+ server_file(struct httpd *env, struct client *clt)
+ {
+-	struct http_descriptor	*desc = clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
+ 	struct server_config	*srv_conf = clt->clt_srv_conf;
+-	struct media_type	*media;
+-	const char		*errstr = NULL;
+-	int			 fd = -1, ret, code = 500;
+ 	char			 path[MAXPATHLEN];
+-	struct stat		 st;
++	const char		*errstr = NULL;
++	int			 ret = 500;
++
++	if (srv_conf->flags & SRVFLAG_FCGI)
++		return (server_fcgi(env, clt));
+ 
+ 	/* Request path is already canonicalized */
+ 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
+-	    srv_conf->root, desc->http_path) >= sizeof(path)) {
++	    srv_conf->root,
++	    desc->http_path_alias != NULL ?
++	    desc->http_path_alias : desc->http_path) >= sizeof(path)) {
+ 		errstr = desc->http_path;
+ 		goto abort;
+ 	}
+ 
+ 	/* Returns HTTP status code on error */
+-	if ((ret = server_file_access(clt, path, sizeof(path), &st)) != 0) {
+-		code = ret;
+-		errstr = desc->http_path;
++	if ((ret = server_file_access(env, clt, path, sizeof(path))) > 0) {
++		errstr = desc->http_path_alias != NULL ?
++		    desc->http_path_alias : desc->http_path;
+ 		goto abort;
+ 	}
+ 
+-	if (S_ISDIR(st.st_mode)) {
+-		/* List directory index */
+-		return (server_file_index(env, clt));
++	return (ret);
++
++ abort:
++	if (errstr == NULL)
++		errstr = strerror(errno);
++	server_abort_http(clt, ret, errstr);
++	return (-1);
++}
++
++int
++server_file_method(struct client *clt)
++{
++	struct http_descriptor	*desc = clt->clt_descreq;
++
++	switch (desc->http_method) {
++	case HTTP_METHOD_GET:
++	case HTTP_METHOD_HEAD:
++		return (0);
++	default:
++		/* Other methods are not allowed */
++		errno = EACCES;
++		return (405);
++	}
++	/* NOTREACHED */
++}
++
++int
++server_file_request(struct httpd *env, struct client *clt, char *path,
++    struct stat *st)
++{
++	struct server_config	*srv_conf = clt->clt_srv_conf;
++	struct media_type	*media;
++	const char		*errstr = NULL;
++	int			 fd = -1, ret, code = 500;
++
++	if ((ret = server_file_method(clt)) != 0) {
++		code = ret;
++		goto abort;
+ 	}
+ 
+ 	/* Now open the file, should be readable or we have another problem */
+@@ -178,7 +220,8 @@ server_file(struct httpd *env, struct cl
+ 		goto abort;
+ 
+ 	media = media_find(env->sc_mediatypes, path);
+-	ret = server_response_http(clt, 200, media, st.st_size);
++	ret = server_response_http(clt, 200, media, st->st_size,
++	    MIN(time(NULL), st->st_mtim.tv_sec));
+ 	switch (ret) {
+ 	case -1:
+ 		goto fail;
+@@ -225,20 +268,25 @@ server_file(struct httpd *env, struct cl
+ }
+ 
+ int
+-server_file_index(struct httpd *env, struct client *clt)
++server_file_index(struct httpd *env, struct client *clt, struct stat *st)
+ {
+ 	char			  path[MAXPATHLEN];
+ 	char			  tmstr[21];
+-	struct http_descriptor	 *desc = clt->clt_desc;
++	struct http_descriptor	 *desc = clt->clt_descreq;
+ 	struct server_config	 *srv_conf = clt->clt_srv_conf;
+ 	struct dirent		**namelist, *dp;
+ 	int			  namesize, i, ret, fd = -1, namewidth, skip;
++	int			  code = 500;
+ 	struct evbuffer		 *evb = NULL;
+ 	struct media_type	 *media;
+ 	const char		 *style;
+-	struct stat		  st;
+ 	struct tm		  tm;
+-	time_t			  t;
++	time_t			  t, dir_mtime;
++
++	if ((ret = server_file_method(clt)) != 0) {
++		code = ret;
++		goto abort;
++	}
+ 
+ 	/* Request path is already canonicalized */
+ 	if ((size_t)snprintf(path, sizeof(path), "%s%s",
+@@ -249,6 +297,9 @@ server_file_index(struct httpd *env, str
+ 	if ((fd = open(path, O_RDONLY)) == -1)
+ 		goto abort;
+ 
++	/* Save last modification time */
++	dir_mtime = MIN(time(NULL), st->st_mtim.tv_sec);
++
+ 	if ((evb = evbuffer_new()) == NULL)
+ 		goto abort;
+ 
+@@ -260,7 +311,7 @@ server_file_index(struct httpd *env, str
+ 
+ 	/* A CSS stylesheet allows minimal customization by the user */
+ 	style = "body { background-color: white; color: black; font-family: "
+-	    "sans-serif; }";
++	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n";
+ 	/* Generate simple HTML index document */
+ 	if (evbuffer_add_printf(evb,
+ 	    "<!DOCTYPE HTML PUBLIC "
+@@ -280,12 +331,12 @@ server_file_index(struct httpd *env, str
+ 		dp = namelist[i];
+ 
+ 		if (skip ||
+-		    fstatat(fd, dp->d_name, &st, 0) == -1) {
++		    fstatat(fd, dp->d_name, st, 0) == -1) {
+ 			free(dp);
+ 			continue;
+ 		}
+ 
+-		t = st.st_mtime;
++		t = st->st_mtime;
+ 		localtime_r(&t, &tm);
+ 		strftime(tmstr, sizeof(tmstr), "%d-%h-%Y %R", &tm);
+ 		namewidth = 51 - strlen(dp->d_name);
+@@ -293,18 +344,18 @@ server_file_index(struct httpd *env, str
+ 		if (dp->d_name[0] == '.' &&
+ 		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
+ 			/* ignore hidden files starting with a dot */
+-		} else if (S_ISDIR(st.st_mode)) {
++		} else if (S_ISDIR(st->st_mode)) {
+ 			namewidth -= 1; /* trailing slash */
+ 			if (evbuffer_add_printf(evb,
+ 			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
+ 			    dp->d_name, dp->d_name,
+ 			    MAX(namewidth, 0), " ", tmstr, "-") == -1)
+ 				skip = 1;
+-		} else if (S_ISREG(st.st_mode)) {
++		} else if (S_ISREG(st->st_mode)) {
+ 			if (evbuffer_add_printf(evb,
+ 			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
+ 			    dp->d_name, dp->d_name,
+-			    MAX(namewidth, 0), " ", tmstr, st.st_size) == -1)
++			    MAX(namewidth, 0), " ", tmstr, st->st_size) == -1)
+ 				skip = 1;
+ 		}
+ 		free(dp);
+@@ -320,7 +371,8 @@ server_file_index(struct httpd *env, str
+ 	fd = -1;
+ 
+ 	media = media_find(env->sc_mediatypes, "index.html");
+-	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb));
++	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb),
++	    dir_mtime);
+ 	switch (ret) {
+ 	case -1:
+ 		goto fail;
+@@ -356,7 +408,7 @@ server_file_index(struct httpd *env, str
+ 		close(fd);
+ 	if (evb != NULL)
+ 		evbuffer_free(evb);
+-	server_abort_http(clt, 500, desc->http_path);
++	server_abort_http(clt, code, desc->http_path);
+ 	return (-1);
+ }
+ 
+@@ -370,8 +422,16 @@ server_file_error(struct bufferevent *be
+ 		server_close(clt, "buffer event timeout");
+ 		return;
+ 	}
++	if (error & EVBUFFER_ERROR) {
++		if (errno == EFBIG) {
++			bufferevent_enable(bev, EV_READ);
++			return;
++		}
++		server_close(clt, "buffer event error");
++		return;
++	}
+ 	if (error & (EVBUFFER_READ|EVBUFFER_WRITE|EVBUFFER_EOF)) {
+-		bufferevent_disable(bev, EV_READ);
++		bufferevent_disable(bev, EV_READ|EV_WRITE);
+ 
+ 		clt->clt_done = 1;
+ 
+@@ -396,10 +456,6 @@ server_file_error(struct bufferevent *be
+ 		server_close(clt, "done");
+ 		return;
+ 	}
+-	if (error & EVBUFFER_ERROR && errno == EFBIG) {
+-		bufferevent_enable(bev, EV_READ);
+-		return;
+-	}
+-	server_close(clt, "buffer event error");
++	server_close(clt, "unknown event error");
+ 	return;
+ }
+Index: usr.sbin/httpd/server_http.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/server_http.c,v
+retrieving revision 1.42
+diff -u -p -r1.42 server_http.c
+--- usr.sbin/httpd/server_http.c	6 Aug 2014 18:21:14 -0000	1.42
++++ usr.sbin/httpd/server_http.c	18 Nov 2014 15:02:55 -0000
+@@ -86,9 +86,15 @@ server_httpdesc_init(struct client *clt)
+ 
+ 	if ((desc = calloc(1, sizeof(*desc))) == NULL)
+ 		return (-1);
++	RB_INIT(&desc->http_headers);
++	clt->clt_descreq = desc;
+ 
++	if ((desc = calloc(1, sizeof(*desc))) == NULL) {
++		/* req will be cleaned up later */
++		return (-1);
++	}
+ 	RB_INIT(&desc->http_headers);
+-	clt->clt_desc = desc;
++	clt->clt_descresp = desc;
+ 
+ 	return (0);
+ }
+@@ -96,10 +102,16 @@ server_httpdesc_init(struct client *clt)
+ void
+ server_httpdesc_free(struct http_descriptor *desc)
+ {
++	if (desc == NULL)
++		return;
+ 	if (desc->http_path != NULL) {
+ 		free(desc->http_path);
+ 		desc->http_path = NULL;
+ 	}
++	if (desc->http_path_alias != NULL) {
++		free(desc->http_path_alias);
++		desc->http_path_alias = NULL;
++	}
+ 	if (desc->http_query != NULL) {
+ 		free(desc->http_query);
+ 		desc->http_query = NULL;
+@@ -114,6 +126,8 @@ server_httpdesc_free(struct http_descrip
+ 	}
+ 	kv_purge(&desc->http_headers);
+ 	desc->http_lastheader = NULL;
++	desc->http_method = 0;
++	desc->http_chunked = 0;
+ }
+ 
+ void
+@@ -121,7 +135,7 @@ server_read_http(struct bufferevent *bev
+ {
+ 	struct client		*clt = arg;
+ 	struct server_config	*srv_conf = clt->clt_srv_conf;
+-	struct http_descriptor	*desc = clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
+ 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
+ 	char			*line = NULL, *key, *value;
+ 	const char		*errstr;
+@@ -215,18 +229,20 @@ server_read_http(struct bufferevent *bev
+ 				goto fail;
+ 			}
+ 			desc->http_version = strchr(desc->http_path, ' ');
+-			if (desc->http_version != NULL)
+-				*desc->http_version++ = '\0';
++			if (desc->http_version == NULL) {
++				free(line);
++				goto fail;
++			}
++			*desc->http_version++ = '\0';
+ 			desc->http_query = strchr(desc->http_path, '?');
+ 			if (desc->http_query != NULL)
+ 				*desc->http_query++ = '\0';
+ 
+ 			/*
+ 			 * Have to allocate the strings because they could
+-			 * be changed independetly by the filters later.
++			 * be changed independently by the filters later.
+ 			 */
+-			if (desc->http_version != NULL &&
+-			    (desc->http_version =
++			if ((desc->http_version =
+ 			    strdup(desc->http_version)) == NULL) {
+ 				free(line);
+ 				goto fail;
+@@ -300,11 +316,36 @@ server_read_http(struct bufferevent *bev
+ 		case HTTP_METHOD_GET:
+ 		case HTTP_METHOD_HEAD:
+ 		case HTTP_METHOD_OPTIONS:
++		/* WebDAV methods */
++		case HTTP_METHOD_COPY:
+ 			clt->clt_toread = 0;
+ 			break;
+ 		case HTTP_METHOD_POST:
+ 		case HTTP_METHOD_PUT:
+ 		case HTTP_METHOD_RESPONSE:
++		/* WebDAV methods */
++		case HTTP_METHOD_PROPFIND:
++		case HTTP_METHOD_PROPPATCH:
++		case HTTP_METHOD_MKCOL:
++		case HTTP_METHOD_LOCK:
++		case HTTP_METHOD_UNLOCK:
++		case HTTP_METHOD_VERSION_CONTROL:
++		case HTTP_METHOD_REPORT:
++		case HTTP_METHOD_CHECKOUT:
++		case HTTP_METHOD_CHECKIN:
++		case HTTP_METHOD_UNCHECKOUT:
++		case HTTP_METHOD_MKWORKSPACE:
++		case HTTP_METHOD_UPDATE:
++		case HTTP_METHOD_LABEL:
++		case HTTP_METHOD_MERGE:
++		case HTTP_METHOD_BASELINE_CONTROL:
++		case HTTP_METHOD_MKACTIVITY:
++		case HTTP_METHOD_ORDERPATCH:
++		case HTTP_METHOD_ACL:
++		case HTTP_METHOD_MKREDIRECTREF:
++		case HTTP_METHOD_UPDATEREDIRECTREF:
++		case HTTP_METHOD_SEARCH:
++		case HTTP_METHOD_PATCH:
+ 			/* HTTP request payload */
+ 			if (clt->clt_toread > 0)
+ 				bev->readcb = server_read_httpcontent;
+@@ -316,10 +357,8 @@ server_read_http(struct bufferevent *bev
+ 			}
+ 			break;
+ 		default:
+-			/* HTTP handler */
+-			clt->clt_toread = TOREAD_HTTP_HEADER;
+-			bev->readcb = server_read_http;
+-			break;
++			server_abort_http(clt, 405, "method not allowed");
++			return;
+ 		}
+ 		if (desc->http_chunked) {
+ 			/* Chunked transfer encoding */
+@@ -514,12 +553,10 @@ server_read_httpchunks(struct buffereven
+ void
+ server_reset_http(struct client *clt)
+ {
+-	struct http_descriptor	*desc = clt->clt_desc;
+ 	struct server		*srv = clt->clt_srv;
+ 
+-	server_httpdesc_free(desc);
+-	desc->http_method = 0;
+-	desc->http_chunked = 0;
++	server_httpdesc_free(clt->clt_descreq);
++	server_httpdesc_free(clt->clt_descresp);
+ 	clt->clt_headerlen = 0;
+ 	clt->clt_line = 0;
+ 	clt->clt_done = 0;
+@@ -530,16 +567,16 @@ server_reset_http(struct client *clt)
+ 	server_log(clt, NULL);
+ }
+ 
+-void
+-server_http_date(char *tmbuf, size_t len)
++ssize_t
++server_http_time(time_t t, char *tmbuf, size_t len)
+ {
+-	time_t			 t;
+ 	struct tm		 tm;
+ 
+ 	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
+-	time(&t);
+-	gmtime_r(&t, &tm);
+-	strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm);
++	if (t == -1 || gmtime_r(&t, &tm) == NULL)
++		return (-1);
++	else
++		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
+ }
+ 
+ const char *
+@@ -574,6 +611,55 @@ server_http_host(struct sockaddr_storage
+ 	return (buf);
+ }
+ 
++char *
++server_http_parsehost(char *host, char *buf, size_t len, int *portval)
++{
++	char		*start, *end, *port;
++	const char	*errstr = NULL;
++
++	if (strlcpy(buf, host, len) >= len) {
++		log_debug("%s: host name too long", __func__);
++		return (NULL);
++	}
++
++	start = buf;
++	end = port = NULL;
++
++	if (*start == '[' && (end = strchr(start, ']')) != NULL) {
++		/* Address enclosed in [] with port, eg. [2001:db8::1]:80 */
++		start++;
++		*end++ = '\0';
++		if ((port = strchr(end, ':')) == NULL || *port == '\0')
++			port = NULL;
++		else
++			port++;
++		memmove(buf, start, strlen(start) + 1);
++	} else if ((end = strchr(start, ':')) != NULL) {
++		/* Name or address with port, eg. www.example.com:80 */
++		*end++ = '\0';
++		port = end;
++	} else {
++		/* Name or address with default port, eg. www.example.com */
++		port = NULL;
++	}
++
++	if (port != NULL) {
++		/* Save the requested port */
++		*portval = strtonum(port, 0, 0xffff, &errstr);
++		if (errstr != NULL) {
++			log_debug("%s: invalid port: %s", __func__,
++			    strerror(errno));
++			return (NULL);
++		}
++		*portval = htons(*portval);
++	} else {
++		/* Port not given, indicate the default port */
++		*portval = -1;
++	}
++
++	return (start);
++}
++
+ void
+ server_abort_http(struct client *clt, u_int code, const char *msg)
+ {
+@@ -598,13 +684,11 @@ server_abort_http(struct client *clt, u_
+ 	if (print_host(&srv_conf->ss, hbuf, sizeof(hbuf)) == NULL)
+ 		goto done;
+ 
+-	server_http_date(tmbuf, sizeof(tmbuf));
++	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0)
++		goto done;
+ 
+ 	/* Do not send details of the Internal Server Error */
+ 	switch (code) {
+-	case 500:
+-		/* Do not send details of the Internal Server Error */
+-		break;
+ 	case 301:
+ 	case 302:
+ 		if (asprintf(&extraheader, "Location: %s\r\n", msg) == -1) {
+@@ -613,7 +697,6 @@ server_abort_http(struct client *clt, u_
+ 		}
+ 		break;
+ 	default:
+-		text = msg;
+ 		break;
+ 	}
+ 
+@@ -665,12 +748,17 @@ server_abort_http(struct client *clt, u_
+ void
+ server_close_http(struct client *clt)
+ {
+-	struct http_descriptor *desc	= clt->clt_desc;
++	struct http_descriptor *desc;
+ 
+-	if (desc == NULL)
+-		return;
++	desc = clt->clt_descreq;
++	server_httpdesc_free(desc);
++	free(desc);
++	clt->clt_descreq = NULL;
++
++	desc = clt->clt_descresp;
+ 	server_httpdesc_free(desc);
+ 	free(desc);
++	clt->clt_descresp = NULL;
+ }
+ 
+ int
+@@ -678,13 +766,17 @@ server_response(struct httpd *httpd, str
+ {
+ 	char			 path[MAXPATHLEN];
+ 	char			 hostname[MAXHOSTNAMELEN];
+-	struct http_descriptor	*desc	= clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
++	struct http_descriptor	*resp = clt->clt_descresp;
+ 	struct server		*srv = clt->clt_srv;
+-	struct server_config	*srv_conf = &srv->srv_conf, *location;
++	struct server_config	*srv_conf = &srv->srv_conf;
+ 	struct kv		*kv, key, *host;
++	int			 portval = -1;
++	char			*hostval;
+ 
+ 	/* Canonicalize the request path */
+ 	if (desc->http_path == NULL ||
++	    url_decode(desc->http_path) == NULL ||
+ 	    canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
+ 		goto fail;
+ 	free(desc->http_path);
+@@ -726,11 +818,16 @@ server_response(struct httpd *httpd, str
+ 	 * XXX the Host can also appear in the URL path.
+ 	 */
+ 	if (host != NULL) {
+-		/* XXX maybe better to turn srv_hosts into a tree */
++		if ((hostval = server_http_parsehost(host->kv_value,
++		    hostname, sizeof(hostname), &portval)) == NULL)
++			goto fail;
++
+ 		TAILQ_FOREACH(srv_conf, &srv->srv_hosts, entry) {
+ 			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0 &&
+-			    fnmatch(srv_conf->name, host->kv_value,
+-			    FNM_CASEFOLD) == 0) {
++			    fnmatch(srv_conf->name, hostname,
++			    FNM_CASEFOLD) == 0 &&
++			    (portval == -1 ||
++			    (portval != -1 && portval == srv_conf->port))) {
+ 				/* Replace host configuration */
+ 				clt->clt_srv_conf = srv_conf;
+ 				srv_conf = NULL;
+@@ -755,31 +852,46 @@ server_response(struct httpd *httpd, str
+ 	if ((desc->http_host = strdup(hostname)) == NULL)
+ 		goto fail;
+ 
++	/* Now fill in the mandatory parts of the response descriptor */
++	resp->http_method = desc->http_method;
++	if ((resp->http_version = strdup(desc->http_version)) == NULL)
++		goto fail;
++
++	/* Now search for the location */
++	srv_conf = server_getlocation(clt, desc->http_path);
++
++	return (server_file(httpd, clt));
++ fail:
++	server_abort_http(clt, 400, "bad request");
++	return (-1);
++}
++
++struct server_config *
++server_getlocation(struct client *clt, const char *path)
++{
++	struct server		*srv = clt->clt_srv;
++	struct server_config	*srv_conf = clt->clt_srv_conf, *location;
++
+ 	/* Now search for the location */
+ 	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
+ 		if ((location->flags & SRVFLAG_LOCATION) &&
+ 		    location->id == srv_conf->id &&
+-		    fnmatch(location->location, desc->http_path,
+-		    FNM_CASEFOLD) == 0) {
++		    fnmatch(location->location, path, FNM_CASEFOLD) == 0) {
+ 			/* Replace host configuration */
+ 			clt->clt_srv_conf = srv_conf = location;
+ 			break;
+ 		}
+ 	}
+ 
+-	if (srv_conf->flags & SRVFLAG_FCGI)
+-		return (server_fcgi(httpd, clt));
+-	return (server_file(httpd, clt));
+- fail:
+-	server_abort_http(clt, 400, "bad request");
+-	return (-1);
++	return (srv_conf);
+ }
+ 
+ int
+ server_response_http(struct client *clt, u_int code,
+-    struct media_type *media, size_t size)
++    struct media_type *media, size_t size, time_t mtime)
+ {
+-	struct http_descriptor	*desc = clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descreq;
++	struct http_descriptor	*resp = clt->clt_descresp;
+ 	const char		*error;
+ 	struct kv		*ct, *cl;
+ 	char			 tmbuf[32];
+@@ -790,51 +902,54 @@ server_response_http(struct client *clt,
+ 	if (server_log_http(clt, code, size) == -1)
+ 		return (-1);
+ 
+-	kv_purge(&desc->http_headers);
+-
+ 	/* Add error codes */
+-	if (kv_setkey(&desc->http_pathquery, "%lu", code) == -1 ||
+-	    kv_set(&desc->http_pathquery, "%s", error) == -1)
++	if (kv_setkey(&resp->http_pathquery, "%lu", code) == -1 ||
++	    kv_set(&resp->http_pathquery, "%s", error) == -1)
+ 		return (-1);
+ 
+ 	/* Add headers */
+-	if (kv_add(&desc->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
++	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
+ 		return (-1);
+ 
+ 	/* Is it a persistent connection? */
+ 	if (clt->clt_persist) {
+-		if (kv_add(&desc->http_headers,
++		if (kv_add(&resp->http_headers,
+ 		    "Connection", "keep-alive") == NULL)
+ 			return (-1);
+-	} else if (kv_add(&desc->http_headers, "Connection", "close") == NULL)
++	} else if (kv_add(&resp->http_headers, "Connection", "close") == NULL)
+ 		return (-1);
+ 
+ 	/* Set media type */
+-	if ((ct = kv_add(&desc->http_headers, "Content-Type", NULL)) == NULL ||
++	if ((ct = kv_add(&resp->http_headers, "Content-Type", NULL)) == NULL ||
+ 	    kv_set(ct, "%s/%s",
+ 	    media == NULL ? "application" : media->media_type,
+ 	    media == NULL ? "octet-stream" : media->media_subtype) == -1)
+ 		return (-1);
+ 
+ 	/* Set content length, if specified */
+-	if (size && ((cl =
+-	    kv_add(&desc->http_headers, "Content-Length", NULL)) == NULL ||
+-	    kv_set(cl, "%ld", size) == -1))
++	if ((cl =
++	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
++	    kv_set(cl, "%ld", size) == -1)
++		return (-1);
++
++	/* Set last modification time */
++	if (server_http_time(mtime, tmbuf, sizeof(tmbuf)) <= 0 ||
++	    kv_add(&resp->http_headers, "Last-Modified", tmbuf) == NULL)
+ 		return (-1);
+ 
+-	/* Date header is mandatory and should be added last */
+-	server_http_date(tmbuf, sizeof(tmbuf));
+-	if (kv_add(&desc->http_headers, "Date", tmbuf) == NULL)
++	/* Date header is mandatory and should be added as late as possible */
++	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
++	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL)
+ 		return (-1);
+ 
+ 	/* Write completed header */
+ 	if (server_writeresponse_http(clt) == -1 ||
+ 	    server_bufferevent_print(clt, "\r\n") == -1 ||
+-	    server_headers(clt, server_writeheader_http, NULL) == -1 ||
++	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
+ 	    server_bufferevent_print(clt, "\r\n") == -1)
+ 		return (-1);
+ 
+-	if (desc->http_method == HTTP_METHOD_HEAD) {
++	if (size == 0 || resp->http_method == HTTP_METHOD_HEAD) {
+ 		bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
+ 		if (clt->clt_persist)
+ 			clt->clt_toread = TOREAD_HTTP_HEADER;
+@@ -850,7 +965,7 @@ server_response_http(struct client *clt,
+ int
+ server_writeresponse_http(struct client *clt)
+ {
+-	struct http_descriptor	*desc = (struct http_descriptor *)clt->clt_desc;
++	struct http_descriptor	*desc = clt->clt_descresp;
+ 
+ 	DPRINTF("version: %s rescode: %s resmsg: %s", desc->http_version,
+ 	    desc->http_rescode, desc->http_resmesg);
+@@ -894,11 +1009,11 @@ server_writeheader_http(struct client *c
+ }
+ 
+ int
+-server_headers(struct client *clt,
++server_headers(struct client *clt, void *descp,
+     int (*hdr_cb)(struct client *, struct kv *, void *), void *arg)
+ {
+ 	struct kv		*hdr, *kv;
+-	struct http_descriptor	*desc = (struct http_descriptor *)clt->clt_desc;
++	struct http_descriptor	*desc = descp;
+ 
+ 	RB_FOREACH(hdr, kvtree, &desc->http_headers) {
+ 		if ((hdr_cb)(clt, hdr, arg) == -1)
+@@ -932,7 +1047,7 @@ server_httpmethod_byname(const char *nam
+ const char *
+ server_httpmethod_byid(u_int id)
+ {
+-	const char	*name = NULL;
++	const char	*name = "<UNKNOWN>";
+ 	int		 i;
+ 
+ 	for (i = 0; http_methods[i].method_name != NULL; i++) {
+@@ -996,7 +1111,7 @@ server_log_http(struct client *clt, u_in
+ 		return (-1);
+ 	if ((srv_conf->flags & SRVFLAG_LOG) == 0)
+ 		return (0);
+-	if ((desc = clt->clt_desc) == NULL)
++	if ((desc = clt->clt_descreq) == NULL)
+ 		return (-1);
+ 
+ 	if ((t = time(NULL)) == -1)
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhhm2X+GICNqJi4Csmn/M9avdfLb8M1ja/3HBZ5I3V1oBO5VXNKHh4phDYZKHX3Mp1k9CwFL6jlPPCoWpVlLxiAY=
+
+OpenBSD 5.6 errata 10, Dec 5, 2014:
+
+Several bugs were fixed that allowed a crash from remote when an active pipex
+session exists.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 010_pipex.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/net/pipex.c
+===================================================================
+RCS file: /cvs/src/sys/net/pipex.c,v
+retrieving revision 1.55
+retrieving revision 1.55.4.1
+diff -u -p -u -r1.55 -r1.55.4.1
+--- sys/net/pipex.c	22 Jul 2014 11:06:10 -0000	1.55
++++ sys/net/pipex.c	1 Dec 2014 06:57:33 -0000	1.55.4.1
+@@ -1037,6 +1037,7 @@ pipex_ppp_input(struct mbuf *m0, struct 
+ 	struct m_tag *mtag;
+ 	struct pipex_tag *tag;
+ 
++	KASSERT(m0->m_pkthdr.len >= PIPEX_PPPMINLEN);
+ 	proto = pipex_ppp_proto(m0, session, 0, &hlen);
+ #ifdef PIPEX_MPPE
+ 	if (proto == PPP_COMP) {
+@@ -1294,7 +1295,8 @@ pipex_common_input(struct pipex_session 
+ 	int proto, ppphlen;
+ 	u_char code;
+ 
+-	if (m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN)
++	if ((m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN) ||
++	    (plen < PIPEX_PPPMINLEN))
+ 		goto drop;
+ 
+ 	proto = pipex_ppp_proto(m0, session, hlen, &ppphlen);
+@@ -1358,6 +1360,7 @@ pipex_ppp_proto(struct mbuf *m0, struct 
+ 	int proto;
+ 	u_char *cp, pktbuf[4];
+ 
++	KASSERT(m0->m_pkthdr.len > sizeof(pktbuf));
+ 	m_copydata(m0, off, sizeof(pktbuf), pktbuf);
+ 	cp = pktbuf;
+ 
+@@ -1621,6 +1624,13 @@ pipex_pptp_lookup_session(struct mbuf *m
+ 		goto not_ours;
+ 	}
+ 
++	/* flag check */
++	if ((flags & PIPEX_GRE_UNUSEDFLAGS) != 0) {
++		PIPEX_DBG((NULL, LOG_DEBUG,
++		    "<%s> gre header has unused flags at pptp.", __func__));
++		goto not_ours;
++	}
++
+ 	/* lookup pipex session table */
+ 	id = ntohs(gre.call_id);
+ 	session = pipex_lookup_by_session_id(PIPEX_PROTO_PPTP, id);
+@@ -2575,6 +2585,8 @@ pipex_mppe_input(struct mbuf *m0, struct
+ 		mppe->coher_cnt++;
+ 		mppe->coher_cnt &= PIPEX_COHERENCY_CNT_MASK;
+ 	}
++	if (m0->m_pkthdr.len < PIPEX_PPPMINLEN)
++		goto drop;
+ 
+ 	pipex_ppp_input(m0, session, 1);
+ 
+Index: sys/net/pipex_local.h
+===================================================================
+RCS file: /cvs/src/sys/net/pipex_local.h,v
+retrieving revision 1.19
+retrieving revision 1.19.8.1
+diff -u -p -u -r1.19 -r1.19.8.1
+--- sys/net/pipex_local.h	20 Apr 2013 07:54:28 -0000	1.19
++++ sys/net/pipex_local.h	1 Dec 2014 06:57:33 -0000	1.19.8.1
+@@ -217,7 +217,8 @@ struct pipex_gre_header {
+ #define PIPEX_GRE_SFLAG			0x1000	/* seq present */
+ #define PIPEX_GRE_AFLAG			0x0080	/* ack present */
+ #define PIPEX_GRE_VER			0x0001	/* gre version code */
+-#define PIPEX_GRE_VERMASK		0x0003	/* gre version mask */
++#define PIPEX_GRE_VERMASK		0x0007	/* gre version mask */
++#define PIPEX_GRE_UNUSEDFLAGS		0xcf78	/* unused at pptp. set 0 in rfc2637 */
+ 
+ 	uint16_t type;
+ #define PIPEX_GRE_PROTO_PPP		0x880b	/* gre/ppp */
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhvXkW6wx7c6sxsPMnVwvuPZx77inMe50GBWlyvEGH4nVwPSBovwqbLy79DVjf2va3ZvjRrZ3gUEzUNH/EPuEjQo=
+
+OpenBSD 5.6 errata 11, Dec 5, 2014:
+
+An incorrect memcpy call would result in corrupted MAC addresses when
+using PPPOE.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 011_pppoe.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/net/if_ethersubr.c
+===================================================================
+RCS file: /cvs/src/sys/net/if_ethersubr.c,v
+retrieving revision 1.174
+diff -u -p -r1.174 if_ethersubr.c
+--- sys/net/if_ethersubr.c	12 Jul 2014 18:44:22 -0000	1.174
++++ sys/net/if_ethersubr.c	1 Dec 2014 17:48:55 -0000
+@@ -673,7 +673,12 @@ decapsulate:
+ 			goto done;
+ 
+ 		eh_tmp = mtod(m, struct ether_header *);
+-		memcpy(eh_tmp, eh, sizeof(struct ether_header));
++		/*
++		 * danger!
++		 * eh_tmp and eh may overlap because eh
++		 * is stolen from the mbuf above.
++		 */
++		memmove(eh_tmp, eh, sizeof(struct ether_header));
+ #ifdef PIPEX
+ 		if (pipex_enable) {
+ 			struct pipex_session *session;
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhkqJaB4bSV/JupP5KHhlyz0YBzPbsZSmLfDGLTnjxTY2EYYY9aR2XzOrnPg01BclNjTNL2wqc6zYWg1vXMTb7gg=
+
+OpenBSD 5.6 errata 12, Dec 9, 2014:
+
+Fix a denial of service where a malicious authority could make the resolver chase an
+endless series of delegations. (CVE-2014-8602)
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 012_unbound.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install unbound:
+
+    cd /usr/src/usr.sbin/unbound
+    make -f Makefile.bsd-wrapper obj
+    make -f Makefile.bsd-wrapper
+    make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/unbound/iterator/iterator.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/unbound/iterator/iterator.c,v
+retrieving revision 1.1.1.5
+diff -u -p -r1.1.1.5 iterator.c
+--- usr.sbin/unbound/iterator/iterator.c	16 Mar 2014 11:38:25 -0000	1.1.1.5
++++ usr.sbin/unbound/iterator/iterator.c	8 Dec 2014 22:09:25 -0000
+@@ -120,6 +120,7 @@ iter_new(struct module_qstate* qstate, i
+ 	iq->query_restart_count = 0;
+ 	iq->referral_count = 0;
+ 	iq->sent_count = 0;
++	iq->target_count = NULL;
+ 	iq->wait_priming_stub = 0;
+ 	iq->refetch_glue = 0;
+ 	iq->dnssec_expected = 0;
+@@ -445,6 +446,26 @@ handle_cname_response(struct module_qsta
+ 	return 1;
+ }
+ 
++/** create target count structure for this query */
++static void
++target_count_create(struct iter_qstate* iq)
++{
++	if(!iq->target_count) {
++		iq->target_count = (int*)calloc(2, sizeof(int));
++		/* if calloc fails we simply do not track this number */
++		if(iq->target_count)
++			iq->target_count[0] = 1;
++	}
++}
++
++static void
++target_count_increase(struct iter_qstate* iq, int num)
++{
++	target_count_create(iq);
++	if(iq->target_count)
++		iq->target_count[1] += num;
++}
++
+ /**
+  * Generate a subrequest.
+  * Generate a local request event. Local events are tied to this module, and
+@@ -516,6 +537,10 @@ generate_sub_request(uint8_t* qname, siz
+ 		subiq = (struct iter_qstate*)subq->minfo[id];
+ 		memset(subiq, 0, sizeof(*subiq));
+ 		subiq->num_target_queries = 0;
++		target_count_create(iq);
++		subiq->target_count = iq->target_count;
++		if(iq->target_count)
++			iq->target_count[0] ++; /* extra reference */
+ 		subiq->num_current_queries = 0;
+ 		subiq->depth = iq->depth+1;
+ 		outbound_list_init(&subiq->outlist);
+@@ -1342,6 +1367,12 @@ query_for_targets(struct module_qstate* 
+ 
+ 	if(iq->depth == ie->max_dependency_depth)
+ 		return 0;
++	if(iq->depth > 0 && iq->target_count &&
++		iq->target_count[1] > MAX_TARGET_COUNT) {
++		verbose(VERB_QUERY, "request has exceeded the maximum "
++			"number of glue fetches %d", iq->target_count[1]);
++		return 0;
++	}
+ 
+ 	iter_mark_cycle_targets(qstate, iq->dp);
+ 	missing = (int)delegpt_count_missing_targets(iq->dp);
+@@ -1524,6 +1555,7 @@ processLastResort(struct module_qstate* 
+ 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
+ 		}
+ 		iq->num_target_queries += qs;
++		target_count_increase(iq, qs);
+ 		if(qs != 0) {
+ 			qstate->ext_state[id] = module_wait_subquery;
+ 			return 0; /* and wait for them */
+@@ -1533,6 +1565,12 @@ processLastResort(struct module_qstate* 
+ 		verbose(VERB_QUERY, "maxdepth and need more nameservers, fail");
+ 		return error_response_cache(qstate, id, LDNS_RCODE_SERVFAIL);
+ 	}
++	if(iq->depth > 0 && iq->target_count &&
++		iq->target_count[1] > MAX_TARGET_COUNT) {
++		verbose(VERB_QUERY, "request has exceeded the maximum "
++			"number of glue fetches %d", iq->target_count[1]);
++		return error_response_cache(qstate, id, LDNS_RCODE_SERVFAIL);
++	}
+ 	/* mark cycle targets for parent-side lookups */
+ 	iter_mark_pside_cycle_targets(qstate, iq->dp);
+ 	/* see if we can issue queries to get nameserver addresses */
+@@ -1562,6 +1600,7 @@ processLastResort(struct module_qstate* 
+ 		if(query_count != 0) { /* suspend to await results */
+ 			verbose(VERB_ALGO, "try parent-side glue lookup");
+ 			iq->num_target_queries += query_count;
++			target_count_increase(iq, query_count);
+ 			qstate->ext_state[id] = module_wait_subquery;
+ 			return 0;
+ 		}
+@@ -1717,6 +1756,7 @@ processQueryTargets(struct module_qstate
+ 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
+ 		}
+ 		iq->num_target_queries += extra;
++		target_count_increase(iq, extra);
+ 		if(iq->num_target_queries > 0) {
+ 			/* wait to get all targets, we want to try em */
+ 			verbose(VERB_ALGO, "wait for all targets for fallback");
+@@ -1757,6 +1797,7 @@ processQueryTargets(struct module_qstate
+ 		/* errors ignored, these targets are not strictly necessary for
+ 		 * this result, we do not have to reply with SERVFAIL */
+ 		iq->num_target_queries += extra;
++		target_count_increase(iq, extra);
+ 	}
+ 
+ 	/* Add the current set of unused targets to our queue. */
+@@ -1802,6 +1843,7 @@ processQueryTargets(struct module_qstate
+ 					return 1;
+ 				}
+ 				iq->num_target_queries += qs;
++				target_count_increase(iq, qs);
+ 			}
+ 			/* Since a target query might have been made, we 
+ 			 * need to check again. */
+@@ -2894,6 +2936,8 @@ iter_clear(struct module_qstate* qstate,
+ 	iq = (struct iter_qstate*)qstate->minfo[id];
+ 	if(iq) {
+ 		outbound_list_clear(&iq->outlist);
++		if(iq->target_count && --iq->target_count[0] == 0)
++			free(iq->target_count);
+ 		iq->num_current_queries = 0;
+ 	}
+ 	qstate->minfo[id] = NULL;
+Index: usr.sbin/unbound/iterator/iterator.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/unbound/iterator/iterator.h,v
+retrieving revision 1.1.1.3
+diff -u -p -r1.1.1.3 iterator.h
+--- usr.sbin/unbound/iterator/iterator.h	16 Mar 2014 11:38:24 -0000	1.1.1.3
++++ usr.sbin/unbound/iterator/iterator.h	8 Dec 2014 22:09:25 -0000
+@@ -52,6 +52,8 @@ struct iter_donotq;
+ struct iter_prep_list;
+ struct iter_priv;
+ 
++/** max number of targets spawned for a query and its subqueries */
++#define MAX_TARGET_COUNT	32
+ /** max number of query restarts. Determines max number of CNAME chain. */
+ #define MAX_RESTART_COUNT       8
+ /** max number of referrals. Makes sure resolver does not run away */
+@@ -254,6 +256,10 @@ struct iter_qstate {
+ 
+ 	/** number of queries fired off */
+ 	int sent_count;
++	
++	/** number of target queries spawned in [1], for this query and its
++	 * subqueries, the malloced-array is shared, [0] refcount. */
++	int* target_count;
+ 
+ 	/**
+ 	 * The query must store NS records from referrals as parentside RRs
+
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhm+ggK98I1rvCSdAAAuoh2w1cAW9PShdW52IqAaM+ogTfSbujjQHeJknhwld7EWu105QrmO3qtPlpSZCEpik9g4=
+
+OpenBSD 5.6 errata 13, Dec 10, 2014:
+
+Missing memory barriers in virtio(4) can lead to hangs with virtio devices,
+like vio(4) and vioblk(4).
+
+Apply patch using:
+    
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 013_virtio.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/dev/pci/virtio.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/virtio.c,v
+retrieving revision 1.9
+retrieving revision 1.9.4.1
+diff -u -p -r1.9 -r1.9.4.1
+--- sys/dev/pci/virtio.c	13 Jul 2014 23:10:23 -0000	1.9
++++ sys/dev/pci/virtio.c	9 Dec 2014 12:54:26 -0000	1.9.4.1
+@@ -657,6 +657,8 @@ publish_avail_idx(struct virtio_softc *s
+ {
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+ 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
++
++	virtio_membar_producer();
+ 	vq->vq_avail->idx = vq->vq_avail_idx;
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
+ 	vq->vq_queued = 1;
+@@ -687,11 +689,15 @@ notify:
+ 			uint16_t n = vq->vq_avail_idx;
+ 			uint16_t t;
+ 			publish_avail_idx(sc, vq);
++
++			virtio_membar_sync();
+ 			t = VQ_AVAIL_EVENT(vq) + 1;
+ 			if ((uint16_t)(n - t) < (uint16_t)(n - o))
+ 				sc->sc_ops->kick(sc, vq->vq_index);
+ 		} else {
+ 			publish_avail_idx(sc, vq);
++
++			virtio_membar_sync();
+ 			if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
+ 				sc->sc_ops->kick(sc, vq->vq_index);
+ 		}
+@@ -744,6 +750,8 @@ virtio_dequeue(struct virtio_softc *sc, 
+ 		return ENOENT;
+ 	usedidx = vq->vq_used_idx++;
+ 	usedidx &= vq->vq_mask;
++
++	virtio_membar_consumer();
+ 	slot = vq->vq_used->ring[usedidx].id;
+ 	qe = &vq->vq_entries[slot];
+ 
+@@ -794,6 +802,7 @@ virtio_postpone_intr(struct virtqueue *v
+ 
+ 	/* set the new event index: avail_ring->used_event = idx */
+ 	VQ_USED_EVENT(vq) = idx;
++	virtio_membar_sync();
+ 
+ 	vq_sync_aring(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
+ 	vq->vq_queued++;
+@@ -867,6 +876,8 @@ virtio_start_vq_intr(struct virtio_softc
+ 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
+ 	else
+ 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;
++
++	virtio_membar_sync();
+ 
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+ 	vq->vq_queued++;
+Index: sys/arch/i386/include/atomic.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/atomic.h,v
+retrieving revision 1.12
+retrieving revision 1.12.4.1
+diff -u -p -r1.12 -r1.12.4.1
+--- sys/arch/i386/include/atomic.h	29 Mar 2014 18:09:29 -0000	1.12
++++ sys/arch/i386/include/atomic.h	9 Dec 2014 12:53:03 -0000	1.12.4.1
+@@ -49,6 +49,13 @@
+ #else
+ #define LOCK
+ #endif
++
++#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
++
++/* virtio needs MP membars even on SP kernels */
++#define virtio_membar_producer()	__membar("")
++#define virtio_membar_consumer()	__membar("")
++#define virtio_membar_sync()		__membar("lock; addl $0,0(%%esp)")
+ 
+ static __inline u_int64_t
+ i386_atomic_testset_uq(volatile u_int64_t *ptr, u_int64_t val)
+Index: sys/arch/amd64/include/atomic.h
+===================================================================
+RCS file: /cvs/src/sys/arch/amd64/include/atomic.h,v
+retrieving revision 1.13
+retrieving revision 1.13.4.1
+diff -u -p -r1.13 -r1.13.4.1
+--- sys/arch/amd64/include/atomic.h	18 Jul 2014 10:40:14 -0000	1.13
++++ sys/arch/amd64/include/atomic.h	9 Dec 2014 12:53:03 -0000	1.13.4.1
+@@ -54,6 +54,13 @@
+ #else
+ #define LOCK
+ #endif
++
++#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
++
++/* virtio needs MP membars even on SP kernels */
++#define virtio_membar_producer()	__membar("")
++#define virtio_membar_consumer()	__membar("")
++#define virtio_membar_sync()		__membar("mfence")
+ 
+ static inline unsigned int
+ _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
+

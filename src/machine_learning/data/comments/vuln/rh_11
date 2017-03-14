@@ -1,0 +1,31 @@
+Adobe Security Advisory APSA15-03 for Adobe Flash Player documents a flaw that can possibly lead to code execution when Flash Player is used to play a specially crafted SWF file.
+
+Quoting from the APSA15-03:
+
+A critical vulnerability (CVE-2015-5119) has been identified in Adobe Flash Player 18.0.0.194 and earlier versions for Windows, Macintosh and Linux. Successful exploitation could cause a crash and potentially allow an attacker to take control of the affected system.  
+
+Adobe is aware of reports that an exploit targeting this vulnerability has been published publicly. Adobe expects to make updates available on July 8, 2015.
+
+https://helpx.adobe.com/security/products/flash-player/apsa15-03.html
+According to the information from CERT and antivirus vendors, this issue was made public when an exploit for it was found in the data dump from the Hacking Team incident.  The issue is reported to be a use-after-free vulnerability in ActionScript 3 ByteArray.  Exploits for this flaw are being incorporated into popular exploit kits.
+
+http://www.kb.cert.org/vuls/id/561288
+http://www.symantec.com/connect/blogs/leaked-flash-zero-day-likely-be-exploited-attackers
+http://blog.trendmicro.com/trendlabs-security-intelligence/unpatched-flash-player-flaws-more-pocs-found-in-hacking-team-leak/
+http://blog.trendmicro.com/trendlabs-security-intelligence/hacking-team-flash-zero-day-integrated-into-exploit-kits/
+This issue is fixed now in version 11.2.202.481.
+
+Adobe Security Bulletin APSB15-16 for Adobe Flash Player confirms this is a use-after-free vulnerability:
+
+These updates resolve use-after-free vulnerabilities that could lead to code execution (..., CVE-2015-5119).
+
+External References:
+
+https://helpx.adobe.com/security/products/flash-player/apsb15-16.html
+https://helpx.adobe.com/security/products/flash-player/apsa15-03.html
+This issue has been addressed in the following products:
+
+  Supplementary for Red Hat Enterprise Linux 5
+  Supplementary for Red Hat Enterprise Linux 6
+
+Via RHSA-2015:1214 https://rhn.redhat.com/errata/RHSA-2015-1214.html

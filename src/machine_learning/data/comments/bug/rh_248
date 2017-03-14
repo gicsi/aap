@@ -1,0 +1,64 @@
+Description of problem:
+SELinux is preventing nginx from 'open' accesses on the file /home/mikhail/logs/nginx_error.log.
+
+*****  Plugin catchall_boolean (89.3 confidence) suggests   ******************
+
+If you want to allow httpd to read user content
+Then you must tell SELinux about this by enabling the 'httpd_read_user_content' boolean.
+You can read 'None' man page for more details.
+Do
+setsebool -P httpd_read_user_content 1
+
+*****  Plugin catchall (11.6 confidence) suggests   **************************
+
+If you believe that nginx should be allowed open access on the nginx_error.log file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep nginx /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:httpd_t:s0
+Target Context                system_u:object_r:user_home_t:s0
+Target Objects                /home/mikhail/logs/nginx_error.log [ file ]
+Source                        nginx
+Source Path                   nginx
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.4.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.7-300.fc22.x86_64+debug #1 SMP
+                              Mon Jun 29 21:56:44 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-07-03 01:48:45 YEKT
+Last Seen                     2015-07-03 01:48:45 YEKT
+Local ID                      d832b159-577b-44ea-ab1a-d18ac13d295e
+
+Raw Audit Messages
+type=AVC msg=audit(1435870125.584:680): avc:  denied  { open } for  pid=27863 comm="nginx" path="/home/mikhail/logs/nginx_error.log" dev="sdb1" ino=243744 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:user_home_t:s0 tclass=file permissive=0
+
+
+Hash: nginx,httpd_t,user_home_t,file,open
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.4.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.7-300.fc22.x86_64+debug
+type:           libreport
+
+Potential duplicate: bug 964379
+Strange that you would put log contents in your homedir, but to make this work you should setup proper labeling.
+
+
+# semanage fcontext -a -t httpd_log_t '/home/mikhail/logs(/.*)?"
+# restorecon -R -v /home/mikhail/logs

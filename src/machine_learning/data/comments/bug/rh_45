@@ -1,0 +1,5 @@
+Description of problem:
+We're still shipping biber 1.8 from 2013. Could we bump to something more modern - version 2.1 was released in May 2015. TIA.
+Unfortunately, we cannot until texlive is bumped to a more recent version :(
+
+*** This bug has been marked as a duplicate of bug 1232215 ***

@@ -1,0 +1,68 @@
+Description of problem:
+Running tests via the CLI, when giving <enter> with no text to prompt causes a TypeError and traceback.
+
+Version-Release number of selected component (if applicable):
+rhel 6.6
+redhat-certification-1.0-20150623.el6
+redhat-certification-hardware-1.6.6-20150619.el6
+
+
+How reproducible:
+occurred repeatedly in affected test run.
+
+Steps to Reproduce:
+1. setup testing with `rhcert-backend plan` on a system with cd-rom drive
+2. run `rhcert-backend run` to start certification
+3. when prompted for cd-rom test, hit <enter> without giving another response.
+
+Actual results:
+crash with TypeError and traceback
+
+Expected results:
+cd-rom test successfully skipped
+
+Additional info:
+Test Verification Passed
+Running cdrom on device=sr0 udi=/devices/pci0000:00/0000:00:1f.2/host1/target1:0:0/1:0:0:0/block/sr0 testserver=intel-s3e37-01.lab.eng.rdu.redhat.com 
+
+  Your device /dev/sr0 supports cd-rw, cd-r, cd-rom 
+
+Would you like to test cd-rw media? (yes|no) no
+response: no
+response: False
+Please choose the media to be tested: 
+Traceback (most recent call last):
+  File "/usr/bin/rhcert-backend", line 37, in <module>
+    success = rhcertBackend.do(args)
+  File "/usr/lib/python2.6/site-packages/rhcert/client/backend.py", line 188, in do
+    result = self.commands[self.command]()
+  File "/usr/lib/python2.6/site-packages/rhcert/client/harness.py", line 409, in doRun
+    return self._doRun(testDocuments)
+  File "/usr/lib/python2.6/site-packages/rhcert/client/harness.py", line 552, in _doRun
+    returnValue = self.runTest(logDirectory, testDocument, runDocument, outputFilePath)
+  File "/usr/lib/python2.6/site-packages/rhcert/client/harness.py", line 1001, in runTest
+    rv = test.run()
+  File "/usr/lib/python2.6/site-packages/rhcert/suites/hwcert/tests/cdrom/cdrom.py", line 102, in run
+    self.getMediaChoice()
+  File "/usr/lib/python2.6/site-packages/rhcert/suites/hwcert/hwcert/opticalDiskTest.py", line 115, in getMediaChoice
+    choice = self.prompt("Please choose the media to be tested: ", map(self.printMediaName, self.supportedMedia))
+  File "/usr/lib/python2.6/site-packages/rhcert/testUI.py", line 68, in prompt
+    return self.ui.prompt(message, validation=validation, default=default)
+  File "/usr/lib/python2.6/site-packages/rhcert/commandLineUI.py", line 76, in prompt
+    error = validation(response.strip())
+TypeError: 'list' object is not callable
+previously a null answer would cause the test to loop over the same prompt
+also seen on 7.1 with
+
+redhat-certification-1.0-20150624.el7.noarch
+redhat-certification-hardware-1.7.1-20150618.el7.noarch
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHEA-2015-1201.html

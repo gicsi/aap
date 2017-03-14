@@ -1,0 +1,102 @@
+Apply by doing
+	cd /usr/src/sbin/ping
+	patch -p0 < ping.patch
+
+And then to rebuild and install
+	make && make install
+
+Index: ping.c
+===================================================================
+RCS file: /cvs/src/sbin/ping/ping.c,v
+retrieving revision 1.25
+retrieving revision 1.28
+diff -u -r1.25 -r1.28
+--- ping.c	1997/08/06 01:45:24	1.25
++++ ping.c	1998/03/31 23:04:10	1.28
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $	*/
++/*	$OpenBSD: ping.c,v 1.28 1998/03/31 23:04:10 deraadt Exp $	*/
+ /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
+ 
+ /*
+@@ -47,7 +47,7 @@
+ #if 0
+ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
+ #else
+-static char rcsid[] = "$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $";
++static char rcsid[] = "$OpenBSD: ping.c,v 1.28 1998/03/31 23:04:10 deraadt Exp $";
+ #endif
+ #endif /* not lint */
+ 
+@@ -438,9 +438,7 @@
+ 	 * ethernet, or just want to fill the arp cache to get some stuff for
+ 	 * /etc/ethers.
+ 	 */
+-	hold = 48 * 1024;
+-	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&hold,
+-	    sizeof(hold));
++	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(packlen));
+ 
+ 	if (to->sin_family == AF_INET)
+ 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
+@@ -469,6 +467,7 @@
+ 		struct sockaddr_in from;
+ 		register int cc;
+ 		int fromlen;
++		sigset_t omask, nmask;
+ 
+ 		if (options & F_FLOOD) {
+ 			pinger();
+@@ -488,7 +487,11 @@
+ 			perror("ping: recvfrom");
+ 			continue;
+ 		}
++		sigemptyset(&nmask);
++		sigaddset(&nmask, SIGALRM);
++		sigprocmask(SIG_BLOCK, &nmask, &omask);
+ 		pr_pack((char *)packet, cc, &from);
++		sigprocmask(SIG_SETMASK, &omask, NULL);
+ 		if (npackets && nreceived >= npackets)
+ 			break;
+ 	}
+@@ -614,7 +617,7 @@
+ {
+ 	register struct icmp *icp;
+ 	register in_addr_t l;
+-	register int i, j;
++	register u_int i, j;
+ 	register u_char *cp,*dp;
+ 	static int old_rrlen;
+ 	static char old_rr[MAX_IPOPTLEN];
+@@ -765,9 +768,14 @@
+ 				cp += i;
+ 				break;
+ 			}
+-			old_rrlen = i;
+-			memcpy(old_rr, cp, i);
++			if (i < MAX_IPOPTLEN) {
++				old_rrlen = i;
++				memcpy(old_rr, cp, i);
++			} else
++				old_rrlen = 0;
++
+ 			(void)printf("\nRR: ");
++			j = 0;
+ 			for (;;) {
+ 				l = *++cp;
+ 				l = (l<<8) + *++cp;
+@@ -779,8 +787,13 @@
+ 					(void)printf("\t%s", pr_addr(ntohl(l)));
+ 				hlen -= 4;
+ 				i -= 4;
++				j += 4;
+ 				if (i <= 0)
+ 					break;
++				if (j >= MAX_IPOPTLEN) {
++					(void)printf("\t(truncated route)");
++					break;
++				}
+ 				(void)putchar('\n');
+ 			}
+ 			break;
+

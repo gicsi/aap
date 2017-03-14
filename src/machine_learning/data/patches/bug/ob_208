@@ -1,0 +1,46 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 027_rtt.patch
+
+And then rebuild your kernel.
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.158.2.2
+retrieving revision 1.158.2.3
+diff -u -p -r1.158.2.2 -r1.158.2.3
+--- sys/netinet/tcp_input.c	26 May 2004 20:02:06 -0000	1.158.2.2
++++ sys/netinet/tcp_input.c	11 Jan 2005 04:40:29 -0000	1.158.2.3
+@@ -2901,8 +2901,13 @@ tcp_xmit_timer(tp, rtt)
+ 	short delta;
+ 	short rttmin;
+ 
+-	tcpstat.tcps_rttupdated++;
+ 	--rtt;
++	if (rtt < 0)
++		rtt = 0;
++	if (rtt > TCP_RTT_MAX)
++		rtt = TCP_RTT_MAX;
++
++	tcpstat.tcps_rttupdated++;
+ 	if (tp->t_srtt != 0) {
+ 		/*
+ 		 * srtt is stored as fixed point with 3 bits after the
+Index: sys/netinet/tcp_var.h
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_var.h,v
+retrieving revision 1.61
+retrieving revision 1.61.2.1
+diff -u -p -r1.61 -r1.61.2.1
+--- sys/netinet/tcp_var.h	2 Mar 2004 12:51:12 -0000	1.61
++++ sys/netinet/tcp_var.h	11 Jan 2005 04:40:30 -0000	1.61.2.1
+@@ -325,6 +325,7 @@ tcp_reass_unlock(struct tcpcb *tp)
+ #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
+ #define	TCP_RTTVAR_SCALE	4	/* multiplier for rttvar; 2 bits */
+ #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
++#define TCP_RTT_MAX		(1<<9)	/* maximum rtt */
+ 
+ /*
+  * The initial retransmission should happen at rtt + 4 * rttvar.
+

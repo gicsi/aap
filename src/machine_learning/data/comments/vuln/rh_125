@@ -1,0 +1,109 @@
+All nightly images since syslinux-6.03-4.fc23 fail to boot, when SYSLINUX / ISOLINUX is used (they boot in cases where it's not used, e.g. in UEFI mode). They just hang at the ISOLINUX or SYSLINUX screen.
+
+This appears to be somehow caused by the Rawhide environment - not sure whether its the compiler, linker, or different compiler options in Rawhide.
+
+I thought it had something to do with hardened builds, so I tried rebuilding for Rawhide with %undefine _hardened_build added to the spec, as mentioned at https://fedoraproject.org/wiki/Changes/Harden_All_Packages , but a live image composed with that syslinux still does not boot. However, if I build the *same* .src.rpm for f21 instead of rawhide and include that fc21 build of syslinux in my live image, it boots fine. So it's clearly some difference between the F21 and F23 build environment. I haven't figured out precisely what the difference is yet, though.
+
+Note that the syslinux-6.03-3.fc23 build failed, so before 6.03-4.fc23 landed, the 'current' Rawhide build was syslinux-6.03-2.fc22 , built on 2015-01-10; it's some change since then that causes the problem.
+
+Proposing as an Alpha blocker, criterion "All release-blocking images must boot in their supported configurations." - https://fedoraproject.org/wiki/Fedora_23_Alpha_Release_Criteria#Release-blocking_images_must_boot .
+If anyone wants to try and figure out the difference between the 21 and 23 builds, here they are:
+
+21 build - http://koji.fedoraproject.org/koji/taskinfo?taskID=10183978
+23 build - http://koji.fedoraproject.org/koji/taskinfo?taskID=10183680
+CCing Till Maas in case the hardened build stuff *is* to do with this somehow, perhaps "%undefine _hardened_build" doesn't work? I'll try fiddling around with a few more compilation scenarios.
+Only thing I can see upstream that might be related is this: 
+
+http://www.syslinux.org/archives/2015-February/023209.html
+
+but that mentions reboots instead of hangs. ;(
+For whatever it's worth, an F22 scratch build fails to compile outright.
+
+AFAICT, all the flags involved in 'hardening' - -fPIE, -pie, and -z now - are the same between the F21 build and the F23 build, so I don't *think* the hardening stuff is related, but I may be missing something.
+
+At this point my best guess is it's down to gcc itself?
+Not sure if it will help, but you can try adding --stdc=gnu89 to the CFLAGS.
+Moez's idea changes nothing, a syslinux build with --std=gnu89 added to the CFLAGS still hangs.
+I wondered if nasm has anything to do with this, so I played with it a bit. I found out that syslinux actually fails to build with nasm 2.11.06 - which is why F22 builds of syslinux fail. However, it seems unrelated to this bug. syslinux does build with an f23 buildroot with nasm 2.11.05 (which is the same nasm used in the last working build, 6.03-2.fc22), but it still hangs - so this isn't caused by a change between nasm 2.11.05 and nasm 2.11.08, it appears.
+I set up a clean Rawhide mock chroot and downgraded gcc to 4.9.2-5.fc22 - which also required downgrading some mingw-gcc subpackages to 4.9.2-2.fc22 and gmp to 6.0.0-8.fc22, and removing gcc-plugin-gdb. I built syslinux that way, and it works. So it seems like we're looking at something between GCC 4.9.2 and 5.1.1. I'll try and do a 5.0 build to see if the issue is between 4.9 and 5 or between 5 and 5.1...
+I think I've triaged this down as close as I can with Koji packages. syslinux built with gcc-4.9.2-5.fc22 - http://koji.fedoraproject.org/koji/buildinfo?buildID=602917 - works. syslinux built with gcc-5.0.0-0.7.fc22 - http://koji.fedoraproject.org/koji/buildinfo?buildID=609238 - fails. There's no other successful Koji builds that come in between those two in NVR. The breakage is somewhere in the changes between those two.
+
+Unfortunately that's still a pretty big difference, but it's the best I can do for now.
+Seems like this qualifies as an automatic blocker "Complete failure of any release-blocking TC/RC image to boot at all under any circumstance" as it affects all BIOS x86 systems and there is no possibility of an alpha with this bug. It's mainly due to a neat trick that BIOS and UEFI aren't separate images. But +1 alpha blocker in any case.
++1 blocker.
+Peter Jones tells me he is working against an internal deadline and won't be able to look at this immediately. Adam, huge thanks for narrowing this down. Maybe we can find someone on the gcc team to dig further?
+Chris: I didn't invoke automatic blocker rules because it boots on UEFI, but let's call Matt's comment a +1 and say it's AcceptedBlocker now, it is fairly slam dunk-ish.
+
+Matthew: yeah, I'm aware of pjones' time constraints - if you can find someone else that'd be great, I really don't have the skills to debug this one properly (at worst I'd wind up trying to triangulate through the entire GCC 5.x commit history, which doesn't sound fun).
+For whatever it's worth, I tried a build of current git master - 5186539cdc9e1da92a30f6e9af0832084d3407db - and it appears to work. I had to change 'make bios clean all' to 'make bios all' and 'make efi64 clean all' to 'make efi64 all' - the syslinux release tarballs have bios/version.h and efi64/version.h files but the git repo doesn't, and somehow 'make (target) all' generates (target)/version.h but 'make (target) clean all' doesn't - and add a build dependency on python2, as somehow the menugen.py bit comes into the build, not sure whether that's just a change since 6.03, something to do with building from git instead of a tarball, or something to do with the change from 'clean all' to 'all'.
+
+Still, the image booted. I suppose now I get to try and triage out what commit fixed the problem, assuming it's actually some commit between 6.03 and current master and not the changes to the build process that 'fixed' things...
+OK, so then I tested a build with the whole patch series from 6.03 to current master applied as patches (rather than a tarball of a git checkout), which avoids the need for the other changes; the diff is simply just the additional patches (and a NEVR bump). That still works. So, the fix is definitely in the commits between 6.03 and current git master somewhere; I'll work on isolating the relevant commit.
+So, I bisected through the post-6.03 commit log and eventually zeroed in on the same commit poma did, only the exact opposite way he says. It seems to me that *backporting* this commit:
+
+http://repo.or.cz/w/syslinux.git/commit/3106dcd19061b4443c5beba4f0e09412e8d37fbe
+
+to 6.03 actually fixes the problem. I've taken the liberty of sending a 6.03-5 build to Rawhide: http://koji.fedoraproject.org/koji/taskinfo?taskID=10279271 . hopefully the next set of nightlies should boot.
+Rather than opposite, it is different operators logic, git vs stable.
+
+This is one of several ways to patch git, one of El Capitan Thomas Schmitt:
+---
+ com32/menu/readconfig.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/com32/menu/readconfig.c b/com32/menu/readconfig.c
+index 257b042..b7814be 100644
+--- a/com32/menu/readconfig.c
++++ b/com32/menu/readconfig.c
+@@ -299,7 +299,7 @@ static char *copy_sysappend_string(char *dst, const char *src)
+     char c;
+ 
+     while ((c = *src++)) {
+-	if (c <= ' ' || c == '\x7f') {
++	if ((c >= 0 && c <= ' ') || c == '\x7f') {
+ 	    if (!was_space)
+ 		*dst++ = '_';
+ 	    was_space = true;
+
+
+
+For the stable branch sufficient is one-third of the "SYSAPPEND" patch:
+---
+ core/sysappend.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/sysappend.c b/core/sysappend.c
+index 5c3f650..758703e 100644
+--- a/core/sysappend.c
++++ b/core/sysappend.c
+@@ -35,7 +35,7 @@ static char *copy_and_mangle(char *dst, const char *src)
+     char c;
+ 
+     while ((c = *src++)) {
+-	if (c <= ' ' && c == '\x7f') {
++	if (c <= ' ' || c == '\x7f') {
+ 	    if (!was_space)
+ 		*dst++ = '_';
+ 	    was_space = true;
+(In reply to Adam Williamson from comment #14)
+> For whatever it's worth, I tried a build of current git master -
+> 5186539cdc9e1da92a30f6e9af0832084d3407db - and it appears to work.
+
+Oh yeah, one more detail, pour moi, in any of the tests, git code never worked per se, always needed patch to accomplish boot ability.
+I read that your case is exactly the opposite.
+Interesting.
+poma: yes, for me, current git master works fine as-is (built from a git checkout or with the entire patch series applied on top of 6.03 tarball).
+Note: the 2015-07-03 nightlies did not include 6.03-5, they still have 6.03-4, so they're still broken. We'll have to wait for the 07-04 nightlies to see if the official images are fixed. A test live image I created with 6.03-5 boots fine.
+https://kojipkgs.fedoraproject.org/mash/rawhide-20150704/rawhide/x86_64/os/images/boot.iso
+
+PASSED/BOOTABLE
+https://kojipkgs.fedoraproject.org/work/tasks/8873/10288873/Fedora-Live-Xfce-x86_64-rawhide-20150704.iso
+
+PASSED/BOOTABLE
+dracut: FATAL: CD check failed!
+https://bugzilla.redhat.com/show_bug.cgi?id=1239226
+
+What an appliance
+A matter of science
+yeah, this is clearly working now. let's close it. The disc check issue is...something else.
+Thanks poma and Adam for heroic work on tracking this down!

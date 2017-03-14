@@ -1,0 +1,8 @@
+Defects in the payload validation and processing functions of
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">isakmpd(8)</a>
+have been discovered.  An attacker could send malformed ISAKMP messages and
+cause isakmpd to crash or to loop endlessly.  This patch fixes these problems
+and removes some memory leaks.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/015_isakmpd2.patch">
+A source code patch exists which remedies this problem.</a>

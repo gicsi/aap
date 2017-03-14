@@ -1,0 +1,9 @@
+As
+<a href="http://seclists.org/lists/fulldisclosure/2004/Jun/0191.html">disclosed</a>
+by Thomas Walpuski
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">isakmpd(8)</a>
+is still vulnerable to unauthorized SA deletion.  An attacker can delete IPsec
+tunnels at will.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/024_isakmpd3.patch">
+A source code patch exists which remedies this problem.</a>

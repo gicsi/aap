@@ -1,0 +1,56 @@
+Description of problem
+======================
+
+*RHEL6_7/databases/postgresql/pre.sh* has syntax error on line ~ 465:
+
+>     # bash -n /usr/share/preupgrade/RHEL6_7/databases/postgresql/pre.sh
+>     /usr/share/preupgrade/RHEL6_7/databases/postgresql/pre.sh: line 465: syntax error near unexpected token `('
+>     /usr/share/preupgrade/RHEL6_7/databases/postgresql/pre.sh: line 465: `        postgresql-@(contrib|devel|docs|plperl|plpython|pltcl|server|test))'
+
+Note that the line numbers are different (+ ~20) than in the repo due
+to header inclusion at build time.
+
+
+Version-Release number of selected component
+============================================
+
+preupgrade-assistant-contents-0.6.30-1
+
+
+
+Steps to Reproduce
+==================
+
+Not known ATM: the error was discovered by static check based on list
+of installed files from RPM DB.
+I can not see any obvious error. Maybe your analyzer does not understand pattern matching?
+(adding Pavel Raiskup to cc)
+Alois, try 'bash -s extglob -n pre.sh' instead of 'bash -n pre.sh'.
+@fklunav "your analyzer" is bash--the same that is about to run the actual script.
+
+@praiskup Yes, it's OK with extglob.
+
+So apparently it's not smart enough to see the extglob being turned on on the line ~12.  So ... false positive.
+Beware, though---turns out that
+
+   bash -s extglob -n file.sh
+
+does not really do what it looks like.
+
+It does not syntax-check the file.sh, but instead starts a new shell.  The `-n file.sh` is apparently ignored--it won't complain if the file.sh does not exist.
+
+Since there's no visual hint for me with my shell settings that new sub-shell has been open, I thought it just passed the test.  So technically the above comment is false negative.  (I discovered it later when I was closing the shell via C-D--I had to press it twice to see the window closing.  If I just closed the window, I would not even know!)
+
+I did not find out how to do the syntax check with bash and shell options on, so I ran ShellCheck and SC reported it was OK.
+
+Anyway, still NOTABUG.
+Ouch!  Sorry, my mistake.  Try 'bash -O extglob -n pre.sh'.
+(In reply to Pavel Raiskup from comment #6)
+> Ouch!  Sorry, my mistake.  Try 'bash -O extglob -n pre.sh'.
+
+    @fullmoon:~/vcs.ipu/preupgrade-assistant-contents/RHEL6_7/databases/postgresql(master)$ bash -O extglob -n pre.sh 
+    @fullmoon:~/vcs.ipu/preupgrade-assistant-contents/RHEL6_7/databases/postgresql(master)$ echo $?
+    0
+    @fullmoon:~/vcs.ipu/preupgrade-assistant-contents/RHEL6_7/databases/postgresql(master)$ 
+
+OK as well, thanks!

@@ -1,0 +1,42 @@
+Description of problem:
+Reference #4ee455d6dbdbc326a2e1f83ef6f6f69f. 
+Unhandled exception reference #4ee455d6dbdbc326a2e1f83ef6f6f69f: too many connection resets (due to Timeout::Error - Timeout::Error) after 1 requests on 41987340, last used 241.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+can't connect to DB 
+
+Steps to Reproduce:
+1. connect via admin panel application: ga-nprogram.rhcloud.com
+2. try to use phpmyadmin
+3.
+
+Actual results:
+timeout
+
+Expected results:
+to connect to my db
+
+Additional info:
+So far I've used it without a problem for 6 months.
+The staging application version  ga3-nprogram.rhcloud.com is running correctly.
+Proxy Error
+
+The proxy server received an invalid response from an upstream server.
+The proxy server could not handle the request GET /phpmyadmin/.
+
+Reason: Error reading from remote server
+
+Apache/2.2.15 (Red Hat) Server at ga-nprogram.rhcloud.com Port 443
+Status:	Connecting to ga-nprogram.rhcloud.com...
+Response:	fzSftp started
+Command:	open "54f9784bfcf933399100025e@ga-nprogram.rhcloud.com" 22
+Error:	Connection timed out
+Error:	Could not connect to server
+is the database otherwise accessible?  
+
+have you attempted to restart either phpmyadmin or the mysql server?
+I've attempted the application restart.
+Now the system is returned ok. I really can't understand what's happened.

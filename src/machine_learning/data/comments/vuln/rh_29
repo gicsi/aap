@@ -1,0 +1,35 @@
+Description of problem:  Upon startup, Firefox is always showing
+the "Firefox is having trouble recovering your windows and tabs screen".
+
+
+Version-Release number of selected component (if applicable):
+firefox-39.0-6.fc22.x86_64
+
+
+How reproducible:
+Stop firefox and restart
+
+
+Steps to Reproduce:
+1.  See above
+2.
+3.
+
+Actual results:
+Display of "Firefox is having trouble recovering your windows and tabs screen"
+
+Expected results:
+Normal display.
+
+
+Additional info:
+This started occuring with the 39.0-6 upgrade.  Never encountered this issue before.  I've tried deleting the .mozilla directory and starting over, but doesn't help.  Problem still occurs, so appears something happened with the latest upgrade.
+The corresponding Mozilla bug report seems to be https://bugzilla.mozilla.org/show_bug.cgi?id=1180371
+Works for me…
+Looks like there's a firefox crash when browser close so the session is not stored. Can you please launch firefox in gdb, quit firefox and see if it crashes in gdb? If so please attach a backtrace. How-to is here:  http://fedoraproject.org/wiki/Debugging_guidelines_for_Mozilla_products#Application_crash
+Thanks.
+Hi, I tried to debug the problem following the instructions you provided, but the only thing that gets written in crash_bt is "You can't do that without a process to debug.", just after I tried to print DumpJSStack(). gdb actually shows firefox exiting correctly so it appears there's no crash involved.
+
+[Thread 0x7ffff7fd5740 (LWP 5625) exited]
+[Inferior 1 (process 5625) exited normally]
+*** This bug has been marked as a duplicate of bug 1240259 ***

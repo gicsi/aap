@@ -1,0 +1,103 @@
+From cd525c459180a0a56abd5522a2391cd0d3366675 Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 13:29:51 -0400
+Subject: [PATCH] Add MANIFEST.MF.
+
+---
+ MANIFEST.MF        | 17 +++++++++++++++++
+ add-manifest.patch | 19 +++++++++++++++++++
+ jnr-constants.spec | 10 +++++++++-
+ 3 files changed, 45 insertions(+), 1 deletion(-)
+ create mode 100644 MANIFEST.MF
+ create mode 100644 add-manifest.patch
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+new file mode 100644
+index 0000000..79fe663
+--- /dev/null
++++ b/MANIFEST.MF
+@@ -0,0 +1,17 @@
++Manifest-Version: 1.0
++Bundle-SymbolicName: jnr.constants
++Export-Package: com.kenai.constantine;version="0.8.8",com.kenai.consta
++ ntine.platform;version="0.8.8",jnr.constants;version="0.8.8",jnr.cons
++ tants.platform;version="0.8.8",jnr.constants.platform.darwin;version=
++ "0.8.8",jnr.constants.platform.fake;version="0.8.8",jnr.constants.pla
++ tform.freebsd;version="0.8.8",jnr.constants.platform.linux;version="0
++ .8.8",jnr.constants.platform.openbsd;version="0.8.8",jnr.constants.pl
++ atform.sunos;version="0.8.8",jnr.constants.platform.windows;version="
++ 0.8.8"
++Bundle-Name: Java Native Runtime Constants
++Bundle-Version: 0.8.8
++Bundle-Localization: plugin
++Bundle-ManifestVersion: 2
++Bundle-ActivationPolicy: lazy
++Bundle-RequiredExecutionEnvironment: JavaSE-1.7
++
+diff --git a/add-manifest.patch b/add-manifest.patch
+new file mode 100644
+index 0000000..2f443fa
+--- /dev/null
++++ b/add-manifest.patch
+@@ -0,0 +1,19 @@
++diff -up ./pom.xml.fix ./pom.xml
++--- ./pom.xml.fix	2015-06-16 16:09:26.737894515 -0400
+++++ ./pom.xml	2015-06-16 16:10:40.290151510 -0400
++@@ -66,6 +66,15 @@
++           </execution>
++         </executions>
++       </plugin>
+++      <plugin>
+++        <groupId>org.apache.maven.plugins</groupId>
+++        <artifactId>maven-jar-plugin</artifactId>
+++        <configuration>
+++          <archive>
+++            <manifestFile>MANIFEST.MF</manifestFile>
+++          </archive>
+++        </configuration>
+++      </plugin>
++     </plugins>
++   </build>
++ </project>
+diff --git a/jnr-constants.spec b/jnr-constants.spec
+index 1f249c7..c0dbc4c 100644
+--- a/jnr-constants.spec
++++ b/jnr-constants.spec
+@@ -1,10 +1,13 @@
+ Name:           jnr-constants
+ Version:        0.8.8
+-Release:        1%{?dist}
++Release:        2%{?dist}
+ Summary:        Java Native Runtime constants 
+ License:        ASL 2.0
+ URL:            http://github.com/jnr/%{name}/
+ Source0:        https://github.com/jnr/%{name}/archive/%{version}.tar.gz
++Source1:        MANIFEST.MF
++Patch0:         add-manifest.patch
++
+ BuildArch:      noarch
+ 
+ BuildRequires:  maven-local
+@@ -23,6 +26,8 @@ This package contains the API documentation for %{name}.
+ 
+ %prep
+ %setup -q
++cp %{SOURCE1} .
++%patch0
+ find ./ -name '*.jar' -delete
+ find ./ -name '*.class' -delete
+ %mvn_file : %{name}/%{name} %{name} constantine
+@@ -40,6 +45,9 @@ find ./ -name '*.class' -delete
+ %doc LICENSE
+ 
+ %changelog
++* Thu Jun 18 2015 Jeff Johnston <jjohnstn@redhat.com> 0.8.8-2
++- Add MANIFEST.MF.
++
+ * Tue Jun 16 2015 Alexander Kurtakov <akurtako@redhat.com> 0.8.8-1
+ - Update to upstream 0.8.8.
+ - Switch to mvn() style BRs.
+-- 
+1.9.3
+
+

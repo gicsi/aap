@@ -1,0 +1,46 @@
+Version-Release number of selected component:
+cinnamon-2.6.7-2.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+cmdline:        python2 /usr/lib/cinnamon-looking-glass/cinnamon-looking-glass.py daemon
+executable:     /usr/lib/cinnamon-looking-glass/cinnamon-looking-glass.py
+kernel:         3.19.5-100.fc20.x86_64
+runlevel:       N 5
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+page_extensions.py:90:getUpdates:KeyError: 'error'
+
+Traceback (most recent call last):
+  File "/usr/lib/cinnamon-looking-glass/lookingglass_proxy.py", line 57, in _onProxyReady
+    self._setStatus(True)
+  File "/usr/lib/cinnamon-looking-glass/lookingglass_proxy.py", line 35, in _setStatus
+    callback(state)
+  File "/usr/lib/cinnamon-looking-glass/page_extensions.py", line 83, in onStatusChange
+    self.getUpdates()
+  File "/usr/lib/cinnamon-looking-glass/page_extensions.py", line 90, in getUpdates
+    self.store.append([item["status"], item["type"], item["name"], item["description"], item["uuid"], item["folder"], item["url"], item["error"] == "true", item["error_message"]])
+KeyError: 'error'
+
+Local variables in innermost frame:
+item: {'status': 'Loaded', 'uuid': 'menu@cinnamon.org', 'url': '', 'description': 'Main Cinnamon menu', 'folder': '/usr/share/cinnamon/applets/menu@cinnamon.org', 'type': 'Applet', 'name': 'Menu'}
+self: <ModulePage object at 0x1681550 (page_extensions+ModulePage at 0x15b8a40)>
+data: [{'status': 'Loaded', 'uuid': 'menu@cinnamon.org', 'url': '', 'description': 'Main Cinnamon menu', 'folder': '/usr/share/cinnamon/applets/menu@cinnamon.org', 'type': 'Applet', 'name': 'Menu'}, {'status': 'Loaded', 'uuid': 'window-list@cinnamon.org', 'url': '', 'description': 'Main Cinnamon window list', 'folder': '/usr/share/cinnamon/applets/window-list@cinnamon.org', 'type': 'Applet', 'name': 'Window list'}, {'status': 'Loaded', 'uuid': 'notifications@cinnamon.org', 'url': '', 'description': 'Click to display and manage system notifications', 'folder': '/usr/share/cinnamon/applets/notifications@cinnamon.org', 'type': 'Applet', 'name': 'Notifications'}, {'status': 'Loaded', 'uuid': 'removable-drives@cinnamon.org', 'url': '', 'description': 'Access removable drives', 'folder': '/usr/share/cinnamon/applets/removable-drives@cinnamon.org', 'type': 'Applet', 'name': 'Removable drives'}, {'status': 'Loaded', 'uuid': 'network@cinnamon.org', 'url': '', 'description': 'Network manager applet', 'folder': '/usr/share/cinnamon/applets/network@cinnamon.org', 'type': 'Applet', 'name': 'Network Manager'}, {'status': 'Loaded', 'uuid': 'sound@cinnamon.org', 'url': '', 'description': 'A Cinnamon applet to control sound and music', 'folder': '/usr/share/cinnamon/applets/sound@cinnamon.org', 'type': 'Applet', 'name': 'Sound'}, {'status': 'Loaded', 'uuid': 'power@cinnamon.org', 'url': '', 'description': 'Cinnamon power management applet', 'folder': '/usr/share/cinnamon/applets/power@cinnamon.org', 'type': 'Applet', 'name': 'Power Manager'}, {'status': 'Loaded', 'uuid': 'systray@cinnamon.org', 'url': '', 'description': 'An applet which hosts all the system tray icons', 'folder': '/usr/share/cinnamon/applets/systray@cinnamon.org', 'type': 'Applet', 'name': 'System Tray'}, {'status': 'Loaded', 'uuid': 'calendar@cinnamon.org', 'url': '', 'description': 'The Cinnamon calendar applet', 'folder': '/usr/share/cinnamon/applets/calendar@cinnamon.org', 'type': 'Applet', 'name': 'Calendar'}, {'status': 'Loaded', 'uuid': 'brightness@cinnamon.org', 'url': '', 'description': "Control your mobile computer's display brightness", 'folder': '/usr/share/cinnamon/applets/brightness@cinnamon.org', 'type': 'Applet', 'name': 'Brightness'}, {'status': 'Loaded', 'uuid': 'weather@mockturtl', 'url': '', 'description': 'View your local weather forecast', 'folder': '/home/sly/.local/share/cinnamon/applets/weather@mockturtl', 'type': 'Applet', 'name': 'Weather'}]
+success: True
+Created attachment 1040580
+File: backtrace
+Created attachment 1040581
+File: environ
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

@@ -1,0 +1,9 @@
+This bug is created as a clone of upstream ticket:
+https://fedorahosted.org/389/ticket/47878
+
+If setup-ds.pl -u is run to upgrade several instances it stops after the first failure to upgarde an instance. It should report an error, but continue to upgrade the other instances.
+
+In addition we should verify in which state the failing instance is after aborting an upgrade. Is it reset to the previous state ?
+Sorry, wrong operation...
+
+*** This bug has been marked as a duplicate of bug 1240406 ***

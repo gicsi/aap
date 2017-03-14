@@ -1,0 +1,54 @@
+Description of problem:
+SELinux is preventing /usr/sbin/cupsd from 'unlink' accesses on the file printers.conf.O.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that cupsd should be allowed unlink access on the printers.conf.O file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep cupsd /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:cupsd_t:s0-s0:c0.c1023
+Target Context                unconfined_u:object_r:cupsd_etc_t:s0
+Target Objects                printers.conf.O [ file ]
+Source                        cupsd
+Source Path                   /usr/sbin/cupsd
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           cups-2.0.2-5.fc22.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-303.fc22.x86_64 #1 SMP Thu
+                              May 28 12:37:06 UTC 2015 x86_64 x86_64
+Alert Count                   2
+First Seen                    2015-06-15 22:15:05 EEST
+Last Seen                     2015-06-21 17:10:21 EEST
+Local ID                      14b20352-0be3-474b-9f1a-a545a26091b6
+
+Raw Audit Messages
+type=AVC msg=audit(1434895821.580:1566): avc:  denied  { unlink } for  pid=4074 comm="cupsd" name="printers.conf.O" dev="dm-1" ino=138502 scontext=system_u:system_r:cupsd_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:cupsd_etc_t:s0 tclass=file permissive=1
+
+
+type=SYSCALL msg=audit(1434895821.580:1566): arch=x86_64 syscall=unlink success=yes exit=0 a0=7ffde1dd9560 a1=7f85aca72106 a2=7ffde1dd9579 a3=7f85ad8331d0 items=0 ppid=1 pid=4074 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=cupsd exe=/usr/sbin/cupsd subj=system_u:system_r:cupsd_t:s0-s0:c0.c1023 key=(null)
+
+Hash: cupsd,cupsd_t,cupsd_etc_t,file,unlink
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.5.1
+hashmarkername: setroubleshoot
+kernel:         4.0.4-303.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 883742
+# /sbin/restorecon -v /etc/cups/printers.conf

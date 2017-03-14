@@ -1,0 +1,4 @@
+A minor problem; the sparc eeprom(8) command is not Y2K compliant.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/sparc/014_eepromy2k.patch">
+A source code patch exists which remedies this problem.</a>
+This is the second revision of the patch.

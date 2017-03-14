@@ -1,0 +1,14 @@
+After upgrading to NetworkManager-1.0.4-0.1.git20150618.8cffaf3bf5.fc23.x86_64 in rawhide I get no 127.0.0.1 ipv4 address on lo. 
+
+This results in dnssec-triggerd and possibly some other things getting mad because they cannot bind to it.
+I am seeing this on one f22 machine, but not another, so it looks like there is some other factor involved in triggering the issue.
+After several consectutive failures on one machine, I downgraded the NetworkManager packages and things worked normally the next boot.
+After upgrading back to 1.0.4-0.1.git20150618.8cffaf3bf5.fc22.i686, the problem returned.
+Would you attach output of 'ip addr' when you hit the issue? And also NetworkManager logs, possibly with debug level. Thanks.
+
+$ nmcli g l level debug
+or put the following to NetworkManager.conf
+[logging]
+level=DEBUG
+
+*** This bug has been marked as a duplicate of bug 1234121 ***

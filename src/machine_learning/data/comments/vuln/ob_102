@@ -1,0 +1,8 @@
+A kernel buffer overflow exists in the NFS mount code. An attacker may
+use this overflow to execute arbitrary code in kernel mode. However,
+only users with <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=mount&amp;sektion=2">mount(2)</a>
+privileges can initiate this attack.  In default installs, only super-user has
+mount privileges.  The kern.usermount <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sysctl&amp;sektion=3">sysctl(3)</a> controls whether other users have mount privileges.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/012_nfs.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,118 @@
+Created attachment 1044302
+BZ_UTFDataFormatException.zip
+
+Description of problem:
+
+If a rule has a constraint larger than 65535 bytes, org.drools.core.util.ClassUtils.deepClone() fails with java.io.UTFDataFormatException.
+
+=====
+java.lang.RuntimeException: java.io.UTFDataFormatException
+	at org.drools.core.util.ClassUtils.deepClone(ClassUtils.java:514)
+	at org.drools.core.definitions.impl.KnowledgePackageImpl.deepCloneIfAlreadyInUse(KnowledgePackageImpl.java:801)
+	at org.drools.core.definitions.impl.KnowledgePackageImpl.deepCloneIfAlreadyInUse(KnowledgePackageImpl.java:66)
+	at org.drools.core.impl.KnowledgeBaseImpl.addPackages(KnowledgeBaseImpl.java:728)
+	at org.drools.core.impl.KnowledgeBaseImpl.addKnowledgePackages(KnowledgeBaseImpl.java:272)
+	at org.drools.compiler.kie.builder.impl.KieContainerImpl.createKieBase(KieContainerImpl.java:455)
+	at org.drools.compiler.kie.builder.impl.KieContainerImpl.getKieBase(KieContainerImpl.java:392)
+	at org.drools.compiler.kie.builder.impl.KieContainerImpl.getKieBase(KieContainerImpl.java:373)
+	at com.sample.DroolsTest.main(DroolsTest.java:29)
+Caused by: java.io.UTFDataFormatException
+	at java.io.ObjectOutputStream$BlockDataOutputStream.writeUTF(ObjectOutputStream.java:2163)
+	at java.io.ObjectOutputStream$BlockDataOutputStream.writeUTF(ObjectOutputStream.java:2006)
+	at java.io.ObjectOutputStream.writeUTF(ObjectOutputStream.java:868)
+	at org.drools.core.base.mvel.MVELCompilationUnit.writeExternal(MVELCompilationUnit.java:165)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.rule.constraint.MvelConstraint.writeExternal(MvelConstraint.java:478)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at java.util.ArrayList.writeObject(ArrayList.java:742)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at java.io.ObjectStreamClass.invokeWriteObject(ObjectStreamClass.java:988)
+	at java.io.ObjectOutputStream.writeSerialData(ObjectOutputStream.java:1495)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1431)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.rule.Pattern.writeExternal(Pattern.java:142)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at java.util.ArrayList.writeObject(ArrayList.java:742)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at java.io.ObjectStreamClass.invokeWriteObject(ObjectStreamClass.java:988)
+	at java.io.ObjectOutputStream.writeSerialData(ObjectOutputStream.java:1495)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1431)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.rule.GroupElement.writeExternal(GroupElement.java:70)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.definitions.rule.impl.RuleImpl.writeExternal(RuleImpl.java:194)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.rule.JavaDialectRuntimeData.writeExternal(JavaDialectRuntimeData.java:136)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at java.util.HashMap.writeObject(HashMap.java:1129)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at java.io.ObjectStreamClass.invokeWriteObject(ObjectStreamClass.java:988)
+	at java.io.ObjectOutputStream.writeSerialData(ObjectOutputStream.java:1495)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1431)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.rule.DialectRuntimeRegistry.writeExternal(DialectRuntimeRegistry.java:48)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.definitions.impl.KnowledgePackageImpl.writeExternal(KnowledgePackageImpl.java:242)
+	at java.io.ObjectOutputStream.writeExternalData(ObjectOutputStream.java:1458)
+	at java.io.ObjectOutputStream.writeOrdinaryObject(ObjectOutputStream.java:1429)
+	at java.io.ObjectOutputStream.writeObject0(ObjectOutputStream.java:1177)
+	at java.io.ObjectOutputStream.writeObject(ObjectOutputStream.java:347)
+	at org.drools.core.util.ClassUtils.deepClone(ClassUtils.java:508)
+	... 8 more
+====
+
+Steps to Reproduce:
+1. Unzip BZ_UTFDataFormatException.zip
+2. cd 01464689_UTFDataFormatException_kjar
+3. mvn clean install
+4. cd ../01464689_UTFDataFormatException_main
+4. mvn clean test
+
+Actual results:
+
+Throws UTFDataFormatException as above.
+
+Expected results:
+
+No Exception.
+
+Additional info:
+
+The reproducer (DroolsTest.testDeepClone()) intentionally calls KieService.newKieContainer() and KieContainer.getKieBase() twice to trigger ClassUtils.deepClone(). This more commonly happens in business-central.
+This is hitting the limitation of java.io.ObjectOutputStream.writeUTF(). You can confirm it with WriteUTFTest.java inside 01464689_UTFDataFormatException_main.
+I confirm that the problem is caused by the limitation of java.io.ObjectOutputStream.writeUTF() method. Anyway I don't see how to fix this problem because I strongly believe that constraints' expressions should be marshalled in UTF in each case. Can we maybe suggest to the customer to split that constraint?
+Giving a look at the drl in the attached reproducer I understand that the constraint expression has been automatically code generated. Nevertheless reducing its size (and consequently also make it much more efficient) looks a quite trivial task.
+Sure, thanks Mario!

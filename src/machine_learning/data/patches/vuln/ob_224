@@ -1,0 +1,76 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 018_sudo.patch
+
+The rebuild sudo:
+	usr.bin/sudo
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.bin/sudo/parse.yacc
+===================================================================
+RCS file: /home/cvs/openbsd/src/usr.bin/sudo/parse.yacc,v
+retrieving revision 1.9
+diff -u -r1.9 parse.yacc
+--- usr.bin/sudo/parse.yacc	19 Apr 2003 21:57:17 -0000	1.9
++++ usr.bin/sudo/parse.yacc	20 Jun 2005 14:16:49 -0000
+@@ -652,10 +652,6 @@
+ 			    }
+ 
+ 			    $$ = TRUE;
+-
+-			    if (safe_cmnd)
+-				free(safe_cmnd);
+-			    safe_cmnd = estrdup(user_cmnd);
+ 			}
+ 		|	ALIAS {
+ 			    aliasinfo *aip;
+Index: usr.bin/sudo/sudo.c
+===================================================================
+RCS file: /home/cvs/openbsd/src/usr.bin/sudo/sudo.c,v
+retrieving revision 1.22
+diff -u -r1.22 sudo.c
+--- usr.bin/sudo/sudo.c	12 Jan 2004 19:13:21 -0000	1.22
++++ usr.bin/sudo/sudo.c	20 Jun 2005 14:16:49 -0000
+@@ -296,6 +296,8 @@
+ 	if (runas_pw == NULL)
+ 	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
+     }
++    if (safe_cmnd == NULL)
++	safe_cmnd = user_cmnd;
+ 
+     /*
+      * Look up the timestamp dir owner if one is specified.
+@@ -378,14 +380,6 @@
+ 	else if (sudo_mode == MODE_LIST) {
+ 	    list_matches();
+ 	    exit(0);
+-	}
+-
+-	/* This *must* have been set if we got a match but... */
+-	if (safe_cmnd == NULL) {
+-	    log_error(MSG_ONLY,
+-		"internal error, safe_cmnd never got set for %s; %s",
+-		user_cmnd,
+-		"please report this error at http://courtesan.com/sudo/bugs/");
+ 	}
+ 
+ 	/* Override user's umask if configured to do so. */
+Index: usr.bin/sudo/version.h
+===================================================================
+RCS file: /home/cvs/openbsd/src/usr.bin/sudo/version.h,v
+retrieving revision 1.23
+diff -u -r1.23 version.h
+--- usr.bin/sudo/version.h	8 May 2003 20:55:05 -0000	1.23
++++ usr.bin/sudo/version.h	20 Jun 2005 14:17:21 -0000
+@@ -41,6 +41,6 @@
+ #ifndef _SUDO_VERSION_H
+ #define _SUDO_VERSION_H
+ 
+-static const char version[] = "1.6.7p5";
++static const char version[] = "1.6.7p5+race_fix";
+ 
+ #endif /* _SUDO_VERSION_H */
+

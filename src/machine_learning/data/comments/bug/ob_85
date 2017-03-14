@@ -1,0 +1,5 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;sektion=8">isakmpd(8)</a>
+will crash when receiving a zero length IKE packet due to a too-late length check.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/017_isakmpd.patch">
+A source code patch exists which remedies this problem.</a>

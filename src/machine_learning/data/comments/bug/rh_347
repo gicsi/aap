@@ -1,0 +1,46 @@
+Description of problem:
+I find very strange behavior of python rpm module during work on bug 1236722.
+It seems that dbMatch() somehow mask KeyboardInterrupt exception.
+While the original use case is in bigger code (rpmconf code) I am able to reproduce it on very minimalistic code. See below.
+
+Version-Release number of selected component (if applicable):
+rpm-python3-4.12.0.1-11.fc22.x86_64
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. cat /tmp/x.py
+import rpm
+trans = rpm.TransactionSet()
+foo = trans.dbMatch()
+print(input("foo"))
+
+2. python3 /tmp/x.py
+3. After the prompt "foo" appear, hit Ctrl+C.
+
+Actual results:
+just "^C" printed on konsole and no exception raised
+
+Expected results:
+When I comment out the line:
+  foo = trans.dbMatch()
+and I hit "Ctrl+C" then I get
+    File "/tmp/x", line 4, in <module>
+    print(input("foo"))
+KeyboardInterrupt
+as expected.
+Additional info:
+I used
+  signal.signal(signal.SIGINT, signal.default_int_handler)
+as workaround. But I'm really curious what's happening inside of dbMatch().
+Bugzilla is not a support forum. Ask on the rpm-list or rpm-maint mailing list if you have questions on how to use the API.
+
+Look at commit 56f49d7f5af7c1c8a3eb478431356195adbfdd25 for a bit of background.
+Ah, so I should call
+  rpm.setInterruptSafety(False)
+However rpm 4.13.0 is not yet released.
+
+And it may be useful to alter
+  http://docs.fedoraproject.org/en-US/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch-rpm-programming-python.html
+to contain this call. Since all but 3 examples there are in read only mode, so masking singals just can confuse programmers (as it confused me).

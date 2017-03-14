@@ -1,0 +1,73 @@
+Description of problem:
+boot a win2012 guest with spice, wait for about 10 seconds, qemu-kvm will quit and print following info:
+(qemu) Segmentation fault
+
+
+Version-Release number of selected component (if applicable):
+host info:
+3.10.0-263.el7.x86_64
+qemu-kvm-rhev-2.3.0-2.el7.x86_64
+spice-server-0.12.4-9.el7.x86_64
+
+guest info:
+win2012-64r2.qcow2
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.boot a win2012 guest with spice.
+# gdb --args /usr/libexec/qemu-kvm -m 2G -smp 4 -boot menu=on -drive file=/home/win2012-64r2.qcow2,if=none,id=img -device virtio-scsi-pci,id=scsi2,bus=pci.0,addr=0x8 -device scsi-hd,drive=img,id=img-disk -monitor stdio -spice port=5932,disable-ticketing -netdev tap,id=tap0,script=/etc/qemu-ifup -device virtio-net-pci,netdev=tap0,mac=24:be:05:14:95:12 -qmp tcp::8886,server,nowait -vga std
+(gdb) r
+
+
+Actual results:
+After step 1, qemu-kvm will core dump. 
+(gdb) bt
+#0  0x00007ffff0adcce9 in __memcmp_sse4_1 () from /lib64/libc.so.6
+#1  0x00005555557b9275 in qemu_spice_create_update (ssd=0x555557a06aa0)
+    at ui/spice-display.c:222
+#2  qemu_spice_display_refresh (ssd=0x555557a06aa0) at ui/spice-display.c:492
+#3  0x00005555557b0c42 in dpy_refresh (s=0x5555563bd850) at ui/console.c:1496
+#4  gui_update (opaque=0x5555563bd850) at ui/console.c:196
+#5  0x00005555557df139 in timerlist_run_timers (timer_list=0x555556168c70)
+    at qemu-timer.c:502
+#6  0x00005555557df2b0 in qemu_clock_run_timers (type=<optimized out>)
+    at qemu-timer.c:513
+#7  qemu_clock_run_all_timers () at qemu-timer.c:621
+#8  0x00005555557de17c in main_loop_wait (nonblocking=<optimized out>)
+    at main-loop.c:500
+#9  0x00005555555e11ee in main_loop () at vl.c:1798
+#10 main (argc=<optimized out>, argv=<optimized out>, envp=<optimized out>)
+    at vl.c:4373
+
+Expected results:
+No qemu-kvm core dump, boot a win2012 guest successfully.
+
+
+Additional info:
+Try with linux guest, no hit this issue.
+Try with win7 guest do not hit this issue, too.
+High chance to be a bug 1229073 duplicate.
+Please retest with qemu-kvm-rhev-2.3.0-3.el7.
+(In reply to Gerd Hoffmann from comment #3)
+> High chance to be a bug 1229073 duplicate.
+> Please retest with qemu-kvm-rhev-2.3.0-3.el7.
+
+retest with qemu-kvm-rhev-2.3.0-3.el7, qemu works well,boot a win2012 guest successfully.
+this bud has been fixed
+(In reply to quxiaoya from comment #4)
+> (In reply to Gerd Hoffmann from comment #3)
+> > High chance to be a bug 1229073 duplicate.
+> > Please retest with qemu-kvm-rhev-2.3.0-3.el7.
+> 
+> retest with qemu-kvm-rhev-2.3.0-3.el7, qemu works well,boot a win2012 guest
+> successfully.
+> this bug has been fixed
+
+retest with qemu-kvm-rhev-2.3.0-4.el7, qemu works well too,boot a win2012 guest
+successfully.
+*** This bug has been marked as a duplicate of bug 1229073 ***
+Oops, wrong bug, it is a 1230550 duplicate.
+
+*** This bug has been marked as a duplicate of bug 1230550 ***

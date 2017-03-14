@@ -1,0 +1,7 @@
+Fix multiple reliability issues in smtpd:
+<ul>
+<li>a local user can cause smtpd to fail by writing an invalid imsg to control socket.
+<li>a local user can prevent smtpd from serving new requests by exhausting descriptors.
+</ul>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.7/common/008_smtpd.patch.sig">
+A source code patch exists which remedies this problem.</a>

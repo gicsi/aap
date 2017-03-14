@@ -1,0 +1,9 @@
++++ This bug was initially created as a clone of Bug #1232295 +++
+
+when editing a large&complicated process, it's easily messing up the whole process diagram. For example, if clicking one connection line trying to add one component, the whole diagram can't keep the original shape and these all have to be fixed manually. Please see the attached video redraw.mp4.
+
+--- Additional comment from JBoss Product and Program Management on 2015-06-16 08:50:08 EDT ---
+
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+*** This bug has been marked as a duplicate of bug 1233873 ***

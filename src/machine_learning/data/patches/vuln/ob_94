@@ -1,0 +1,29 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 023_mail.patch
+
+Rebuild and install mail:
+	cd usr.bin/mail
+	make cleandir
+	make obj
+	make depend
+	make && make install
+
+Index: src/usr.bin/mail/collect.c
+===================================================================
+RCS file: /cvs/src/usr.bin/mail/collect.c,v
+retrieving revision 1.20
+diff -u -r1.20 collect.c
+--- usr.bin/mail/collect.c	16 Jan 2001 05:36:08 -0000	1.20
++++ usr.bin/mail/collect.c	11 Apr 2002 21:53:24 -0000
+@@ -192,7 +192,8 @@
+ 		    value("interactive") != NULL && !lastlong &&
+ 		    (value("dot") != NULL || value("ignoreeof") != NULL))
+ 			break;
+-		if (linebuf[0] != escape || lastlong) {
++		if (linebuf[0] != escape || value("interactive") == NULL ||
++		    lastlong) {
+ 			if (putline(collf, linebuf, !longline) < 0)
+ 				goto err;
+ 			continue;
+

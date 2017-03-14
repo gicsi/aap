@@ -1,0 +1,61 @@
+Description of problem:
+=======================
+Overcloud Horizon - No details on Admin Defaults window
+
+Version-Release number of selected component (if applicable):
+=============================================================
+openstack-dashboard-2015.1.0-10.el7ost.noarch
+python-django-horizon-2015.1.0-10.el7ost.noarch
+
+How reproducible:
+=================
+100%
+
+Steps to Reproduce:
+===================
+1. Deploy overcloud
+2. Log in to overcloud UI  Horizon
+3. Go to Project -> Admin -> Defaults
+
+Actual results:
+==============
+no details shown
+
+Expected results:
+=================
+Output should be similar to nova quota-defaults
+
+Additional info:
+================
+nova quota-defaults
++-----------------------------+-------+
+| Quota                       | Limit |
++-----------------------------+-------+
+| instances                   | 10    |
+| cores                       | 20    |
+| ram                         | 51200 |
+| floating_ips                | 10    |
+| fixed_ips                   | -1    |
+| metadata_items              | 128   |
+| injected_files              | 5     |
+| injected_file_content_bytes | 10240 |
+| injected_file_path_bytes    | 255   |
+| key_pairs                   | 100   |
+| security_groups             | 10    |
+| security_group_rules        | 20    |
+| server_groups               | 10    |
+| server_group_members        | 10    |
++-----------------------------+-------+
+Horizon uses the same api as nova command line client.
+
+Are you looking at the same keystone or were you querying the same nova instance?
+
+
+Is the install still available?
+It looks like this setup has several issues (like the known cinder v2 endpoint missing)
+
+cinder v2 is called for getting quota. 
+Disabling cinder v2 in my packstack install leads to the same issues.
+I suspect this to be a duplicate of .bug 1233945
+
+*** This bug has been marked as a duplicate of bug 1233945 ***

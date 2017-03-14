@@ -1,0 +1,12 @@
+This bug has been copied from bug #1234801 and has been proposed
+to be backported to 7.1 z-stream (EUS).
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHBA-2015-1192.html

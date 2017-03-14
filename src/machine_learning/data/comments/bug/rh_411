@@ -1,0 +1,42 @@
+Description of problem:
+
+libselinux-python / libselinux-python3 are python modules, if not specified in the spec as Require the software which is packaged and needs the module won't be able to run.
+
+How reproducible:
+  $ cat /etc/fedora-release 
+  Fedora release 22 (Twenty Two)
+
+  $ rpm -qa | grep -i rpmlint
+  rpmlint-1.6-3.fc22.noarch
+
+  Example running rpmlint:
+  $ rpmlint ./python3-ovirt-register-1.0-1.fc22.noarch.rpm 
+  python3-ovirt-register.noarch: E: explicit-lib-dependency libselinux-python3
+
+Example of software removing the Requires: libselinux-python3 in the spec:
+
+  # cat /etc/fedora-release 
+  Fedora release 22 (Twenty Two)
+
+  # dnf install ~/rpmbuild/RPMS/noarch/python3-ovirt-register-1.0-1.fc22.noarch.rpm
+
+  # python3 /usr/bin/ovirt-register --engine-fqdn engine.mysuperdomain
+  Traceback (most recent call last):
+  <snip>
+    import selinux
+  ImportError: No module named 'selinux'
+
+Version-Release number of selected component (if applicable):
+rpmlint-1.6-3.fc22.noarch
+
+Expected results:
+No complains/errors
+
+Additional info:
+Affects fedora-review tool output.
+
+Example of spec:
+https://github.com/dougsland/ovirt-register/raw/master/python-ovirt-register.spec
+the "Requires: lib" check is not, and has never been terribly bright. In this case, it is clearly incorrect to remove Requires: libselinux-python[3].
+
+Just note the false positive and move on with your day. :)

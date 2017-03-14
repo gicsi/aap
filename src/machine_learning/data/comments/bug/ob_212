@@ -1,0 +1,5 @@
+Due to a null pointer dereference, it would be possible to crash ftpd when
+handling glob(3)'ing requests. This is non-exploitable.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.6/common/007_ftpd.patch">
+A source code patch exists which remedies this problem.</a>

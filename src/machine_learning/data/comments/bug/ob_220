@@ -1,0 +1,5 @@
+Avoid calling scsi_done() more than once in gdt(4). Fixes a kernel panic triggered by syncing disks during shut down.<br>
+Clear the ITSDONE flag before issuing commands to the SCSI adapter. Fixes handling of retried SCSI commands.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.7/common/007_scsi.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,24 @@
+Description of problem:
+LUNs that are already attached to the main storage domain, show up as attachable to VMs in the direct LUN dialog
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Create a Storage Domain & attach an FC LUN
+2. Create a VM and click "attach disk / external (direct lun)
+3. Look for LUN thats already in use for the Storage Domain 
+
+Actual results:
+The LUN from the main Storage domain is listed as available
+
+Expected results:
+It should be shown greyed out or unavailable
+
+Additional info:
+RHEL 6.6 RHEV-M
+RHEL 7.1 RHEL-H
+*** This bug has been marked as a duplicate of bug 906252 ***

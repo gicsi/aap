@@ -1,0 +1,12 @@
+Your package TurboGears failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10076621
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046386
+build.log
+Created attachment 1046387
+root.log
+Created attachment 1046388
+state.log
+*** This bug has been marked as a duplicate of bug 1233553 ***

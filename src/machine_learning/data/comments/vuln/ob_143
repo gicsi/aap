@@ -1,0 +1,5 @@
+A buffer overflow can occur in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=kadmind&amp;sektion=8">kadmind(8)</a>
+daemon, leading to possible remote crash or exploit.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/016_kadmin.patch">
+A source code patch exists which remedies this problem.</a>

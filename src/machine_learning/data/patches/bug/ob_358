@@ -1,0 +1,594 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93z0uERun06gnUvsfcC1KpQB7tmX6DIhpmLZG9J7BRtekstcTAujL+VXaTpreU58UMTDACvJT4LRjREzVnZWcoA0=
+
+OpenBSD 5.5 errata 12, Oct 20, 2014
+
+Two remotely triggerable memory leaks in OpenSSL can lead to a denial of
+service in server applications.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 012_openssl.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+Then build and install libssl
+
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+
+Index: lib/libssl/src/ssl/d1_srtp.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_srtp.c,v
+retrieving revision 1.1.1.1
+diff -u -p -r1.1.1.1 d1_srtp.c
+--- lib/libssl/src/ssl/d1_srtp.c	13 Oct 2012 21:23:49 -0000	1.1.1.1
++++ lib/libssl/src/ssl/d1_srtp.c	17 Oct 2014 19:57:51 -0000
+@@ -213,6 +213,7 @@ static int ssl_ctx_make_profiles(const c
+ 		else
+ 			{
+ 			SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
++			sk_SRTP_PROTECTION_PROFILE_free(profiles);
+ 			return 1;
+ 			}
+ 
+Index: lib/libssl/src/ssl/t1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/t1_lib.c,v
+retrieving revision 1.12.8.2
+diff -u -p -r1.12.8.2 t1_lib.c
+--- lib/libssl/src/ssl/t1_lib.c	9 Aug 2014 16:54:58 -0000	1.12.8.2
++++ lib/libssl/src/ssl/t1_lib.c	17 Oct 2014 19:56:17 -0000
+@@ -2188,8 +2188,10 @@ static int tls_decrypt_ticket(SSL *s, co
+ 	HMAC_Update(&hctx, etick, eticklen);
+ 	HMAC_Final(&hctx, tick_hmac, NULL);
+ 	HMAC_CTX_cleanup(&hctx);
+-	if (timingsafe_bcmp(tick_hmac, etick + eticklen, mlen))
++	if (timingsafe_bcmp(tick_hmac, etick + eticklen, mlen)) {
++		EVP_CIPHER_CTX_cleanup(&ctx);
+ 		return 2;
++	}
+ 	/* Attempt to decrypt session data */
+ 	/* Move p after IV to start of encrypted ticket, update length */
+ 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93+CyZ3HPzmlkYc+DX80XHguS4MVaRRRK53ZyfwuOFKvvKgrM6UO3yUJVfSkHRh7X6SaD17yDUck9m+kWScQy7Q0=
+
+OpenBSD 5.5 errata 13, Oct 20, 2014:
+
+Executable headers with an unaligned address will trigger a kernel panic.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 013_kernexec.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.137
+diff -u -p -r1.137 kern_exec.c
+--- sys/kern/kern_exec.c	21 Jan 2014 01:48:44 -0000	1.137
++++ sys/kern/kern_exec.c	19 Oct 2014 16:58:19 -0000
+@@ -428,10 +428,12 @@ sys_execve(struct proc *p, void *v, regi
+ 
+ 	vm = p->p_vmspace;
+ 	/* Now map address space */
+-	vm->vm_taddr = (char *)pack.ep_taddr;
+-	vm->vm_tsize = atop(round_page(pack.ep_tsize));
+-	vm->vm_daddr = (char *)pack.ep_daddr;
+-	vm->vm_dsize = atop(round_page(pack.ep_dsize));
++	vm->vm_taddr = (char *)trunc_page(pack.ep_taddr);
++	vm->vm_tsize = atop(round_page(pack.ep_taddr + pack.ep_tsize) -
++	    trunc_page(pack.ep_taddr));
++	vm->vm_daddr = (char *)trunc_page(pack.ep_daddr);
++	vm->vm_dsize = atop(round_page(pack.ep_daddr + pack.ep_dsize) -
++	    trunc_page(pack.ep_daddr));
+ 	vm->vm_dused = 0;
+ 	vm->vm_ssize = atop(round_page(pack.ep_ssize));
+ 	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93yf0s8n8AnuMxRTccsW2oR9NO25RY67cg1Oefuhuyi/Gc0wR4SO8D9ChLKUAH2kekcCG7pjCYxTynsq2dR9U/wk=
+
+OpenBSD 5.5 errata 14, Nov 17, 2014:  A PF rule using an IPv4 address
+followed by an IPv6 address and then a dynamic address, e.g. "pass
+from {192.0.2.1 2001:db8::1} to (pppoe0)", will have an incorrect /32
+mask applied to the dynamic address.
+
+This is the 2nd version of this patch.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 014_pfctl.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install pfctl:
+    cd /usr/src/sbin/pfctl
+    make obj
+    make
+    make install
+
+Index: sbin/pfctl/parse.y
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/parse.y,v
+retrieving revision 1.631
+retrieving revision 1.631.4.1
+diff -u -p -r1.631 -r1.631.4.1
+--- sbin/pfctl/parse.y	22 Jan 2014 00:21:16 -0000	1.631
++++ sbin/pfctl/parse.y	29 Oct 2014 15:36:15 -0000	1.631.4.1
+@@ -5074,7 +5074,7 @@ expand_rule(struct pf_rule *r, int keepr
+ 	char			 tagname[PF_TAG_NAME_SIZE];
+ 	char			 match_tagname[PF_TAG_NAME_SIZE];
+ 	u_int8_t		 flags, flagset, keep_state;
+-	struct node_host	*srch, *dsth;
++	struct node_host	*srch, *dsth, *osrch, *odsth;
+ 	struct redirspec	 binat;
+ 	struct pf_rule		 rb;
+ 	int			 dir = r->direction;
+@@ -5165,6 +5165,18 @@ expand_rule(struct pf_rule *r, int keepr
+ 		    r->af, src_host, src_port, dst_host, dst_port,
+ 		    proto->proto);
+ 
++		osrch = odsth = NULL;
++		if (src_host->addr.type == PF_ADDR_DYNIFTL) {
++			osrch = src_host;
++			if ((src_host = gen_dynnode(src_host, r->af)) == NULL)
++				err(1, "expand_rule: calloc");
++		}
++		if (dst_host->addr.type == PF_ADDR_DYNIFTL) {
++			odsth = dst_host;
++			if ((dst_host = gen_dynnode(dst_host, r->af)) == NULL)
++				err(1, "expand_rule: calloc");
++		}
++
+ 		error += check_netmask(src_host, r->af);
+ 		error += check_netmask(dst_host, r->af);
+ 
+@@ -5314,6 +5326,14 @@ expand_rule(struct pf_rule *r, int keepr
+ 			    uid, gid, rcv, icmp_type, anchor_call);
+ 		}
+ 
++		if (osrch && src_host->addr.type == PF_ADDR_DYNIFTL) {
++			free(src_host);
++			src_host = osrch;
++		}
++		if (odsth && dst_host->addr.type == PF_ADDR_DYNIFTL) {
++			free(dst_host);
++			dst_host = odsth;
++		}
+ 	))))))))));
+ 
+ 	if (!keeprule) {
+Index: sbin/pfctl/pfctl_parser.c
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/pfctl_parser.c,v
+retrieving revision 1.298
+retrieving revision 1.298.4.1
+diff -u -p -r1.298 -r1.298.4.1
+--- sbin/pfctl/pfctl_parser.c	20 Jan 2014 02:59:13 -0000	1.298
++++ sbin/pfctl/pfctl_parser.c	29 Oct 2014 15:36:15 -0000	1.298.4.1
+@@ -1244,16 +1244,12 @@ int
+ check_netmask(struct node_host *h, sa_family_t af)
+ {
+ 	struct node_host	*n = NULL;
+-	struct pf_addr	*m;
++	struct pf_addr		*m;
+ 
+ 	for (n = h; n != NULL; n = n->next) {
+ 		if (h->addr.type == PF_ADDR_TABLE)
+ 			continue;
+ 		m = &h->addr.v.a.mask;
+-		/* fix up netmask for dynaddr */
+-		if (af == AF_INET && h->addr.type == PF_ADDR_DYNIFTL &&
+-		    unmask(m, AF_INET6) > 32)
+-			set_ipmask(n, 32);
+ 		/* netmasks > 32 bit are invalid on v4 */
+ 		if (af == AF_INET &&
+ 		    (m->addr32[1] || m->addr32[2] || m->addr32[3])) {
+@@ -1263,6 +1259,30 @@ check_netmask(struct node_host *h, sa_fa
+ 		}
+ 	}
+ 	return (0);
++}
++
++struct node_host *
++gen_dynnode(struct node_host *h, sa_family_t af)
++{
++	struct node_host	*n;
++	struct pf_addr		*m;
++
++	if (h->addr.type != PF_ADDR_DYNIFTL)
++		return (NULL);
++
++	if ((n = calloc(1, sizeof(*n))) == NULL)
++		return (NULL);
++	bcopy(h, n, sizeof(*n));
++	n->ifname = NULL;
++	n->next = NULL;
++	n->tail = NULL;
++
++	/* fix up netmask */
++	m = &n->addr.v.a.mask;
++	if (af == AF_INET && unmask(m, AF_INET6) > 32)
++		set_ipmask(n, 32);
++
++	return (n);
+ }
+ 
+ /* interface lookup routines */
+Index: sbin/pfctl/pfctl_parser.h
+===================================================================
+RCS file: /cvs/src/sbin/pfctl/pfctl_parser.h,v
+retrieving revision 1.101
+retrieving revision 1.101.4.1
+diff -u -p -r1.101 -r1.101.4.1
+--- sbin/pfctl/pfctl_parser.h	12 Oct 2013 12:16:12 -0000	1.101
++++ sbin/pfctl/pfctl_parser.h	29 Oct 2014 15:36:15 -0000	1.101.4.1
+@@ -278,6 +278,7 @@ extern const struct pf_timeout pf_timeou
+ void			 set_ipmask(struct node_host *, u_int8_t);
+ int			 check_netmask(struct node_host *, sa_family_t);
+ int			 unmask(struct pf_addr *, sa_family_t);
++struct node_host	*gen_dynnode(struct node_host *, sa_family_t);
+ void			 ifa_load(void);
+ unsigned int		 ifa_nametoindex(const char *);
+ char			*ifa_indextoname(unsigned int, char *);
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N935WG0mYXd13AzGVWbOgbfdooC8/ob6jvlOGupaDbcpAju9giU57WKQ0m1rDCUt4jvBI5ZmbWOOVdSRjnpAa42AI=
+
+OpenBSD 5.5 errata 15, Nov 17, 2014:  Querying an invalid hostname with
+gethostbyname(3) could cause a NULL deref.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 015_asr.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install libc
+
+    cd /usr/src/lib/libc
+    make obj
+    make depend
+    make
+    make install
+
+Also recompile any statically-linked binaries:
+
+    cd /usr/src/bin
+    make obj
+    make depend
+    make
+    make install
+
+    cd /usr/src/sbin
+    make obj
+    make depend
+    make
+    make install
+
+Index: lib/libc/asr/gethostnamadr_async.c
+===================================================================
+RCS file: /cvs/src/lib/libc/asr/gethostnamadr_async.c,v
+retrieving revision 1.25
+diff -u -p -u -r1.25 gethostnamadr_async.c
+--- lib/libc/asr/gethostnamadr_async.c	26 Feb 2014 20:00:08 -0000	1.25
++++ lib/libc/asr/gethostnamadr_async.c	5 Nov 2014 19:46:07 -0000
+@@ -349,13 +349,12 @@ gethostnamadr_async_run(struct async *as
+ 		}
+ 
+ 		/*
+-		 * No address found in the dns packet. The blocking version
+-		 * reports this as an error.
++		 * No valid hostname or address found in the dns packet.
++		 * Ignore it.
+ 		 */
+ 		if ((as->as_type == ASR_GETHOSTBYNAME &&
+ 		     h->h.h_addr_list[0] == NULL) ||
+-		    (as->as_type == ASR_GETHOSTBYADDR &&
+-		     h->h.h_name == NULL)) {
++		    h->h.h_name == NULL) {
+ 			free(h);
+ 			async_set_state(as, ASR_STATE_NEXT_DB);
+ 			break;
+Index: lib/libc/asr/getnetnamadr_async.c
+===================================================================
+RCS file: /cvs/src/lib/libc/asr/getnetnamadr_async.c,v
+retrieving revision 1.11
+diff -u -p -u -r1.11 getnetnamadr_async.c
+--- lib/libc/asr/getnetnamadr_async.c	26 Feb 2014 20:00:08 -0000	1.11
++++ lib/libc/asr/getnetnamadr_async.c	5 Nov 2014 19:46:07 -0000
+@@ -231,11 +231,11 @@ getnetnamadr_async_run(struct async *as,
+ 			n->n.n_net = as->as.netnamadr.addr;
+ 
+ 		/*
+-		 * No address found in the dns packet. The blocking version
+-		 * reports this as an error.
++		 * No valid hostname or address found in the dns packet.
++		 * Ignore it.
+ 		 */
+-		if (as->as_type == ASR_GETNETBYNAME && n->n.n_net == 0) {
+-			 /* XXX wrong */
++		if ((as->as_type == ASR_GETNETBYNAME && n->n.n_net == 0) ||
++		    n->n.n_name == NULL) {
+ 			free(n);
+ 			async_set_state(as, ASR_STATE_NEXT_DB);
+ 			break;
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93408GKKZA3Ey7RVxlSBVscyn5LWZmhgGxIMBZzJjX6WwWQobZjr1vGDwzyXYSdCKe3dQQyK+iV8MiBLnjWd3dAA=
+
+OpenBSD 5.5 errata 16, Dec 5, 2014:
+
+Several bugs were fixed that allowed a crash from remote when an active pipex
+session exists.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 016_pipex.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/net/pipex.c
+===================================================================
+RCS file: /cvs/src/sys/net/pipex.c,v
+retrieving revision 1.48
+retrieving revision 1.48.4.1
+diff -u -p -u -r1.48 -r1.48.4.1
+--- sys/net/pipex.c	11 Nov 2013 09:15:34 -0000	1.48
++++ sys/net/pipex.c	1 Dec 2014 06:59:03 -0000	1.48.4.1
+@@ -1038,6 +1038,7 @@ pipex_ppp_input(struct mbuf *m0, struct 
+ 	struct m_tag *mtag;
+ 	struct pipex_tag *tag;
+ 
++	KASSERT(m0->m_pkthdr.len >= PIPEX_PPPMINLEN);
+ 	proto = pipex_ppp_proto(m0, session, 0, &hlen);
+ #ifdef PIPEX_MPPE
+ 	if (pipex_session_is_mppe_accepted(session) && proto == PPP_COMP) {
+@@ -1292,7 +1293,8 @@ pipex_common_input(struct pipex_session 
+ 	int proto, ppphlen;
+ 	u_char code;
+ 
+-	if (m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN)
++	if ((m0->m_pkthdr.len < hlen + PIPEX_PPPMINLEN) ||
++	    (plen < PIPEX_PPPMINLEN))
+ 		goto drop;
+ 
+ 	proto = pipex_ppp_proto(m0, session, hlen, &ppphlen);
+@@ -1353,6 +1355,7 @@ pipex_ppp_proto(struct mbuf *m0, struct 
+ 	int proto;
+ 	u_char *cp, pktbuf[4];
+ 
++	KASSERT(m0->m_pkthdr.len > sizeof(pktbuf));
+ 	m_copydata(m0, off, sizeof(pktbuf), pktbuf);
+ 	cp = pktbuf;
+ 
+@@ -1616,6 +1619,13 @@ pipex_pptp_lookup_session(struct mbuf *m
+ 		goto not_ours;
+ 	}
+ 
++	/* flag check */
++	if ((flags & PIPEX_GRE_UNUSEDFLAGS) != 0) {
++		PIPEX_DBG((NULL, LOG_DEBUG,
++		    "<%s> gre header has unused flags at pptp.", __func__));
++		goto not_ours;
++	}
++
+ 	/* lookup pipex session table */
+ 	id = ntohs(gre.call_id);
+ 	session = pipex_lookup_by_session_id(PIPEX_PROTO_PPTP, id);
+@@ -2570,6 +2580,8 @@ pipex_mppe_input(struct mbuf *m0, struct
+ 		mppe->coher_cnt++;
+ 		mppe->coher_cnt &= PIPEX_COHERENCY_CNT_MASK;
+ 	}
++	if (m0->m_pkthdr.len < PIPEX_PPPMINLEN)
++		goto drop;
+ 
+ 	pipex_ppp_input(m0, session, 1);
+ 
+Index: sys/net/pipex_local.h
+===================================================================
+RCS file: /cvs/src/sys/net/pipex_local.h,v
+retrieving revision 1.19
+retrieving revision 1.19.6.1
+diff -u -p -u -r1.19 -r1.19.6.1
+--- sys/net/pipex_local.h	20 Apr 2013 07:54:28 -0000	1.19
++++ sys/net/pipex_local.h	1 Dec 2014 06:59:03 -0000	1.19.6.1
+@@ -217,7 +217,8 @@ struct pipex_gre_header {
+ #define PIPEX_GRE_SFLAG			0x1000	/* seq present */
+ #define PIPEX_GRE_AFLAG			0x0080	/* ack present */
+ #define PIPEX_GRE_VER			0x0001	/* gre version code */
+-#define PIPEX_GRE_VERMASK		0x0003	/* gre version mask */
++#define PIPEX_GRE_VERMASK		0x0007	/* gre version mask */
++#define PIPEX_GRE_UNUSEDFLAGS		0xcf78	/* unused at pptp. set 0 in rfc2637 */
+ 
+ 	uint16_t type;
+ #define PIPEX_GRE_PROTO_PPP		0x880b	/* gre/ppp */
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N930c7VP1Rwdwv7NcTbfPjzv73AiCTMYAQVK02BVoRg6Azc8z61ZthC1/bJ62TxyZvzJqNULZA5p2xZWA0FmiADgU=
+
+OpenBSD 5.5 errata 17, Dec 5, 2014:
+
+An incorrect memcpy call would result in corrupted MAC addresses when
+using PPPOE.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 017_pppoe.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/net/if_ethersubr.c
+===================================================================
+RCS file: /cvs/src/sys/net/if_ethersubr.c,v
+retrieving revision 1.162
+diff -u -p -r1.162 if_ethersubr.c
+--- sys/net/if_ethersubr.c	17 Feb 2014 14:48:48 -0000	1.162
++++ sys/net/if_ethersubr.c	1 Dec 2014 17:51:08 -0000
+@@ -647,7 +647,12 @@ decapsulate:
+ 			goto done;
+ 
+ 		eh_tmp = mtod(m, struct ether_header *);
+-		memcpy(eh_tmp, eh, sizeof(struct ether_header));
++		/*
++		 * danger!
++		 * eh_tmp and eh may overlap because eh
++		 * is stolen from the mbuf above.
++		 */
++		memmove(eh_tmp, eh, sizeof(struct ether_header));
+ #ifdef PIPEX
+ 		if (pipex_enable) {
+ 			struct pipex_session *session;
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93xob/rIni4484cw6hOLhQpR5MP30JzQo6ETZ6S1po5tqNYDOLThyCBGwWQxEPKEG8fQdkD9JfD7KHwbDq8J7uQk=
+
+OpenBSD 5.5 errata 18, Dec 10, 2014:
+
+Several bugs in virtio(4) can lead to hangs with virtio devices,
+like vio(4) and vioblk(4).
+
+Apply patch using:
+    
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 018_virtio.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/dev/pci/virtio.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/virtio.c,v
+retrieving revision 1.5
+retrieving revision 1.5.6.2
+diff -u -p -r1.5 -r1.5.6.2
+--- sys/dev/pci/virtio.c	10 Mar 2013 21:58:02 -0000	1.5
++++ sys/dev/pci/virtio.c	9 Dec 2014 13:03:54 -0000	1.5.6.2
+@@ -277,7 +277,6 @@ virtio_init_vq(struct virtio_softc *sc, 
+ 
+ 	/* enqueue/dequeue status */
+ 	vq->vq_avail_idx = 0;
+-	vq->vq_avail_signalled = 0xffff;
+ 	vq->vq_used_idx = 0;
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+ 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
+@@ -658,6 +657,8 @@ publish_avail_idx(struct virtio_softc *s
+ {
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+ 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
++
++	virtio_membar_producer();
+ 	vq->vq_avail->idx = vq->vq_avail_idx;
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
+ 	vq->vq_queued = 1;
+@@ -684,17 +685,19 @@ virtio_enqueue_commit(struct virtio_soft
+ notify:
+ 	if (notifynow) {
+ 		if (vq->vq_owner->sc_features & VIRTIO_F_RING_EVENT_IDX) {
+-			uint16_t o = vq->vq_avail_signalled;
++			uint16_t o = vq->vq_avail->idx;
+ 			uint16_t n = vq->vq_avail_idx;
+-			uint16_t t = VQ_AVAIL_EVENT(vq) + 1;
++			uint16_t t;
+ 			publish_avail_idx(sc, vq);
+-			if ((o < n && o < t && t <= n)
+-			    || (o > n && (o < t || t <= n))) {
++
++			virtio_membar_sync();
++			t = VQ_AVAIL_EVENT(vq) + 1;
++			if ((uint16_t)(n - t) < (uint16_t)(n - o))
+ 				sc->sc_ops->kick(sc, vq->vq_index);
+-				vq->vq_avail_signalled = n;
+-			}
+ 		} else {
+ 			publish_avail_idx(sc, vq);
++
++			virtio_membar_sync();
+ 			if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
+ 				sc->sc_ops->kick(sc, vq->vq_index);
+ 		}
+@@ -747,6 +750,8 @@ virtio_dequeue(struct virtio_softc *sc, 
+ 		return ENOENT;
+ 	usedidx = vq->vq_used_idx++;
+ 	usedidx &= vq->vq_mask;
++
++	virtio_membar_consumer();
+ 	slot = vq->vq_used->ring[usedidx].id;
+ 	qe = &vq->vq_entries[slot];
+ 
+@@ -797,6 +802,7 @@ virtio_postpone_intr(struct virtqueue *v
+ 
+ 	/* set the new event index: avail_ring->used_event = idx */
+ 	VQ_USED_EVENT(vq) = idx;
++	virtio_membar_sync();
+ 
+ 	vq_sync_aring(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
+ 	vq->vq_queued++;
+@@ -870,6 +876,8 @@ virtio_start_vq_intr(struct virtio_softc
+ 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
+ 	else
+ 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;
++
++	virtio_membar_sync();
+ 
+ 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+ 	vq->vq_queued++;
+Index: sys/arch/i386/include/atomic.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/atomic.h,v
+retrieving revision 1.11
+retrieving revision 1.11.8.1
+diff -u -p -r1.11 -r1.11.8.1
+--- sys/arch/i386/include/atomic.h	19 Nov 2012 15:18:06 -0000	1.11
++++ sys/arch/i386/include/atomic.h	9 Dec 2014 13:03:17 -0000	1.11.8.1
+@@ -49,6 +49,13 @@
+ #else
+ #define LOCK
+ #endif
++
++#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
++
++/* virtio needs MP membars even on SP kernels */
++#define virtio_membar_producer()	__membar("")
++#define virtio_membar_consumer()	__membar("")
++#define virtio_membar_sync()		__membar("lock; addl $0,0(%%esp)")
+ 
+ static __inline u_int64_t
+ i386_atomic_testset_uq(volatile u_int64_t *ptr, u_int64_t val)
+Index: sys/arch/amd64/include/atomic.h
+===================================================================
+RCS file: /cvs/src/sys/arch/amd64/include/atomic.h,v
+retrieving revision 1.10
+retrieving revision 1.10.4.1
+diff -u -p -r1.10 -r1.10.4.1
+--- sys/arch/amd64/include/atomic.h	17 Feb 2014 10:01:32 -0000	1.10
++++ sys/arch/amd64/include/atomic.h	9 Dec 2014 13:03:17 -0000	1.10.4.1
+@@ -54,6 +54,13 @@
+ #else
+ #define LOCK
+ #endif
++
++#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
++
++/* virtio needs MP membars even on SP kernels */
++#define virtio_membar_producer()	__membar("")
++#define virtio_membar_consumer()	__membar("")
++#define virtio_membar_sync()		__membar("mfence")
+ 
+ static __inline u_int64_t
+ x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
+

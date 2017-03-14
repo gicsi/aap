@@ -1,0 +1,34 @@
+Created attachment 1042955
+Crash log
+
+Description of problem:
+
+
+When running :
+
+docker images -v
+
+docker simply crash
+ 
+
+Version-Release number of selected component (if applicable):
+
+docker-1.6.2-14.el7.x86_64
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.docker images -v
+
+Actual results:
+
+panic: runtime error: index out of range
+
+full log attached.
+
+Expected results:
+
+
+Additional info:
+We don't even have support for docker images -v in docker-1.7. so since this is going away, I am closing this as not supported.

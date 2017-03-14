@@ -1,0 +1,849 @@
+This is the second revision patch, which solves rijndael operation on both
+big and little endian machines.
+
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_rijndael.patch
+And then rebuild your kernel.
+
+Index: sys/crypto/rijndael.c
+===================================================================
+RCS file: /cvs/src/sys/crypto/rijndael.c,v
+retrieving revision 1.4
+diff -u -r1.4 rijndael.c
+--- sys/crypto/rijndael.c	2000/10/16 22:44:33	1.4
++++ sys/crypto/rijndael.c	2000/12/14 01:52:53
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: rijndael.c,v 1.4 2000/10/16 22:44:33 deraadt Exp $	*/
++/*	$OpenBSD: rijndael.c,v 1.5 2000/11/11 20:07:36 markus Exp $	*/
+ 
+ /* This is an independent implementation of the encryption algorithm:   */
+ /*                                                                      */
+@@ -54,21 +54,14 @@
+ 
+ /* Invert byte order in a 32 bit variable                           */
+ 
+-#define bswap(x)    (rotl(x, 8) & 0x00ff00ff | rotr(x, 8) & 0xff00ff00)
++#define bswap(x)    ((rotl(x, 8) & 0x00ff00ff) | (rotr(x, 8) & 0xff00ff00))
+ 
+-/* Extract byte from a 32 bit quantity (little endian notation)     */
++/* Extract byte from a 32 bit quantity (little endian notation)     */ 
+ 
+ #define byte(x,n)   ((u1byte)((x) >> (8 * n)))
+ 
+ #if BYTE_ORDER != LITTLE_ENDIAN
+-#define BLOCK_SWAP
+-#endif
+-
+-/* For inverting byte order in input/output 32 bit words if needed  */
+-
+-#ifdef  BLOCK_SWAP
+ #define BYTE_SWAP
+-#define WORD_SWAP
+ #endif
+ 
+ #ifdef  BYTE_SWAP
+@@ -77,84 +70,6 @@
+ #define io_swap(x)  (x)
+ #endif
+ 
+-/* For inverting the byte order of input/output blocks if needed    */
+-
+-#ifdef  WORD_SWAP
+-
+-#define get_block(x)                            \
+-    ((u4byte*)(x))[0] = io_swap(in_blk[3]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_blk[2]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_blk[1]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_blk[0])
+-
+-#define put_block(x)                            \
+-    out_blk[3] = io_swap(((u4byte*)(x))[0]);    \
+-    out_blk[2] = io_swap(((u4byte*)(x))[1]);    \
+-    out_blk[1] = io_swap(((u4byte*)(x))[2]);    \
+-    out_blk[0] = io_swap(((u4byte*)(x))[3])
+-
+-#define get_key(x,len)                          \
+-    ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
+-    ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
+-    switch ((((len) + 63) / 64)) {               \
+-    case 2:                                     \
+-    ((u4byte*)(x))[0] = io_swap(in_key[3]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_key[2]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_key[1]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_key[0]);     \
+-    break;                                      \
+-    case 3:                                     \
+-    ((u4byte*)(x))[0] = io_swap(in_key[5]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_key[4]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_key[3]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_key[2]);     \
+-    ((u4byte*)(x))[4] = io_swap(in_key[1]);     \
+-    ((u4byte*)(x))[5] = io_swap(in_key[0]);     \
+-    break;                                      \
+-    case 4:                                     \
+-    ((u4byte*)(x))[0] = io_swap(in_key[7]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_key[6]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_key[5]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_key[4]);     \
+-    ((u4byte*)(x))[4] = io_swap(in_key[3]);     \
+-    ((u4byte*)(x))[5] = io_swap(in_key[2]);     \
+-    ((u4byte*)(x))[6] = io_swap(in_key[1]);     \
+-    ((u4byte*)(x))[7] = io_swap(in_key[0]);     \
+-    }
+-
+-#else
+-
+-#define get_block(x)                            \
+-    ((u4byte*)(x))[0] = io_swap(in_blk[0]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_blk[1]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_blk[2]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_blk[3])
+-
+-#define put_block(x)                            \
+-    out_blk[0] = io_swap(((u4byte*)(x))[0]);    \
+-    out_blk[1] = io_swap(((u4byte*)(x))[1]);    \
+-    out_blk[2] = io_swap(((u4byte*)(x))[2]);    \
+-    out_blk[3] = io_swap(((u4byte*)(x))[3])
+-
+-#define get_key(x,len)                          \
+-    ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
+-    ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
+-    switch ((((len) + 63) / 64)) {               \
+-    case 4:                                     \
+-    ((u4byte*)(x))[6] = io_swap(in_key[6]);     \
+-    ((u4byte*)(x))[7] = io_swap(in_key[7]);     \
+-    case 3:                                     \
+-    ((u4byte*)(x))[4] = io_swap(in_key[4]);     \
+-    ((u4byte*)(x))[5] = io_swap(in_key[5]);     \
+-    case 2:                                     \
+-    ((u4byte*)(x))[0] = io_swap(in_key[0]);     \
+-    ((u4byte*)(x))[1] = io_swap(in_key[1]);     \
+-    ((u4byte*)(x))[2] = io_swap(in_key[2]);     \
+-    ((u4byte*)(x))[3] = io_swap(in_key[3]);     \
+-    }
+-
+-#endif
+-
+ #define LARGE_TABLES
+ 
+ u1byte  pow_tab[256];
+@@ -238,7 +153,7 @@
+ 	/* 0x11b as modular polynomial - the simplest prmitive  */
+ 	/* root is 0x11, used here to generate the tables       */
+ 
+-	for (i = 0,p = 1; i < 256; ++i) {
++	for(i = 0,p = 1; i < 256; ++i) {
+ 		pow_tab[i] = (u1byte)p; log_tab[p] = (u1byte)i;
+ 
+ 		p = p ^ (p << 1) ^ (p & 0x80 ? 0x01b : 0);
+@@ -246,8 +161,8 @@
+ 
+ 	log_tab[1] = 0; p = 1;
+ 
+-	for (i = 0; i < 10; ++i) {
+-		rco_tab[i] = p;
++	for(i = 0; i < 10; ++i) {
++		rco_tab[i] = p; 
+ 
+ 		p = (p << 1) ^ (p & 0x80 ? 0x1b : 0);
+ 	}
+@@ -258,19 +173,20 @@
+ 	/* of the specification the bits are numbered from the  */
+ 	/* least significant end of a byte.                     */
+ 
+-	for (i = 0; i < 256; ++i) {
+-		p = (i ? pow_tab[255 - log_tab[i]] : 0); q = p;
+-		q = (q >> 7) | (q << 1); p ^= q;
+-		q = (q >> 7) | (q << 1); p ^= q;
+-		q = (q >> 7) | (q << 1); p ^= q;
+-		q = (q >> 7) | (q << 1); p ^= q ^ 0x63;
++	for(i = 0; i < 256; ++i) {
++		p = (i ? pow_tab[255 - log_tab[i]] : 0); q = p; 
++		q = (q >> 7) | (q << 1); p ^= q; 
++		q = (q >> 7) | (q << 1); p ^= q; 
++		q = (q >> 7) | (q << 1); p ^= q; 
++		q = (q >> 7) | (q << 1); p ^= q ^ 0x63; 
+ 		sbx_tab[i] = (u1byte)p; isb_tab[p] = (u1byte)i;
+ 	}
+ 
+-	for (i = 0; i < 256; ++i) {
+-		p = sbx_tab[i];
++	for(i = 0; i < 256; ++i) {
++		p = sbx_tab[i]; 
+ 
+-#ifdef  LARGE_TABLES
++#ifdef  LARGE_TABLES        
++        
+ 		t = p; fl_tab[0][i] = t;
+ 		fl_tab[1][i] = rotl(t,  8);
+ 		fl_tab[2][i] = rotl(t, 16);
+@@ -280,29 +196,30 @@
+ 			((u4byte)p <<  8) |
+ 			((u4byte)p << 16) |
+ 			((u4byte)ff_mult(3, p) << 24);
+-
++        
+ 		ft_tab[0][i] = t;
+ 		ft_tab[1][i] = rotl(t,  8);
+ 		ft_tab[2][i] = rotl(t, 16);
+ 		ft_tab[3][i] = rotl(t, 24);
+ 
+-		p = isb_tab[i];
++		p = isb_tab[i]; 
+ 
+-#ifdef  LARGE_TABLES
+-		t = p; il_tab[0][i] = t;
+-		il_tab[1][i] = rotl(t,  8);
+-		il_tab[2][i] = rotl(t, 16);
++#ifdef  LARGE_TABLES        
++        
++		t = p; il_tab[0][i] = t; 
++		il_tab[1][i] = rotl(t,  8); 
++		il_tab[2][i] = rotl(t, 16); 
+ 		il_tab[3][i] = rotl(t, 24);
+-#endif
++#endif 
+ 		t = ((u4byte)ff_mult(14, p)) |
+ 			((u4byte)ff_mult( 9, p) <<  8) |
+ 			((u4byte)ff_mult(13, p) << 16) |
+ 			((u4byte)ff_mult(11, p) << 24);
+-
+-		it_tab[0][i] = t;
+-		it_tab[1][i] = rotl(t,  8);
+-		it_tab[2][i] = rotl(t, 16);
+-		it_tab[3][i] = rotl(t, 24);
++        
++		it_tab[0][i] = t; 
++		it_tab[1][i] = rotl(t,  8); 
++		it_tab[2][i] = rotl(t, 16); 
++		it_tab[3][i] = rotl(t, 24); 
+ 	}
+ 
+ 	tab_gen = 1;
+@@ -356,55 +273,46 @@
+ rijndael_ctx *
+ rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
+ 		 int encrypt)
+-{
++{  
+ 	u4byte  i, t, u, v, w;
+ 	u4byte *e_key = ctx->e_key;
+ 	u4byte *d_key = ctx->d_key;
+ 
+ 	ctx->decrypt = !encrypt;
+ 
+-	if (!tab_gen)
++	if(!tab_gen)
+ 		gen_tabs();
+ 
+ 	ctx->k_len = (key_len + 31) / 32;
+ 
+-	e_key[0] = in_key[0];
+-	e_key[1] = in_key[1];
+-	e_key[2] = in_key[2];
+-	e_key[3] = in_key[3];
+-
+-	switch (ctx->k_len) {
+-        case 4:
+-		t = e_key[3];
+-                for (i = 0; i < 10; ++i)
++	e_key[0] = io_swap(in_key[0]); e_key[1] = io_swap(in_key[1]);
++	e_key[2] = io_swap(in_key[2]); e_key[3] = io_swap(in_key[3]);
++	
++	switch(ctx->k_len) {
++        case 4: t = e_key[3];
++                for(i = 0; i < 10; ++i) 
+ 			loop4(i);
+                 break;
+ 
+-        case 6:
+-		e_key[4] = in_key[4];
+-		t = e_key[5] = in_key[5];
+-                for (i = 0; i < 8; ++i)
++        case 6: e_key[4] = io_swap(in_key[4]); t = e_key[5] = io_swap(in_key[5]);
++                for(i = 0; i < 8; ++i) 
+ 			loop6(i);
+                 break;
+ 
+-        case 8:
+-		e_key[4] = in_key[4];
+-		e_key[5] = in_key[5];
+-                e_key[6] = in_key[6];
+-		t = e_key[7] = in_key[7];
+-                for (i = 0; i < 7; ++i)
++        case 8: e_key[4] = io_swap(in_key[4]); e_key[5] = io_swap(in_key[5]);
++                e_key[6] = io_swap(in_key[6]); t = e_key[7] = io_swap(in_key[7]);
++                for(i = 0; i < 7; ++i) 
+ 			loop8(i);
+                 break;
+ 	}
+ 
+ 	if (!encrypt) {
+-		d_key[0] = e_key[0];
+-		d_key[1] = e_key[1];
+-		d_key[2] = e_key[2];
+-		d_key[3] = e_key[3];
++		d_key[0] = e_key[0]; d_key[1] = e_key[1];
++		d_key[2] = e_key[2]; d_key[3] = e_key[3];
+ 
+-		for (i = 4; i < 4 * ctx->k_len + 24; ++i)
++		for(i = 4; i < 4 * ctx->k_len + 24; ++i) {
+ 			imix_col(d_key[i], e_key[i]);
++		}
+ 	}
+ 
+ 	return ctx;
+@@ -427,23 +335,25 @@
+ 
+ void
+ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
+-{
++{   
+ 	u4byte k_len = ctx->k_len;
+ 	u4byte *e_key = ctx->e_key;
+ 	u4byte  b0[4], b1[4], *kp;
+ 
+-	b0[0] = in_blk[0] ^ e_key[0];
+-	b0[1] = in_blk[1] ^ e_key[1];
+-	b0[2] = in_blk[2] ^ e_key[2];
+-	b0[3] = in_blk[3] ^ e_key[3];
++	b0[0] = io_swap(in_blk[0]) ^ e_key[0];
++	b0[1] = io_swap(in_blk[1]) ^ e_key[1];
++	b0[2] = io_swap(in_blk[2]) ^ e_key[2];
++	b0[3] = io_swap(in_blk[3]) ^ e_key[3];
+ 
+ 	kp = e_key + 4;
+ 
+-	if (k_len > 6)
++	if(k_len > 6) {
+ 		f_nround(b1, b0, kp); f_nround(b0, b1, kp);
++	}
+ 
+-	if (k_len > 4)
++	if(k_len > 4) {
+ 		f_nround(b1, b0, kp); f_nround(b0, b1, kp);
++	}
+ 
+ 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
+ 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
+@@ -451,8 +361,8 @@
+ 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
+ 	f_nround(b1, b0, kp); f_lround(b0, b1, kp);
+ 
+-	out_blk[0] = b0[0]; out_blk[1] = b0[1];
+-	out_blk[2] = b0[2]; out_blk[3] = b0[3];
++	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
++	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
+ }
+ 
+ /* decrypt a block of text  */
+@@ -472,24 +382,26 @@
+ 
+ void
+ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
+-{
++{  
+ 	u4byte  b0[4], b1[4], *kp;
+ 	u4byte k_len = ctx->k_len;
+ 	u4byte *e_key = ctx->e_key;
+ 	u4byte *d_key = ctx->d_key;
+ 
+-	b0[0] = in_blk[0] ^ e_key[4 * k_len + 24];
+-	b0[1] = in_blk[1] ^ e_key[4 * k_len + 25];
+-	b0[2] = in_blk[2] ^ e_key[4 * k_len + 26];
+-	b0[3] = in_blk[3] ^ e_key[4 * k_len + 27];
++	b0[0] = io_swap(in_blk[0]) ^ e_key[4 * k_len + 24];
++	b0[1] = io_swap(in_blk[1]) ^ e_key[4 * k_len + 25];
++	b0[2] = io_swap(in_blk[2]) ^ e_key[4 * k_len + 26];
++	b0[3] = io_swap(in_blk[3]) ^ e_key[4 * k_len + 27];
+ 
+ 	kp = d_key + 4 * (k_len + 5);
+ 
+-	if (k_len > 6)
++	if(k_len > 6) {
+ 		i_nround(b1, b0, kp); i_nround(b0, b1, kp);
++	}
+ 
+-	if (k_len > 4)
++	if(k_len > 4) {
+ 		i_nround(b1, b0, kp); i_nround(b0, b1, kp);
++	}
+ 
+ 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
+ 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
+@@ -497,6 +409,6 @@
+ 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
+ 	i_nround(b1, b0, kp); i_lround(b0, b1, kp);
+ 
+-	out_blk[0] = b0[0]; out_blk[1] = b0[1];
+-	out_blk[2] = b0[2]; out_blk[3] = b0[3];
++	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
++	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
+ }
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_qe.patch
+And then re-config(8) and rebuild your kernel.
+
+Index: sys/arch/sparc/conf/files.sparc
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/conf/files.sparc,v
+retrieving revision 1.37
+retrieving revision 1.38
+diff -u -r1.37 -r1.38
+--- sys/arch/sparc/conf/files.sparc	2000/06/28 20:20:14	1.37
++++ sys/arch/sparc/conf/files.sparc	2000/11/16 15:47:56	1.38
+@@ -112,7 +112,7 @@
+ attach	be at qec
+ file	arch/sparc/dev/be.c		be
+ 
+-device	qe: ifnet, ether
++device	qe: ifnet, ether, ifmedia
+ attach	qe at qec
+ file	arch/sparc/dev/qe.c		qe
+ 
+Index: sys/arch/sparc/dev/qe.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/qe.c,v
+retrieving revision 1.9
+retrieving revision 1.13
+diff -u -r1.9 -r1.13
+--- sys/arch/sparc/dev/qe.c	2000/06/18 17:36:59	1.9
++++ sys/arch/sparc/dev/qe.c	2000/11/17 17:38:32	1.13
+@@ -1,7 +1,7 @@
+-/*	$OpenBSD: qe.c,v 1.9 2000/06/18 17:36:59 jason Exp $	*/
++/*	$OpenBSD: qe.c,v 1.13 2000/11/17 17:38:32 jason Exp $	*/
+ 
+ /*
+- * Copyright (c) 1998 Jason L. Wright.
++ * Copyright (c) 1998, 2000 Jason L. Wright.
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+@@ -50,6 +50,7 @@
+ #include <net/if.h>
+ #include <net/if_dl.h>
+ #include <net/if_types.h>
++#include <net/if_media.h>
+ #include <net/netisr.h>
+ 
+ #ifdef INET
+@@ -96,6 +97,8 @@
+ void		qe_read __P((struct qesoftc *, int, int));
+ struct mbuf *	qe_get __P((struct qesoftc *, int, int));
+ void		qe_mcreset __P((struct qesoftc *));
++void		qe_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
++int		qe_ifmedia_upd __P((struct ifnet *));
+ 
+ struct cfdriver qe_cd = {
+ 	NULL, "qe", DV_IFNET
+@@ -163,6 +166,12 @@
+ 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+ 	    IFF_MULTICAST;
+ 
++	ifmedia_init(&sc->sc_ifmedia, IFM_IMASK,
++	    qe_ifmedia_upd, qe_ifmedia_sts);
++	ifmedia_add(&sc->sc_ifmedia,
++	    IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), 0, NULL);
++	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);
++
+ 	/* Attach the interface. */
+ 	if_attach(ifp);
+ 	ether_ifattach(ifp);
+@@ -248,17 +257,21 @@
+ {	
+ 	struct qe_cregs *cr = sc->sc_cr;
+ 	struct qe_mregs *mr = sc->sc_mr;
+-	int tries;
++	int n;
+ 
+-	tries = 200;
+ 	mr->biucc = QE_MR_BIUCC_SWRST;
+-	while ((mr->biucc & QE_MR_BIUCC_SWRST) && --tries)
++	for (n = 200; n > 0; n--) {
++		if ((mr->biucc & QE_MR_BIUCC_SWRST) == 0)
++			break;
+ 		DELAY(20);
++	}
+ 
+-	tries = 200;
+ 	cr->ctrl = QE_CR_CTRL_RESET;
+-	while ((cr->ctrl & QE_CR_CTRL_RESET) && --tries)
++	for (n = 200; n > 0; n--) {
++		if ((cr->ctrl & QE_CR_CTRL_RESET) == 0)
++			break;
+ 		DELAY(20);
++	}
+ }
+ 
+ /*
+@@ -268,12 +281,8 @@
+ qereset(sc)
+ 	struct qesoftc *sc;
+ {
+-	int s;
+-
+-	s = splnet();
+ 	qestop(sc);
+ 	qeinit(sc);
+-	splx(s);
+ }
+ 
+ void
+@@ -281,11 +290,14 @@
+ 	struct ifnet *ifp;
+ {
+ 	struct qesoftc *sc = ifp->if_softc;
++	int s;
+ 
+ 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+ 	++sc->sc_arpcom.ac_if.if_oerrors;
+ 
++	s = splnet();
+ 	qereset(sc);
++	splx(s);
+ }
+ 
+ /*
+@@ -422,7 +434,6 @@
+ 		rst = 1;
+ 	}
+ 
+-
+ 	if (why & QE_CR_STAT_LCOLL) {
+ 		printf("%s: late tx transmission\n", sc->sc_dev.dv_xname);
+ 		ifp->if_oerrors++;
+@@ -650,10 +661,15 @@
+ 			 * Multicast list has changed; set the hardware filter
+ 			 * accordingly.
+ 			 */
+-			qe_mcreset(sc);
++			if (ifp->if_flags & IFF_UP)
++				qeinit(sc);
+ 			error = 0;
+ 		}
+ 		break;
++	case SIOCGIFMEDIA:
++	case SIOCSIFMEDIA:
++		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
++		break;
+ 	default:
+ 		if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+ 			splx(s);
+@@ -677,29 +693,30 @@
+ 	int s = splimp();
+ 	int i;
+ 
++	qestop(sc);
++
+ 	/*
+ 	 * Allocate descriptor ring and buffers, if not already done
+ 	 */
+ 	if (sc->sc_desc == NULL)
+ 		sc->sc_desc_dva = (struct qe_desc *) dvma_malloc(
+ 			sizeof(struct qe_desc), &sc->sc_desc, M_NOWAIT);
++	bzero(sc->sc_desc, sizeof(struct qe_desc));
++
+ 	if (sc->sc_bufs == NULL)
+ 		sc->sc_bufs_dva = (struct qe_bufs *) dvma_malloc(
+ 			sizeof(struct qe_bufs), &sc->sc_bufs, M_NOWAIT);
+-	
+-	for (i = 0; i < QE_TX_RING_MAXSIZE; i++) {
++	bzero(sc->sc_bufs, sizeof(struct qe_bufs));
++
++	for (i = 0; i < QE_TX_RING_MAXSIZE; i++)
+ 		sc->sc_desc->qe_txd[i].tx_addr =
+ 			(u_int32_t) &sc->sc_bufs_dva->tx_buf[i % QE_TX_RING_SIZE][0];
+-		sc->sc_desc->qe_txd[i].tx_flags = 0;
+-	}
+ 	for (i = 0; i < QE_RX_RING_MAXSIZE; i++) {
+ 		sc->sc_desc->qe_rxd[i].rx_addr =
+ 			(u_int32_t) &sc->sc_bufs_dva->rx_buf[i % QE_RX_RING_SIZE][0];
+ 		if ((i / QE_RX_RING_SIZE) == 0)
+ 			sc->sc_desc->qe_rxd[i].rx_flags =
+ 				QE_RXD_OWN | QE_RXD_LENGTH;
+-		else
+-			sc->sc_desc->qe_rxd[i].rx_flags = 0;
+ 	}
+ 
+ 	cr->rxds = (u_int32_t) &sc->sc_desc_dva->qe_rxd[0];
+@@ -708,49 +725,55 @@
+ 	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
+ 	sc->sc_last_rd = 0;
+ 
+-	qestop(sc);
+-
+ 	cr->rimask = 0;
+ 	cr->timask = 0;
+ 	cr->qmask = 0;
+-	cr->mmask = QE_CR_MMASK_RXCOLL;
+-	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * qec->sc_msize;
+-	cr->txwbufptr = cr->txrbufptr = cr->rxrbufptr + qec->sc_rsize;
++	cr->mmask = QE_CR_MMASK_RXCOLL | QE_CR_MMASK_CLOSS;
+ 	cr->ccnt = 0;
+ 	cr->pipg = 0;
++	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * qec->sc_msize;
++	cr->txwbufptr = cr->txrbufptr = cr->rxrbufptr + qec->sc_rsize;
+ 
+-	mr->phycc = QE_MR_PHYCC_ASEL;
+-	mr->xmtfc = QE_MR_XMTFC_APADXMT;
+-	mr->rcvfc = 0;
+-	mr->imr = QE_MR_IMR_CERRM | QE_MR_IMR_RCVINTM;
++	/*
++	 * When switching from mace<->qec always guarantee an sbus
++	 * turnaround (if last op was read, perform a dummy write, and
++	 * vice versa).
++	 */
++	i = cr->qmask;		/* dummy */
++
+ 	mr->biucc = QE_MR_BIUCC_BSWAP | QE_MR_BIUCC_64TS;
+ 	mr->fifofc = QE_MR_FIFOCC_TXF16 | QE_MR_FIFOCC_RXF32 |
+ 	    QE_MR_FIFOCC_RFWU | QE_MR_FIFOCC_TFWU;
++	mr->xmtfc = QE_MR_XMTFC_APADXMT;
++	mr->rcvfc = 0;
++	mr->imr = QE_MR_IMR_CERRM | QE_MR_IMR_RCVINTM;
++	mr->phycc = QE_MR_PHYCC_ASEL;
+ 	mr->plscc = QE_MR_PLSCC_TP;
+ 
++	qe_ifmedia_upd(ifp);
++
+ 	mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_PHYADDR;
++	for (i = 100; i > 0; i--) {
++		if ((mr->iac & QE_MR_IAC_ADDRCHG) == 0)
++			break;
++		DELAY(2);
++	}
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[0];
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[1];
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[2];
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[3];
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[4];
+ 	mr->padr = sc->sc_arpcom.ac_enaddr[5];
+-
+-	mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
+-	for (i = 0; i < 8; i++)
+-		mr->ladrf = 0;
++	qe_mcreset(sc);
+ 	mr->iac = 0;
+ 
+-	delay(50000);
+-	if ((mr->phycc & QE_MR_PHYCC_LNKFL) == QE_MR_PHYCC_LNKFL)
+-		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
+-
+ 	i = mr->mpc;	/* cleared on read */
+ 
+-	qe_mcreset(sc);
+-
+ 	ifp->if_flags |= IFF_RUNNING;
+ 	ifp->if_flags &= ~IFF_OACTIVE;
++
++	mr->maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV |
++	    ((ifp->if_flags & IFF_PROMISC) ? QE_MR_MACCC_PROM : 0);
+ 	splx(s);
+ }
+ 
+@@ -905,19 +928,17 @@
+ 	u_int16_t hash[4];
+ 	u_int8_t octet, *ladrp = (u_int8_t *)&hash[0];
+ 	int i, j;
+-
+-	if (ifp->if_flags & IFF_PROMISC) {
+-		mr->maccc = QE_MR_MACCC_PROM | QE_MR_MACCC_ENXMT |
+-		    QE_MR_MACCC_ENRCV;
+-		return;
+-	}
+ 
++allmulti:
+ 	if (ifp->if_flags & IFF_ALLMULTI) {
+ 		mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
++		for (i = 100; i > 0; i--) {
++			if ((mr->iac & QE_MR_IAC_ADDRCHG) == 0)
++				break;
++			DELAY(2);
++		}
+ 		for (i = 0; i < 8; i++)
+ 			mr->ladrf = 0xff;
+-		mr->iac = 0;
+-		mr->maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
+ 		return;
+ 	}
+ 
+@@ -937,12 +958,8 @@
+ 			 * which the range is big enough to require
+ 			 * all bits set.)
+ 			 */
+-			mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
+-			for (i = 0; i < 8; i++)
+-				mr->ladrf = 0xff;
+-			mr->iac = 0;
+ 			ifp->if_flags |= IFF_ALLMULTI;
+-			break;
++			goto allmulti;
+ 		}
+ 
+ 		crc = 0xffffffff;
+@@ -967,9 +984,46 @@
+ 	}
+ 
+ 	mr->iac = QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR;
++	for (i = 100; i > 0; i--) {
++		if ((mr->iac & QE_MR_IAC_ADDRCHG) == 0)
++			break;
++		DELAY(2);
++	}
+ 	for (i = 0; i < 8; i++)
+ 		mr->ladrf = ladrp[i];
+-	mr->iac = 0;
++}
++
++void
++qe_ifmedia_sts(ifp, ifmr)
++	struct ifnet *ifp;
++	struct ifmediareq *ifmr;
++{
++	struct qesoftc *sc = (struct qesoftc *)ifp->if_softc;
++	u_int8_t phycc;
++
++	ifmr->ifm_active = IFM_ETHER | IFM_10_T;
++	phycc = sc->sc_mr->phycc;
++	if ((phycc & QE_MR_PHYCC_DLNKTST) == 0) {
++		ifmr->ifm_status |= IFM_AVALID;
++		if (phycc & QE_MR_PHYCC_LNKFL)
++			ifmr->ifm_status &= ~IFM_ACTIVE;
++		else
++			ifmr->ifm_status |= IFM_ACTIVE;
++	}
++}
++
++int
++qe_ifmedia_upd(ifp)
++	struct ifnet *ifp;
++{
++	struct qesoftc *sc = (struct qesoftc *)ifp->if_softc;
++	int media = sc->sc_ifmedia.ifm_media;
++
++	if (IFM_TYPE(media) != IFM_ETHER)
++		return (EINVAL);
++
++	if (IFM_SUBTYPE(media) != IFM_10_T)
++		return (EINVAL);
+ 
+-	mr->maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
++	return (0);
+ }
+Index: sys/arch/sparc/dev/qereg.h
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/qereg.h,v
+retrieving revision 1.4
+retrieving revision 1.5
+diff -u -r1.4 -r1.5
+--- sys/arch/sparc/dev/qereg.h	1999/03/12 18:56:18	1.4
++++ sys/arch/sparc/dev/qereg.h	2000/11/16 15:47:57	1.5
+@@ -1,7 +1,7 @@
+-/*	$OpenBSD: qereg.h,v 1.4 1999/03/12 18:56:18 jason Exp $	*/
++/*	$OpenBSD: qereg.h,v 1.5 2000/11/16 15:47:57 jason Exp $	*/
+ 
+ /*
+- * Copyright (c) 1998 Jason L. Wright.
++ * Copyright (c) 1998, 2000 Jason L. Wright.
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+@@ -255,6 +255,7 @@
+ 
+ /* qe_mregs.plscc: pls config control. */
+ #define	QE_MR_PLSCC_XMTSEL	0x08		/* tx mode select */
++#define	QE_MR_PLSCC_PORTMASK	0x06		/* media mask */
+ #define	QE_MR_PLSCC_GPSI	0x06		/* use gpsi connector */
+ #define	QE_MR_PLSCC_DAI		0x04		/* use dai connector */
+ #define	QE_MR_PLSCC_TP		0x02		/* use twistedpair connector */
+Index: sys/arch/sparc/dev/qevar.h
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/qevar.h,v
+retrieving revision 1.3
+retrieving revision 1.4
+diff -u -r1.3 -r1.4
+--- sys/arch/sparc/dev/qevar.h	1999/02/24 06:57:45	1.3
++++ sys/arch/sparc/dev/qevar.h	2000/11/16 15:47:57	1.4
+@@ -1,7 +1,7 @@
+-/*	$OpenBSD: qevar.h,v 1.3 1999/02/24 06:57:45 jason Exp $	*/
++/*	$OpenBSD: qevar.h,v 1.4 2000/11/16 15:47:57 jason Exp $	*/
+ 
+ /*
+- * Copyright (c) 1998 Jason L. Wright.
++ * Copyright (c) 1998, 2000 Jason L. Wright.
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+@@ -48,4 +48,5 @@
+ 
+ 	int	sc_no_td, sc_first_td, sc_last_td;
+ 	int	sc_last_rd;
++	struct	ifmedia sc_ifmedia;
+ };
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 002_sshskey.patch
+
+And then rebuild and install ssh.
+        cd usr.bin/ssh
+        make obj
+	make depend
+        make
+        make install
+
+Index: usr.bin/ssh/auth1.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/auth1.c,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- usr.bin/ssh/auth1.c	2000/10/11 20:27:23	1.6
++++ usr.bin/ssh/auth1.c	2000/11/10 01:04:40	1.7
+@@ -10,7 +10,7 @@
+  */
+ 
+ #include "includes.h"
+-RCSID("$OpenBSD: auth1.c,v 1.6 2000/10/11 20:27:23 markus Exp $");
++RCSID("$OpenBSD: auth1.c,v 1.7 2000/11/10 01:04:40 markus Exp $");
+ 
+ #include "xmalloc.h"
+ #include "rsa.h"
+@@ -248,7 +248,7 @@
+ 			if (options.skey_authentication == 1) {
+ 				char *skeyinfo = NULL;
+ 				if (pw != NULL)
+-					skey_keyinfo(pw->pw_name);
++					skeyinfo = skey_keyinfo(pw->pw_name);
+ 				if (skeyinfo == NULL) {
+ 					debug("generating fake skeyinfo for %.100s.", luser);
+ 					skeyinfo = skey_fake_keyinfo(luser);
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 001_zsconsole.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/sparc/dev/zs.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/zs.c,v
+retrieving revision 1.26
+retrieving revision 1.26.2.1
+diff -u -r1.26 -r1.26.2.1
+--- sys/arch/sparc/dev/zs.c	2000/07/14 20:27:37	1.26
++++ sys/arch/sparc/dev/zs.c	2000/11/10 20:18:41	1.26.2.1
+@@ -957,7 +957,7 @@
+ #endif
+ 		ienab_bis(IE_ZSSOFT);
+ 	}
+-	return (intflags & ZSHARD_WAS_SERVICED) ? 1 : 0 /* -1 XXX */;
++	return (intflags & ZSHARD_WAS_SERVICED) ? 1 : -1 /* XXX */;
+ }
+ 
+ static int
+

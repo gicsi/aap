@@ -1,0 +1,29 @@
+Description of problem:
+A RHEL 6 hypervisor was decommissioned from a RHEV datacenter and replaced with another new host with the same hostname and same ip. The new host and the rest of its cluster was upgraded to RHEL 7. 
+
+The old host was not wiped of data and when it was powered back on to be used elsewhere, it reconnected to the old RHEV environment, it even overrode the RHEV-H 7 "general" tab's information with the information from the failed RHEV-H 6 machine. VMs which were marked to be Highly Available were powered back on and therefore were running on two hosts at once and these VMs were corrupted. 
+
+To resolve this, he took the decommissioned system offline that was causing the corruption, shut everything down and rolled back our storage to an earlier time and ran an FSCK.
+
+Afterwards, the UUIDs on the two systems shipped by Dell were shown to have the same UUID:
+
+New host:
+[root@exes125 ~]# dmidecode -s system-uuid
+4C4C4544-0046-3310-805A-B6C04F4B4D31
+[root@exes125 ~]#
+
+Decommissioned host:
+[root@localhost ~]# dmidecode -s system-uuid
+4C4C4544-0046-3310-805A-B6C04F4B4D31
+
+We need a way to check for duplicate UUIDs in a RHEV environment if they are not absolutely unique, or if two hosts with the same UUID are recognized, disregard the second. 
+
+Version-Release number of selected component (if applicable):
+RHEV 3.5.3
+the scenario is not clear, "hypervisor was decommissioned" means it was moved to maintenance? removed from the setup? or non-responsive?
+please describe the setup and scenario, also please attach engine log for the relevant time (decommission time and old host start time)
+Omer,
+
+Thanks for having a look. The host was decommissioned due to a hardware failure and was powered on after the hardware issue had been fixed. The server was completely removed from RHEV, both physically as well as from the database. The system was not wiped before powering it back on though, so when it came back online it reconnected with the RHEV-M and the VMs which were marked as Highly Available were allowed to start on multiple hosts. 
+
+-Robert

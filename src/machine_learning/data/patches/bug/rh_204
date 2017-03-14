@@ -1,0 +1,38 @@
+From e92eb0569911fe8f824bc8cd5766d076d06afc6f Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 4 Jul 2015 01:51:14 +0000
+Subject: [PATCH] Update to 1.6.0 (#1239186)
+
+---
+ python-vcrpy.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-vcrpy.spec b/python-vcrpy.spec
+index c8873d2..be0bdb3 100644
+--- a/python-vcrpy.spec
++++ b/python-vcrpy.spec
+@@ -13,8 +13,8 @@
+ %global modname vcrpy
+ 
+ Name:               python-vcrpy
+-Version:            1.5.2
+-Release:            3%{?dist}
++Version:            1.6.0
++Release:            1%{?dist}
+ Summary:            Automatically mock your HTTP interactions to simplify and speed up testing
+ 
+ Group:              Development/Libraries
+@@ -148,6 +148,9 @@ popd
+ %endif
+ 
+ %changelog
++* Sat Jul 04 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.6.0-1
++- Update to 1.6.0 (#1239186)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5.2-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

@@ -1,0 +1,33 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_mbuf.patch
+
+Then build and install a new kernel.
+
+This patch differs from the 4.0 patch because this issue was partly
+fixed prior to 4.1 being tagged.
+
+Index: sys/kern/uipc_mbuf2.c
+===================================================================
+RCS file: /cvs/src/sys/kern/uipc_mbuf2.c,v
+retrieving revision 1.27
+retrieving revision 1.27.2.1
+diff -u -p -r1.27 -r1.27.2.1
+--- sys/kern/uipc_mbuf2.c	26 Feb 2007 20:15:33 -0000	1.27
++++ sys/kern/uipc_mbuf2.c	28 Apr 2007 01:50:26 -0000	1.27.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: uipc_mbuf2.c,v 1.27 2007/02/26 20:15:33 claudio Exp $	*/
++/*	$OpenBSD: uipc_mbuf2.c,v 1.27.2.1 2007/04/28 01:50:26 ckuethe Exp $	*/
+ /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
+ /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
+ 
+@@ -231,6 +231,8 @@ m_dup1(struct mbuf *m, int off, int len,
+ 		return (NULL);
+ 	if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
+ 		MGETHDR(n, wait, m->m_type);
++		if (n == NULL)
++			return (NULL);
+ 		M_DUP_PKTHDR(n, m);
+ 		l = MHLEN;
+ 	} else {
+

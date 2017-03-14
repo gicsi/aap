@@ -1,0 +1,210 @@
+Description of problem:
+As the MATE desktop starts up, the Synaptics touchpad (psmouse serio1: synaptics: Touchpad model: 1, fw: 7.0, id: 0x1c0b1, caps: 0xd04791/0xb00000/0x20000, board id: 0, fw id: 434116) stops working. It works initially, and scratching in a circle moves the mouse until about the time the top panel in the MATE desktop appears. After that, there's no response from the touchpad or the touchpad buttons on MATE. (It still works fine under GNOME.)
+
+Version-Release number of selected component (if applicable):
+Started with the upgrade from F21 to F22.
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Login to MATE Desktop
+2.
+3.
+
+Actual results:
+Touchpad and buttons work through the initial part of the MATE initialization, but about the time the top panel appears, the touchpad becomes unresponsive.
+
+Expected results:
+Expect to be able to use the touch pad and buttons to move the mouse pointer.
+
+Additional info:
+Relevant(?) lines from dmesg
+[    1.732520] psmouse serio1: synaptics: Touchpad model: 1, fw: 7.0, id: 0x1c0b1, caps: 0xd04791/0xb00000/0x20000, board id: 0, fw id: 434116
+[    1.732655] psmouse serio1: synaptics: serio: Synaptics pass-through port at isa0060/serio1/input0
+[    1.779308] input: SynPS/2 Synaptics TouchPad as /devices/platform/i8042/serio1/input/input5
+mate-desktop-1.10.0-7.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/mate-desktop-1.10.0-7.fc22
+Package mate-desktop-1.10.0-7.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing mate-desktop-1.10.0-7.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10847/mate-desktop-1.10.0-7.fc22
+then log in and leave karma (feedback).
+mate-desktop-1.10.0-7.fc22 has no effect on the issue.
+After applying this update and a restart of X my touchpad starts working again and i found this new installed file.
+/usr/share/X11/xorg.conf.d/99-synaptics-mate.conf
+mate-desktop-1.10.0-7.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+(In reply to Fedora Update System from comment #5)
+> mate-desktop-1.10.0-7.fc22 has been pushed to the Fedora 22 stable
+> repository.  If problems still persist, please make note of it in this bug
+> report.
+
+Problem persists as per original report. Synaptics touchpad still unresponsive after starting MATE Desktop. The touchpad does work in a VT, and on the login screen, and I can "sudo cat /dev/char/13:68" and scratch on the pad and get junk blurted onto the screen. But MATE doesn't respond to it. (Fortunately, the trackpoint "eraser" thing works.) It used to work before the upgrade to F22.
+(In reply to todd_lewis from comment #6)
+> (In reply to Fedora Update System from comment #5)
+> > mate-desktop-1.10.0-7.fc22 has been pushed to the Fedora 22 stable
+> > repository.  If problems still persist, please make note of it in this bug
+> > report.
+> 
+> Problem persists as per original report. Synaptics touchpad still
+> unresponsive after starting MATE Desktop. The touchpad does work in a VT,
+> and on the login screen, and I can "sudo cat /dev/char/13:68" and scratch on
+> the pad and get junk blurted onto the screen. But MATE doesn't respond to
+> it. (Fortunately, the trackpoint "eraser" thing works.) It used to work
+> before the upgrade to F22.
+There is a new feature in f22 which installs 'libinput' driver, but mate or cinnamon doesn't support this driver.
+https://fedoraproject.org/wiki/Changes/LibinputForXorg
+
+[root@mother xorg.conf.d]# ls
+10-evdev.conf      50-vmmouse.conf   99-synaptics-cinnamon.conf
+10-quirks.conf     50-wacom.conf     99-synaptics-mate.conf
+50-synaptics.conf  90-libinput.conf  nvidia.conf
+
+90-libinput.conf has a higher priority than 50-synaptics.conf
+For this reason i create the 99-synaptics-mate.conf with the update.
+In result X use the synaptics driver in mate session.
+This works with my notebook and i have the touchpad tap in mate-mouse-properties and my touchpad is working.
+
+So, is xorg-x11-drv-synaptics installed?
+Did you get an output with 'synclient' which indicates that the synaptics driver is loaded?
+Do you have /usr/share/X11/xorg.conf.d/50-synaptics.conf ?
+Do you have this symlink after installing mate-desktop-1.10.0-7.fc22 ?
+/usr/share/X11/xorg.conf.d/99-synaptics-mate.conf
+You can also check in /var/log/Xorg.0.log if the synaptic driver is in use.
+Please answer to all the questions.
+Created attachment 1044672
+Xorg.0.log showing synaptics device info
+(In reply to Wolfgang Ulbrich from comment #7)
+> (In reply to todd_lewis from comment #6)
+> There is a new feature in f22 which installs 'libinput' driver, but mate or
+> cinnamon doesn't support this driver.
+> https://fedoraproject.org/wiki/Changes/LibinputForXorg
+
+This is very helpful info; thank you.
+
+> So, is xorg-x11-drv-synaptics installed?
+
+Yes, and it owns /usr/share/X11/xorg.conf.d/50-synaptics.conf
+
+> Did you get an output with 'synclient' which indicates that the synaptics
+> driver is loaded?
+
+Yes, with 59 "parameter = ##" pairs reported.
+
+> Do you have /usr/share/X11/xorg.conf.d/50-synaptics.conf ?
+
+Yes; Behold:
+[utoddl@lappy2 ~]$ ls -l /usr/share/X11/xorg.conf.d/50-synaptics.conf
+-rw-r--r--. 1 root root 2827 May  1 02:23 /usr/share/X11/xorg.conf.d/50-synaptics.conf
+[utoddl@lappy2 ~]$ rpm -qvf /usr/share/X11/xorg.conf.d/50-synaptics.conf
+xorg-x11-drv-synaptics-1.8.2-2.fc22.x86_64
+
+> Do you have this symlink after installing mate-desktop-1.10.0-7.fc22 ?
+> /usr/share/X11/xorg.conf.d/99-synaptics-mate.conf
+
+Yes; Behold:
+[utoddl@lappy2 ~]$ ls -l /usr/share/X11/xorg.conf.d/99-synaptics-mate.conf
+lrwxrwxrwx. 1 root root 44 Jun 29 07:23 /usr/share/X11/xorg.conf.d/99-synaptics-mate.conf -> /usr/share/X11/xorg.conf.d/50-synaptics.conf
+[utoddl@lappy2 ~]$ rpm -qvf /usr/share/X11/xorg.conf.d/99-synaptics-mate.conf
+mate-desktop-1.10.0-7.fc22.x86_64
+
+> You can also check in /var/log/Xorg.0.log if the synaptic driver is in use.
+> Please answer to all the questions.
+
+I've attached Xorg.0.log, but here are the relevant lines. The last two seem ominous:
+[    81.245] (II) config/udev: Adding input device SynPS/2 Synaptics TouchPad (/dev/input/event5)
+[    81.245] (**) SynPS/2 Synaptics TouchPad: Applying InputClass "evdev touchpad catchall"
+[    81.245] (**) SynPS/2 Synaptics TouchPad: Applying InputClass "touchpad catchall"
+[    81.245] (**) SynPS/2 Synaptics TouchPad: Applying InputClass "Default clickpad buttons"
+[    81.245] (**) SynPS/2 Synaptics TouchPad: Applying InputClass "touchpad catchall"
+[    81.245] (**) SynPS/2 Synaptics TouchPad: Applying InputClass "Default clickpad buttons"
+[    81.245] (II) LoadModule: "synaptics"
+[    81.245] (II) Loading /usr/lib64/xorg/modules/input/synaptics_drv.so
+[    81.245] (II) Module synaptics: vendor="X.Org Foundation"
+[    81.245]    compiled for 1.17.1, module version = 1.8.2
+[    81.245]    Module class: X.Org XInput Driver
+[    81.245]    ABI class: X.Org XInput driver, version 21.0
+[    81.245] (II) Using input driver 'synaptics' for 'SynPS/2 Synaptics TouchPad'
+[    81.245] (**) SynPS/2 Synaptics TouchPad: always reports core events
+[    81.245] (**) Option "Device" "/dev/input/event5"
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: x-axis range 1472 - 5598 (res 67)
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: y-axis range 1408 - 4670 (res 111)
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: pressure range 0 - 255
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: finger width range 0 - 15
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: buttons: left right
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: Vendor 0x2 Product 0x7
+[    81.275] (--) synaptics: SynPS/2 Synaptics TouchPad: touchpad found
+[    81.275] (**) SynPS/2 Synaptics TouchPad: always reports core events
+[    81.299] (**) Option "config_info" "udev:/sys/devices/platform/i8042/serio1/input/input5/event5"
+[    81.299] (II) XINPUT: Adding extended input device "SynPS/2 Synaptics TouchPad" (type: TOUCHPAD, id 13)
+[    81.299] (**) synaptics: SynPS/2 Synaptics TouchPad: (accel) MinSpeed is now constant deceleration 2.5
+[    81.299] (**) synaptics: SynPS/2 Synaptics TouchPad: (accel) MaxSpeed is now 1.75
+[    81.299] (**) synaptics: SynPS/2 Synaptics TouchPad: (accel) AccelFactor is now 0.038
+[    81.299] (**) SynPS/2 Synaptics TouchPad: (accel) keeping acceleration scheme 1
+[    81.299] (**) SynPS/2 Synaptics TouchPad: (accel) acceleration profile 1
+[    81.299] (**) SynPS/2 Synaptics TouchPad: (accel) acceleration factor: 2.000
+[    81.299] (**) SynPS/2 Synaptics TouchPad: (accel) acceleration threshold: 4
+[    81.299] (--) synaptics: SynPS/2 Synaptics TouchPad: touchpad found
+[    81.299] (II) config/udev: Adding input device SynPS/2 Synaptics TouchPad (/dev/input/mouse1)
+[    81.299] (II) No input driver specified, ignoring this device.
+[    81.299] (II) This device may have been added with another device file.
+Ok, all looks good,
+synaptic driver is runing and i see no failures.
+Do you use gdm as login manager?
+Maybe gdm calls xorg-x11-drv-libinput and switching to xorg-x11-drv-synaptics causes the isue in a running X.
+You can also try uninstall xorg-x11-drv-libinput for testing.
+Gnome should also run withs synaptic driver as mentioned in wiki.
+(In reply to Wolfgang Ulbrich from comment #10)
+> Ok, all looks good,
+> synaptic driver is runing and i see no failures.
+> Do you use gdm as login manager?
+
+No. lightdm
+
+> Maybe gdm calls xorg-x11-drv-libinput and switching to
+> xorg-x11-drv-synaptics causes the isue in a running X.
+> You can also try uninstall xorg-x11-drv-libinput for testing.
+> Gnome should also run withs synaptic driver as mentioned in wiki.
+
+Neither gdm, xorg-x11-drv-libinput, or libinput are installed on this system. I did try again after installing them and again after re-removing them: no difference. The touchpad is responsive in lightdm, but not after MATE Desktop loads. Touchpad works with LXDE, and ever so briefly while MATE is starting, but quits about the time icons / top panel appear.
+There is no change in Mate-1.10 about input devices.
+Did you check with dconf-editor or mate-mouse-properties if all settings are correct?
+Is this gsettings key enabled?
+[rave@mother ~]$ gsettings get org.mate.peripherals-touchpad touchpad-enabled
+true
+(In reply to Wolfgang Ulbrich from comment #13)
+> Is this gsettings key enabled?
+> [rave@mother ~]$ gsettings get org.mate.peripherals-touchpad touchpad-enabled
+> true
+
+No, it was not set! After
+
+[utoddl@foo]$ gsettings set org.mate.peripherals-touchpad touchpad-enabled true
+
+it immediately started working again -- first time since the F22 upgrade.
+
+So, what could possibly have turned this setting false? The System->Preferences->Hardware->Mouse app has had a Touchpad tab, and I've twiddled everything there many times over during the last month, but there's nothing there that says "Enable touchpad () Yes (*) No".
+
+Very glad to have this working; thanks. Very frustrated at the invisibility of this switch. (Are users supposed to dig into gsettings outside of the GUI?)
+
+Thanks again.
+Glad to hear that it works again for you :)
+Hard to say what can cause this change in your settings, maybe through the upgrade.
+There is also a major glib2 change for gsettings with f22,
+most stuff is adjusted for this in mate-1.10, but not all.
+Upstream is working on it.
+So if you notice that a settings change don't work, simply restart the session and the setting will apply ;)
+
+(In reply to todd_lewis from comment #14)
+> So, what could possibly have turned this setting false? The
+> System->Preferences->Hardware->Mouse app has had a Touchpad tab, and I've
+> twiddled everything there many times over during the last month, but there's
+> nothing there that says "Enable touchpad () Yes (*) No".
+> 
+sounds like a good improvement, maybe you can file out a feature request for it at mate at github and mention this report there.
+Opened an issue (https://github.com/mate-desktop/mate-desktop/issues/178) upstream as suggested. Thanks again.

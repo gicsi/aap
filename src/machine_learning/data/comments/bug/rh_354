@@ -1,0 +1,21 @@
+Security researcher Paul Bandha reported a type confusion error where part of IDBDatabase is read by the Indexed Database Manager and incorrectly used as a pointer when it shouldn't be used as such. This leads to memory corruption and the possibility of an exploitable crash. 
+
+
+External Reference:
+
+http://www.mozilla.org/security/announce/2015/mfsa2015-61.html
+
+
+Acknowledgements:
+
+Red Hat would like to thank the Mozilla project for reporting this issue. Upstream acknowledges Paul Bandha as the original reporter.
+This issue has been addressed in the following products:
+
+  Red Hat Enterprise Linux 7
+  Red Hat Enterprise Linux 6
+  Red Hat Enterprise Linux 5
+
+Via RHSA-2015:1207 https://rhn.redhat.com/errata/RHSA-2015-1207.html
+Statement:
+
+This issue does not affect the version of thunderbird package, as shipped with Red Hat Enterprise Linux 5, 6 and 7.

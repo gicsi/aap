@@ -1,0 +1,13 @@
+Your package python-django-evolution failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10142753
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047793
+build.log
+Created attachment 1047794
+root.log
+Created attachment 1047795
+state.log
+This package has changed ownership in the Fedora Package Database.  Reassigning to the new owner of this component.
+I am retiring python-django-evolution from Fedora. Upstream is not compatible with Django 1.7+ and will not be in the foreseeable future.

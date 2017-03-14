@@ -1,0 +1,8 @@
+Created attachment 1040617
+Patch for adding exported packages to MANIFEST.MF of jnr-ffi
+
+Description of problem:
+
+jnr-ffi does not export its packages in the MANIFEST.MF and this is needed for Eclipse plugins such as the new Docker Tooling plugins.
+Pushed to master.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=663663

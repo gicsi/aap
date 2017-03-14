@@ -1,0 +1,25 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-Config-Model-Tester/perl-Config-Model-Tester.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-Config-Model-Tester/perl-Config-Model-Tester-2.051-1.fc23.src.rpm
+Description:
+This class provides a way to test configuration models with tests files.
+This class was designed to tests several models and several tests cases
+per model.
+
+Fedora Account System Username: jplesnik@redhat.com
+Line 59 isn't necessary these days.  If you remove it, you can also drop the dependency on coreutils and findutils.
+
+The explicit version constraint for Log::Log4perl isn't necessary.  perl-generators pick this up from the code.
+
+I think the License tag should be changed to `LGPLv2', omitting the plus sign.  Upstream explicitly declares the version in the module file.
+Updated files are available on the same links.
+Ack, approving.
+New Package SCM Request
+=======================
+Package Name: perl-Config-Model-Tester
+Short Description: Test framework for Config::Model
+Upstream URL: http://search.cpan.org/dist/Config-Model-Tester/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

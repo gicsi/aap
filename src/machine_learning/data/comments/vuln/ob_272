@@ -1,0 +1,9 @@
+Due to an off-by-one error in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=dhcpd&amp;sektion=8">dhcpd(8)</a>,
+it is possible to cause
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=dhcpd&amp;sektion=8">dhcpd(8)</a>
+to exit by sending a DHCPDISCOVER packet with a 32-byte client identifier option.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-3122">CVE-2006-3122</a>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/006_dhcpd.patch">
+A source code patch exists which remedies this problem.</a>

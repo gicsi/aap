@@ -1,0 +1,32 @@
+Created attachment 1043069
+reports boot log
+
+Description of problem:
+Ovirt-engine-reportsd service won't start after clean install and it can't be started manually. WildFly fails to parse config.
+
+Version-Release number of selected component (if applicable):
+3.6
+
+How reproducible:
+always on my setup
+
+Steps to Reproduce:
+1. install ovirt+dwh+reports
+2. check ovirt-engine-reportsd status
+3. try to start the service and check status again
+
+Actual results:
+ovirt-engine-reportsd dead but pid file exists
+
+Expected results:
+running ovirt-engine-reportsd service
+
+Additional info:
+ovirt-engine-3.6.0-0.0.master.20150624173726.git0568f1b.el6.noarch
+ovirt-engine-reports-3.6.0-0.0.master.20150624094644.20150624094424.git019fd83.el6.noarch
+ovirt-engine-wildfly-8.2.0-1.el6.x86_64
+Closing currently as clone of bug 1209022 which is about making reports work with jboss-as 7.1.1 side-by-side with engine on wildfly on same machine.
+
+If you just need reports, you can set it up on a separate machine using a supported os (fedora 20 or el6 should work).
+
+*** This bug has been marked as a duplicate of bug 1209022 ***

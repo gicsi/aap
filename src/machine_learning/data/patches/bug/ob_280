@@ -1,0 +1,96 @@
+Apply by doing:
+	cd /usr/XF4     # Assuming XF4 is in /usr/XF4
+	patch -p0 < 014_xorg.patch
+
+And then rebuild and install X:
+	make build
+
+Index: xc/programs/Xserver/fb/fbtrap.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/fb/fbtrap.c,v
+retrieving revision 1.3
+diff -u -r1.3 fbtrap.c
+--- xc/programs/Xserver/fb/fbtrap.c	8 Jan 2006 21:18:16 -0000	1.3
++++ xc/programs/Xserver/fb/fbtrap.c	9 May 2007 17:36:48 -0000
+@@ -115,6 +115,9 @@
+     RenderEdge	l, r;
+     xFixed	t, b;
+     
++    if (!xTrapezoidValid (trap))
++	return;
++
+     fbGetDrawable (pPicture->pDrawable, buf, stride, bpp, pxoff, pyoff);
+ 
+     width = pPicture->pDrawable->width;
+Index: xc/programs/Xserver/render/renderedge.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/render/renderedge.c,v
+retrieving revision 1.2
+diff -u -r1.2 renderedge.c
+--- xc/programs/Xserver/render/renderedge.c	8 Jan 2006 21:18:25 -0000	1.2
++++ xc/programs/Xserver/render/renderedge.c	9 May 2007 17:36:51 -0000
+@@ -143,6 +143,7 @@
+     dx = x_bot - x_top;
+     dy = y_bot - y_top;
+     e->dy = dy;
++    e->dx = 0;
+     if (dy)
+     {
+ 	if (dx >= 0)
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 013_altivec.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/powerpc/powerpc/trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/powerpc/trap.c,v
+retrieving revision 1.72
+retrieving revision 1.72.4.1
+diff -u -r1.72 -r1.72.4.1
+--- sys/arch/powerpc/powerpc/trap.c	2005/12/17 07:31:27	1.72
++++ sys/arch/powerpc/powerpc/trap.c	2007/04/26 23:56:59	1.72.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trap.c,v 1.72 2005/12/17 07:31:27 miod Exp $	*/
++/*	$OpenBSD: trap.c,v 1.72.4.1 2007/04/26 23:56:59 ckuethe Exp $	*/
+ /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
+ 
+ /*
+@@ -645,6 +645,12 @@
+ 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+ 		break;
+ #endif
++
++	case EXC_VECAST|EXC_USER:
++		KERNEL_PROC_LOCK(p);
++		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
++		KERNEL_PROC_UNLOCK(p);
++		break;
+ 
+ 	case EXC_AST|EXC_USER:
+ 		uvmexp.softs++;
+Index: sys/arch/powerpc/include/trap.h
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/include/trap.h,v
+retrieving revision 1.6
+retrieving revision 1.6.14.1
+diff -u -r1.6 -r1.6.14.1
+--- sys/arch/powerpc/include/trap.h	2003/04/26 08:01:42	1.6
++++ sys/arch/powerpc/include/trap.h	2007/04/26 23:56:59	1.6.14.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trap.h,v 1.6 2003/04/26 08:01:42 jmc Exp $	*/
++/*	$OpenBSD: trap.h,v 1.6.14.1 2007/04/26 23:56:59 ckuethe Exp $	*/
+ /*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
+ 
+ /*
+@@ -51,6 +51,7 @@
+ #define	EXC_VEC		0x0f20		/* AltiVec Unavailable */
+ #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
+ #define	EXC_SMI		0x1400		/* System Management Interrupt */
++#define	EXC_VECAST	0x1600		/* AltiVec Assist */
+ 
+ /* And these are only on the 603: */
+ #define	EXC_IMISS	0x1000		/* Instruction translation miss */
+

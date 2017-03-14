@@ -1,0 +1,49 @@
+Description of problem:
+
+Logs and execution can be found here:
+https://prod-rdojenkins.rhcloud.com/view/RDO-Liberty-Delorean-Trunk/job/khaleesi-rdo-liberty-delorean-centos-7.0-aio-packstack-neutron-ml2-vxlan-rabbitmq-permissive-tempest-rpm-minimal/16/artifact/khaleesi/collected_files/rdo-pksk-ucwpe-rhos-ci-16-controller.tar.bz2
+
+
+
+
+======== END OF STDOUT ========
+2015-06-30 00:49:08::DEBUG::sequences::52::root:: Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/packstack/installer/core/sequences.py", line 50, in run
+    self.function(config, messages)
+  File "/usr/lib/python2.7/site-packages/packstack/plugins/puppet_950.py", line 210, in apply_puppet_manifest
+    wait_for_puppet(currently_running, messages)
+  File "/usr/lib/python2.7/site-packages/packstack/plugins/puppet_950.py", line 124, in wait_for_puppet
+    validate_logfile(log)
+  File "/usr/lib/python2.7/site-packages/packstack/modules/puppet.py", line 107, in validate_logfile
+    raise PuppetError(message)
+PuppetError: Error appeared during Puppet run: 172.16.0.171_cinder.pp
+[mNotice: /Stage[main]/Cinder::Api/Exec[cinder-manage db_sync]/returns: ImportError: No module named oslo_service[0m
+You will find full trace in log /var/tmp/packstack/20150630-003554-m3uh_F/manifests/172.16.0.171_cinder.pp.log
+
+2015-06-30 00:49:08::ERROR::run_setup::1018::root:: Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/packstack/installer/run_setup.py", line 1013, in main
+    _main(options, confFile, logFile)
+  File "/usr/lib/python2.7/site-packages/packstack/installer/run_setup.py", line 655, in _main
+    runSequences()
+  File "/usr/lib/python2.7/site-packages/packstack/installer/run_setup.py", line 626, in runSequences
+    controller.runAllSequences()
+  File "/usr/lib/python2.7/site-packages/packstack/installer/setup_controller.py", line 81, in runAllSequences
+    sequence.run(config=self.CONF, messages=self.MESSAGES)
+  File "/usr/lib/python2.7/site-packages/packstack/installer/core/sequences.py", line 109, in run
+    step.run(config=config, messages=messages)
+  File "/usr/lib/python2.7/site-packages/packstack/installer/core/sequences.py", line 50, in run
+    self.function(config, messages)
+  File "/usr/lib/python2.7/site-packages/packstack/plugins/puppet_950.py", line 210, in apply_puppet_manifest
+    wait_for_puppet(currently_running, messages)
+  File "/usr/lib/python2.7/site-packages/packstack/plugins/puppet_950.py", line 124, in wait_for_puppet
+    validate_logfile(log)
+  File "/usr/lib/python2.7/site-packages/packstack/modules/puppet.py", line 107, in validate_logfile
+    raise PuppetError(message)
+PuppetError: Error appeared during Puppet run: 172.16.0.171_cinder.pp
+[mNotice: /Stage[main]/Cinder::Api/Exec[cinder-manage db_sync]/returns: ImportError: No module named oslo_service[0m
+You will find full trace in log /var/tmp/packstack/20150630-003554-m3uh_F/manifests/172.16.0.171_cinder.pp.log
+python-oslo-service was added to openstack-packages but rdoinfo was not updated on trunk.rdo, fixed now.
+One more thing left is to add python-oslo-service dependency in openstack-cinder:
+
+https://review.gerrithub.io/237687
+http://trunk.rdoproject.org/f21/87/01/87016e624b8dd5574d0c678e5869510b1358a7da_7a99fe31/rpmbuild.log

@@ -1,0 +1,167 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 016_approval.patch
+
+And then rebuild and install rshd, rexecd and atrun:
+	cd libexec/rshd
+	make obj
+	make depend
+	make && make install
+
+	cd ../rexecd
+	make obj
+	make depend
+	make && make install
+
+	cd ../atrun
+	make obj
+	make depend
+	make && make install
+
+Index: libexec/atrun/atrun.c
+===================================================================
+RCS file: /cvs/src/libexec/atrun/atrun.c,v
+retrieving revision 1.15
+retrieving revision 1.15.2.1
+diff -u -r1.15 -r1.15.2.1
+--- libexec/atrun/atrun.c	27 Aug 2001 16:18:58 -0000	1.15
++++ libexec/atrun/atrun.c	19 Mar 2002 04:28:22 -0000	1.15.2.1
+@@ -134,6 +134,7 @@
+ 	uid_t nuid;
+ 	gid_t ngid;
+ 	login_cap_t *lc;
++	auth_session_t *as;
+ 
+ 	PRIV_START
+ 
+@@ -160,6 +161,13 @@
+ 		    uid, filename);
+ 		exit(EXIT_FAILURE);
+ 	}
++
++	as = auth_open();
++	if (as == NULL || auth_setpwd(as, pw) != 0) {
++		syslog(LOG_ERR,"Unable to allocate memory - aborting job %s",
++		    filename);
++		exit(EXIT_FAILURE);
++	}
+ 	PRIV_START
+ 
+ 	stream = fopen(filename, "r");
+@@ -307,9 +315,10 @@
+ 		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETALL) < 0)
+ 			perr("Cannot set user context");
+ 
+-		if (auth_approval(NULL, lc, pw->pw_name, "at") <= 0)
++		if (auth_approval(as, lc, pw->pw_name, "at") <= 0)
+ 			perr2("Approval failure for ", pw->pw_name);
+ 
++		auth_close(as);
+ 		login_close(lc);
+ 
+ 		if (chdir(pw->pw_dir) < 0)
+Index: libexec/rexecd/rexecd.c
+===================================================================
+RCS file: /cvs/src/libexec/rexecd/rexecd.c,v
+retrieving revision 1.18
+retrieving revision 1.18.2.1
+diff -u -r1.18 -r1.18.2.1
+--- libexec/rexecd/rexecd.c	9 Jul 2001 07:04:44 -0000	1.18
++++ libexec/rexecd/rexecd.c	19 Mar 2002 04:28:22 -0000	1.18.2.1
+@@ -73,7 +73,6 @@
+ char	*remote;
+ char	*envinit[1];
+ extern char **environ;
+-login_cap_t *lc;
+ 
+ struct	sockaddr_in asin = { AF_INET };
+ 
+@@ -108,6 +107,10 @@
+ 	hp = gethostbyaddr((char *) &from.sin_addr, sizeof(from.sin_addr),
+ 	    from.sin_family);
+ 	remote = strdup(hp ? hp->h_name : inet_ntoa(from.sin_addr));
++	if (remote == NULL) {
++		(void)fprintf(stderr, "rexecd: strdup: %s\n", strerror(errno));
++		exit(1);
++	}
+ 
+ 	doit(0, &from);
+ 	exit(0);
+@@ -128,6 +131,8 @@
+ 	char buf[BUFSIZ], sig;
+ 	int one = 1;
+ 	int maxfd;
++	login_cap_t *lc;
++	auth_session_t *as;
+ 
+ 	(void) signal(SIGINT, SIG_DFL);
+ 	(void) signal(SIGQUIT, SIG_DFL);
+@@ -168,6 +173,11 @@
+ 		error("Login class incorrect.\n");
+ 		exit(1);
+ 	}
++	as = auth_open();
++	if (as == NULL || auth_setpwd(as, pwd) != 0) {
++		error("Unable to allocate memory.\n");
++		exit(1);
++	}
+ 	endpwent();
+ 	if (pwd->pw_uid)
+ 		auth_checknologin(lc);
+@@ -274,8 +284,10 @@
+ 		err(1, "unable to setup environment");
+ 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
+ 		err(1, "unable to set user context");
+-	if (auth_approval(NULL, lc, pwd->pw_name, "rexec") <= 0)
++	if (auth_approval(as, lc, pwd->pw_name, "rexec") <= 0)
+ 		err(1, "approval failure");
++	auth_close(as);
++	login_close(lc);
+ 
+ 	cp = strrchr(pwd->pw_shell, '/');
+ 	if (cp)
+Index: libexec/rshd/rshd.c
+===================================================================
+RCS file: /cvs/src/libexec/rshd/rshd.c,v
+retrieving revision 1.40
+retrieving revision 1.40.2.1
+diff -u -r1.40 -r1.40.2.1
+--- libexec/rshd/rshd.c	5 Sep 2001 22:32:36 -0000	1.40
++++ libexec/rshd/rshd.c	19 Mar 2002 04:28:22 -0000	1.40.2.1
+@@ -225,6 +225,7 @@
+ 	char saddr[NI_MAXHOST];
+ 	char raddr[NI_MAXHOST];
+ 	char pbuf[NI_MAXSERV];
++	auth_session_t *as;
+ #ifdef NI_WITHSCOPEID
+ 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
+ #else
+@@ -494,6 +495,15 @@
+ 			errorstr = "Login incorrect.\n";
+ 		goto fail;
+ 	}
++	as = auth_open();
++	if (as == NULL || auth_setpwd(as, pwd) != 0) {
++		syslog(LOG_INFO|LOG_AUTH,
++		    "%s@%s as %s: unable to allocate memory. cmd='%.80s'",
++		    remuser, hostname, locuser, cmdbuf);
++		if (errorstr == NULL)
++			errorstr = "Cannot allocate memory.\n";
++		goto fail;
++	}
+ 
+ 	setegid(pwd->pw_gid);
+ 	seteuid(pwd->pw_uid);
+@@ -730,8 +740,10 @@
+ 
+ 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
+ 		errx(1, "cannot set user context");
+-	if (auth_approval(NULL, lc, pwd->pw_name, "rsh") <= 0)
++	if (auth_approval(as, lc, pwd->pw_name, "rsh") <= 0)
+ 		errx(1, "approval failure");
++	auth_close(as);
++	login_close(lc);
+ 
+ 	cp = strrchr(pwd->pw_shell, '/');
+ 	if (cp)
+

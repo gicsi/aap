@@ -1,0 +1,1 @@
+This patch disables the SSLv3 protocol by default.

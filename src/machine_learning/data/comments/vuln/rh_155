@@ -1,0 +1,58 @@
+Description of problem:
+I'm trying to build an rpm in a private rpmbuild tree but am consistently getting a fatal error;
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+always
+
+Steps to Reproduce:
+
+1. this piece of script (from my builder script)
+
+  echo ""
+  echo "# Building SRPM $dstSrpmFile"
+  echo "$rpmbuildDir"
+  echo "$dstSpecFile"
+  find "$rpmbuildDir" -type f -exec ls -la '{}' ";" | sort -k 9
+  echo ""
+  rpmbuild $rpmbuildQuiet -vv -D "_topdir = $rpmbuildDir" -bs "$dstSpecFile"
+
+2. produces
+
+# Building SRPM /home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI/SRPMS/bash-aliases-shell-1.0.0-1.fc22.src.rpm
+/home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI
+/home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI/SPECS/bash-aliases-shell-1.0.0.spec
+-rw-rw-r--. 1 ferry ferry 510 Jun 19 14:38 /home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI/SOURCES/bash-aliases-shell-1.0.0.tar.gz
+-rw-rw-r--. 1 ferry ferry 2190 Jun 19 14:38 /home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI/SPECS/bash-aliases-shell-1.0.0.spec
+
+ufdio:       1 reads,    15439 total bytes in 0.000009 secs
+ufdio:       1 reads,     3780 total bytes in 0.000001 secs
+ufdio:       1 reads,    15439 total bytes in 0.000006 secs
+error: File = /home/ferry/vcs/pelagic/rpms/rpmbuild.LyfSY9EeFI/SOURCES/bash-aliases-shell-1.0.0.tar.gz: No such file or directory
+
+
+The error is rather strange since the really is there and it's readable to all.
+Version:
+rpmdevtools-8.6-1.fc22.noarch
+rpm-build-4.12.0.1-9.fc22.x86_64
+Created attachment 1040956
+rpmbuild strace
+
+rpmbuild strace
+
+Why is it accessing /usr/lib/rpm/init.lua?
+
+dnf says nothing provides it
+rpmdevtools package is not involved at all.
+
+
+> D "_topdir = $rpmbuildDir" -
+
+the " = " is wrong.
+
+Next time please discuss such a problem on users@ list first.
+Sorry, tunnel vision I guess.
+
+I'm now using -D "%_topdir $rpmbuildDir" and that works fine.

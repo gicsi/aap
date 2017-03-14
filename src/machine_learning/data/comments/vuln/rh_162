@@ -1,0 +1,83 @@
+Description of problem:
+
+I was validating the ucs driver with OSP7 back porting/hacking nodes.py as specified in bug#1233564. 
+I've added the mappings in nodes.py file for UCS driver. But register_nodes was still failing.
+ 
+I've tried as below (even the instack-ironic-deployment is internally calling like this only "instack-ironic-deployment --nodes-json ~/instackenv.json --register-nodes")
+ 
+register-nodes --service-host undercloud --nodes /home/stack/instackenv.json
+/usr/lib/python2.7/site-packages/novaclient/v1_1/__init__.py:30: UserWarning: Module novaclient.v1_1 is deprecated (taken as a basis for novaclient.v2). The preferable way to get client class or object you can find in novaclient.client module.
+  warnings.warn("Module novaclient.v1_1 is deprecated (taken as a basis for "
+2015-06-16 07:48:37 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:48:37 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:48:37 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:48:37 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:48:37 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:48:37 - root - ERROR - Unexpected error during command execution
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/cmd/register_nodes.py", line 83, in main
+    ramdisk_name=args.ramdisk_name)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 327, in register_all_nodes
+    glance_ids['kernel'], glance_ids['ramdisk'])
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 291, in _register_list_of_nodes
+    client=client, blocking=blocking)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 208, in _update_or_register_ironic_node
+    node_uuid = _get_node_id(node, node_map)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 182, in _get_node_id
+    if node['pm_type'] == 'pxe_ssh':
+TypeError: string indices must be integers
+ 
+the nodes_list values are as below
+ 
+{u'nodes': [{u'pm_password': u'Nbv12345!', u'memory': u'131072', u'pm_addr': u'10.65.122.187', u'pm_service_profile': u'org-root/ls-osp7-cntrl', u'mac': [u'00:25:b5:77:00:1f', u'00:2A:6A:A1:CB:81'], u'pm_type': u'pxe_ucs', u'disk': u'557', u'arch': u'x86_64', u'cpu': u'16', u'pm_user': u'admin'}, {u'pm_password': u'Nbv12345!', u'memory': u'98304', u'pm_addr': u'10.65.122.187', u'pm_service_profile': u'org-root/ls-osp7-nova1', u'mac': [u'00:25:b5:77:00:3e', u'00:2A:6A:A1:CB:81'], u'pm_type': u'pxe_ucs', u'disk': u'186', u'arch': u'x86_64', u'cpu': u'12', u'pm_user': u'admin'}]}
+ 
+
+When I execute register_nodes passing the instackenv.json file, it was failing with above error.
+So, I've updated nodes.py:338 as below
+ 
+    for node in nodes_list['nodes']:
+ 
+I was able to register with command "register-nodes --service-host undercloud --nodes /home/stack/instackenv.json"
+[root@osp7-director ~]# ironic node-list
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| UUID                                 | Name | Instance UUID | Power State | Provision State | Maintenance |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+| 7a48d100-1f7f-493c-8f07-d20a5d255dab | None | None          | power off   | available       | False       |
+| d289d85b-c016-412f-9d63-5c2434535ba0 | None | None          | power off   | available       | False       |
+| afa7ec80-fed5-4b5a-ac88-45c558ce30c4 | None | None          | None        | available       | False       |
++--------------------------------------+------+---------------+-------------+-----------------+-------------+
+ 
+But it was still failing with below error
+ 
+2015-06-16 07:53:23 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:53:23 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:53:24 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:53:24 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+2015-06-16 07:53:24 - requests.packages.urllib3.connectionpool - INFO - Starting new HTTP connection (1): 192.0.2.1
+{u'nodes': [{u'pm_password': u'Nbv12345!', u'memory': u'131072', u'pm_addr': u'10.65.122.187', u'pm_service_profile': u'org-root/ls-osp7-cntrl', u'mac': [u'00:25:b5:77:00:1f', u'00:2A:6A:A1:CB:81'], u'pm_type': u'pxe_ucs', u'disk': u'557', u'arch': u'x86_64', u'cpu': u'16', u'pm_user': u'admin'}, {u'pm_password': u'Nbv12345!', u'memory': u'98304', u'pm_addr': u'10.65.122.187', u'pm_service_profile': u'org-root/ls-osp7-nova1', u'mac': [u'00:25:b5:77:00:3e', u'00:2A:6A:A1:CB:81'], u'pm_type': u'pxe_ucs', u'disk': u'186', u'arch': u'x86_64', u'cpu': u'12', u'pm_user': u'admin'}]}
+2015-06-16 07:53:25 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:25 - ironicclient.common.http - WARNING - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 1 of 6
+2015-06-16 07:53:27 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:27 - ironicclient.common.http - WARNING - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 2 of 6
+2015-06-16 07:53:29 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:29 - ironicclient.common.http - WARNING - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 3 of 6
+2015-06-16 07:53:32 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:32 - ironicclient.common.http - WARNING - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 4 of 6
+2015-06-16 07:53:34 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:34 - ironicclient.common.http - WARNING - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 5 of 6
+2015-06-16 07:53:36 - ironicclient.common.http - WARNING - Request returned failure status.
+2015-06-16 07:53:36 - ironicclient.common.http - ERROR - Error contacting Ironic server: A port with MAC address 00:25:b5:77:00:1f already exists. (HTTP 409). Attempt 6 of 6
+2015-06-16 07:53:36 - root - ERROR - Unexpected error during command execution
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/cmd/register_nodes.py", line 83, in main
+    ramdisk_name=args.ramdisk_name)
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 327, in register_all_nodes
+    glance_ids['kernel'], glance_ids['ramdisk'])
+  File "/usr/lib/python2.7/site-packages/os_cloud_config/nodes.py", line 295, in _register_list_of_nodes
+    seen.add(node)
+TypeError: unhashable type: 'dict'
+ 
+I think it requires some on the was instackenv.json data is parsed.
+This is due to the lack of support for pxe_ucs in os-cloud-config which is requested in bug 1233564.  closing this as a duplicate
+
+*** This bug has been marked as a duplicate of bug 1233564 ***

@@ -1,0 +1,74 @@
+Description of problem:
+
+Large number of alerts for same event.
+
+Version-Release number of selected component (if applicable):
+
+3.5.0-0.32.el6ev
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. For a cluster with 1 host, enable HA reservations
+2. Wait :-)
+3.
+
+Actual results:
+
+Every 10 minutes, event 10300 (CLUSTER_ALERT_HA_RESERVATION) is raised (Cluster cluster_name failed the HA Reservation check, HA VMs on host(s): host_name will fail to migrate in case of a failover, consider adding resources or shutting down unused VMs.)
+
+Expected results:
+
+A) "Enable HA Reservation" to be grayed out if only 1 eligible host in cluster
+B) Event to be raised only once, not every 10 minutes
+
+Additional info:
+
+A user-friendly way of selecting multiple Alerts and dismissing them would be nice.
+(In reply to Thom Carlin from comment #0)
+> Description of problem:
+> 
+> Large number of alerts for same event.
+> 
+> Version-Release number of selected component (if applicable):
+> 
+> 3.5.0-0.32.el6ev
+> 
+> How reproducible:
+> 
+> 100%
+> 
+> Steps to Reproduce:
+> 1. For a cluster with 1 host, enable HA reservations
+> 2. Wait :-)
+> 3.
+> 
+> Actual results:
+> 
+> Every 10 minutes, event 10300 (CLUSTER_ALERT_HA_RESERVATION) is raised
+> (Cluster cluster_name failed the HA Reservation check, HA VMs on host(s):
+> host_name will fail to migrate in case of a failover, consider adding
+> resources or shutting down unused VMs.)
+> 
+> Expected results:
+> 
+> A) "Enable HA Reservation" to be grayed out if only 1 eligible host in
+> cluster
+> B) Event to be raised only once, not every 10 minutes
+> 
+> Additional info:
+> 
+> A user-friendly way of selecting multiple Alerts and dismissing them would
+> be nice.
+
+Hi Thom,
+this is working by design;
+The system is warning you that in case of a failure you will not have
+capacity for HA. With a single host this is obvious, still the alert is valid.
+Consider a scenario where you have 2 hosts and one goes down.
+
+If you do not want to use HA reservations, you can disable it using:
+Cluster-> Edit cluster
+Cluster Policy-> Disable "Enable HA Reservation"

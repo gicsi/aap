@@ -1,0 +1,17 @@
+We trigger that, which does not seem to be correct:
+
+  def dns?
+    # host.managed? and managed? should always come first so that orchestration doesn't
+    # even get tested for such objects
+    (host.nil? || host.managed?) && managed? && hostname.present? && ip_available? && !domain.nil? && !domain.proxy.nil? && SETTINGS[:unattended]
+  end
+
+  def reverse_dns?
+    # host.managed? and managed? should always come first so that orchestration doesn't
+    # even get tested for such objects
+    (host.nil? || host.managed?) && managed? && hostname.present? && ip_available? && !subnet.nil? && subnet.dns? && SETTINGS[:unattended]
+  end
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+Actually this is invalid report.
+I have filed documentation bug on this topic: https://bugzilla.redhat.com/show_bug.cgi?id=1238091

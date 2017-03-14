@@ -1,0 +1,225 @@
+This is the 2nd of this patch.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 020_ssh2.patch
+
+And then rebuild and install ssh:
+	cd usr.bin/ssh
+	make obj
+	make cleandir
+	make
+	make install
+
+Index: usr.bin/ssh/auth.h
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/auth.h,v
+retrieving revision 1.51
+diff -u -p -r1.51 auth.h
+--- usr.bin/ssh/auth.h	6 Jun 2005 11:20:36 -0000	1.51
++++ usr.bin/ssh/auth.h	10 Oct 2006 00:44:36 -0000
+@@ -48,6 +48,7 @@ typedef struct KbdintDevice KbdintDevice
+ 
+ struct Authctxt {
+ 	int		 success;
++	int		 authenticated;	/* authenticated and alarms cancelled */
+ 	int		 postponed;	/* authentication needs another step */
+ 	int		 valid;		/* user exists and is allowed to login */
+ 	int		 attempt;
+Index: usr.bin/ssh/deattack.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/deattack.c,v
+retrieving revision 1.19
+diff -u -p -r1.19 deattack.c
+--- usr.bin/ssh/deattack.c	18 Sep 2003 08:49:45 -0000	1.19
++++ usr.bin/ssh/deattack.c	10 Oct 2006 00:44:36 -0000
+@@ -27,6 +27,24 @@ RCSID("$OpenBSD: deattack.c,v 1.19 2003/
+ #include "xmalloc.h"
+ #include "deattack.h"
+ 
++/*
++ * CRC attack detection has a worst-case behaviour that is O(N^3) over
++ * the number of identical blocks in a packet. This behaviour can be 
++ * exploited to create a limited denial of service attack. 
++ * 
++ * However, because we are dealing with encrypted data, identical
++ * blocks should only occur every 2^35 maximally-sized packets or so. 
++ * Consequently, we can detect this DoS by looking for identical blocks
++ * in a packet.
++ *
++ * The parameter below determines how many identical blocks we will
++ * accept in a single packet, trading off between attack detection and
++ * likelihood of terminating a legitimate connection. A value of 32 
++ * corresponds to an average of 2^40 messages before an attack is
++ * misdetected
++ */
++#define MAX_IDENTICAL	32
++
+ /* SSH Constants */
+ #define SSH_MAXBLOCKS	(32 * 1024)
+ #define SSH_BLOCKSIZE	(8)
+@@ -87,7 +105,7 @@ detect_attack(u_char *buf, u_int32_t len
+ 	static u_int16_t *h = (u_int16_t *) NULL;
+ 	static u_int32_t n = HASH_MINSIZE / HASH_ENTRYSIZE;
+ 	u_int32_t i, j;
+-	u_int32_t l;
++	u_int32_t l, same;
+ 	u_char *c;
+ 	u_char *d;
+ 
+@@ -133,7 +151,7 @@ detect_attack(u_char *buf, u_int32_t len
+ 	if (IV)
+ 		h[HASH(IV) & (n - 1)] = HASH_IV;
+ 
+-	for (c = buf, j = 0; c < (buf + len); c += SSH_BLOCKSIZE, j++) {
++	for (c = buf, same = j = 0; c < (buf + len); c += SSH_BLOCKSIZE, j++) {
+ 		for (i = HASH(c) & (n - 1); h[i] != HASH_UNUSED;
+ 		    i = (i + 1) & (n - 1)) {
+ 			if (h[i] == HASH_IV) {
+@@ -144,6 +162,8 @@ detect_attack(u_char *buf, u_int32_t len
+ 						break;
+ 				}
+ 			} else if (!CMP(c, buf + h[i] * SSH_BLOCKSIZE)) {
++				if (++same > MAX_IDENTICAL)
++					return (DEATTACK_DOS_DETECTED);
+ 				if (check_crc(c, buf, len, IV))
+ 					return (DEATTACK_DETECTED);
+ 				else
+Index: usr.bin/ssh/deattack.h
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/deattack.h,v
+retrieving revision 1.7
+diff -u -p -r1.7 deattack.h
+--- usr.bin/ssh/deattack.h	26 Jun 2001 17:27:23 -0000	1.7
++++ usr.bin/ssh/deattack.h	10 Oct 2006 00:44:36 -0000
+@@ -25,6 +25,7 @@
+ /* Return codes */
+ #define DEATTACK_OK		0
+ #define DEATTACK_DETECTED	1
++#define DEATTACK_DOS_DETECTED	2
+ 
+ int	 detect_attack(u_char *, u_int32_t, u_char[8]);
+ #endif
+Index: usr.bin/ssh/log.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/log.c,v
+retrieving revision 1.29
+diff -u -p -r1.29 log.c
+--- usr.bin/ssh/log.c	23 Sep 2003 20:17:11 -0000	1.29
++++ usr.bin/ssh/log.c	10 Oct 2006 00:44:36 -0000
+@@ -122,6 +122,18 @@ error(const char *fmt,...)
+ 	va_end(args);
+ }
+ 
++void
++sigdie(const char *fmt,...)
++{
++	va_list args;
++
++	va_start(args, fmt);
++	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
++	va_end(args);
++	_exit(1);
++}
++
++
+ /* Log this message (information that usually should go to the log). */
+ 
+ void
+Index: usr.bin/ssh/log.h
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/log.h,v
+retrieving revision 1.11
+diff -u -p -r1.11 log.h
+--- usr.bin/ssh/log.h	21 Jun 2004 22:02:58 -0000	1.11
++++ usr.bin/ssh/log.h	10 Oct 2006 00:44:36 -0000
+@@ -50,6 +50,7 @@ LogLevel log_level_number(char *);
+ 
+ void     fatal(const char *, ...) __dead __attribute__((format(printf, 1, 2)));
+ void     error(const char *, ...) __attribute__((format(printf, 1, 2)));
++void     sigdie(const char *, ...) __attribute__((format(printf, 1, 2)));
+ void     logit(const char *, ...) __attribute__((format(printf, 1, 2)));
+ void     verbose(const char *, ...) __attribute__((format(printf, 1, 2)));
+ void     debug(const char *, ...) __attribute__((format(printf, 1, 2)));
+Index: usr.bin/ssh/packet.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/packet.c,v
+retrieving revision 1.119
+diff -u -p -r1.119 packet.c
+--- usr.bin/ssh/packet.c	28 Jul 2005 17:36:22 -0000	1.119
++++ usr.bin/ssh/packet.c	10 Oct 2006 00:44:37 -0000
+@@ -973,9 +973,16 @@ packet_read_poll1(void)
+ 	 * (C)1998 CORE-SDI, Buenos Aires Argentina
+ 	 * Ariel Futoransky(futo@core-sdi.com)
+ 	 */
+-	if (!receive_context.plaintext &&
+-	    detect_attack(buffer_ptr(&input), padded_len, NULL) == DEATTACK_DETECTED)
+-		packet_disconnect("crc32 compensation attack: network attack detected");
++	if (!receive_context.plaintext) {
++		switch (detect_attack(buffer_ptr(&input), padded_len, NULL)) {
++		case DEATTACK_DETECTED:
++			packet_disconnect("crc32 compensation attack: "
++			    "network attack detected");
++		case DEATTACK_DOS_DETECTED:
++			packet_disconnect("deattack denial of "
++			    "service detected");
++		}
++	}
+ 
+ 	/* Decrypt data to incoming_packet. */
+ 	buffer_clear(&incoming_packet);
+Index: usr.bin/ssh/session.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/session.c,v
+retrieving revision 1.186
+diff -u -p -r1.186 session.c
+--- usr.bin/ssh/session.c	25 Jul 2005 11:59:40 -0000	1.186
++++ usr.bin/ssh/session.c	10 Oct 2006 00:44:38 -0000
+@@ -211,6 +211,7 @@ do_authenticated(Authctxt *authctxt)
+ 	 * authentication.
+ 	 */
+ 	alarm(0);
++	authctxt->authenticated = 1;
+ 	if (startup_pipe != -1) {
+ 		close(startup_pipe);
+ 		startup_pipe = -1;
+@@ -2044,7 +2045,7 @@ do_cleanup(Authctxt *authctxt)
+ 		return;
+ 	called = 1;
+ 
+-	if (authctxt == NULL)
++	if (authctxt == NULL || !authctxt->authenticated)
+ 		return;
+ #ifdef KRB5
+ 	if (options.kerberos_ticket_cleanup &&
+Index: usr.bin/ssh/sshd.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/sshd.c,v
+retrieving revision 1.312
+diff -u -p -r1.312 sshd.c
+--- usr.bin/ssh/sshd.c	25 Jul 2005 11:59:40 -0000	1.312
++++ usr.bin/ssh/sshd.c	10 Oct 2006 00:44:39 -0000
+@@ -301,13 +301,11 @@ main_sigchld_handler(int sig)
+ static void
+ grace_alarm_handler(int sig)
+ {
+-	/* XXX no idea how fix this signal handler */
+-
+ 	if (use_privsep && pmonitor != NULL && pmonitor->m_pid > 0)
+ 		kill(pmonitor->m_pid, SIGALRM);
+ 
+ 	/* Log error and exit. */
+-	fatal("Timeout before authentication for %s", get_remote_ipaddr());
++	sigdie("Timeout before authentication for %s", get_remote_ipaddr());
+ }
+ 
+ /*
+@@ -631,6 +629,7 @@ privsep_postauth(Authctxt *authctxt)
+ 
+ 	/* Authentication complete */
+ 	alarm(0);
++	authctxt->authenticated = 1;
+ 	if (startup_pipe != -1) {
+ 		close(startup_pipe);
+ 		startup_pipe = -1;
+

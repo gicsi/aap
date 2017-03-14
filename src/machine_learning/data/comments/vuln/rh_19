@@ -1,0 +1,47 @@
+Created attachment 1048835
+Bitd
+
+Description of problem:
+=================
+Bitd Crashed 
+
+
+Version-Release number of selected component (if applicable):
+===============
+glusterfs-3.7.1-6.el6r
+
+How reproducible:
+
+
+Steps to Reproduce:
+=============
+1.Create a volume and un tar linux kernel and then enable bitd
+2.while bitd is crawling the files, kill the brick and and bring back using CLI 
+3.After some time kill the brick and stop the volume and start the volume 
+
+Actual results:
+============
+Bitd crashed 
+
+
+Expected results:
+
+
+Additional info:
+==============
+IP: 10.70.36.21
+Attaching the core dump
+OK, looks like the reborp notify crash is back again (after ~3 months of hibernation) and it's pretty hard to hit this case.
+
+(gdb) bt
+#0  0x00007f55a8000078 in ?? ()
+#1  0x00007f55efbeac9a in gf_changelog_reborp_rpcsvc_notify () from /usr/lib64/libgfchangelog.so.0
+#2  0x00007f56020720c4 in rpcsvc_notify () from /usr/lib64/libgfrpc.so.0
+#3  0x00007f5602073ad8 in rpc_transport_notify () from /usr/lib64/libgfrpc.so.0
+#4  0x00007f55f63d6be2 in ?? () from /usr/lib64/glusterfs/3.7.1/rpc-transport/socket.so
+#5  0x00007f560230c970 in ?? () from /usr/lib64/libglusterfs.so.0
+#6  0x00007f5601393a51 in start_thread () from /lib64/libpthread.so.0
+#7  0x00007f5600cfd96d in clone () from /lib64/libc.so.6
+
+There's already a bz for this (bz #1224162).
+*** This bug has been marked as a duplicate of bug 1224162 ***

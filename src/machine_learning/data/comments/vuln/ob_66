@@ -1,0 +1,5 @@
+A serious bug in isakmpd(8) policy handling wherein policy
+verification could be completely bypassed in isakmpd.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/009_isakmpd.patch">
+A source code patch exists which remedies this problem.</a>

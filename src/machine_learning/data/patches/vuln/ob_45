@@ -1,0 +1,69 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 011_poll.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/sys_generic.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sys_generic.c,v
+retrieving revision 1.20
+retrieving revision 1.22
+diff -u -r1.20 -r1.22
+--- sys/kern/sys_generic.c	1999/08/04 19:18:13	1.20
++++ sys/kern/sys_generic.c	1999/11/29 22:02:14	1.22
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: sys_generic.c,v 1.20 1999/08/04 19:18:13 deraadt Exp $	*/
++/*	$OpenBSD: sys_generic.c,v 1.22 1999/11/29 22:02:14 deraadt Exp $	*/
+ /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
+ 
+ /*
+@@ -48,6 +48,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/file.h>
+ #include <sys/proc.h>
++#include <sys/resourcevar.h>
+ #include <sys/socketvar.h>
+ #include <sys/signalvar.h>
+ #include <sys/uio.h>
+@@ -775,12 +776,19 @@
+ 	 * XXX: We need to implement the rest of the flags.
+ 	 */
+ 	for (i = 0; i < nfd; i++) {
++		/* Check the file descriptor. */
++		if (pl[i].fd < 0)
++			continue;
++		if (pl[i].fd >= fdp->fd_nfiles) {
++			pl[i].revents = POLLNVAL;
++			n++;
++			continue;
++		}
++
+ 		fp = fdp->fd_ofiles[pl[i].fd];
+ 		if (fp == NULL) {
+-			if (pl[i].events & POLLNVAL) {
+-				pl[i].revents |= POLLNVAL;
+-				n++;
+-			}
++			pl[i].revents = POLLNVAL;
++			n++;
+ 			continue;
+ 		}
+ 		for (x = msk = 0; msk < 3; msk++) {
+@@ -815,10 +823,12 @@
+ 	struct timeval atv;
+ 	int timo, ncoll, i, s, error, error2;
+ 	extern int nselcoll, selwait;
++
++	/* Standards say no more than MAX_OPEN; this is possibly better. */
++	if (SCARG(uap, nfds) > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, 
++	    maxfiles))
++		return (EINVAL);
+ 
+-	/* XXX constrain; This may not match standards */
+-	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles)
+-		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
+ 	sz = sizeof(struct pollfd) * SCARG(uap, nfds);
+ 	
+ 	/* optimize for the default case, of a small nfds value */
+

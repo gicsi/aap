@@ -1,0 +1,71 @@
+Description of problem:
+
+I was trying to run the following simple probe:
+
+ruben@wodan: ~$ sudo stap -v -e 'probe vfs.read {printf("read performed\n"); exit()}'
+Pass 1: parsed user script and 122 library script(s) using 237480virt/49484res/7192shr/42152data kb, in 190usr/70sys/250real ms.
+Pass 2: analyzed script: 1 probe(s), 1 function(s), 4 embed(s), 0 global(s) using 376932virt/183612res/8544shr/181604data kb, in 2170usr/1540sys/4358real ms.
+Pass 3: translated to C into "/tmp/stapbdpxn3/stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693_src.c" using 376932virt/183860res/8792shr/181604data kb, in 10usr/390sys/417real ms.
+In file included from include/linux/mutex.h:15:0,
+                 from /tmp/stapbdpxn3/stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693_src.c:25:
+include/linux/spinlock_types.h:55:14: error: ‘__ARCH_SPIN_LOCK_UNLOCKED’ undeclared here (not in a function)
+  .raw_lock = __ARCH_SPIN_LOCK_UNLOCKED, \
+              ^
+include/linux/spinlock_types.h:79:15: note: in expansion of macro ‘__RAW_SPIN_LOCK_INITIALIZER’
+  { { .rlock = __RAW_SPIN_LOCK_INITIALIZER(lockname) } }
+               ^
+include/linux/spinlock_types.h:82:16: note: in expansion of macro ‘__SPIN_LOCK_INITIALIZER’
+  (spinlock_t ) __SPIN_LOCK_INITIALIZER(lockname)
+                ^
+include/linux/mutex.h:111:18: note: in expansion of macro ‘__SPIN_LOCK_UNLOCKED’
+   , .wait_lock = __SPIN_LOCK_UNLOCKED(lockname.wait_lock) \
+                  ^
+include/linux/mutex.h:117:27: note: in expansion of macro ‘__MUTEX_INITIALIZER’
+  struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
+                           ^
+/tmp/stapbdpxn3/stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693_src.c:26:8: note: in expansion of macro ‘DEFINE_MUTEX’
+ static DEFINE_MUTEX(module_refresh_mutex);
+        ^
+scripts/Makefile.build:258: recipe for target '/tmp/stapbdpxn3/stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693_src.o' failed
+make[1]: *** [/tmp/stapbdpxn3/stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693_src.o] Error 1
+Makefile:1386: recipe for target '_module_/tmp/stapbdpxn3' failed
+make: *** [_module_/tmp/stapbdpxn3] Error 2
+WARNING: kbuild exited with status: 2
+Pass 4: compiled C into "stap_a0ec17f995e8f89d672d8c2eb7fe7c24_1693.ko" in 8650usr/5580sys/15546real ms.
+Pass 4: compilation failed.  [man error::pass4]
+
+
+Version-Release number of selected component (if applicable):
+systemtap-2.8-1.fc23.x86_64
+ruben@wodan: ~$ uname -r
+4.2.0-0.rc0.git4.1.fc23.x86_64
+I'm seeing the same thing, looking into it now.
+It looks like this was caused by the addition of qspinlocks in the following kernel commit:
+
+====
+commit a33fda35e3a7655fb7df756ed67822afb5ed5e8d
+Author: Waiman Long <Waiman.Long@hp.com>
+Date:   Fri Apr 24 14:56:30 2015 -0400
+
+    locking/qspinlock: Introduce a simple generic 4-byte queued spinlock
+====
+
+With this change we need to include linux/module.h before including linux/mutex.h.
+
+To fix your immediate problem, add the following text to /usr/share/systemtap/runtime/linux/runtime_defines.h:
+
+====
+#ifndef _LINUX_RUNTIME_DEFINES_H_
+#define _LINUX_RUNTIME_DEFINES_H_
+
+#include <linux/module.h>
+#include <linux/mutex.h>
+
+#endif /* _LINUX_RUNTIME_DEFINES_H_ */
+====
+
+I'm not 100% sure if that's the final fix, but it will get you going again.
+The final fix ended up being a small tweak to our code generation - commit 320e1ec.
+
+<https://www.sourceware.org/git/gitweb.cgi?p=systemtap.git;a=commitdiff;h=320e1ecb16427b5769f0f5a097d80823ee1fb765>
+Thanks for the quick fix David!

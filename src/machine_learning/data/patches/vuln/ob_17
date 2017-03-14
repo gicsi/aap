@@ -1,0 +1,3350 @@
+
+This is bugfix patch number 2 for XFree86 3.3.2 adapted to OpenBSD 2.3 
+X11 sources.  This patch fixes the following problems:
+
+  - Various buffer overflows (some exploitable) in Xlib and the Xt, Xaw
+    and Xmu libraries.
+  - Fix a denial of service problem with xdm (the fix is in the Xdmcp library).
+  - Fix some build problems that show up when using gcc 2.8.x.
+  - Fix a sysconf() related problem that shows up with recent FreeBSD versions.
+  - FreeBSD config update to include multi-byte locale support.
+  - scanpci and X server update to detect the AGP slot on some motherboards.
+
+This patch includes a resync with TOG's public patch 3 for X11R6.3.
+
+Credits:
+
+  Topi Miettinen                   found the Xt translation manager
+                                   buffer overflows.
+  Paulo Cesar Pereira de Andrade   found and fixed the Xmu and related Xaw
+                                   buffer overflows.
+  David Dawes                      found and fixed various library buffer
+                                   overflow problems.
+  Theo de Raadt                    pointed out some buffer overflows.
+  Tom Dickey                       reviewed and updated TOG's Xaw fix.
+  Matthieu Herrb                   fixed the xdm denial of service problem.
+  Robin Cutshaw                    PCI code updates.
+
+This patch applies to the OpenBSD 2.3 X11 source.  To apply the
+patch, run the following from the directory containing the X11 source
+directory (/usr) :
+ 
+  patch -p0 -E < this-file
+
+Then cd to the X11/xc directory and rebuild and reinstall with the 
+commands: 
+
+  make Everything
+  make install
+
+If you've never built X11 yourself, read the file
+/usr/X11R6/lib/X11/doc/BUILD before proceeding.
+
+ ----------------------------------------------------------------------------
+Index: X11/xc/bug-report
+diff -u X11/xc/bug-report:1.1.1.1 X11/xc/bug-report:1.2
+--- X11/xc/bug-report:1.1.1.1	Fri Sep  5 02:58:22 1997
++++ X11/xc/bug-report	Sat May 23 13:12:39 1998
+@@ -3,7 +3,7 @@
+ 
+      VERSION:
+ 
+-R6.3, public-patch-2
++R6.3, public-patch-3
+ [X Consortium public patches edit this line to indicate the patch level]
+ 
+      CLIENT MACHINE and OPERATING SYSTEM:
+Index: X11/xc/config/cf/FreeBSD.cf
+diff -u X11/xc/config/cf/FreeBSD.cf:1.1.1.2 X11/xc/config/cf/FreeBSD.cf:1.2
+--- X11/xc/config/cf/FreeBSD.cf:1.1.1.2	Sat Mar  7 08:57:27 1998
++++ X11/xc/config/cf/FreeBSD.cf	Sat May 23 13:12:41 1998
+@@ -1,5 +1,5 @@
+ XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
+-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.11 1998/03/01 01:08:59 dawes Exp $
++XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.12 1998/04/29 04:18:26 dawes Exp $
+ 
+ #ifndef OSName
+ #define OSName			DefaultOSName
+@@ -59,7 +59,12 @@
+ #define DefaultCCOptions	-ansi -pedantic -Dasm=__asm
+ #endif
+ #ifndef ExtraLibraries
++/* support for multi-byte locales is in libxpg4 rather than libc */
++#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
++#define ExtraLibraries		-lxpg4
++#else
+ #define ExtraLibraries		/**/
++#endif
+ #endif
+ #ifndef UseGnuMalloc
+ /* 2.2 doesn't really have GnuMalloc */
+Index: X11/xc/config/cf/Imake.cf
+diff -u X11/xc/config/cf/Imake.cf:1.2 X11/xc/config/cf/Imake.cf:1.3
+--- X11/xc/config/cf/Imake.cf:1.2	Mon Nov 17 17:59:13 1997
++++ X11/xc/config/cf/Imake.cf	Sat May 23 13:12:42 1998
+@@ -1,5 +1,5 @@
+ XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
+-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
++XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.4 1998/05/22 16:38:18 dawes Exp $
+ /*
+  * To add support for another platform:
+  * 
+@@ -101,7 +101,7 @@
+ #   undef hp300
+ #  endif
+ #  if defined(mac68k)
+-#    define mac68kArchitecture
++#    define Mac68kArchitecture
+ #    undef mac68k
+ #  endif
+ #  if defined(mvme68k)
+@@ -548,6 +548,12 @@
+ #  define i386Architecture
+ #  undef i386
+ # endif /* i386 */
++# ifdef __i386__
++#  ifndef i386Architecture
++#   define i386Architecture
++#  endif
++#  undef __i386__
++# endif /* __i386__ */
+ # ifdef __alpha
+ #  define AlphaArchitecture
+ #  undef __alpha
+Index: X11/xc/programs/Xserver/PEX5/dipex/swap/check.c
+diff -u X11/xc/programs/Xserver/PEX5/dipex/swap/check.c:1.1.1.1 X11/xc/programs/Xserver/PEX5/dipex/swap/check.c:1.2
+--- X11/xc/programs/Xserver/PEX5/dipex/swap/check.c:1.1.1.1	Fri Sep  5 03:03:30 1997
++++ X11/xc/programs/Xserver/PEX5/dipex/swap/check.c	Sat May 23 13:12:44 1998
+@@ -133,7 +133,7 @@
+ checkStdHeader *strmPtr;
+ {
+ /* HACK ALERT ON */
+-extern INT16 lastfp[];
++extern INT16 lastfp[MAXCLIENTS];
+ /* HACK ALERT OFF */
+ 
+     pexEnumTypeIndex fp;
+@@ -193,7 +193,7 @@
+ pexContext *cntxtPtr;
+ checkStdHeader *strmPtr;
+ {
+-extern INT16 lastfp[];
++extern INT16 lastfp[MAXCLIENTS];
+ 
+     pexEnumTypeIndex fp;
+ 
+Index: X11/xc/programs/Xserver/dix/dixfonts.c
+diff -u X11/xc/programs/Xserver/dix/dixfonts.c:1.1.1.1 X11/xc/programs/Xserver/dix/dixfonts.c:1.2
+--- X11/xc/programs/Xserver/dix/dixfonts.c:1.1.1.1	Fri Sep  5 03:05:24 1997
++++ X11/xc/programs/Xserver/dix/dixfonts.c	Sat May 23 13:12:45 1998
+@@ -22,7 +22,7 @@
+ ************************************************************************/
+ 
+ /* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
+-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6 1996/12/23 06:29:40 dawes Exp $ */
++/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.2 1998/05/18 13:51:25 dawes Exp $ */
+ 
+ #define NEED_REPLIES
+ #include "X.h"
+@@ -834,6 +834,8 @@
+     int         i;
+     LFclosurePtr c;
+ 
++    if (length > sizeof(c->current.pattern))
++	return BadAlloc;
+     if (!(c = (LFclosurePtr) xalloc(sizeof *c)))
+ 	return BadAlloc;
+     c->fpe_list = (FontPathElementPtr *)
+@@ -1097,6 +1099,8 @@
+     int		    i;
+     LFWIclosurePtr  c;
+ 
++    if (length > sizeof(c->current.pattern))
++	goto badAlloc;
+     if (!(c = (LFWIclosurePtr) xalloc(sizeof *c)))
+ 	goto badAlloc;
+     c->fpe_list = (FontPathElementPtr *)
+Index: X11/xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c
+diff -u X11/xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c:1.1.1.2 X11/xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c:1.2
+--- X11/xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c:1.1.1.2	Sat Mar  7 09:13:12 1998
++++ X11/xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c	Sat May 23 13:12:47 1998
+@@ -1,4 +1,4 @@
+-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.6 1998/02/01 16:04:49 robin Exp $ */
++/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.7 1998/05/22 13:46:11 robin Exp $ */
+ /*
+  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
+  *
+@@ -52,7 +52,7 @@
+ {
+     unsigned long tmplong1, tmplong2, config_cmd;
+     unsigned char tmp1, tmp2;
+-    unsigned int i, j, idx = 0;
++    unsigned int i, j, idx = 0, hostbridges = 0;;
+     pciConfigRec pcr;
+     unsigned PCI_CtrlIOPorts[] = { PCI_MODE1_ADDRESS_REG,
+ 				   PCI_MODE2_FORWARD_REG,
+@@ -214,6 +214,12 @@
+                         pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
+                     }
+                         break;
++                case PCI_CLASS_BRIDGE:
++		    if (++hostbridges > 1) {
++			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
++			pcr._pcinumbus++;
++		    }
++			break;
+                 default:
+                         break;
+             }
+@@ -302,6 +308,12 @@
+                         pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;            
+                     }       
+                         break;
++                case PCI_CLASS_BRIDGE:
++		    if (++hostbridges > 1) {
++			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
++			pcr._pcinumbus++;
++		    }
++			break;
+                 default:
+                         break;
+             }
+@@ -1092,7 +1104,7 @@
+ {
+     pciConfigRec pcr;
+     int pcibusidx, pcinumbus, pcibuses[16];
+-    int idx = 0;
++    int idx = 0, hostbridges = 0;
+ 
+     if (pci_devp[0])
+ 	return pci_devp;
+@@ -1143,10 +1155,13 @@
+ 		pcr._user_config = pcibusRead(tag, PCI_REG_USERCONFIG);
+ 
+ 		/* Check for PCI-PCI bridges */
+-		if (pcr._base_class == PCI_CLASS_BRIDGE &&
+-		    pcr._sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
+-		    if (pcr._secondary_bus_number > 0) {
+-			pcibuses[pcinumbus++] = pcr._secondary_bus_number;
++		if (pcr._base_class == PCI_CLASS_BRIDGE) {
++		    if (pcr._sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
++		        if (pcr._secondary_bus_number > 0)
++			    pcibuses[pcinumbus++] = pcr._secondary_bus_number;
++		    } else if (++hostbridges > 1) {
++			    pcibuses[pcinumbus] = pcinumbus;
++			    pcinumbus++;
+ 		    }
+ 		}
+ 
+Index: X11/xc/programs/Xserver/hw/xfree86/etc/scanpci.c
+diff -u X11/xc/programs/Xserver/hw/xfree86/etc/scanpci.c:1.1.1.2 X11/xc/programs/Xserver/hw/xfree86/etc/scanpci.c:1.2
+--- X11/xc/programs/Xserver/hw/xfree86/etc/scanpci.c:1.1.1.2	Sat Mar  7 09:15:17 1998
++++ X11/xc/programs/Xserver/hw/xfree86/etc/scanpci.c	Sat May 23 13:12:48 1998
+@@ -21,7 +21,7 @@
+  *
+  */
+ 
+-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.10 1998/02/27 17:13:22 robin Exp $ */
++/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.11 1998/05/22 13:20:58 robin Exp $ */
+ 
+ /*
+  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
+@@ -1186,7 +1186,7 @@
+     unsigned int idx;
+     struct pci_config_reg pcr;
+     int ch, verbose = 0, do_mode1_scan = 0, do_mode2_scan = 0;
+-    int func;
++    int func, hostbridges=0;
+ 
+     while((ch = getopt(argc, argv, "v12")) != EOF) {
+      	switch((char)ch) {
+@@ -1339,6 +1339,12 @@
+ 		case PCI_CLASS_BRIDGE|PCI_SUBCLASS_BRIDGE_PCI:
+ 		    if (pcr._secondary_bus_number > 0) {
+ 		        pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
++		    }
++			break;
++		case PCI_CLASS_BRIDGE:
++		    if ( ++hostbridges > 1) {
++			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
++			pcr._pcinumbus++;
+ 		    }
+ 			break;
+ 		default:
+Index: X11/xc/programs/Xserver/os/xalloc.c
+diff -u X11/xc/programs/Xserver/os/xalloc.c:1.1.1.1 X11/xc/programs/Xserver/os/xalloc.c:1.2
+--- X11/xc/programs/Xserver/os/xalloc.c:1.1.1.1	Fri Sep  5 03:15:14 1997
++++ X11/xc/programs/Xserver/os/xalloc.c	Sat May 23 13:12:50 1998
+@@ -25,7 +25,7 @@
+ Pascal Haible.
+ */
+ 
+-/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.12.2.1 1997/05/10 07:03:02 hohndel Exp $ */
++/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.12.2.2 1998/04/07 11:32:12 dawes Exp $ */
+ 
+ /* Only used if INTERNAL_MALLOC is defined
+  * - otherwise xalloc() in utils.c is used
+@@ -678,15 +678,20 @@
+     beenhere = TRUE;
+ 
+ #if defined(HAS_MMAP_ANON) || defined (MMAP_DEV_ZERO)
++    pagesize = -1;
+ #if defined(_SC_PAGESIZE) /* || defined(linux) */
+     pagesize = sysconf(_SC_PAGESIZE);
+-#else
++#endif
+ #ifdef HAS_GETPAGESIZE
+-    pagesize = getpagesize();
+-#else
+-    pagesize = PAGE_SIZE;
++    if (pagesize == -1)
++	pagesize = getpagesize();
+ #endif
++#ifdef PAGE_SIZE
++    if (pagesize == -1)
++	pagesize = PAGE_SIZE;
+ #endif
++    if (pagesize == -1)
++	FatalError("OsInitAllocator: Cannot determine page size\n");
+ #endif
+ 
+     /* set up linked lists of free blocks */
+Index: X11/xc/lib/ICE/connect.c
+diff -u X11/xc/lib/ICE/connect.c:1.1.1.1 X11/xc/lib/ICE/connect.c:1.2
+--- X11/xc/lib/ICE/connect.c:1.1.1.1	Fri Sep  5 02:58:32 1997
++++ X11/xc/lib/ICE/connect.c	Sat May 23 13:12:52 1998
+@@ -1,5 +1,4 @@
+ /* $XConsortium: connect.c /main/32 1996/12/10 15:58:34 swick $ */
+-/* $XFree86: xc/lib/ICE/connect.c,v 3.2 1996/12/23 05:59:00 dawes Exp $ */
+ /******************************************************************************
+ 
+ 
+@@ -28,6 +27,7 @@
+ 
+ Author: Ralph Mor, X Consortium
+ ******************************************************************************/
++/* $XFree86: xc/lib/ICE/connect.c,v 3.2.2.2 1998/05/19 14:21:32 dawes Exp $ */
+ 
+ #include <X11/ICE/ICElib.h>
+ #include "ICElibint.h"
+@@ -490,6 +490,8 @@
+ 	    delim = endptr;
+ 
+ 	len = delim - ptr;
++	if (len > sizeof(address) - 1)
++	    len = sizeof(address) - 1;
+ 	strncpy (address, ptr, len);
+ 	address[len] = '\0';
+ 
+Index: X11/xc/lib/X11/FSWrap.c
+diff -u X11/xc/lib/X11/FSWrap.c:1.1.1.1 X11/xc/lib/X11/FSWrap.c:1.2
+--- X11/xc/lib/X11/FSWrap.c:1.1.1.1	Fri Sep  5 02:58:41 1997
++++ X11/xc/lib/X11/FSWrap.c	Sat May 23 13:12:53 1998
+@@ -58,6 +58,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/X11/FSWrap.c,v 1.1.1.3.2.2 1998/05/18 14:08:38 dawes Exp $ */
++
+ #include "Xlibint.h"
+ #include "Xlcint.h"
+ #include <ctype.h>
+@@ -89,7 +91,7 @@
+     }
+     strcpy(ptr, str);
+ 
+-    while (1) {
++    while (*num < sizeof(plist) / sizeof(plist[0])) {
+ 	char	*back;
+ 
+ 	plist[*num] = ptr;
+Index: X11/xc/lib/X11/FontNames.c
+diff -u X11/xc/lib/X11/FontNames.c:1.1.1.1 X11/xc/lib/X11/FontNames.c:1.2
+--- X11/xc/lib/X11/FontNames.c:1.1.1.1	Fri Sep  5 02:58:42 1997
++++ X11/xc/lib/X11/FontNames.c	Sat May 23 13:12:54 1998
+@@ -26,6 +26,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/X11/FontNames.c,v 1.1.1.2.2.2 1998/05/18 14:08:38 dawes Exp $ */
++
+ #define NEED_REPLIES
+ #include "Xlibint.h"
+ 
+@@ -60,7 +62,11 @@
+     _XSend (dpy, pattern, nbytes);
+     /* use _XSend instead of Data, since following _XReply will flush buffer */
+ 
+-    (void) _XReply (dpy, (xReply *)&rep, 0, xFalse);
++    if (!_XReply (dpy, (xReply *)&rep, 0, xFalse)) {
++	UnlockDisplay(dpy);
++	SyncHandle();
++	return (char **) NULL;
++    }
+ 
+     if (rep.nFonts) {
+ 	flist = (char **)Xmalloc ((unsigned)rep.nFonts * sizeof(char *));
+Index: X11/xc/lib/X11/GetDflt.c
+diff -u X11/xc/lib/X11/GetDflt.c:1.1.1.1 X11/xc/lib/X11/GetDflt.c:1.2
+--- X11/xc/lib/X11/GetDflt.c:1.1.1.1	Fri Sep  5 02:58:43 1997
++++ X11/xc/lib/X11/GetDflt.c	Sat May 23 13:12:56 1998
+@@ -1,4 +1,4 @@
+-/* $TOG: GetDflt.c /main/56 1997/06/11 06:40:28 kaleb $ */
++/* $TOG: GetDflt.c /main/56.0 1998/05/12 11:19:09 kaleb $ */
+ 
+ /***********************************************************
+ 
+@@ -47,7 +47,7 @@
+ SOFTWARE.
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.10.2.2 1997/06/15 07:25:26 dawes Exp $ */
++/* $XFree86: xc/lib/X11/GetDflt.c,v 3.10.2.6 1998/05/20 05:06:16 dawes Exp $ */
+ 
+ #include "Xlibint.h"
+ #include <X11/Xos.h>
+@@ -101,8 +101,11 @@
+     register char *ptr;
+     char* users = "/users/";
+ 
++    if (len <= 0 || dest == NULL)
++	return NULL;
++
+     if (ptr = getenv("HOME")) {
+-	(void) strncpy(dest, ptr, len);
++	(void) strncpy(dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else if (ptr = getenv("USERNAME")) {
+ 	(void) strcpy (dest, users);
+@@ -115,17 +118,21 @@
+     struct passwd *pw;
+     register char *ptr;
+ 
++    if (len <= 0 || dest == NULL)
++	return NULL;
++
+     if ((ptr = getenv("HOME"))) {
+-	(void) strncpy(dest, ptr, len);
++	(void) strncpy(dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else {
+ 	if (ptr = getenv("USER"))
+ 	    pw = _XGetpwnam(ptr,pwparams);
+ 	else
+ 	    pw = _XGetpwuid(getuid(),pwparams);
+-	if (pw != NULL)
+-	    (void) strcpy(dest, pw->pw_dir);
+-	else
++	if (pw != NULL) {
++	    (void) strncpy(dest, pw->pw_dir, len-1);
++	    dest[len-1] = '\0';
++	} else
+ 	    *dest = '\0';
+     }
+ #endif
+Index: X11/xc/lib/X11/GetPntMap.c
+diff -u X11/xc/lib/X11/GetPntMap.c:1.1.1.1 X11/xc/lib/X11/GetPntMap.c:1.2
+--- X11/xc/lib/X11/GetPntMap.c:1.1.1.1	Fri Sep  5 02:58:44 1997
++++ X11/xc/lib/X11/GetPntMap.c	Sat May 23 13:12:57 1998
+@@ -26,6 +26,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/X11/GetPntMap.c,v 1.1.1.1.12.1 1998/05/19 02:55:08 dawes Exp $ */
++
+ #define NEED_REPLIES
+ #include "Xlibint.h"
+ 
+@@ -50,6 +52,13 @@
+     (void) _XReply(dpy, (xReply *)&rep, 0, xFalse);
+ 
+     nbytes = (long)rep.length << 2;
++    /* Don't count on the server returning a valid value */
++    if (nbytes > 256) {
++	    _XEatData(dpy, (unsigned long) nbytes);
++	    UnlockDisplay(dpy);
++	    SyncHandle();
++	    return 0;
++    }
+     _XRead (dpy, (char *)mapping, nbytes);
+     /* don't return more data than the user asked for. */
+     if (rep.nElts) {
+Index: X11/xc/lib/X11/Imakefile
+diff -u X11/xc/lib/X11/Imakefile:1.1.1.1 X11/xc/lib/X11/Imakefile:1.2
+--- X11/xc/lib/X11/Imakefile:1.1.1.1	Fri Sep  5 02:58:46 1997
++++ X11/xc/lib/X11/Imakefile	Sat May 23 13:12:58 1998
+@@ -3,7 +3,7 @@
+ 
+ 
+ 
+-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.2 1997/05/21 15:02:16 dawes Exp $
++XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.3 1998/05/23 13:38:55 dawes Exp $
+ #define DoNormalLib NormalLibX11
+ #define DoSharedLib SharedLibX11
+ #define DoDebugLib DebugLibX11
+@@ -87,7 +87,7 @@
+ #if NeedLibInsideFlag
+     LIB_DEFINES = -D_XLIBINT_
+ #endif
+-        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES)
++        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES) $(MISC_DEFINES)
+    OPEN_DEFINES = -I$(EXTINCSRC) $(K5INCL) $(K5DEFS)
+  DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES)
+        AUTHOBJS = AuDispose.o AuGetBest.o AuFileName.o AuRead.o
+Index: X11/xc/lib/X11/SetLocale.c
+diff -u X11/xc/lib/X11/SetLocale.c:1.1.1.1 X11/xc/lib/X11/SetLocale.c:1.3
+--- X11/xc/lib/X11/SetLocale.c:1.1.1.1	Fri Sep  5 02:58:52 1997
++++ X11/xc/lib/X11/SetLocale.c	Sat May 30 08:51:38 1998
+@@ -57,7 +57,7 @@
+ from the X Consortium.
+ 
+ */
+-/* $XFree86: xc/lib/X11/SetLocale.c,v 3.4.2.2 1997/06/08 15:41:18 dawes Exp $ */
++/* $XFree86: xc/lib/X11/SetLocale.c,v 3.4.2.4 1998/05/26 02:23:54 dawes Exp $ */
+ 
+ #include "Xlibint.h"
+ #include "Xlcint.h"
+@@ -103,6 +103,8 @@
+ 	name = getenv("LC_CTYPE");
+     if (!name || !*name)
+ 	name = getenv("LANG");
++    if (name && strlen(name) >= MAXLOCALE)
++	name = NULL;
+     if (!name || !*name || !_XOpenLC(name))
+ 	name = "C";
+     old_name = xsl_name;
+Index: X11/xc/lib/X11/TextToStr.c
+diff -u X11/xc/lib/X11/TextToStr.c:1.1.1.1 X11/xc/lib/X11/TextToStr.c:1.2
+--- X11/xc/lib/X11/TextToStr.c:1.1.1.1	Fri Sep  5 02:58:54 1997
++++ X11/xc/lib/X11/TextToStr.c	Sat May 23 13:13:00 1998
+@@ -26,6 +26,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/X11/TextToStr.c,v 1.1.1.1.12.2 1998/05/18 14:08:39 dawes Exp $ */
++
+ #include <X11/Xlibint.h>
+ #include <X11/Xatom.h>
+ #include <X11/Xutil.h>
+@@ -111,6 +113,7 @@
+     if (list) {
+ 	if (list[0]) Xfree (list[0]);
+ 	Xfree ((char *) list);
++	list = NULL;
+     }
+ }
+ 
+Index: X11/xc/lib/X11/X11os2.def
+diff -u X11/xc/lib/X11/X11os2.def:1.1.1.1 X11/xc/lib/X11/X11os2.def:1.2
+--- X11/xc/lib/X11/X11os2.def:1.1.1.1	Fri Sep  5 02:58:57 1997
++++ X11/xc/lib/X11/X11os2.def	Sat May 23 13:13:01 1998
+@@ -1,5 +1,5 @@
+ LIBRARY X11
+-DESCRIPTION "$XFree86: xc/lib/X11/X11os2.def,v 3.5.4.3 1997/08/04 02:10:34 dawes Exp $"
++DESCRIPTION "$XFree86: xc/lib/X11/X11os2.def,v 3.5.4.4 1998/05/23 13:38:56 dawes Exp $"
+ CODE	
+ 	PRELOAD
+ DATA	
+@@ -917,7 +917,7 @@
+ 	_XomConvert  @ 907
+ 	_XomInitConverter  @ 908
+ 	_Xmblen  @ 909
+-	_XimGetResourceName  @ 910
++;;Removed 3.3.2.2	_XimGetResourceName  @ 910
+ 	_XimGetResourceListRecByQuark  @ 911
+ 	_XimSetIMValueData  @ 912
+ 	_XimGetIMValueData  @ 913
+Index: X11/xc/lib/X11/XKBCvt.c
+diff -u X11/xc/lib/X11/XKBCvt.c:1.1.1.1 X11/xc/lib/X11/XKBCvt.c:1.2
+--- X11/xc/lib/X11/XKBCvt.c:1.1.1.1	Fri Sep  5 02:58:59 1997
++++ X11/xc/lib/X11/XKBCvt.c	Sat May 23 13:13:02 1998
+@@ -28,7 +28,7 @@
+ from the X Consortium.
+ 
+ */
+-/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13.2.1 1997/06/22 10:32:25 dawes Exp $ */
++/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13.2.3 1998/05/19 14:13:42 dawes Exp $ */
+ 
+ #include <stdio.h>
+ #include <sys/types.h>
+@@ -569,6 +569,13 @@
+     char str[256];
+     char c, *s;
+ 
++    /*
++     * unchecked strings from the environment can end up here, so check
++     * the length before copying.
++     */
++    if (strlen(str1) >= sizeof(str))
++	return 1;
++
+     for (s = str; c = *str1++; ) {
+ 	if (isupper(c))
+ 	    c = tolower(c);
+@@ -665,6 +672,9 @@
+     locale = setlocale(LC_CTYPE,NULL);
+ 
+     if ( locale == NULL )
++	return NULL;
++
++    if (strlen(locale) >= sizeof(lang))
+ 	return NULL;
+ 
+     for (tmp = lang; *tmp = *locale++; tmp++) {
+Index: X11/xc/lib/X11/XKBGetMap.c
+diff -u X11/xc/lib/X11/XKBGetMap.c:1.1.1.1 X11/xc/lib/X11/XKBGetMap.c:1.2
+--- X11/xc/lib/X11/XKBGetMap.c:1.1.1.1	Fri Sep  5 02:59:00 1997
++++ X11/xc/lib/X11/XKBGetMap.c	Sat May 23 13:13:03 1998
+@@ -25,6 +25,8 @@
+ 
+ ********************************************************/
+ 
++/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.1.1.4.4.2 1998/05/19 14:36:44 dawes Exp $ */
++
+ #define NEED_REPLIES
+ #define NEED_EVENTS
+ #define	NEED_MAP_READERS
+@@ -253,6 +255,9 @@
+ int		i;
+ CARD8		numDesc[248];
+ register int	nKeyActs;
++
++    if (rep->nKeyActs > sizeof(numDesc))
++	return BadLength;
+ 
+     if ( (nKeyActs=rep->nKeyActs)>0 ) {
+ 	XkbSymMapPtr	symMap;
+Index: X11/xc/lib/X11/Ximint.h
+diff -u X11/xc/lib/X11/Ximint.h:1.1.1.1 X11/xc/lib/X11/Ximint.h:1.2
+--- X11/xc/lib/X11/Ximint.h:1.1.1.1	Fri Sep  5 02:59:05 1997
++++ X11/xc/lib/X11/Ximint.h	Sat May 23 13:13:05 1998
+@@ -30,7 +30,7 @@
+ 			       makoto@sm.sony.co.jp
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.2 1997/07/05 15:55:33 dawes Exp $ */
++/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.4 1998/05/19 14:36:45 dawes Exp $ */
+ 
+ #ifndef _XIMINT_H
+ #define _XIMINT_H
+@@ -1001,14 +1001,6 @@
+     INT16 len, 
+     XPointer data, 
+     XPointer call_data
+-#endif
+-);
+-
+-extern void _XimGetResourceName(
+-#if NeedFunctionPrototypes
+-    Xim im, 
+-    char *res_name,
+-    char *res_class
+ #endif
+ );
+ 
+Index: X11/xc/lib/X11/XlibInt.c
+diff -u X11/xc/lib/X11/XlibInt.c:1.1.1.1 X11/xc/lib/X11/XlibInt.c:1.2
+--- X11/xc/lib/X11/XlibInt.c:1.1.1.1	Fri Sep  5 02:59:08 1997
++++ X11/xc/lib/X11/XlibInt.c	Sat May 23 13:13:06 1998
+@@ -1,5 +1,4 @@
+ /* $XConsortium: XlibInt.c /main/183 1996/10/22 14:24:21 kaleb $ */
+-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9 1996/12/23 05:59:48 dawes Exp $ */
+ /*
+ 
+ Copyright (c) 1985, 1986, 1987  X Consortium
+@@ -30,6 +29,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.2 1998/05/18 14:08:39 dawes Exp $ */
++
+ /*
+  *	XlibInt.c - Internal support routines for the C subroutine
+  *	interface library (Xlib) to the X Window System Protocol V11.0.
+@@ -3185,12 +3186,18 @@
+ #ifdef NEED_UTSNAME
+     struct utsname name;
+ 
++    if (maxlen <= 0 || buf == NULL)
++	return 0;
++
+     uname (&name);
+     len = strlen (name.nodename);
+     if (len >= maxlen) len = maxlen - 1;
+     strncpy (buf, name.nodename, len);
+     buf[len] = '\0';
+ #else
++    if (maxlen <= 0 || buf == NULL)
++	return 0;
++
+     buf[0] = '\0';
+     (void) gethostname (buf, maxlen);
+     buf [maxlen - 1] = '\0';
+Index: X11/xc/lib/X11/imInt.c
+diff -u X11/xc/lib/X11/imInt.c:1.1.1.1 X11/xc/lib/X11/imInt.c:1.2
+--- X11/xc/lib/X11/imInt.c:1.1.1.1	Fri Sep  5 02:59:13 1997
++++ X11/xc/lib/X11/imInt.c	Sat May 23 13:13:07 1998
+@@ -26,7 +26,7 @@
+                                fujiwara@a80.tech.yk.fujitsu.co.jp
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.2 1997/07/05 15:55:34 dawes Exp $ */
++/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.3 1998/05/19 02:55:10 dawes Exp $ */
+ 
+ #include <X11/Xatom.h>
+ #include <X11/Xlib.h>
+@@ -189,6 +189,9 @@
+     char	  *ret;
+ 
+     buf[0] = '\0';
++    if (lcd->core->modifiers != (char *)NULL &&
++	strlen(lcd->core->modifiers) >= sizeof(buf))
++	return NULL;
+     if(lcd->core->modifiers != (char *)NULL && *lcd->core->modifiers != '\0') {
+ 	mod = _XimStrstr(lcd->core->modifiers, XIMMODIFIER);
+ 	if(mod) {
+Index: X11/xc/lib/X11/imLcPrs.c
+diff -u X11/xc/lib/X11/imLcPrs.c:1.1.1.1 X11/xc/lib/X11/imLcPrs.c:1.2
+--- X11/xc/lib/X11/imLcPrs.c:1.1.1.1	Fri Sep  5 02:59:14 1997
++++ X11/xc/lib/X11/imLcPrs.c	Sat May 23 13:13:08 1998
+@@ -30,6 +30,8 @@
+ 
+ ******************************************************************/
+ 
++/* $XFree86: xc/lib/X11/imLcPrs.c,v 1.1.1.3.2.2 1998/05/19 07:31:41 dawes Exp $ */
++
+ #include <stdio.h>
+ #include <X11/Xlib.h>
+ #include <X11/Xmd.h>
+@@ -132,6 +134,8 @@
+     char *p;
+     int i, j;
+ 
++#define CHECKBUF() if (p - tokenbuf >= MAXSTRLEN - 1) return ERROR; else
++
+     while ((c = nextch(fp, lastch)) == ' ' || c == '\t') {
+     }
+     switch (c) {
+@@ -168,6 +172,7 @@
+ 		switch (c) {
+ 		  case '\\':
+ 		  case '"':
++		    CHECKBUF();
+ 		    *p++ = c;
+ 		    break;
+ 		  case '0':
+@@ -186,6 +191,7 @@
+ 			c = nextch(fp, lastch);
+ 		    }
+ 		    putbackch(c, lastch);
++		    CHECKBUF();
+ 		    *p++ = (char)i;
+ 		    break;
+ 		  case 'X':
+@@ -211,6 +217,7 @@
+ 		        goto string_error;
+ 		    }
+ 		    putbackch(c, lastch);
++		    CHECKBUF();
+ 		    *p++ = (char)i;
+ #undef ishexch
+ 		    break;
+@@ -220,10 +227,12 @@
+ 		    token = ERROR;
+ 		    goto string_error;
+ 		  default:
++		    CHECKBUF();
+ 		    *p++ = c;
+ 		    break;
+ 		}
+ 	    } else {
++		CHECKBUF();
+ 		*p++ = c;
+ 	    }
+ 	}
+@@ -242,9 +251,11 @@
+       default:
+ 	if (isalnum(c) || c == '_' || c == '-') {
+ 	    p = tokenbuf;
++	    CHECKBUF();
+ 	    *p++ = c;
+ 	    c = nextch(fp, lastch);
+ 	    while (isalnum(c) || c == '_' || c == '-') {
++		CHECKBUF();
+ 		*p++ = c;
+ 		c = nextch(fp, lastch);
+ 	    }
+Index: X11/xc/lib/X11/imRm.c
+diff -u X11/xc/lib/X11/imRm.c:1.1.1.1 X11/xc/lib/X11/imRm.c:1.2
+--- X11/xc/lib/X11/imRm.c:1.1.1.1	Fri Sep  5 02:59:15 1997
++++ X11/xc/lib/X11/imRm.c	Sat May 23 13:13:09 1998
+@@ -30,7 +30,7 @@
+ 			       makoto@sm.sony.co.jp
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/X11/imRm.c,v 3.1.2.1 1997/06/29 08:43:30 dawes Exp $ */
++/* $XFree86: xc/lib/X11/imRm.c,v 3.1.2.4 1998/05/23 13:38:56 dawes Exp $ */
+ 
+ #include <stdio.h>
+ #include <X11/Xlib.h>
+@@ -38,6 +38,7 @@
+ #include "Xlcint.h"
+ #include "Ximint.h"
+ #include "Xresource.h"
++#include "snprintf.h"
+ 
+ #ifndef	isalnum
+ #define	isalnum(c)	\
+@@ -67,26 +68,23 @@
+ 			 );
+ } XimValueOffsetInfoRec, *XimValueOffsetInfo;
+ 
+-void
+-_XimGetResourceName(im, res_name, res_class)
++static void
++_XimGetResourceName(im, res_name, res_class, size)
+     Xim		 im;
+     char	*res_name;
+     char	*res_class;
++    int		size;
+ {
+     if(im->core.res_name == NULL) {
+-	strcpy(res_name, "*");
++	strcpy(res_name, "*xim.");
+     } else {
+-	strcpy(res_name, im->core.res_name);
+-	strcat(res_name, ".");
++	_XSnprintf(res_name, size, "%s.xim.", im->core.res_name);
+     }
+     if(im->core.res_class == NULL) {
+-	strcpy(res_class, "*");
++	strcpy(res_class, "*Xim.");
+     } else {
+-	strcpy(res_class, im->core.res_class);
+-	strcat(res_class, ".");
++	_XSnprintf(res_class, size, "%s.Xim.", im->core.res_class);
+     }
+-    strcat(res_name, "xim.");
+-    strcat(res_class, "Xim.");
+ }
+ 
+ #ifdef XIM_CONNECTABLE
+@@ -118,7 +116,7 @@
+     if (!im->core.rdb)
+ 	return;
+ 
+-    _XimGetResourceName(im, xim_res_name, xim_res_class);
++    _XimGetResourceName(im, xim_res_name, xim_res_class, 256);
+ 
+     _XSnprintf(res_name, sizeof(res_name), "%s%s", xim_res_name, "useAuth");
+     _XSnprintf(res_class, sizeof(res_class), "%s%s", xim_res_class, "UseAuth");
+Index: X11/xc/lib/X11/lcCT.c
+diff -u X11/xc/lib/X11/lcCT.c:1.1.1.2 X11/xc/lib/X11/lcCT.c:1.2
+--- X11/xc/lib/X11/lcCT.c:1.1.1.2	Sat Mar  7 08:59:44 1998
++++ X11/xc/lib/X11/lcCT.c	Sat May 23 13:13:11 1998
+@@ -31,7 +31,7 @@
+  * Modifier: Takanori Tateno   FUJITSU LIMITED
+  *
+  */
+-/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.2 1998/01/25 06:11:05 dawes Exp $ */
++/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.3 1998/05/19 02:55:11 dawes Exp $ */
+ 
+ #include "Xlibint.h"
+ #include "XlcPubI.h"
+@@ -400,6 +400,9 @@
+     int length;
+ 
+     if (charset->ct_sequence == NULL)
++	return False;
++
++    if (charset->name && strlen(charset->name) >= sizeof(buf))
+ 	return False;
+ 
+     ptr = charset->ct_sequence;
+Index: X11/xc/lib/X11/lcDB.c
+diff -u X11/xc/lib/X11/lcDB.c:1.1.1.1 X11/xc/lib/X11/lcDB.c:1.2
+--- X11/xc/lib/X11/lcDB.c:1.1.1.1	Fri Sep  5 02:59:18 1997
++++ X11/xc/lib/X11/lcDB.c	Sat May 23 13:13:12 1998
+@@ -28,7 +28,7 @@
+  *  This is source code modified by FUJITSU LIMITED under the Joint
+  *  Development Agreement for the CDE/Motif PST.
+  */
+-/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.2 1997/07/06 07:28:03 dawes Exp $ */
++/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.3 1998/05/19 02:55:12 dawes Exp $ */
+ 
+ 
+ 
+@@ -401,10 +401,14 @@
+     }
+ }
+ 
++#define CHECKWORD(n) \
++	if (w - word + (n) >= size - 1) {*word = 0; return 0;} else
++
+ static int
+-get_word(str, word)
++get_word(str, word, size)
+     char *str;
+     char *word;
++    int size;
+ {
+     char *p = str, *w = word;
+     Token token;
+@@ -424,6 +428,7 @@
+ 		 token != T_DEFAULT){
+ 	    break;
+ 	}
++	CHECKWORD(token_len);
+ 	strncpy(w, p, token_len);
+ 	p += token_len; w += token_len;
+     }
+@@ -432,9 +437,10 @@
+ }
+ 
+ static int
+-get_quoted_word(str, word)
++get_quoted_word(str, word, size)
+     char *str;
+     char *word;
++    int size;
+ {
+     char *p = str, *w = word;
+     Token token;
+@@ -458,6 +464,7 @@
+ 	    token = get_token(p);
+ 	    token_len = token_tbl[token].len;
+ 	}
++	CHECKWORD(token_len);
+ 	strncpy(w, p, token_len);
+ 	p += token_len; w += token_len;
+     }
+@@ -541,8 +548,9 @@
+ }
+ 
+ static int 
+-construct_name(name)
++construct_name(name, size)
+     char *name;
++    int size;
+ {
+     register int i, len = 0;
+     char *p = name;
+@@ -550,6 +558,8 @@
+     for(i = 0; i <= parse_info.nest_depth; ++i){
+ 	len += strlen(parse_info.name[i]) + 1;
+     }
++    if (len >= size)
++	return 0;
+ 
+     strcpy(p, parse_info.name[0]);
+     p += strlen(parse_info.name[0]);
+@@ -590,7 +600,7 @@
+     }
+     strcpy(new->category, parse_info.category);
+ 
+-    if(! construct_name(name)){
++    if(! construct_name(name, sizeof(name))){
+ 	goto err;
+     }
+     new->name = (char *)Xmalloc(strlen(name) + 1);
+@@ -825,7 +835,7 @@
+ 	goto err;
+     case S_NAME:
+     case S_VALUE:
+-	len = get_quoted_word(str, word);
++	len = get_quoted_word(str, word, sizeof(word));
+ 	if(len < 1){
+ 	    goto err;
+ 	}
+@@ -875,7 +885,7 @@
+     case S_VALUE:
+ 	token_len = token_tbl[token].len;
+ 	p = str + token_len;
+-	len = get_word(p, word);
++	len = get_word(p, word, sizeof(word));
+ 	if(len < 1){
+ 	    goto err;
+ 	}
+@@ -908,7 +918,7 @@
+     char word[BUFSIZE], *p;
+     int len;
+ 
+-    len = get_word(str, word);
++    len = get_word(str, word, sizeof(word));
+     if(len < 1){
+ 	goto err;
+     }
+Index: X11/xc/lib/X11/lcGeneric.c
+diff -u X11/xc/lib/X11/lcGeneric.c:1.1.1.1 X11/xc/lib/X11/lcGeneric.c:1.2
+--- X11/xc/lib/X11/lcGeneric.c:1.1.1.1	Fri Sep  5 02:59:19 1997
++++ X11/xc/lib/X11/lcGeneric.c	Sat May 23 13:13:13 1998
+@@ -28,7 +28,7 @@
+  *  This is source code modified by FUJITSU LIMITED under the Joint
+  *  Development Agreement for the CDE/Motif PST.
+  */
+-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.3.2.1 1997/07/19 04:59:10 dawes Exp $ */
++/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.3.2.3 1998/05/19 07:31:41 dawes Exp $ */
+ 
+ #include <stdio.h>
+ #include "Xlibint.h"
+@@ -301,7 +301,7 @@
+ char *str;
+ FontScope scp;
+ {
+-    char buff[256],*next;
++    char *next;
+     unsigned long start=0,end=0,dest=0,shift=0,direction=0;
+     sscanf(str,"[\\x%lx,\\x%lx]->\\x%lx", &start, &end,&dest);
+     if( dest ){
+@@ -430,7 +430,7 @@
+         sprintf(name, "%s.%s", csd , "charset_name");
+         _XlcGetResource(lcd, "XLC_CHARSET_DEFINE", name, &value, &num);
+         _XlcDbg_printValue(name,value,num);
+-        if (num > 0) {
++        if (num > 0 && strlen(value[0]) + 5 <= sizeof(cset_name)) {
+             strcpy(cset_name,value[0]);
+             sprintf(name, "%s.%s", csd , "side");
+             _XlcGetResource(lcd, "XLC_CHARSET_DEFINE", name, &value, &num);
+@@ -658,8 +658,8 @@
+ int num;
+ {
+     ExtdSegment ret;
+-    char side_str[128],*ptr;
+-    char cset_name[128],*tmp;
++    char *ptr;
++    char *cset_name = NULL;
+     int i,new;
+     FontScope scope;
+     ret = (ExtdSegment)Xmalloc(sizeof(ExtdSegmentRec));
+@@ -669,12 +669,18 @@
+     if(strchr(value[0],':')){
+         ret->name = (char *)Xmalloc(strlen(value[0])+1);
+         if(ret->name == NULL){
+-            return NULL; /* XXX ick, without freeing ret */
++	    Xfree(ret);
++            return NULL;
+         }
+         strcpy(ret->name,value[0]);
+         ptr = strchr(ret->name,':');
+         *ptr = '\0';
+         ptr++;
++	cset_name = (char *)Xmalloc(strlen(ret->name) + 5 + 1);
++	if (cset_name == NULL){
++	    Xfree(ret);
++            return NULL;
++        }
+         if( !_XlcNCompareISOLatin1(ptr, "none", 4) ){
+             ret->side =  XlcNONE ;
+             sprintf(cset_name,"%s:%s",ret->name,"none");
+@@ -689,13 +695,15 @@
+     } else {
+         ret->name = (char *)Xmalloc(strlen(value[0])+1);
+         if(ret->name == NULL){
+-            return NULL; /* XXX ick, without freeing ret */
++	    Xfree(ret);
++            return NULL;
+         }
+         strcpy(ret->name,value[0]);
+     }
+     ret->area = (FontScope)Xmalloc((num - 1)*sizeof(FontScopeRec));
+     if(ret->area == NULL){
+-        return NULL; /* XXX ick, without freeing ret */
++	Xfree(ret);
++        return NULL;
+     }
+     ret->area_num  = num - 1;
+     scope = ret->area ;
+@@ -705,12 +713,10 @@
+     }
+     ret->charset = srch_charset_define(cset_name,&new);
+     if(new){
+-        tmp = (char *)Xmalloc(strlen(cset_name)+1);
+-        if(tmp == NULL){
+-            return NULL; /* XXX ick, without freeing ret */
+-        }
+-        strcpy(tmp,cset_name);
+-        ret->charset->name = tmp;
++	ret->charset->name = cset_name;
++    } else {
++	if (cset_name != NULL)
++	    Xfree(cset_name);
+     }
+     return(ret);
+ }
+@@ -832,6 +838,8 @@
+ 			break;
+ 		    }
+ 		}
++		if (strlen(tmp) >= sizeof(encoding))
++			goto err;
+ 		if (string_to_encoding(tmp, encoding) == False)
+ 			goto err;
+ 		add_parse_list(gen, type, encoding, codeset);
+@@ -859,6 +867,8 @@
+ 	    if (codeset == NULL && (codeset = add_codeset(gen)) == NULL)
+ 		goto err;
+ 	    for ( ; num-- > 0; value++) {
++		if (strlen(*value) >= sizeof(name))
++			continue;
+ 		string_to_encoding(*value, name);
+ 		charset = NULL;
+ 		if ((encoding = strchr(name, ':')) &&
+@@ -914,7 +924,6 @@
+                 (codeset->byteM)[M-1].byteinfo =
+                     (ByteInfo)Xmalloc( num * sizeof(ByteInfoRec));
+                 for(ii = 0 ; ii < num ; ii++){
+-                    char tmp[128];
+                     tmpb = (codeset->byteM)[M-1].byteinfo ;
+                     /* default 0x00 - 0xff */
+                     sscanf(value[ii],"\\x%lx,\\x%lx",&start,&end);
+Index: X11/xc/lib/X11/omGeneric.c
+diff -u X11/xc/lib/X11/omGeneric.c:1.1.1.1 X11/xc/lib/X11/omGeneric.c:1.2
+--- X11/xc/lib/X11/omGeneric.c:1.1.1.1	Fri Sep  5 02:59:22 1997
++++ X11/xc/lib/X11/omGeneric.c	Sat May 23 13:13:14 1998
+@@ -31,7 +31,7 @@
+  * Modifier: Takanori Tateno   FUJITSU LIMITED
+  *
+  */
+-/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5.2.2 1997/07/19 04:59:11 dawes Exp $ */
++/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5.2.7 1998/05/19 14:36:46 dawes Exp $ */
+ 
+ #include "Xlibint.h"
+ #include "XomGeneric.h"
+@@ -493,7 +493,6 @@
+     char *pattern = NULL, *ptr = NULL;
+     char *fields[CHARSET_ENCODING_FIELD];
+     char str_pixel[32], str_point[4];
+-    char rotate_font[256];
+     char *rotate_font_ptr = NULL;
+     int pixel_size = 0;
+     int field_num = 0, len = 0;
+@@ -546,20 +545,30 @@
+     strcpy(str_point, "*");
+     fields[POINT_SIZE_FIELD - 1] = str_point;
+ 
+-    rotate_font[0] = '\0';
++    len = 0;
++    for (field_num = 0; field_num < CHARSET_ENCODING_FIELD &&
++			fields[field_num]; field_num++) {
++	len += 1 + strlen(fields[field_num]);
++    }
++
++    /* Max XLFD length is 255 */
++    if (len > 255) 
++	return NULL;
++
++    rotate_font_ptr = (char *)Xmalloc(len + 1);
++    if(!rotate_font_ptr)
++	return NULL;
++
++    rotate_font_ptr[0] = '\0';
++
+     for(field_num = 0 ; field_num < CHARSET_ENCODING_FIELD &&
+ 			fields[field_num] ; field_num++) {
+-	sprintf(rotate_font, "%s-%s", rotate_font, fields[field_num]);
++	sprintf(rotate_font_ptr, "%s-%s", rotate_font_ptr, fields[field_num]);
+     }
+ 
+     if(pattern)
+ 	Xfree(pattern);
+ 
+-    rotate_font_ptr = (char *)Xmalloc(strlen(rotate_font) + 1);
+-    if(!rotate_font_ptr)
+-	return NULL;
+-    strcpy(rotate_font_ptr, rotate_font);
+-	
+     return rotate_font_ptr;
+ }
+ 
+@@ -646,7 +655,11 @@
+     char	buf[BUFSIZE];
+     int		length = 0;
+     int		num_fields;
++    char	*end;
+ 
++    if (strlen(pattern) >= sizeof(buf))
++	return -1;
++
+     if(is_match_charset(font_data, pattern) == True) {
+ 	strcpy(buf, pattern);
+ 	length = strlen(pattern);
+@@ -665,7 +678,9 @@
+     strcpy(buf, pattern);
+     length = strlen(pattern);
+     last = buf + length - 1;
++    end = buf + sizeof(buf) - 1;
+ 
++#define CHECK_SPACE(n) if (end - last <= (n)) return -1; else
+     /* 
+      * Plug in the charset/encoding specified in the XLC_LOCALE file
+      * into the *right* place in the XLFD name.
+@@ -676,6 +691,7 @@
+     switch (num_fields) {
+     case 12:
+ 	/* this is the best way to have specifed the fontset */
++	CHECK_SPACE(1);
+ 	*++last = '-';
+ 	break;
+     case 13:
+@@ -698,12 +714,14 @@
+ 	    else
+ 		last--;
+ 	} else {
++	    CHECK_SPACE(1);
+ 	    *++last = '-';
+ 	}
+ 	break;
+     }
+     last++;
+ 
++    CHECK_SPACE(strlen(font_data->name));
+     strcpy(last, font_data->name);
+     if (font_name = get_font_name(oc, buf)) {
+ 	font_data->xlfd_name = (char *)Xmalloc(strlen(font_name) + 1);
+@@ -717,6 +735,7 @@
+     }
+ 
+     while (num_fields < 12) {
++	CHECK_SPACE(2 + strlen(font_data->name));
+ 	*last = '*';
+ 	*(last + 1) = '-';
+ 	strcpy(last + 2, font_data->name);
+@@ -1024,7 +1043,9 @@
+     return found_num;
+ 
+ err:
+-    XFreeStringList(name_list);		
++    XFreeStringList(name_list);
++    /* Prevent this from being freed twice */
++    oc->core.base_name_list = NULL;
+ 
+     return -1;
+ }
+Index: X11/xc/lib/X11/udcInf.c
+diff -u X11/xc/lib/X11/udcInf.c:1.1.1.1 X11/xc/lib/X11/udcInf.c:1.2
+--- X11/xc/lib/X11/udcInf.c:1.1.1.1	Fri Sep  5 02:59:23 1997
++++ X11/xc/lib/X11/udcInf.c	Sat May 23 13:13:15 1998
+@@ -34,6 +34,9 @@
+  * Modifier: Takanori Tateno   FUJITSU LIMITED
+  *
+  */
++
++/* $XFree86: xc/lib/X11/udcInf.c,v 1.1.1.1.2.1 1998/05/19 07:31:42 dawes Exp $ */
++
+ #include <stdio.h>
+ #include <locale.h>
+ #include <Xlib.h>
+@@ -135,6 +138,8 @@
+             break ;
+         }
+         for(i=0;i<count;i++){
++	    if (strlen(value[i]) >= sizeof(buf))
++		continue;
+             strcpy(buf,value[i]);
+             ptr = (char *)strchr(buf,(int)':');
+             *ptr = 0;
+@@ -304,7 +309,8 @@
+  *
+  */
+ 
+-int _xudc_gi_to_vgi(lcd,locale,charset_str,codeset,gi,vgi,charsetname)
++static int
++_xudc_gi_to_vgi(lcd,locale,charset_str,codeset,gi,vgi,charsetname,size)
+ XLCd 	lcd;
+ char 	*locale;
+ char 	*charset_str;
+@@ -312,6 +318,7 @@
+ unsigned long 	gi;
+ unsigned long 	*vgi;
+ char    *charsetname;
++int	size;
+ {
+     _XUDCGlyphRegion *udc;
+     int num = 0,count,num_ret=0;
+@@ -325,6 +332,8 @@
+     if(count > 0){
+         strcpy(charsetname,value[0]);
+     }
++    if (count >= size)
++	return False;
+     sprintf(buf, "fs%d.font.primary", codeset-1);
+     _XlcGetLocaleDataBase(lcd, "XLC_FONTSET", buf, &value, &count);
+     if(count > 0){
+@@ -369,20 +378,26 @@
+ 	}
+     }
+ }
+-make_none_standard(from,charset,src)
++
++static Bool
++make_none_standard(from,charset,src,size)
+ char *from;
+ XlcCharSet 	charset;
+ char *src;
++int size;
+ {
+     int name_len,seq_len,i;
+     name_len = 2 + strlen(charset->encoding_name) + 1;
+     seq_len = strlen(charset->ct_sequence);
++    if (name_len + seq_len + strlen(src) >= size)
++	return False;
+     strcpy(from,charset->ct_sequence);
+     from[seq_len]    = name_len / 128 + 128;
+     from[seq_len+1]  = name_len % 128 + 128;
+     strcpy(&from[seq_len + 2],charset->encoding_name);
+     from[seq_len+name_len-1]  = 0x02;  /* STX */
+     strcpy(&from[seq_len + name_len],src);
++    return True;
+ }
+ int 
+ _xudc_glyph_to_code(locale,charset_str,codeset,glyph_index,codepoint)
+@@ -400,7 +415,7 @@
+     unsigned long from32[25];
+     unsigned long to32[25];
+     int	     i,j;
+-    char tmp[256],charsetname[256],src[10];
++    char charsetname[256],src[10];
+     XlcConv 	conv;
+     XlcCharSet 	charset;
+     XPointer args[2];
+@@ -413,8 +428,9 @@
+ 	
+     lcd = (XLCd)_XlcGenericLoader(locale);
+ 
+-    _xudc_gi_to_vgi(lcd,locale,charset_str,codeset,
+-	glyph_index,&glyph_index,charsetname);
++    if (!_xudc_gi_to_vgi(lcd,locale,charset_str,codeset,
++	glyph_index,&glyph_index,charsetname,sizeof(charsetname)))
++	return(_XUDC_ERROR);
+ 
+     for(i=0,j=0;i<4;i++){
+ 	byte = getbyte(glyph_index,i);
+@@ -438,8 +454,11 @@
+     }
+     /* make ct */
+     if( non_standard(lcd,charset)) {
+-        make_none_standard(from,charset,src);
++        if (!make_none_standard(from,charset,src,sizeof(from32)))
++	    return(_XUDC_ERROR);
+     } else if(charset->ct_sequence){
++	if (strlen(charset->ct_sequence) + strlen(src) >= sizeof(from32))
++	    return(_XUDC_ERROR);
+         sprintf((char *)from,"%s%s",charset->ct_sequence,src);
+     } else {
+         sprintf((char *)from,"%s\0",src);
+@@ -564,13 +583,14 @@
+  *
+  */
+ static Bool  
+-_xudc_vgi_to_gi(lcd,locale,vglyph,glyph,charset,charsetname)
++_xudc_vgi_to_gi(lcd,locale,vglyph,glyph,charset,charsetname,size)
+ XLCd    lcd;
+ char    *locale;
+ unsigned long   vglyph;
+ unsigned long   *glyph;
+ XlcCharSet	charset;
+ char    *charsetname;
++int	size;
+ {
+     int num = 0,count,num_ret=0;
+     int i,j,k;
+@@ -606,6 +626,8 @@
+         for(i=0;i<count;i++){
+             for(k=0;k<font_data[i].scopes_num;k++){
+ 	        if( vgi_to_gi(glyph,vglyph,&(font_data[i].scopes[k])) == True){
++		    if (strlen(font_data[i].name) >= size)
++			return(False);
+ 		    strcpy(charsetname,font_data[i].name);
+ 		    return(True);
+                 }
+@@ -630,7 +652,7 @@
+     unsigned int from32[25];
+     unsigned int to32[25];
+     int      i,j;
+-    char tmp[256],charsetname[256],src[10];
++    char charsetname[256],src[10];
+     XlcConv     conv;
+     XlcCharSet  charset;
+     XPointer args[2];
+@@ -664,7 +686,8 @@
+     for(i=0;dst[i];i++){
+         vglyph = ((vglyph << 8) | dst[i]) ;
+     }
+-    if(_xudc_vgi_to_gi(lcd,locale,vglyph,&glyph,charset,charsetname)==False){
++    if(_xudc_vgi_to_gi(lcd,locale,vglyph,&glyph,charset,charsetname,
++			sizeof(charsetname))==False){
+         _XlcCloseConverter(conv);
+ 	_XlcDestroyLC(lcd);
+         *num_gi = 0;
+Index: X11/xc/lib/Xaw/AsciiSrc.c
+diff -u X11/xc/lib/Xaw/AsciiSrc.c:1.1.1.1 X11/xc/lib/Xaw/AsciiSrc.c:1.2
+--- X11/xc/lib/Xaw/AsciiSrc.c:1.1.1.1	Fri Sep  5 02:59:31 1997
++++ X11/xc/lib/Xaw/AsciiSrc.c	Sat May 23 13:13:17 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.1.1.2.4.2 1998/05/16 09:05:19 dawes Exp $ */
++
+ /*
+  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).
+  *
+@@ -1291,15 +1293,21 @@
+     XtQEfile   = XrmPermStringToQuark(XtEfile);
+   }
+ 
++  if (strlen((char *) fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
++    return;
++  }
+   XmuCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+   if (q == XtQEstring) type = XawAsciiString;
+   if (q == XtQEfile)  type = XawAsciiFile;
+-
+-  (*toVal).size = sizeof(XawAsciiType);
+-  (*toVal).addr = (XPointer) &type;
+-  return;
++  if (q == XtQEstring || q == XtQEfile) {
++    (*toVal).size = sizeof(XawAsciiType);
++    (*toVal).addr = (XPointer) &type;
++    return;
++  }
++  XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
+ }
+ 
+ #if (defined(ASCII_STRING) || defined(ASCII_DISK))
+Index: X11/xc/lib/Xaw/AsciiSrcP.h
+diff -u X11/xc/lib/Xaw/AsciiSrcP.h:1.1.1.1 X11/xc/lib/Xaw/AsciiSrcP.h:1.2
+--- X11/xc/lib/Xaw/AsciiSrcP.h:1.1.1.1	Fri Sep  5 02:59:32 1997
++++ X11/xc/lib/Xaw/AsciiSrcP.h	Sat May 23 13:13:18 1998
+@@ -50,6 +50,7 @@
+ SOFTWARE.
+ 
+ ******************************************************************/
++/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.1.1.1.12.1 1998/05/19 07:31:43 dawes Exp $ */
+ 
+ /*
+  * AsciiSrcP.h - Private Header for Ascii Text Source.
+@@ -85,7 +86,11 @@
+ #ifdef L_tmpnam
+ #define TMPSIZ L_tmpnam
+ #else
+-#define TMPSIZ 32		/* bytes to allocate for tmpnam */
++#ifdef PATH_MAX
++#define TMPSIZ PATH_MAX
++#else
++#define TMPSIZ 1024		/* bytes to allocate for tmpnam */
++#endif
+ #endif
+ 
+ #define MAGIC_VALUE ((XawTextPosition) -1) /* Magic value. */
+Index: X11/xc/lib/Xaw/Form.c
+diff -u X11/xc/lib/Xaw/Form.c:1.1.1.1 X11/xc/lib/Xaw/Form.c:1.2
+--- X11/xc/lib/Xaw/Form.c:1.1.1.1	Fri Sep  5 02:59:34 1997
++++ X11/xc/lib/Xaw/Form.c	Sat May 23 13:13:19 1998
+@@ -48,6 +48,8 @@
+ 
+ ******************************************************************/
+ 
++/* $XFree86: xc/lib/Xaw/Form.c,v 1.1.1.1.12.2 1998/05/16 09:05:19 dawes Exp $ */
++
+ #include <X11/IntrinsicP.h>
+ #include <X11/StringDefs.h>
+ #include <X11/Xmu/Converters.h>
+@@ -185,6 +187,10 @@
+     XrmQuark q;
+     char lowerName[1000];
+ 
++    if (strlen((char*)fromVal->addr) >= sizeof(lowerName)) {
++	XtStringConversionWarning(fromVal->addr, "edgeType");
++	return;
++    }
+     XmuCopyISOLatin1Lowered (lowerName, (char*)fromVal->addr);
+     q = XrmStringToQuark(lowerName);
+     if (q == XtQChainLeft) {
+Index: X11/xc/lib/Xaw/MenuButton.c
+diff -u X11/xc/lib/Xaw/MenuButton.c:1.1.1.1 X11/xc/lib/Xaw/MenuButton.c:1.2
+--- X11/xc/lib/Xaw/MenuButton.c:1.1.1.1	Fri Sep  5 02:59:36 1997
++++ X11/xc/lib/Xaw/MenuButton.c	Sat May 23 13:13:20 1998
+@@ -26,6 +26,7 @@
+  *
+  */
+ 
++/* $XFree86: xc/lib/Xaw/MenuButton.c,v 3.0.6.2 1998/05/20 05:06:17 dawes Exp $ */
+ 
+ /***********************************************************************
+  *
+@@ -53,6 +54,8 @@
+ #include <X11/Xaw/XawInit.h>
+ #include <X11/Xaw/MenuButtoP.h>
+ 
++#include "XawAlloc.h"
++
+ static void ClassInitialize();
+ static void PopupMenu();
+ 
+@@ -176,9 +179,16 @@
+ 
+   if (menu == NULL) {
+     char error_buf[BUFSIZ];
+-    (void) sprintf(error_buf, "MenuButton: %s %s.",
+-	    "Could not find menu widget named", mbw->menu_button.menu_name);
+-    XtAppWarning(XtWidgetToApplicationContext(w), error_buf);
++    char *err1 = "MenuButton: Could not find menu widget named ";
++    char *perr;
++    int len;
++
++    len = strlen(err1) + strlen(mbw->menu_button.menu_name) + 1 + 1;
++    perr = XtStackAlloc(len, error_buf);
++    if (perr == NULL) return;
++    sprintf(perr, "%s%s.", err1, mbw->menu_button.menu_name);
++    XtAppWarning(XtWidgetToApplicationContext(w), perr);
++    XtStackFree(perr, error_buf);
+     return;
+   }
+   if (!XtIsRealized(menu))
+Index: X11/xc/lib/Xaw/MultiSrc.c
+diff -u X11/xc/lib/Xaw/MultiSrc.c:1.1.1.1 X11/xc/lib/Xaw/MultiSrc.c:1.2
+--- X11/xc/lib/Xaw/MultiSrc.c:1.1.1.1	Fri Sep  5 02:59:36 1997
++++ X11/xc/lib/Xaw/MultiSrc.c	Sat May 23 13:13:21 1998
+@@ -27,7 +27,7 @@
+  *
+  * Much code taken from X11R3 String and Disk Sources.
+  */
+-/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.1.1.2.8.1 1997/05/11 05:04:09 dawes Exp $ */
++/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.1.1.2.8.3 1998/05/16 09:05:20 dawes Exp $ */
+ 
+ /*
+ 
+@@ -1439,13 +1439,19 @@
+     XtQEfile   = XrmPermStringToQuark(XtEfile);
+   }
+ 
++  if (strlen((char *) fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
++    return;
++  }
+   XmuCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+   if (q == XtQEstring) type = XawAsciiString;
+   if (q == XtQEfile)  type = XawAsciiFile;
+-
+-  (*toVal).size = sizeof(XawAsciiType);
+-  (*toVal).addr = (XPointer) &type;
+-  return;
++  if (q == XtQEstring || q == XtQEfile) {
++    (*toVal).size = sizeof(XawAsciiType);
++    (*toVal).addr = (XPointer) &type;
++    return;
++  }
++  XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
+ }
+Index: X11/xc/lib/Xaw/MultiSrcP.h
+diff -u X11/xc/lib/Xaw/MultiSrcP.h:1.1.1.1 X11/xc/lib/Xaw/MultiSrcP.h:1.2
+--- X11/xc/lib/Xaw/MultiSrcP.h:1.1.1.1	Fri Sep  5 02:59:37 1997
++++ X11/xc/lib/Xaw/MultiSrcP.h	Sat May 23 13:13:22 1998
+@@ -72,6 +72,7 @@
+ SOFTWARE.
+ 
+ ******************************************************************/
++/* $XFree86: xc/lib/Xaw/MultiSrcP.h,v 1.1.1.1.12.2 1998/05/19 14:36:47 dawes Exp $ */
+ 
+ /*
+  * MultiSrcP.h - Private Header for Multi Text Source.
+@@ -113,7 +114,11 @@
+ #ifdef L_tmpnam
+ #define TMPSIZ L_tmpnam
+ #else
+-#define TMPSIZ 32		/* bytes to allocate for tmpnam */
++#ifdef PATH_MAX
++#define TMPSIZ PATH_MAX
++#else
++#define TMPSIZ 1024		/* bytes to allocate for tmpnam */
++#endif
+ #endif
+ 
+ #define MAGIC_VALUE ((XawTextPosition) -1) /* Magic value. */
+Index: X11/xc/lib/Xaw/Simple.c
+diff -u X11/xc/lib/Xaw/Simple.c:1.1.1.1 X11/xc/lib/Xaw/Simple.c:1.2
+--- X11/xc/lib/Xaw/Simple.c:1.1.1.1	Fri Sep  5 02:59:40 1997
++++ X11/xc/lib/Xaw/Simple.c	Sat May 23 13:13:23 1998
+@@ -48,6 +48,8 @@
+ 
+ ******************************************************************/
+ 
++/* $XFree86: xc/lib/Xaw/Simple.c,v 1.1.1.1.12.2 1998/05/18 14:08:41 dawes Exp $ */
++
+ #include <stdio.h>
+ #include <X11/IntrinsicP.h>
+ #include <X11/StringDefs.h>
+@@ -55,6 +57,8 @@
+ #include <X11/Xaw/SimpleP.h>
+ #include <X11/Xmu/Drawing.h>
+ 
++#include "XawAlloc.h"
++
+ #define offset(field) XtOffsetOf(SimpleRec, simple.field)
+ 
+ static XtResource resources[] = {
+@@ -145,11 +149,17 @@
+ 
+     if (c->simple_class.change_sensitive == NULL) {
+ 	char buf[BUFSIZ];
+-
+-	(void) sprintf(buf,
+-		"%s Widget: The Simple Widget class method 'change_sensitive' is undefined.\nA function must be defined or inherited.",
+-		c->core_class.class_name);
+-	XtWarning(buf);
++	char *pbuf;
++	char *msg1 = " Widget: The Simple Widget class method 'change_sensitive' is undefined.\nA function must be defined or inherited.";
++	int len;
++
++	len = strlen(msg1) + strlen(c->core_class.class_name) + 1;
++	pbuf = XtStackAlloc(len, buf);
++	if (pbuf != NULL) {
++	    sprintf(pbuf, "%s%s", c->core_class.class_name, msg1);
++	    XtWarning(pbuf);
++	    XtStackFree(pbuf, buf);
++	}
+ 	c->simple_class.change_sensitive = ChangeSensitive;
+     }
+ 
+Index: X11/xc/lib/Xaw/SimpleMenu.c
+diff -u X11/xc/lib/Xaw/SimpleMenu.c:1.1.1.1 X11/xc/lib/Xaw/SimpleMenu.c:1.2
+--- X11/xc/lib/Xaw/SimpleMenu.c:1.1.1.1	Fri Sep  5 02:59:41 1997
++++ X11/xc/lib/Xaw/SimpleMenu.c	Sat May 23 13:13:24 1998
+@@ -25,6 +25,8 @@
+ in this Software without prior written authorization from the X Consortium.
+  */
+ 
++/* $XFree86: xc/lib/Xaw/SimpleMenu.c,v 3.1.6.3 1998/05/20 05:06:17 dawes Exp $ */
++
+ /*
+  * SimpleMenu.c - Source code file for SimpleMenu widget.
+  *
+@@ -47,6 +49,8 @@
+ #include <X11/Xmu/Initer.h>
+ #include <X11/Xmu/CharSet.h>
+ 
++#include "XawAlloc.h"
++
+ #define streq(a, b)        ( strcmp((a), (b)) == 0 )
+ 
+ #define offset(field) XtOffsetOf(SimpleMenuRec, simple_menu.field)
+@@ -625,9 +629,17 @@
+ 
+   if ( (menu = FindMenu(w, params[0])) == NULL) {
+     char error_buf[BUFSIZ];
+-    (void) sprintf(error_buf, "%s '%s'",
+-	    "Xaw - SimpleMenuWidget: could not find menu named: ", params[0]);
+-    XtAppWarning(XtWidgetToApplicationContext(w), error_buf);
++    char *err1 = "Xaw - SimpleMenuWidget: could not find menu named: ";
++    char *perr;
++    int len;
++
++    len = strlen(err1) + strlen(params[0]) + 2 + 1;
++    perr = XtStackAlloc(len, error_buf);
++    if (perr == NULL)
++	return;
++    sprintf(perr, "%s'%s'", err1, params[0]);
++    XtAppWarning(XtWidgetToApplicationContext(w), perr);
++    XtStackFree(perr, error_buf);
+     return;
+   }
+   
+Index: X11/xc/lib/Xaw/SmeBSB.c
+diff -u X11/xc/lib/Xaw/SmeBSB.c:1.1.1.1 X11/xc/lib/Xaw/SmeBSB.c:1.2
+--- X11/xc/lib/Xaw/SmeBSB.c:1.1.1.1	Fri Sep  5 02:59:42 1997
++++ X11/xc/lib/Xaw/SmeBSB.c	Sat May 23 13:13:26 1998
+@@ -25,6 +25,8 @@
+ in this Software without prior written authorization from the X Consortium.
+  */
+ 
++/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.1.1.2.2.3 1998/05/20 05:06:18 dawes Exp $ */
++
+ /*
+  * SmeBSB.c - Source code file for BSB Menu Entry object.
+  *
+@@ -55,6 +57,8 @@
+ 
+ #include <stdio.h>
+ 
++#include "XawAlloc.h"
++
+ #define ONE_HUNDRED 100
+ 
+ #define offset(field) XtOffsetOf(SmeBSBRec, sme_bsb.field)
+@@ -587,22 +591,31 @@
+     int x, y;
+     unsigned int width, height;
+     char buf[BUFSIZ];
++    char *pbuf;
++    int len;
+     
+     if (is_left) {
+ 	if (entry->sme_bsb.left_bitmap != None) {
+ 	    if (!XGetGeometry(XtDisplayOfObject(w), 
+ 			      entry->sme_bsb.left_bitmap, &root, 
+ 			      &x, &y, &width, &height, &bw, &depth)) {
+-		(void) sprintf(buf, "Xaw SmeBSB Object: %s %s \"%s\".", "Could not",
+-			"get Left Bitmap geometry information for menu entry ",
+-			XtName(w));
+-		XtAppError(XtWidgetToApplicationContext(w), buf);
++		char *err1 = "Xaw SmeBSB Object: Could not get Left Bitmap geometry information for menu entry ";
++		len = strlen(err1) + strlen(XtName(w)) + 3 + 1;
++		pbuf = XtStackAlloc(len, buf);
++		if (pbuf == NULL) return;
++		sprintf(pbuf, "%s\"%s\".", err1, XtName(w));
++		XtAppError(XtWidgetToApplicationContext(w), pbuf);
++		XtStackFree(pbuf, buf);
+ 	    }
+ 	    if (depth != 1) {
+-		(void) sprintf(buf, "Xaw SmeBSB Object: %s \"%s\"%s.", 
+-			"Left Bitmap of entry ", 
+-			XtName(w), " is not one bit deep.");
+-		XtAppError(XtWidgetToApplicationContext(w), buf);
++		char *err1 = "Xaw SmeBSB Object: Left Bitmap of entry ";
++		char *err2 = " is not one bit deep.";
++		len = strlen(err1) + strlen(err2) + strlen(XtName(w)) + 2 + 1;
++		pbuf = XtStackAlloc(len, buf);
++		if (pbuf == NULL) return;
++		sprintf(pbuf, "%s\"%s\"%s", err1, XtName(w), err2);
++		XtAppError(XtWidgetToApplicationContext(w), pbuf);
++		XtStackFree(pbuf, buf);
+ 	    }
+ 	    entry->sme_bsb.left_bitmap_width = (Dimension) width; 
+ 	    entry->sme_bsb.left_bitmap_height = (Dimension) height;
+@@ -612,16 +625,23 @@
+ 	if (!XGetGeometry(XtDisplayOfObject(w),
+ 			  entry->sme_bsb.right_bitmap, &root,
+ 			  &x, &y, &width, &height, &bw, &depth)) {
+-	    (void) sprintf(buf, "Xaw SmeBSB Object: %s %s \"%s\".", "Could not",
+-		    "get Right Bitmap geometry information for menu entry ",
+-		    XtName(w));
+-	    XtAppError(XtWidgetToApplicationContext(w), buf);
++	    char *err1 = "Xaw SmeBSB Object: Could not get Right Bitmap geometry information for menu entry ";
++	    len = strlen(err1) + strlen(XtName(w)) + 3 + 1;
++	    pbuf = XtStackAlloc(len, buf);
++	    if (pbuf == NULL) return;
++	    sprintf(pbuf, "%s\"%s\".", err1, XtName(w));
++	    XtAppError(XtWidgetToApplicationContext(w), pbuf);
++	    XtStackFree(pbuf, buf);
+ 	}
+ 	if (depth != 1) {
+-	    (void) sprintf(buf, "Xaw SmeBSB Object: %s \"%s\"%s.", 
+-		    "Right Bitmap of entry ", XtName(w),
+-		    " is not one bit deep.");
+-	    XtAppError(XtWidgetToApplicationContext(w), buf);
++	    char *err1 = "Xaw SmeBSB Object: Right Bitmap of entry ";
++	    char *err2 = " is not one bit deep.";
++	    len = strlen(err1) + strlen(err2) + strlen(XtName(w)) + 2 + 1;
++	    pbuf = XtStackAlloc(len, buf);
++	    if (pbuf == NULL) return;
++	    sprintf(pbuf, "%s\"%s\"%s", err1, XtName(w), err2);
++	    XtAppError(XtWidgetToApplicationContext(w), pbuf);
++	    XtStackFree(pbuf, buf);
+ 	}
+ 	entry->sme_bsb.right_bitmap_width = (Dimension) width; 
+ 	entry->sme_bsb.right_bitmap_height = (Dimension) height;
+Index: X11/xc/lib/Xaw/Text.c
+diff -u X11/xc/lib/Xaw/Text.c:1.1.1.1 X11/xc/lib/Xaw/Text.c:1.2
+--- X11/xc/lib/Xaw/Text.c:1.1.1.1	Fri Sep  5 02:59:44 1997
++++ X11/xc/lib/Xaw/Text.c	Sat May 23 13:13:27 1998
+@@ -48,6 +48,8 @@
+ 
+ ******************************************************************/
+ 
++/* $XFree86: xc/lib/Xaw/Text.c,v 3.2.4.2 1998/05/16 09:05:21 dawes Exp $ */
++
+ #include <X11/IntrinsicP.h>
+ #include <X11/StringDefs.h>
+ #include <X11/Shell.h>
+@@ -72,6 +74,8 @@
+ #include <X11/Xfuncs.h>
+ #include <ctype.h>		/* for isprint() */
+ 
++#include "XawAlloc.h"
++
+ #ifndef MAX_LEN_CT
+ #define MAX_LEN_CT 6		/* for sequence: ESC $ ( A \xx \xx */
+ #endif
+@@ -203,6 +207,10 @@
+     inited = TRUE;
+   }
+ 
++  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtRScrollMode);
++    return;
++  }
+   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+@@ -210,7 +218,7 @@
+   else if (q == QScrollWhenNeeded)     scrollMode = XawtextScrollWhenNeeded;
+   else if (q == QScrollAlways)         scrollMode = XawtextScrollAlways;
+   else {
+-    done(NULL, 0);
++    XtStringConversionWarning((char *) fromVal->addr, XtRScrollMode);
+     return;
+   }
+   done(&scrollMode, XawTextScrollMode);
+@@ -238,6 +246,10 @@
+     inited = TRUE;
+   }
+ 
++  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtRWrapMode);
++    return;
++  }
+   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+@@ -245,7 +257,7 @@
+   else if (q == QWrapLine)      wrapMode = XawtextWrapLine;
+   else if (q == QWrapWord)      wrapMode = XawtextWrapWord;
+   else {
+-    done(NULL, 0);
++    XtStringConversionWarning((char *) fromVal->addr, XtRWrapMode);
+     return;
+   }
+   done(&wrapMode, XawTextWrapMode);
+@@ -274,6 +286,10 @@
+     inited = TRUE;
+   }
+ 
++  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtRResizeMode);
++    return;
++  }
+   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+@@ -282,7 +298,7 @@
+   else if (q == QResizeHeight)         resizeMode = XawtextResizeHeight;
+   else if (q == QResizeBoth)           resizeMode = XawtextResizeBoth;
+   else {
+-    done(NULL, 0);
++    XtStringConversionWarning((char *) fromVal->addr, XtRResizeMode);
+     return;
+   }
+   done(&resizeMode, XawTextResizeMode);
+@@ -487,6 +503,8 @@
+ {
+   TextWidget ctx = (TextWidget) new;
+   char error_buf[BUFSIZ];
++  char *perr;
++  int len;
+ 
+   ctx->text.lt.lines = 0;
+   ctx->text.lt.info = NULL;
+@@ -523,10 +541,17 @@
+   if (ctx->text.scroll_vert != XawtextScrollNever) 
+     if ( (ctx->text.resize == XawtextResizeHeight) ||
+      	 (ctx->text.resize == XawtextResizeBoth) ) {
+-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
+-	      "Vertical scrolling not allowed with height resize.\n",
+-	      "Vertical scrolling has been DEACTIVATED.");
+-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
++      char *err1 = "Xaw Text Widget ";
++      char *err2 = ":\nVertical scrolling not allowed with height resize.\n";
++      char *err3 = "Vertical scrolling has been DEACTIVATED.";
++      len = strlen(err1) + strlen(err2) + strlen(err3) +
++		strlen(ctx->core.name) + 1;
++      perr = XtStackAlloc(len, error_buf);
++      if (perr != NULL) {
++	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
++	XtAppWarning(XtWidgetToApplicationContext(new), perr);
++	XtStackFree(perr, error_buf);
++      }
+       ctx->text.scroll_vert = XawtextScrollNever;
+     }
+     else if (ctx->text.scroll_vert == XawtextScrollAlways)
+@@ -534,18 +559,32 @@
+ 
+   if (ctx->text.scroll_horiz != XawtextScrollNever) 
+     if (ctx->text.wrap != XawtextWrapNever) {
+-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
+-	      "Horizontal scrolling not allowed with wrapping active.\n",
+-	      "Horizontal scrolling has been DEACTIVATED.");
+-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
++      char *err1 = "Xaw Text Widget ";
++      char *err2 = ":\nHorizontal scrolling not allowed with wrapping active.";
++      char *err3 = "\nHorizontal scrolling has been DEACTIVATED.";
++      len = strlen(err1) + strlen(err2) + strlen(err3) +
++		strlen(ctx->core.name) + 1;
++      perr = XtStackAlloc(len, error_buf);
++      if (perr != NULL) {
++	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
++	XtAppWarning(XtWidgetToApplicationContext(new), perr);
++	XtStackFree(perr, error_buf);
++      }
+       ctx->text.scroll_horiz = XawtextScrollNever;
+     }
+     else if ( (ctx->text.resize == XawtextResizeWidth) ||
+ 	      (ctx->text.resize == XawtextResizeBoth) ) {
+-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
+-	      "Horizontal scrolling not allowed with width resize.\n",
+-	      "Horizontal scrolling has been DEACTIVATED.");
+-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
++      char *err1 = "Xaw Text Widget ";
++      char *err2 = ":\nHorizontal scrolling not allowed with width resize.\n";
++      char *err3 = "Horizontal scrolling has been DEACTIVATED.";
++      len = strlen(err1) + strlen(err2) + strlen(err3) +
++		strlen(ctx->core.name) + 1;
++      perr = XtStackAlloc(len, error_buf);
++      if (perr != NULL) {
++	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
++	XtAppWarning(XtWidgetToApplicationContext(new), perr);
++	XtStackFree(perr, error_buf);
++      }
+       ctx->text.scroll_horiz = XawtextScrollNever;
+     }
+     else if (ctx->text.scroll_horiz == XawtextScrollAlways)
+Index: X11/xc/lib/Xaw/TextPop.c
+diff -u X11/xc/lib/Xaw/TextPop.c:1.1.1.1 X11/xc/lib/Xaw/TextPop.c:1.2
+--- X11/xc/lib/Xaw/TextPop.c:1.1.1.1	Fri Sep  5 02:59:45 1997
++++ X11/xc/lib/Xaw/TextPop.c	Sat May 23 13:13:28 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.2 1998/05/18 14:08:43 dawes Exp $ */
++
+ /************************************************************
+  *
+  * This file is broken up into three sections one dealing with
+@@ -64,6 +66,8 @@
+ #include <X11/Xos.h>		/* for O_RDONLY */
+ #include <errno.h>
+ 
++#include "XawAlloc.h"
++
+ #ifdef X_NOT_STDC_ENV
+ extern int errno;
+ #endif
+@@ -805,6 +809,8 @@
+ struct SearchAndReplace * search;
+ {
+   char msg[BUFSIZ];
++  char *pmsg;
++  int len;
+   Widget tw = XtParent(search->search_popup);
+   XawTextPosition pos;
+   XawTextScanDirection dir;
+@@ -828,9 +834,20 @@
+    /* The Raw string in find.ptr may be WC I can't use here, so I re - call 
+    GetString to get a tame version. */
+ 
+-  if (pos == XawTextSearchError) 
+-    (void) sprintf( msg, "Could not find string ``%s''.", GetString( search->search_text ) );
+-  else {
++  if (pos == XawTextSearchError) {
++    char *msg1 = "Could not find string ``";
++    char *msg2 = "''.";
++    len = strlen(msg1) + strlen(msg2) +
++		strlen(GetString( search->search_text )) + 1;
++    pmsg = XtStackAlloc(len, msg);
++    if (pmsg != NULL) {
++      (void) sprintf( pmsg, "%s%s%s", msg1, GetString( search->search_text ),
++			msg2);
++    } else {
++      pmsg = msg;
++      (void) sprintf( pmsg, "Could not find string");
++    }
++  } else {
+     if (dir == XawsdRight)
+       XawTextSetInsertionPoint( tw, pos + text.length);
+     else
+@@ -842,7 +859,8 @@
+   }
+   
+   XawTextUnsetSelection(tw);
+-  SetSearchLabels(search, msg, "", TRUE);
++  SetSearchLabels(search, pmsg, "", TRUE);
++  XtStackFree(pmsg, msg);
+   return(FALSE);
+ }
+ 
+@@ -969,13 +987,26 @@
+       if ( (new_pos == XawTextSearchError) ) {
+ 	if (count == 0) {
+ 	  char msg[BUFSIZ];
++	  char *pmsg;
++	  int len;
++	  char *msg1 = "*** Error: Could not find string ``";
++	  char *msg2 = "''. ***";
+ 
+              /* The Raw string in find.ptr may be WC I can't use here, 
+ 		so I call GetString to get a tame version.*/
+ 
+-	  (void) sprintf( msg, "%s %s %s", "*** Error: Could not find string ``",
+-		  GetString( search->search_text ), "''. ***");
+-	  SetSearchLabels(search, msg, "", TRUE);
++	  len = strlen(msg1) + strlen(msg2) +
++		strlen(GetString( search->search_text )) + 1;
++	  pmsg = XtStackAlloc(len, msg);
++	  if (pmsg != NULL) {
++	    (void) sprintf( pmsg, "%s%s%s", msg1,
++				GetString( search->search_text ), msg2);
++	  } else {
++	    pmsg = msg;
++	    (void) sprintf(pmsg, "*** Error: Could not find string ***");
++	  }
++	  SetSearchLabels(search, pmsg, "", TRUE);
++	  XtStackFree(pmsg, msg);
+ 	  return(FALSE);
+ 	}
+ 	else
+@@ -998,9 +1029,22 @@
+ 
+     if (XawTextReplace(tw, pos, end_pos, &replace) != XawEditDone) {
+       char msg[BUFSIZ];
+-      
+-      (void) sprintf( msg, "'%s' with '%s'. ***", find.ptr, replace.ptr);
++      char *pmsg;
++      int len;
++      char *msg1 = "' with '";
++      char *msg2 = "'. ***";
++
++      len = 1 + strlen(msg1) + strlen(msg2) + strlen(find.ptr) +
++		strlen(replace.ptr) + 1;
++      pmsg = XtStackAlloc(len, msg);
++      if (pmsg != NULL) {
++	(void) sprintf( pmsg, "`%s%s%s%s", find.ptr, msg1, replace.ptr, msg2);
++      } else {
++	pmsg = msg;
++	(void) sprintf(pmsg, "string ***");
++      }
+       SetSearchLabels(search, "*** Error while replacing", msg, TRUE);
++      XtStackFree(pmsg, msg);
+       return(FALSE);
+     }      
+ 
+@@ -1151,13 +1195,20 @@
+ {
+   Widget temp_widget;
+   char buf[BUFSIZ];
++  char *pbuf;
++  int len;
+ 
+-  (void) sprintf(buf, "%s.%s", FORM_NAME, name);
++  len = strlen(FORM_NAME) + strlen(name) + 2;
++  pbuf = XtStackAlloc(len, buf);
++  if (pbuf == NULL) return FALSE;
++  (void) sprintf(pbuf, "%s.%s", FORM_NAME, name);
+ 
+-  if ( (temp_widget = XtNameToWidget(shell, buf)) != NULL) {
++  if ( (temp_widget = XtNameToWidget(shell, pbuf)) != NULL) {
+     SetResource(temp_widget, res_name, value);
++    XtStackFree(pbuf, buf);
+     return(TRUE);
+   }
++  XtStackFree(pbuf, buf);
+   return(FALSE);
+ }
+ 
+Index: X11/xc/lib/Xaw/TextSrc.c
+diff -u X11/xc/lib/Xaw/TextSrc.c:1.1.1.1 X11/xc/lib/Xaw/TextSrc.c:1.2
+--- X11/xc/lib/Xaw/TextSrc.c:1.1.1.1	Fri Sep  5 02:59:46 1997
++++ X11/xc/lib/Xaw/TextSrc.c	Sat May 23 13:13:29 1998
+@@ -26,6 +26,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.1.1.1.12.2 1998/05/16 09:05:22 dawes Exp $ */
++
+ /*
+  * Author:  Chris Peterson, MIT X Consortium.
+  * Much code taken from X11R3 String and Disk Sources.
+@@ -323,6 +325,10 @@
+     inited = TRUE;
+   }
+ 
++  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
++    XtStringConversionWarning((char *) fromVal->addr, XtREditMode);
++    return;
++  }
+   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
+   q = XrmStringToQuark(lowerName);
+ 
+@@ -330,7 +336,7 @@
+   else if (q == QAppend)         editType = XawtextAppend;
+   else if (q == QEdit)           editType = XawtextEdit;
+   else {
+-    done(NULL, 0);
++    XtStringConversionWarning((char *) fromVal->addr, XtREditMode);
+     return;
+   }
+   done(&editType, XawTextEditType);
+Index: X11/xc/lib/Xaw/XawIm.c
+diff -u X11/xc/lib/Xaw/XawIm.c:1.1.1.1 X11/xc/lib/Xaw/XawIm.c:1.3
+--- X11/xc/lib/Xaw/XawIm.c:1.1.1.1	Fri Sep  5 02:59:50 1997
++++ X11/xc/lib/Xaw/XawIm.c	Sat May 23 13:13:31 1998
+@@ -1,4 +1,4 @@
+-/* $XConsortium: XawIm.c /main/9 1996/11/09 08:20:50 kaleb $ */
++/* $TOG: XawIm.c /main/9.0 1998/04/21 07:40:26 kaleb $ */
+ 
+ /*
+  * Copyright 1991 by OMRON Corporation
+@@ -53,7 +53,6 @@
+ in this Software without prior written authorization from the X Consortium.
+ 
+ */
+-/* $XFree86: xc/lib/Xaw/XawIm.c,v 1.1.1.4.2.1 1998/05/01 04:02:42 dawes Exp $ */
+ 
+ #include <X11/IntrinsicP.h>
+ #include <X11/StringDefs.h>
+@@ -225,22 +224,6 @@
+     return(ve->ic.input_style);
+ }
+ 
+-static XIMStyle GetInputStyleOfIM( p )
+-    String	p;
+-{
+-    if (!p || !*p)
+-	return((XIMStyle)0);
+-    if (!strcmp(p, "OverTheSpot")) {
+-	return((XIMPreeditPosition | XIMStatusArea));
+-    } else if (!strcmp(p, "OffTheSpot")) {
+-	return((XIMPreeditArea | XIMStatusArea));
+-    } else if (!strcmp(p, "Root")) {
+-	return((XIMPreeditNothing | XIMStatusNothing));
+-    } else {
+-	return((XIMStyle)0);
+-    }
+-}
+-
+ static void ConfigureCB( w, closure, event )
+     Widget	w;
+     XtPointer	closure;
+@@ -390,14 +373,6 @@
+ 	if (contextErrData) XtFree((char *)contextErrData);
+     }
+     XDeleteContext(XtDisplay(vw), (Window)vw, extContext);
+-    if (ve->im.im_list) {
+-        XtFree((char *)ve->im.im_list[0]);
+-        XtFree((char *)ve->im.im_list);
+-    }
+-    if (ve->ic.ic_list) {
+-        XtFree((char *)ve->ic.ic_list[0]);
+-        XtFree((char *)ve->ic.ic_list);
+-    }
+     if (ve->ic.shared_ic_table)
+         XtFree((char *)ve->ic.shared_ic_table);
+     if (ve->im.resources) XtFree((char *)ve->im.resources);
+@@ -439,25 +414,51 @@
+ static void OpenIM(ve)
+     XawVendorShellExtPart * ve;
+ {
+-    char	*p, modifiers[32];
++    int		i;
++    char	*p, *s, *ns, *end, *pbuf, buf[32];
+     XIM		xim = NULL;
+     XIMStyles	*xim_styles;
+-    XIMStyle	input_style;
+-    int		i, j;
++    XIMStyle	input_style = 0;
++    Boolean	found;
+ 
+     if (ve->im.open_im == False) return;
+     ve->im.xim = NULL;
+-    if (ve->im.im_list_num <= 0) {
++    if (ve->im.input_method == NULL) {
+ 	if ((p = XSetLocaleModifiers("@im=none")) != NULL && *p)
+ 	    xim = XOpenIM(XtDisplay(ve->parent), NULL, NULL, NULL);
+     } else {
+-	for (i = 0; i < ve->im.im_list_num; i++) {
+-	    strcpy(modifiers, "@im=");
+-	    strncat(modifiers, ve->im.im_list[i], sizeof(modifiers) - 5/*strlen("@im=")*/);
+-	    if ((p = XSetLocaleModifiers(modifiers)) != NULL && *p &&
+-		(xim = XOpenIM(XtDisplay(ve->parent), NULL, NULL, NULL)) != NULL)
++	/* no fragment can be longer than the whole string */
++	int	len = strlen (ve->im.input_method) + 5;
++
++	if (len < sizeof buf) pbuf = buf;
++	else pbuf = XtMalloc (len);
++
++	if (pbuf == NULL) return;
++
++	for(ns=s=ve->im.input_method; ns && *s;) {
++	    /* skip any leading blanks */
++	    while (*s && isspace(*s)) s++;
++	    if (!*s) break;
++	    if ((ns = end = strchr(s, ',')) == NULL)
++		end = s + strlen(s);
++	    /* If there is a spurious comma end can be the same as s */
++	    if (end > s) {
++		/* strip any trailing blanks */
++		while (isspace(*(end - 1))) end--;
++
++		strcpy (pbuf, "@im=");
++		strncat (pbuf, s, end - s);
++		pbuf[end - s + 4] = '\0';
++	    }
++
++	    if ((p = XSetLocaleModifiers(pbuf)) != NULL && *p
++		&& (xim = XOpenIM(XtDisplay(ve->parent), NULL, NULL, NULL)) != NULL)
+ 		break;
++
++	    s = ns + 1;
+ 	}
++
++	if (pbuf != buf) XtFree (pbuf);
+     }
+     if (xim == NULL) {
+ 	if ((p = XSetLocaleModifiers("")) != NULL) {
+@@ -476,24 +477,42 @@
+ 	XCloseIM(xim);
+ 	return;
+     }
+-    for (j = 0; j < ve->ic.ic_list_num; j++) {
+-	input_style = GetInputStyleOfIM(ve->ic.ic_list[j]);
+-	if (input_style == (XIMStyle)0) continue;
+-	for (i = 0; (unsigned short)i < xim_styles->count_styles; i++) {
++    found = False;
++    for(ns = s = ve->im.preedit_type; s && !found;) {
++	while (*s && isspace(*s)) s++;
++	if (!*s) break;
++	if ((ns = end = strchr(s, ',')) == NULL)
++	    end = s + strlen(s);
++	else
++	    ns++;
++	if (end > s)
++	    while (isspace(*(end - 1))) end--;
++
++	if (!strncmp(s, "OverTheSpot", end - s)) {
++	    input_style = (XIMPreeditPosition | XIMStatusArea);
++	} else if (!strncmp(s, "OffTheSpot", end - s)) {
++	    input_style = (XIMPreeditArea | XIMStatusArea);
++	} else if (!strncmp(s, "Root", end - s)) {
++	    input_style = (XIMPreeditNothing | XIMStatusNothing);
++	}
++	for (i = 0; (unsigned short)i < xim_styles->count_styles; i++)
+ 	    if (input_style == xim_styles->supported_styles[i]) {
+ 		ve->ic.input_style = input_style;
+ 		SetErrCnxt(ve->parent, xim);
+-/*		_XipSetIOErrorHandler(IOErrorHandler); */
+ 		ve->im.xim = xim;
+-		XFree(xim_styles);
+-		return;
++		found = True;
++		break;
+ 	    }
+-	}
++
++	s = ns;
+     }
+-    XCloseIM(xim);
+-    XtAppWarning(XtWidgetToApplicationContext(ve->parent),
+-	"input method doesn't support my input style");
+     XFree(xim_styles);
++
++    if (!found) {
++	XCloseIM(xim);
++	XtAppWarning(XtWidgetToApplicationContext(ve->parent),
++		     "input method doesn't support my input style");
++    }
+ }
+ 
+ static Boolean ResizeVendorShell_Core(vw, ve, p)
+@@ -1339,48 +1358,6 @@
+ #undef xrmres
+ }
+ 
+-
+-static char** ParseIMNameList(p, num)
+-    char* p;
+-    int* num;
+-{
+-    char	*s, *save_s, *ss, *list[32], **lp, *end;
+-    int		i = 0;
+-
+-    *num = 0;
+-    if (!p || !*p) return ((char **)NULL);
+-    while (*p && isspace(*p)) p++;
+-    if (!*p) return ((char **)NULL);
+-    if ((s = XtMalloc(strlen(p) + 1)) == NULL) return((char **)NULL);
+-    strcpy(s, p);
+-    save_s = s;
+-
+-    while(i < (sizeof(list) / sizeof(list[0]))) {
+-	list[i] = s;
+-	ss = index(s, ',');
+-	if (!ss) {
+-	    end = s + strlen(s);
+-	} else {
+-	    end = ss;
+-	}
+-	while (isspace(*end)) end--;
+-	*end = '\0';
+-	i++;
+-	if (!ss) break;
+-	s = ss + 1;
+-	while (*s && isspace(*s)) p++;
+-	if (!*s) break;
+-    }
+-    if ((lp = (char **)XtMalloc(sizeof(char *) * (i + 1))) == NULL) {
+-	XtFree(save_s);
+-	return((char **)NULL);
+-    }
+-    memcpy((char *)lp, (char *)list, sizeof(char *) * i);
+-    *(lp + i) = NULL;
+-    *num = i;
+-    return(lp);
+-}
+-
+ static Boolean Initialize( vw, ve )
+     VendorShellWidget vw;
+     XawVendorShellExtPart* ve;
+@@ -1401,10 +1378,6 @@
+ 	return(FALSE);
+     ve->ic.current_ic_table = NULL;
+     ve->ic.ic_table = NULL;
+-    ve->im.im_list = ParseIMNameList(ve->im.input_method, &i);
+-    ve->im.im_list_num = i;
+-    ve->ic.ic_list = ParseIMNameList(ve->im.preedit_type, &i);
+-    ve->ic.ic_list_num = i;
+     return(TRUE);
+ }
+ 
+Index: X11/xc/lib/Xaw/XawImP.h
+diff -u X11/xc/lib/Xaw/XawImP.h:1.1.1.1 X11/xc/lib/Xaw/XawImP.h:1.2
+--- X11/xc/lib/Xaw/XawImP.h:1.1.1.1	Fri Sep  5 02:59:50 1997
++++ X11/xc/lib/Xaw/XawImP.h	Sat May 23 13:13:32 1998
+@@ -1,4 +1,4 @@
+-/* $XConsortium: XawImP.h /main/5 1995/12/08 16:34:32 kaleb $ */
++/* $TOG: XawImP.h /main/5.0 1998/04/21 09:44:31 kaleb $ */
+ 
+ /*
+  * Copyright 1991 by OMRON Corporation
+@@ -85,8 +85,6 @@
+     Dimension		area_height;
+     String		input_method;
+     String		preedit_type;
+-    String		*im_list;
+-    Cardinal		im_list_num;
+ } XawImPart;
+ 
+ typedef struct _XawIcTablePart
+@@ -109,8 +107,6 @@
+ 
+ typedef	struct _XawIcPart
+ {
+-    String		*ic_list;
+-    Cardinal		ic_list_num;
+     XIMStyle		input_style;
+     Boolean		shared_ic;
+     XawIcTableList	shared_ic_table;
+Index: X11/xc/lib/Xdmcp/DA16.c
+diff -u X11/xc/lib/Xdmcp/DA16.c:1.3 X11/xc/lib/Xdmcp/DA16.c:1.4
+--- X11/xc/lib/Xdmcp/DA16.c:1.3	Fri Apr 17 05:30:08 1998
++++ X11/xc/lib/Xdmcp/DA16.c	Sat May 23 13:13:33 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/DA16.c,v 1.1.1.1.12.1 1998/05/20 10:30:27 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/DA32.c
+diff -u X11/xc/lib/Xdmcp/DA32.c:1.2 X11/xc/lib/Xdmcp/DA32.c:1.3
+--- X11/xc/lib/Xdmcp/DA32.c:1.2	Fri Apr 17 04:09:49 1998
++++ X11/xc/lib/Xdmcp/DA32.c	Sat May 23 13:13:34 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/DA32.c,v 1.1.1.1.12.1 1998/05/20 10:30:28 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/DA8.c
+diff -u X11/xc/lib/Xdmcp/DA8.c:1.2 X11/xc/lib/Xdmcp/DA8.c:1.3
+--- X11/xc/lib/Xdmcp/DA8.c:1.2	Fri Apr 17 04:09:51 1998
++++ X11/xc/lib/Xdmcp/DA8.c	Sat May 23 13:13:35 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/DA8.c,v 1.1.1.1.12.1 1998/05/20 10:30:28 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/DAofA8.c
+diff -u X11/xc/lib/Xdmcp/DAofA8.c:1.3 X11/xc/lib/Xdmcp/DAofA8.c:1.4
+--- X11/xc/lib/Xdmcp/DAofA8.c:1.3	Fri Apr 17 05:30:09 1998
++++ X11/xc/lib/Xdmcp/DAofA8.c	Sat May 23 13:13:36 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/DAofA8.c,v 1.1.1.1.12.1 1998/05/20 10:30:28 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+@@ -38,7 +39,7 @@
+     ARRAYofARRAY8Ptr	array;
+ {
+     int	i;
+-
++    
+     for (i = 0; i < (int)array->length; i++)
+ 	XdmcpDisposeARRAY8 (&array->data[i]);
+     if (array->data != 0) 
+Index: X11/xc/lib/Xdmcp/RA16.c
+diff -u X11/xc/lib/Xdmcp/RA16.c:1.2 X11/xc/lib/Xdmcp/RA16.c:1.3
+--- X11/xc/lib/Xdmcp/RA16.c:1.2	Fri Apr 17 04:09:53 1998
++++ X11/xc/lib/Xdmcp/RA16.c	Sat May 23 13:13:38 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/RA16.c,v 1.1.1.1.12.1 1998/05/20 10:30:29 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/RA32.c
+diff -u X11/xc/lib/Xdmcp/RA32.c:1.2 X11/xc/lib/Xdmcp/RA32.c:1.3
+--- X11/xc/lib/Xdmcp/RA32.c:1.2	Fri Apr 17 04:09:54 1998
++++ X11/xc/lib/Xdmcp/RA32.c	Sat May 23 13:13:39 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/RA32.c,v 1.1.1.1.12.1 1998/05/20 10:30:29 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/RA8.c
+diff -u X11/xc/lib/Xdmcp/RA8.c:1.2 X11/xc/lib/Xdmcp/RA8.c:1.3
+--- X11/xc/lib/Xdmcp/RA8.c:1.2	Fri Apr 17 04:09:55 1998
++++ X11/xc/lib/Xdmcp/RA8.c	Sat May 23 13:13:40 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/RA8.c,v 1.1.1.1.12.1 1998/05/20 10:30:29 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xdmcp/RAofA8.c
+diff -u X11/xc/lib/Xdmcp/RAofA8.c:1.2 X11/xc/lib/Xdmcp/RAofA8.c:1.3
+--- X11/xc/lib/Xdmcp/RAofA8.c:1.2	Fri Apr 17 04:09:57 1998
++++ X11/xc/lib/Xdmcp/RAofA8.c	Sat May 23 13:13:41 1998
+@@ -27,6 +27,7 @@
+  * *
+  * Author:  Keith Packard, MIT X Consortium
+  */
++/* $XFree86: xc/lib/Xdmcp/RAofA8.c,v 1.1.1.1.12.1 1998/05/20 10:30:29 dawes Exp $ */
+ 
+ #include <X11/Xos.h>
+ #include <X11/X.h>
+Index: X11/xc/lib/Xmu/CharSet.h
+diff -u X11/xc/lib/Xmu/CharSet.h:1.1.1.1 X11/xc/lib/Xmu/CharSet.h:1.2
+--- X11/xc/lib/Xmu/CharSet.h:1.1.1.1	Fri Sep  5 03:00:05 1997
++++ X11/xc/lib/Xmu/CharSet.h	Sat May 23 13:13:42 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/CharSet.h,v 1.1.1.1.12.1 1998/05/16 09:05:25 dawes Exp $ */
++
+ /*
+  * The interfaces described by this header file are for miscellaneous utilities
+  * and are not part of the Xlib standard.
+@@ -57,6 +59,23 @@
+ #if NeedFunctionPrototypes
+     _Xconst char *	/* first */,
+     _Xconst char *	/* second */
++#endif
++);
++
++/* These are for internal use only, and are implementation dependent */
++extern void _XmuNCopyISOLatin1Lowered(
++#if NeedFunctionPrototypes
++    char *		/* dst_return */,
++    _Xconst char *	/* src */,
++    int			/* size */
++#endif
++);
++
++extern void _XmuNCopyISOLatin1Uppered(
++#if NeedFunctionPrototypes
++    char *		/* dst_return */,
++    _Xconst char *	/* src */,
++    int			/* size */
+ #endif
+ );
+ 
+Index: X11/xc/lib/Xmu/Converters.h
+diff -u X11/xc/lib/Xmu/Converters.h:1.1.1.1 X11/xc/lib/Xmu/Converters.h:1.2
+--- X11/xc/lib/Xmu/Converters.h:1.1.1.1	Fri Sep  5 03:00:05 1997
++++ X11/xc/lib/Xmu/Converters.h	Sat May 23 13:13:43 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/Converters.h,v 1.1.1.1.12.1 1998/05/16 09:05:25 dawes Exp $ */
++
+ /*
+  * The interfaces described by this header file are for miscellaneous utilities
+  * and are not part of the Xlib standard.
+@@ -142,6 +144,9 @@
+     XtJustifyCenter,     /* justify text in center of button      */
+     XtJustifyRight       /* justify text to right side of button  */
+ } XtJustify;
++#ifndef XtRJustify
++#define XtRJustify "Justify"
++#endif
+ #define XtEleft "left"
+ #define XtEcenter "center"
+ #define XtEright "right"
+Index: X11/xc/lib/Xmu/EditresCom.c
+diff -u X11/xc/lib/Xmu/EditresCom.c:1.1.1.1 X11/xc/lib/Xmu/EditresCom.c:1.2
+--- X11/xc/lib/Xmu/EditresCom.c:1.1.1.1	Fri Sep  5 03:00:32 1997
++++ X11/xc/lib/Xmu/EditresCom.c	Sat May 23 13:13:44 1998
+@@ -26,7 +26,7 @@
+ in this Software without prior written authorization from the X Consortium.
+ 
+ */
+-/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3 1997/01/18 07:17:50 dawes Exp $ */
++/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3.2.3 1998/05/18 10:34:23 dawes Exp $ */
+ 
+ /*
+  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium
+@@ -843,25 +843,89 @@
+ {
+     SVErrorInfo * info = &globals.error_info;	
+     char buf[BUFSIZ];
++    char *pbuf;
++    int len;
+ 
+-    if ( streq(name, "unknownType") ) 
+-	sprintf(buf, "The `%s' resource is not used by this widget.", 
+-		info->event->name); 
+-    else if ( streq(name, "noColormap") ) 
+-	sprintf(buf, msg, params[0]);
++    if ( streq(name, "unknownType") ) {
++	char *msg1 = "The `";
++	char *msg2 = "' resource is not used by this widget.";
++	len = strlen(msg1) + strlen(msg2) + strlen(info->event->name) + 1;
++	if (len > sizeof(buf))
++	    pbuf = XtMalloc(len);
++	else
++	    pbuf = buf;
++	if (pbuf == NULL) {
++	    pbuf = buf;
++	    sprintf(pbuf, "A%s", msg2);
++	} else {
++	    sprintf(pbuf, "%s%s%s", msg1, info->event->name, msg2); 
++	}
++    } else if ( streq(name, "noColormap") ) {
++	len = strlen(msg) + 1;
++	if (params[0])
++	    len += strlen(params[0]);
++	if (len > sizeof(buf))
++	    pbuf = XtMalloc(len);
++	else
++	    pbuf = buf;
++	if (pbuf == NULL) {
++	    pbuf = buf;
++	    sprintf(pbuf, "Message too long");
++	} else {
++	    sprintf(pbuf, msg, params[0]); 
++	}
++    }
+     else if (streq(name, "conversionFailed") || streq(name, "conversionError"))
+     {
+-	if (streq(info->event->value, XtRString))
+-	    sprintf(buf, 
+-		    "Could not convert the string '%s' for the `%s' resource.",
+-		    info->event->value, info->event->name);   
++	char *msg1, *msg2, *msg3;
++	if (streq(info->event->value, XtRString)) {
++	    msg1 = "Could not convert the string '";
++	    msg2 = "' for the `";
++	    msg3 = "' resource.";
++	    len = strlen(msg1) + strlen(msg2) + strlen(msg3) + 1 +
++			strlen(info->event->value) + strlen(info->event->name);
++	} else {
++	    msg1 = "Could not convert the `";
++	    msg2 = "' resource.";
++	    len = strlen(msg1) + strlen(msg2) + strlen(info->event->name) + 1;
++	}
++	if (len > sizeof(buf))
++	    pbuf = XtMalloc(len);
+ 	else
+-	    sprintf(buf, "Could not convert the `%s' resource.",
+-		    info->event->name);
++	    pbuf = buf;
++	if (streq(info->event->value, XtRString)) {
++	    if (pbuf == NULL) {
++		pbuf = buf;
++		sprintf(pbuf, "Could not convert a string");
++	    } else {
++		sprintf(pbuf, "%s%s%s%s%s", msg1, info->event->value, msg2,
++			info->event->name, msg3);
++	    }
++	} else {
++	    if (pbuf == NULL) {
++		pbuf = buf;
++		sprintf(pbuf, "Could not convert a resource");
++	    } else {
++		sprintf(pbuf, "%s%s%s", msg1, info->event->name, msg2);
++	    }
++	}
++    } else {
++	char *msg1 = "Name: ", *msg2 = ", Type: ", *msg3 = ", Class: ";
++	char *msg4 = ", Msg: ";
++	len = strlen(msg1) + strlen(msg2) + strlen(msg3) + strlen(msg4) +
++		strlen(name) + strlen(type) + strlen(class) + strlen(msg) + 1;
++	if (len > sizeof(buf))
++	    pbuf = XtMalloc(len);
++	else
++	    pbuf = buf;
++	if (pbuf == NULL) {
++	    pbuf = buf;
++	    sprintf(pbuf, "Message too long to show");
++	} else {
++	    sprintf(pbuf, "%s%s%s%s%s%s%s%s", msg1, name, msg2, type,
++			msg3, class, msg4, msg);
++	}
+     }
+-    else 
+-	sprintf(buf, "Name: %s, Type: %s, Class: %s, Msg: %s",
+-		name, type, class, msg);
+ 
+     /*
+      * Insert this info into the protocol stream, and update the count.
+@@ -869,7 +933,9 @@
+ 
+     (*(info->count))++;
+     _XEditResPutWidgetInfo(info->stream, info->entry);
+-    _XEditResPutString8(info->stream, buf);
++    _XEditResPutString8(info->stream, pbuf);
++    if (pbuf != buf)
++	XtFree(pbuf);
+ }
+ 
+ /*	Function Name: ExecuteSetValues
+@@ -1778,7 +1844,7 @@
+     char ptr[BUFSIZ];
+     static EditresBlock block;
+ 
+-    XmuCopyISOLatin1Lowered(ptr, from_val->addr);
++    _XmuNCopyISOLatin1Lowered(ptr, from_val->addr, sizeof(ptr));
+ 
+     if (streq(ptr, "none")) 
+ 	block = BlockNone;
+Index: X11/xc/lib/Xmu/LocBitmap.c
+diff -u X11/xc/lib/Xmu/LocBitmap.c:1.1.1.1 X11/xc/lib/Xmu/LocBitmap.c:1.2
+--- X11/xc/lib/Xmu/LocBitmap.c:1.1.1.1	Fri Sep  5 03:00:33 1997
++++ X11/xc/lib/Xmu/LocBitmap.c	Sat May 23 13:13:46 1998
+@@ -1,5 +1,4 @@
+ /* $XConsortium: LocBitmap.c,v 1.19 94/04/17 20:16:10 rws Exp $ */
+-/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.1 1996/05/06 05:54:35 dawes Exp $ */
+ 
+ /*
+  
+@@ -27,6 +26,7 @@
+ in this Software without prior written authorization from the X Consortium.
+ 
+ */
++/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.1.4.1 1998/05/16 09:05:26 dawes Exp $ */
+ 
+ /*
+  * Author:  Jim Fulton, MIT X Consortium
+@@ -186,6 +186,8 @@
+ 	    break;
+ 	  case 2:
+ 	    if (file_paths && *file_paths) {
++		if (strlen(*file_paths) + strlen(name) + 2 > sizeof(filename))
++		    continue;
+ 		sprintf (filename, "%s/%s", *file_paths, name);
+ 		file_paths++;
+ 		i--;
+@@ -193,6 +195,8 @@
+ 	    }
+ 	    continue;
+ 	  case 3:
++	    if (strlen(BITMAPDIR) + strlen(name) + 2 > sizeof(filename))
++		continue;
+ 	    sprintf (filename, "%s/%s", BITMAPDIR, name);
+ 	    break;
+ 	  case 4:
+Index: X11/xc/lib/Xmu/Lower.c
+diff -u X11/xc/lib/Xmu/Lower.c:1.1.1.1 X11/xc/lib/Xmu/Lower.c:1.2
+--- X11/xc/lib/Xmu/Lower.c:1.1.1.1	Fri Sep  5 03:00:33 1997
++++ X11/xc/lib/Xmu/Lower.c	Sat May 23 13:13:47 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/Lower.c,v 1.1.1.1.12.2 1998/05/19 13:29:00 dawes Exp $ */
++
+ #define  XK_LATIN1
+ #include <X11/keysymdef.h>
+ #include <X11/Xmu/CharSet.h>
+@@ -120,3 +122,64 @@
+     }
+     return (((int) *ap) - ((int) *bp));
+ }
++
++#if NeedFunctionPrototypes
++void _XmuNCopyISOLatin1Lowered(char *dst, _Xconst char *src, int size)
++#else
++void _XmuNCopyISOLatin1Lowered(dst, src, size)
++    char *dst, *src;
++    int size;
++#endif
++{
++    register unsigned char *dest, *source;
++    int bytes;
++
++    if (size <= 0)
++	return;
++
++    for (dest = (unsigned char *)dst, source = (unsigned char *)src, bytes = 0;
++	 *source && bytes < size - 1;
++	 source++, dest++, bytes++)
++    {
++	if ((*source >= XK_A) && (*source <= XK_Z))
++	    *dest = *source + (XK_a - XK_A);
++	else if ((*source >= XK_Agrave) && (*source <= XK_Odiaeresis))
++	    *dest = *source + (XK_agrave - XK_Agrave);
++	else if ((*source >= XK_Ooblique) && (*source <= XK_Thorn))
++	    *dest = *source + (XK_oslash - XK_Ooblique);
++	else
++	    *dest = *source;
++    }
++    *dest = '\0';
++}
++
++#if NeedFunctionPrototypes
++void _XmuNCopyISOLatin1Uppered(char *dst, _Xconst char *src, int size)
++#else
++void _XmuNCopyISOLatin1Uppered(dst, src, size)
++    char *dst, *src;
++    int size;
++#endif
++{
++    register unsigned char *dest, *source;
++    int bytes;
++
++    if (size <= 0)
++	return;
++
++    for (dest = (unsigned char *)dst, source = (unsigned char *)src, bytes = 0;
++	 *source && bytes < size - 1;
++	 source++, dest++, bytes++)
++    {
++	if ((*source >= XK_a) && (*source <= XK_z))
++	    *dest = *source - (XK_a - XK_A);
++	else if ((*source >= XK_agrave) && (*source <= XK_odiaeresis))
++	    *dest = *source - (XK_agrave - XK_Agrave);
++	else if ((*source >= XK_slash) && (*source <= XK_thorn))
++	    *dest = *source - (XK_oslash - XK_Ooblique);
++	else
++	    *dest = *source;
++    }
++    *dest = '\0';
++}
++
+Index: X11/xc/lib/Xmu/StrToBS.c
+diff -u X11/xc/lib/Xmu/StrToBS.c:1.1.1.1 X11/xc/lib/Xmu/StrToBS.c:1.2
+--- X11/xc/lib/Xmu/StrToBS.c:1.1.1.1	Fri Sep  5 03:00:35 1997
++++ X11/xc/lib/Xmu/StrToBS.c	Sat May 23 13:13:48 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/StrToBS.c,v 1.1.1.1.12.2 1998/05/16 09:05:27 dawes Exp $ */
++
+ #include <X11/Intrinsic.h>
+ #include "Converters.h"
+ #include "CharSet.h"
+@@ -61,7 +63,8 @@
+ 	XtQEdefault = XrmStringToQuark(lowerString);
+ 	haveQuarks = 1;
+     }
+-    XmuCopyISOLatin1Lowered (lowerString, (char *) fromVal->addr);
++    _XmuNCopyISOLatin1Lowered (lowerString, (char *) fromVal->addr,
++				sizeof(lowerString));
+     q = XrmStringToQuark (lowerString);
+     if (q == XtQEnotUseful) {
+ 	backingStoreType = NotUseful;
+Index: X11/xc/lib/Xmu/StrToCurs.c
+diff -u X11/xc/lib/Xmu/StrToCurs.c:1.1.1.1 X11/xc/lib/Xmu/StrToCurs.c:1.2
+--- X11/xc/lib/Xmu/StrToCurs.c:1.1.1.1	Fri Sep  5 03:00:35 1997
++++ X11/xc/lib/Xmu/StrToCurs.c	Sat May 23 13:13:49 1998
+@@ -51,6 +51,8 @@
+ 
+ ******************************************************************/
+ 
++/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.1.1.1.12.3 1998/05/20 05:06:19 dawes Exp $ */
++
+ #include	<X11/Intrinsic.h>
+ #include	<X11/StringDefs.h>
+ #include	<X11/Xmu/Converters.h>
+@@ -153,13 +155,18 @@
+ 	XrmValue cvtArg;
+ 	Boolean success;
+ 	Display *dpy = DisplayOfScreen(screen);
++        char *strspec = NULL;
+ #ifdef XMU_KLUDGE
+ 	Cardinal num;
+ #endif
+ 
+-	fields = sscanf(name, "FONT %s %d %s %d",
++	strspec = XtMalloc(strlen("FONT %s %d %s %d") + 21);
++	sprintf(strspec, "FONT %%%ds %%d %%%ds %%d", sizeof(source_name) - 1,
++		sizeof(mask_name) - 1);
++	fields = sscanf(name, strspec,
+ 			source_name, &source_char,
+ 			mask_name, &mask_char);
++	XtFree(strspec);
+ 	if (fields < 2) {
+ 	    XtStringConversionWarning(name, XtRCursor);
+ 	    return;
+Index: X11/xc/lib/Xmu/StrToJust.c
+diff -u X11/xc/lib/Xmu/StrToJust.c:1.1.1.1 X11/xc/lib/Xmu/StrToJust.c:1.2
+--- X11/xc/lib/Xmu/StrToJust.c:1.1.1.1	Fri Sep  5 03:00:35 1997
++++ X11/xc/lib/Xmu/StrToJust.c	Sat May 23 13:13:50 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/StrToJust.c,v 1.1.1.1.12.2 1998/05/16 09:05:27 dawes Exp $ */
++
+ #include <X11/Intrinsic.h>
+ #include "Converters.h"
+ #include "CharSet.h"
+@@ -57,7 +59,7 @@
+ 	haveQuarks = 1;
+     }
+ 
+-    XmuCopyISOLatin1Lowered(lowerName, s);
++    _XmuNCopyISOLatin1Lowered(lowerName, s, sizeof(lowerName));
+ 
+     q = XrmStringToQuark(lowerName);
+ 
+@@ -70,4 +72,5 @@
+ 
+     toVal->size = 0;
+     toVal->addr = NULL;
++    XtStringConversionWarning((char *) fromVal->addr, XtRJustify);
+ }
+Index: X11/xc/lib/Xmu/StrToOrnt.c
+diff -u X11/xc/lib/Xmu/StrToOrnt.c:1.1.1.1 X11/xc/lib/Xmu/StrToOrnt.c:1.2
+--- X11/xc/lib/Xmu/StrToOrnt.c:1.1.1.1	Fri Sep  5 03:00:35 1997
++++ X11/xc/lib/Xmu/StrToOrnt.c	Sat May 23 13:13:51 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/StrToOrnt.c,v 1.1.1.1.12.2 1998/05/16 09:05:28 dawes Exp $ */
++
+ #include <X11/Intrinsic.h>
+ #include <X11/StringDefs.h>
+ #include "Converters.h"
+@@ -56,7 +58,8 @@
+ 	XtQEvertical   = XrmPermStringToQuark(XtEvertical);
+ 	haveQuarks = 1;
+     }
+-    XmuCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr);
++    _XmuNCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr,
++				sizeof(lowerName));
+     q = XrmStringToQuark(lowerName);
+     if (q == XtQEhorizontal) {
+     	orient = XtorientHorizontal;
+@@ -68,4 +71,5 @@
+ 	done(&orient, XtOrientation);
+ 	return;
+     }
++    XtStringConversionWarning((char *) fromVal->addr, XtROrientation);
+ }
+Index: X11/xc/lib/Xmu/WidgetNode.c
+diff -u X11/xc/lib/Xmu/WidgetNode.c:1.1.1.1 X11/xc/lib/Xmu/WidgetNode.c:1.2
+--- X11/xc/lib/Xmu/WidgetNode.c:1.1.1.1	Fri Sep  5 03:00:36 1997
++++ X11/xc/lib/Xmu/WidgetNode.c	Sat May 23 13:13:52 1998
+@@ -27,6 +27,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.1.1.1.12.2 1998/05/16 09:05:28 dawes Exp $ */
++
+ /*
+  * Author:  Jim Fulton, MIT X Consortium
+  */
+@@ -286,13 +288,17 @@
+ {
+     int i;
+     XmuWidgetNode *wn;
+-    char tmp[1024];
++    char *tmp;
+ 
++    tmp = (char *)XtMalloc(strlen(name) + 1);
+     XmuCopyISOLatin1Lowered (tmp, name);
+     for (i = 0, wn = nodelist; i < nnodes; i++, wn++) {
+ 	if (strcmp (tmp, wn->lowered_label) == 0 ||
+-	    strcmp (tmp, wn->lowered_classname) == 0)
++	    strcmp (tmp, wn->lowered_classname) == 0) {
++	  XtFree(tmp);
+ 	  return wn;
++	}
+     }
++    XtFree(tmp);
+     return NULL;
+ }
+Index: X11/xc/lib/Xt/Initialize.c
+diff -u X11/xc/lib/Xt/Initialize.c:1.1.1.1 X11/xc/lib/Xt/Initialize.c:1.2
+--- X11/xc/lib/Xt/Initialize.c:1.1.1.1	Fri Sep  5 03:01:44 1997
++++ X11/xc/lib/Xt/Initialize.c	Sat May 23 13:13:54 1998
+@@ -1,4 +1,4 @@
+-/* $TOG: Initialize.c /main/210 1997/05/15 17:29:50 kaleb $ */
++/* $TOG: Initialize.c /main/210.0 1998/05/12 11:19:17 kaleb $ */
+ 
+ /***********************************************************
+ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
+@@ -32,7 +32,7 @@
+ THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/Xt/Initialize.c,v 3.11.2.1 1997/05/17 12:24:54 dawes Exp $ */
++/* $XFree86: xc/lib/Xt/Initialize.c,v 3.11.2.5 1998/05/18 10:34:24 dawes Exp $ */
+ 
+ /*
+ 
+@@ -170,12 +170,18 @@
+ #ifdef USE_UNAME
+     struct utsname name;
+ 
++    if (maxlen <= 0 || buf == NULL)
++	return;
++
+     uname (&name);
+     len = strlen (name.nodename);
+     if (len >= maxlen) len = maxlen;
+-    (void) strncpy (buf, name.nodename, len);
++    (void) strncpy (buf, name.nodename, len-1);
+     buf[len-1] = '\0';
+ #else
++    if (maxlen <= 0 || buf == NULL)
++	return;
++
+     buf[0] = '\0';
+     (void) gethostname (buf, maxlen);
+     buf [maxlen - 1] = '\0';
+@@ -231,7 +237,7 @@
+     String ptr = NULL;
+ 
+     if ((ptr = getenv("USERNAME"))) {
+-	(void) strncpy (dest, ptr, len);
++	(void) strncpy (dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else
+ 	*dest = '\0';
+@@ -241,12 +247,13 @@
+     char* ptr;
+ 
+     if ((ptr = getenv("USER"))) {
+-	(void) strncpy (dest, ptr, len);
++	(void) strncpy (dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else {
+-	if ((pw = _XGetpwuid(getuid(),pwparams)) != NULL)
+-	    (void) strcpy (dest, pw->pw_name);
+-	else
++	if ((pw = _XGetpwuid(getuid(),pwparams)) != NULL) {
++	    (void) strncpy (dest, pw->pw_name, len-1);
++	    dest[len-1] = '\0';
++	} else
+ 	    *dest = '\0';
+     }
+ #endif
+@@ -261,8 +268,11 @@
+ #ifdef WIN32
+     register char *ptr;
+ 
++    if (len <= 0 || dest == NULL)
++	return NULL;
++
+     if (ptr = getenv("HOME")) {
+-	(void) strncpy(dest, ptr, len);
++	(void) strncpy(dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else if (ptr = getenv("USERNAME")) {
+ 	(void) strcpy (dest, "/users/");
+@@ -275,17 +285,21 @@
+     struct passwd *pw;
+     static char *ptr;
+ 
++    if (len <= 0 || dest == NULL)
++	return NULL;
++
+     if ((ptr = getenv("HOME"))) {
+-	(void) strncpy (dest, ptr, len);
++	(void) strncpy (dest, ptr, len-1);
+ 	dest[len-1] = '\0';
+     } else {
+ 	if (ptr = getenv("USER"))
+ 	    pw = _XGetpwnam(ptr,pwparams);
+ 	else
+  	    pw = _XGetpwuid(getuid(),pwparams);
+-	if (pw != NULL)
+-	    (void) strcpy (dest, pw->pw_dir);
+-	else
++	if (pw != NULL) {
++	    (void) strncpy (dest, pw->pw_dir, len-1);
++	    dest[len-1] = '\0';
++	} else
+ 	    *dest = '\0';
+     }
+ #endif
+Index: X11/xc/lib/Xt/Resources.c
+diff -u X11/xc/lib/Xt/Resources.c:1.1.1.1 X11/xc/lib/Xt/Resources.c:1.2
+--- X11/xc/lib/Xt/Resources.c:1.1.1.1	Fri Sep  5 03:01:48 1997
++++ X11/xc/lib/Xt/Resources.c	Sat May 23 13:13:55 1998
+@@ -60,6 +60,8 @@
+ 
+ */
+ 
++/* $XFree86: xc/lib/Xt/Resources.c,v 1.1.1.2.4.3 1998/05/19 14:36:48 dawes Exp $ */
++
+ /*LINTLIBRARY*/
+ #include "IntrinsicI.h"
+ #include "VarargsI.h"
+@@ -569,6 +571,7 @@
+  * assert: num_args == 0 if *pNumTypedArgs > 0
+  */
+ #define SEARCHLISTLEN 100
++#define MAXRESOURCES 400
+ 
+     XrmValue	    value;
+     XrmQuark	    rawType;
+@@ -576,9 +579,9 @@
+     XrmHashTable    stackSearchList[SEARCHLISTLEN];
+     XrmHashTable    *searchList = stackSearchList;
+     unsigned int    searchListSize = SEARCHLISTLEN;
+-    Boolean	    found[400];
+-    int		    typed[400];
+-    XtCacheRef	    cache_ref[400];
++    Boolean	    found[MAXRESOURCES];
++    int		    typed[MAXRESOURCES];
++    XtCacheRef	    cache_ref[MAXRESOURCES];
+     XtCacheRef      *cache_ptr, *cache_base;
+     Boolean	    persistent_resources = True;
+     Boolean	    found_persistence = False;
+@@ -593,7 +596,7 @@
+                    (String *)NULL, (Cardinal *)NULL);
+ 	num_args = 0;
+     }
+-    if (num_resources == 0) {
++    if (num_resources == 0 || num_resources >= MAXRESOURCES) {
+ 	return NULL;
+     } else if (table == NULL) {
+     	XtAppWarningMsg(XtWidgetToApplicationContext(widget),
+Index: X11/xc/lib/Xt/TMaction.c
+diff -u X11/xc/lib/Xt/TMaction.c:1.1.1.1 X11/xc/lib/Xt/TMaction.c:1.2
+--- X11/xc/lib/Xt/TMaction.c:1.1.1.1	Fri Sep  5 03:01:51 1997
++++ X11/xc/lib/Xt/TMaction.c	Sat May 23 13:13:56 1998
+@@ -1,4 +1,4 @@
+-/* $TOG: TMaction.c /main/28 1997/05/15 17:31:14 kaleb $ */
++/* $TOG: TMaction.c /main/28.0 1998/05/12 11:19:24 kaleb $ */
+ /*LINTLIBRARY*/
+ 
+ /***********************************************************
+@@ -148,40 +148,63 @@
+     TMBindData		bindData;
+ {
+     TMSimpleStateTree	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[0];
+-    Cardinal num_unbound;
+-    char     message[10000];
+-    register Cardinal num_chars;
++    Cardinal num_unbound = 0;
++    Cardinal num_params = 1;
++    char* message;
++    char messagebuf[1000];
++    String params[1];
++    register Cardinal num_chars = 0;
+     register Cardinal i, j;
+     XtActionProc *procs;
+-    num_unbound = 0;
+-    (void) strcpy(message, "Actions not found: ");
+-    num_chars = strlen(message);
+-
+-    for (i=0; 
+-	 i < xlations->numStateTrees; 
+-	 i++) {
++
++    for (i=0; i < xlations->numStateTrees; i++) {
+ 	if (bindData->simple.isComplex)
+ 	  procs = TMGetComplexBindEntry(bindData, i)->procs;
+ 	else
+ 	  procs = TMGetSimpleBindEntry(bindData, i)->procs;
++
+ 	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[i];
+ 	for (j=0; j < stateTree->numQuarks; j++) {
+ 	    if (procs[j] == NULL) {
+ 		String s = XrmQuarkToString(stateTree->quarkTbl[j]);
+-		if (num_unbound != 0) {
+-		    (void) strcpy(&message[num_chars], ", ");
+-		    num_chars = num_chars + 2;
+-		}
+-		(void) strcpy(&message[num_chars], s);
++		if (num_unbound != 0)
++		    num_chars += 2;
+ 		num_chars += strlen(s);
+ 		num_unbound++;
+ 	    }
+ 	}
++    }
++    if (num_unbound == 0)
++	return;
++    message = XtStackAlloc (num_chars + 1, messagebuf);
++    if (message != NULL) {
++	*message = '\0';
++	num_unbound = 0;
++	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[0];
++	for (i=0; i < xlations->numStateTrees; i++) {
++	    if (bindData->simple.isComplex)
++		procs = TMGetComplexBindEntry(bindData, i)->procs;
++	    else
++		procs = TMGetSimpleBindEntry(bindData, i)->procs;
++
++	    stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[i];
++	    for (j=0; j < stateTree->numQuarks; j++) {
++		if (procs[j] == NULL) {
++		    String s = XrmQuarkToString(stateTree->quarkTbl[j]);
++		    if (num_unbound != 0)
++			(void) strcat(message, ", ");
++		    (void) strcat(message, s);
++		    num_unbound++;
++		}
++	    }
++	}
++	message[num_chars] = '\0';
++	params[0] = message;
++	XtWarningMsg(XtNtranslationError,"unboundActions",XtCXtToolkitError,
++		     "Actions not found: %s", 
++		     params, &num_params);
++	XtStackFree (message, messagebuf);
+     }
+-    message[num_chars] = '\0';
+-    if (num_unbound != 0)
+-      XtWarningMsg(XtNtranslationError,"unboundActions",XtCXtToolkitError,
+-		   message, (String *)NULL, (Cardinal *)NULL);
+ }
+ 
+ 
+Index: X11/xc/lib/Xt/TMparse.c
+diff -u X11/xc/lib/Xt/TMparse.c:1.1.1.1 X11/xc/lib/Xt/TMparse.c:1.2
+--- X11/xc/lib/Xt/TMparse.c:1.1.1.1	Fri Sep  5 03:01:51 1997
++++ X11/xc/lib/Xt/TMparse.c	Sat May 23 13:13:57 1998
+@@ -1,4 +1,4 @@
+-/* $TOG: TMparse.c /main/119 1997/05/15 17:31:29 kaleb $ */
++/* $TOG: TMparse.c /main/119.0 1998/05/12 11:19:31 kaleb $ */
+ 
+ /***********************************************************
+ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
+@@ -32,7 +32,7 @@
+ THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+ ******************************************************************/
+-/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0.4.1 1997/05/17 12:24:59 dawes Exp $ */
++/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0.4.6 1998/05/16 04:47:40 dawes Exp $ */
+ 
+ /*
+ 
+@@ -476,22 +476,17 @@
+ }
+ 
+ 
+-static void Syntax(str,str1)
+-    String str,str1;
++static void Syntax(str0,str1)
++    String str0,str1;
+ {
+     Cardinal numChars;
+-    Cardinal num_params = 1;
+-    String params[1];
+-    char message[1000];
++    Cardinal num_params = 2;
++    String params[2];
+ 
+-    (void)strcpy(message,str);
+-    numChars = strlen(message);
+-    (void) strcpy(&message[numChars], str1);
+-    numChars += strlen(str1);
+-    message[numChars] = '\0';
+-    params[0] = message;
++    params[0] = str0;
++    params[1] = str1;
+     XtWarningMsg(XtNtranslationParseError,"parseError",XtCXtToolkitError,
+-		 "translation table syntax error: %s",params,&num_params);
++		 "translation table syntax error: %s %s",params,&num_params);
+ }
+ 
+ 
+@@ -565,9 +560,11 @@
+         if (keysymR){
+             temp[count].knot = notR;
+             temp[count].pair = FALSE;
++	    temp[count].ref_count = 0;
+             temp[count++].keysym = keysymR;
+         }
+-        temp[count].knot = FALSE;
++        temp[count].knot = temp[count].pair = FALSE;
++        temp[count].ref_count = 0;
+         temp[count].keysym = 0;
+     }
+ } 
+@@ -664,10 +661,15 @@
+     }
+     str = ScanIdent(str);
+     if (start != str) {
+-	char modStr[100];
++	char modStrbuf[100];
++	char* modStr;
++
++	modStr = XtStackAlloc (str - start + 1, modStrbuf);
++	if (modStr == NULL) _XtAllocError (NULL);
+ 	(void) memmove(modStr, start, str-start);
+ 	modStr[str-start] = '\0';
+ 	*token_return = XrmStringToQuark(modStr);
++	XtStackFree (modStr, modStrbuf);
+ 	return str;
+     }
+     return str;
+@@ -762,12 +764,16 @@
+     Boolean* error;
+ {
+     String start = str;
+-    char eventTypeStr[100];
++    char eventTypeStrbuf[100];
++    char* eventTypeStr;
+ 
+     ScanAlphanumeric(str);
++    eventTypeStr = XtStackAlloc (str - start + 1, eventTypeStrbuf);
++    if (eventTypeStr == NULL) _XtAllocError (NULL);
+     (void) memmove(eventTypeStr, start, str-start);
+     eventTypeStr[str-start] = '\0';
+     *tmEventP = LookupTMEventType(eventTypeStr,error);
++    XtStackFree (eventTypeStr, eventTypeStrbuf);
+     if (*error) 
+         return PanicModeRecovery(str);
+     event->event.eventType = events[*tmEventP].eventType;
+@@ -948,12 +954,14 @@
+     Boolean* error;
+ {
+     char *start;
+-    char keySymName[100];
++    char keySymNamebuf[100];
++    char *keySymName;
+ 
+     ScanWhitespace(str);
+ 
+     if (*str == '\\') {
+ 	str++;
++	keySymName = keySymNamebuf;
+ 	keySymName[0] = *str;
+ 	if (*str != '\0' && !IsNewline(*str)) str++;
+ 	keySymName[1] = '\0';
+@@ -964,6 +972,7 @@
+               * for backwards compatibility
+               */
+              (*str == '(' && *(str+1) >= '0' && *(str+1) <= '9')) {
++	keySymName = keySymNamebuf; /* just so we can stackfree it later */
+ 	/* no detail */
+ 	event->event.eventCode = 0L;
+         event->event.eventCodeMask = 0L;
+@@ -977,12 +986,15 @@
+                 && !IsNewline(*str)
+                 && (*str != '(' || *(str+1) <= '0' || *(str+1) >= '9')
+ 		&& *str != '\0') str++;
++	keySymName = XtStackAlloc (str - start + 1, keySymNamebuf);
++	if (keySymName == NULL) _XtAllocError(NULL);
+ 	(void) memmove(keySymName, start, str-start);
+ 	keySymName[str-start] = '\0';
+ 	event->event.eventCode = StringToKeySym(keySymName, error);
+ 	event->event.eventCodeMask = ~0L;
+     }
+     if (*error) {
++	/* We never get here when keySymName hasn't been allocated */
+ 	if (keySymName[0] == '<') {
+ 	    /* special case for common error */
+ 	    XtWarningMsg(XtNtranslationParseError, "missingComma",
+@@ -990,6 +1002,7 @@
+ 		     "... possibly due to missing ',' in event sequence.",
+ 		     (String*)NULL, (Cardinal*)NULL);
+ 	}
++	XtStackFree (keySymName, keySymNamebuf);
+ 	return PanicModeRecovery(str);
+     }
+     if (event->event.standard)
+@@ -997,6 +1010,8 @@
+     else 
+ 	event->event.matchEvent = _XtMatchUsingDontCareMods;
+ 
++    XtStackFree (keySymName, keySymNamebuf);
++
+     return str;
+ }
+ 
+@@ -1687,6 +1702,7 @@
+ 	if (newStr != NULL) {
+ 	    ParamPtr temp = (ParamRec*)
+ 		ALLOCATE_LOCAL( (unsigned)sizeof(ParamRec) );
++	    if (temp == NULL) _XtAllocError(NULL);
+ 
+ 	    num_params++;
+ 	    temp->next = params;
+@@ -1785,21 +1801,26 @@
+ {
+     Cardinal num_params = 1;
+     String params[1];
+-    int len = 499;
+-    char *eol, production[500];
++    int len;
++    char *eol, *production, productionbuf[500];
+ 
+ #ifdef __EMX__
+     eol = strchr(currentProduction, '\r');
+     if (!eol) /* try '\n' as well below */
+ #endif
+         eol = strchr(currentProduction, '\n');
+-    if (eol) len = MIN(499, eol - currentProduction);
++    if (eol) len = eol - currentProduction;
++    else len = strlen (currentProduction);
++    production = XtStackAlloc (len + 1, productionbuf);
++    if (production == NULL) _XtAllocError (NULL);
+     (void) memmove(production, currentProduction, len);
+     production[len] = '\0';
+ 
+     params[0] = production;
+     XtWarningMsg(XtNtranslationParseError, "showLine", XtCXtToolkitError,
+ 		 "... found while parsing '%s'", params, &num_params);
++
++    XtStackFree (production, productionbuf);
+ }
+ 
+ /***********************************************************************
+Index: X11/xc/lib/Xaw/XawAlloc.h
+--- /dev/null	Thu Jul 16 09:15:03 1998
++++ X11/xc/lib/Xaw/XawAlloc.h	Thu Jun 11 09:12:17 1998
+@@ -0,0 +1,10 @@
++/* $XFree86: xc/lib/Xaw/XawAlloc.h,v 1.1.2.1 1998/05/16 09:05:23 dawes Exp $ */
++
++#define XtStackAlloc(size, stack_cache_array)     \
++    ((size) <= sizeof(stack_cache_array)          \
++    ?  (XtPointer)(stack_cache_array)             \
++    :  XtMalloc((unsigned)(size)))
++     
++#define XtStackFree(pointer, stack_cache_array) \
++    if ((pointer) != ((XtPointer)(stack_cache_array))) XtFree(pointer); else
++
+

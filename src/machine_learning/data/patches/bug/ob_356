@@ -1,0 +1,71 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N93/QG6Y9kGPe+DHW4eR6ZbsfLTCXCXAsEwTnx4m/bIm9T9tYjw38rAbRiQWSkDgUvlmxRil/j/ML/4NCynGtfbgU=
+
+OpenBSD 5.5 errata 9, June 30, 2014: Packets with illegal DHCP options
+can lead to memory exhaustion of dhclient(8) or dhcpd(8).  This is the
+second version of this patch.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 009_dhcp.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+And then rebuild and install dhclient and dhcpd:
+	cd sbin/dhclient
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+	cd ../../usr.sbin/dhcpd
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: sbin/dhclient/options.c
+===================================================================
+RCS file: /cvs/src/sbin/dhclient/options.c,v
+retrieving revision 1.67
+retrieving revision 1.67.4.1
+diff -u -p -r1.67 -r1.67.4.1
+--- sbin/dhclient/options.c	21 Jan 2014 03:07:50 -0000	1.67
++++ sbin/dhclient/options.c	29 Jul 2014 18:21:30 -0000	1.67.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: options.c,v 1.67 2014/01/21 03:07:50 krw Exp $	*/
++/*	$OpenBSD: options.c,v 1.67.4.1 2014/07/29 18:21:30 tobias Exp $	*/
+ 
+ /* DHCP options parsing and reassembly. */
+ 
+@@ -565,6 +565,5 @@ do_packet(unsigned int from_port, struct
+ 	free(info);
+ 
+ 	for (i = 0; i < 256; i++)
+-		if (options[i].len && options[i].data)
+-			free(options[i].data);
++		free(options[i].data);
+ }
+Index: usr.sbin/dhcpd/options.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/dhcpd/options.c,v
+retrieving revision 1.26
+retrieving revision 1.26.20.1
+diff -u -p -r1.26 -r1.26.20.1
+--- usr.sbin/dhcpd/options.c	2 Jan 2010 04:21:16 -0000	1.26
++++ usr.sbin/dhcpd/options.c	29 Jul 2014 18:21:30 -0000	1.26.20.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: options.c,v 1.26 2010/01/02 04:21:16 krw Exp $	*/
++/*	$OpenBSD: options.c,v 1.26.20.1 2014/07/29 18:21:30 tobias Exp $	*/
+ 
+ /* DHCP options parsing and reassembly. */
+ 
+@@ -516,6 +516,5 @@ do_packet(struct interface_info *interfa
+ 
+ 	/* Free the data associated with the options. */
+ 	for (i = 0; i < 256; i++)
+-		if (tp.options[i].len && tp.options[i].data)
+-			free(tp.options[i].data);
++		free(tp.options[i].data);
+ }
+

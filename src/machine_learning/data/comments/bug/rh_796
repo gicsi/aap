@@ -1,0 +1,41 @@
+Spec URL: https://ppisar.fedorapeople.org/perl-Log-Agent/perl-Log-Agent.spec
+SRPM URL: https://ppisar.fedorapeople.org/perl-Log-Agent/perl-Log-Agent-1.000-1.fc23.src.rpm
+Description:
+The Log::Agent Perl module provides an abstract layer for logging and tracing,
+which is independent from the actual method used to physically perform those
+activities. It acts as an agent (hence the name) that collects the requests
+and delegates processing to a logging driver.
+
+Fedora Account System Username: ppisar
+Package the README file as %doc rather then %license.  The %license macro is reserved for license texts so they get installed even if documentation is disabled.  This README file doesn't provide, from the licensing point of view,  anything what the RPM License tag or the modules themselves don't.
+
+Consider packaging Log-Agent-Rotate for the optional log rotating features.
+
+The following build-time deps aren't needed since the files requiring them aren't tested:
+ - Mail::Mailer
+ - Sys::Syslog
+
+The patch is fine.
+
+So is the license.
+Updated spec file is on the same address.
+I cannot package the Log-Agent-Rotate because it's Artistic 1 only code.
+(In reply to Petr Pisar from comment #2)
+> Updated spec file is on the same address.
+
+Ack, all good.
+
+(In reply to Petr Pisar from comment #3)
+> I cannot package the Log-Agent-Rotate because it's Artistic 1 only code.
+
+Fair enough.
+New Package SCM Request
+=======================
+Package Name: perl-Log-Agent
+Short Description: Logging agent
+Upstream URL: http://search.cpan.org/dist/Log-Agent/
+Owners: ppisar jplesnik psabata
+Branches: 
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

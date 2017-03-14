@@ -1,0 +1,24 @@
+Description of problem:
+By default keybinding for lock screen Ctrl+Alt+L doesn't work. Changing it for something like Ctrl+<letter> or Alt+<letter> or Ctrl+Alt+<letter> doesn't work too. But binding like Ctrl+Space, Alt+Space, Ctrl+Alt+Space works fine.
+Also Ctrl+Alt+D for showing desktop - also works fine. But the same binding for lock screen doesn't work.
+
+Version-Release number of selected component (if applicable):
+mate-screensaver-1.10.1-1.fc22.x86_64
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Trouble solved. By default installation with russian locale - language sequence in keyboard settings - Ru,En. After changing it En,Ru - all works fine.

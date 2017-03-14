@@ -1,0 +1,52 @@
+Description of problem:
+SELinux is preventing /usr/lib/systemd/systemd-journald from 'search' accesses on the directory /.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that systemd-journald should be allowed search access on the  directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep systemd-journal /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:syslogd_t:s0
+Target Context                system_u:object_r:samba_share_t:s0
+Target Objects                / [ dir ]
+Source                        systemd-journal
+Source Path                   /usr/lib/systemd/systemd-journald
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           systemd-219-15.fc22.x86_64
+Target RPM Packages           filesystem-3.2-32.fc22.x86_64
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-303.fc22.x86_64 #1 SMP Thu
+                              May 28 12:37:06 UTC 2015 x86_64 x86_64
+Alert Count                   2
+First Seen                    2015-06-13 19:21:11 EEST
+Last Seen                     2015-06-18 19:22:33 EEST
+Local ID                      89623c25-90b2-4e8e-b18c-b3433fdd7eba
+
+Raw Audit Messages
+type=AVC msg=audit(1434644553.698:4508): avc:  denied  { search } for  pid=566 comm="systemd-journal" name="/" dev="dm-1" ino=2 scontext=system_u:system_r:syslogd_t:s0 tcontext=system_u:object_r:samba_share_t:s0 tclass=dir permissive=1
+
+
+type=SYSCALL msg=audit(1434644553.698:4508): arch=x86_64 syscall=connect success=no exit=ENOENT a0=78 a1=7ffd34ab61f0 a2=6e a3=7f954ca8d500 items=0 ppid=1 pid=566 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=systemd-journal exe=/usr/lib/systemd/systemd-journald subj=system_u:system_r:syslogd_t:s0 key=(null)
+
+Hash: systemd-journal,syslogd_t,samba_share_t,dir,search
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.5.1
+hashmarkername: setroubleshoot
+kernel:         4.0.4-303.fc22.x86_64
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1234126 ***

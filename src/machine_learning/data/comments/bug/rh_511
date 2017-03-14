@@ -1,0 +1,30 @@
+Description of problem:
+
+Doing a dnf upgrade in Rawhide:
+
+  Upgrading   : perl-XML-SAX-0.99-15.fc23.noarch                        259/674 
+/var/tmp/rpm-tmp.v3p4sv: line 1: 37797 Segmentation fault      (core dumped) perl -MXML::SAX -e "XML::SAX->add_parser(q($p))->save_parsers()" 2> /dev/null
+/var/tmp/rpm-tmp.v3p4sv: line 1: 37801 Segmentation fault      (core dumped) perl -MXML::SAX -e "XML::SAX->add_parser(q($p))->save_parsers()" 2> /dev/null
+
+systemd grabbed the core dump.  However it doesn't appear to
+correspond to the current version of perl -- possibly it
+coredumped with the previous version of perl and then perl
+was upgraded.
+
+Version-Release number of selected component (if applicable):
+
+perl-XML-SAX-0.99-15.fc23.noarch
+
+How reproducible:
+
+Unknown.
+
+Steps to Reproduce:
+1. dnf upgrade in Rawhide.
+Created attachment 1042718
+core1
+
+Attaching the coredump in case it is useful.
+Created attachment 1042719
+core2
+*** This bug has been marked as a duplicate of bug 1206915 ***

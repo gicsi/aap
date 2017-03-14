@@ -1,0 +1,6 @@
+A problem with NFS version 3 mounts on big endian machines (m68k, sparc
+and powerpc) exists when mounting filesystems larger than 2gig.  You
+can see evidence of the bug by running df(1) and checking for negative
+partition sizes.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/nfs3.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,60 @@
+Description of problem:
+Create a pod which mounts a glusterfs volume, the pod is created successfully, but permission to access the files of glusterfs is denied by selinx
+
+Version-Release number of selected component (if applicable):
+openshift v3.0.0.0-25-g235b0e7
+kubernetes v0.17.1-804-g496be63
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Create endpoints, pv, pvc and pod using the example: https://github.com/jhou1/openshiftv3tests/tree/master/persistent-volumes/gluster
+2. After pod is running, verify the files on glusterfs can be accessed:
+oc exec -p gluster ls /mnt/gluster
+
+
+Actual results:
+After step 2:
+ls: cannot open directory /mnt/gluster: Permission denied
+error: Error executing remote command: Error executing command in container: Error executing in Docker Container: 2
+
+# oc exec -p gluster -it -- bash    
+bash-4.3$ ls -Zl /mnt/
+total 0
+drwxr-xr-x. 3 system_u:object_r:fusefs_t:s0    root root 52 Jun 17 05:28 gluster
+
+bash-4.3$ ls /mnt/gluster/
+ls: cannot open directory /mnt/gluster/: Permission denied
+
+On the node, set selinux to permissive, then the files are accessible.
+bash-4.3$ ls /mnt/gluster/
+hello  index.html
+
+
+Expected results:
+Should be able to access glsuterfs files with selinux enforcing
+
+Additional info:
+Additional: Got same error using hostPath volume when selinux is enforcing
+Dupe of https://bugzilla.redhat.com/show_bug.cgi?id=1231936
+I believe this bug is the same as the one linked in my previous comment.  Both require SELinux solutions to allow gluster to connect, even though the approach to get there was different between the two.
+Cut and pasted from an email from Jan Safranek who is working with gluster:
+
+To follow up on current development, docker-1.6.2-14.el7 adds a new
+boolean to SELinux policy. This should allow docker container to access
+gluster volume (optionally with -P for persistent change):
+
+setsebool virt_sandbox_use_fusefs 1
+
+dwalsh told me docker-1.6.2-14.el7 is heading to RHEL 7.1.3, i.e. to be
+released in couple of days (2015-Jun-23?) in RHEL7 extras channel.
+
+So what we need is just to document the boolean and encourage customers
+to check docker package version (and wait for 1.6.2-14).
+
+Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1231936
+Docker build: https://brewweb.devel.redhat.com/buildinfo?buildID=441835
+Errata: https://errata.devel.redhat.com/advisory/20663
+
+*** This bug has been marked as a duplicate of bug 1231936 ***

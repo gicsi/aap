@@ -1,0 +1,20 @@
+Version:
+OSP7 RC2, OSP Director Beta2
+
+3.5 Configuring Director
+Documentation points to incorrect paths. There is no longer instack.answers.sample file. Instead of this, exists undercloud.conf.sample one.
+You're too quick.  The content was barely even there and the docs hadn't been uploaded yet.  The docs are a bit rough, but a combination of the Documents/osp7-beta-issues3.txt and the Documents/director-01jul-html/index.html should be pretty close.
+
+More official docs are in the works.
+I've grabbed a bits few minutes after these were added to FTP :)
+
+@Mike, any ETA about documentation release?
+The should be there now.  Those references in comment 3 are relative to the ftp site.
+
+release notes:
+
+<ftp-site>/Documents/osp7-beta-issues3.txt
+
+General Docs:
+
+<ftp-site>/Documents/director-01jul-html/index.html

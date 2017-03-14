@@ -1,0 +1,49 @@
+Description of problem:
+
+RCO is not failing over to interactive mode if the credentials in test_config.json is incorrect.
+
+Version-Release number of selected component (if applicable):
+redhat-certification-openstack-1.0.4-1.el7.noarch
+
+How reproducible:
+Everytime
+
+Actual results:
+rying to run in non-interactive mode...
+[Errno 2] No such file or directory: '/etc/redhat-certification-openstack/tempest.conf'
+Generating sample /etc/redhat-certification-openstack/tempest.conf
+Configuring tempest
+Traceback (most recent call last):
+  File "/usr/bin/rhcert-backend", line 37, in <module>
+    success = rhcertBackend.do(args)
+  File "/usr/lib/python2.7/site-packages/rhcert/client/backend.py", line 188, in do
+    result = self.commands[self.command]()
+  File "/usr/lib/python2.7/site-packages/rhcert/client/harness.py", line 382, in doRun
+    return self._doRun(testDocuments)
+  File "/usr/lib/python2.7/site-packages/rhcert/client/harness.py", line 525, in _doRun
+    returnValue = self.runTest(logDirectory, testDocument, runDocument, outputFilePath)
+  File "/usr/lib/python2.7/site-packages/rhcert/client/harness.py", line 972, in runTest
+    rv = test.run()
+  File "/usr/lib/python2.7/site-packages/rhcert/suites/openstack/base.py", line 98, in run
+    self.pre_run()
+  File "/usr/lib/python2.7/site-packages/rhcert/suites/openstack/verify.py", line 178, in pre_run
+    self.populate_test_data()
+  File "/usr/lib/python2.7/site-packages/rhcert/suites/openstack/verify.py", line 332, in populate_test_data
+    end_point, CONFIG_PATH).generate(conf_file)
+  File "/usr/lib/python2.7/site-packages/rhcert/suites/openstack/tempest_config.py", line 51, in __init__
+    raise TempestConfigCreationFailure(msg)
+rhcert.suites.openstack.tempest_config.TempestConfigCreationFailure: Admin permission is required to generate tempest configuration file. User admin  doesn't have admin role.
+
+
+Expected results:
+No exception should be there
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHEA-2015-1204.html

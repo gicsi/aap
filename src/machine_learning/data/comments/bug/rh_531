@@ -1,0 +1,9 @@
+Created attachment 1042518
+Proposed patch for jffi requiring jffi-native via the OSGi manifest
+
+Description of problem:
+
+There needs to be a Require-Bundle attribute in jffi.jar's MANIFEST.MF so it requires com.kejai.jffi.native.  The native jar needs to add a Bundle-Version to it's MANIFEST.MF.  This allows the Eclipse docker plug-ins to bring in the native jar.
+Jeff, please provide patches against HEAD aka pull before commit.
+Rebased patch pushed and built.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=664734

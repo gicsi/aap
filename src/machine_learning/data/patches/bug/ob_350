@@ -1,0 +1,131 @@
+OpenBSD 5.4 errata 16, Oct 20, 2014
+
+Two remotely triggerable memory leaks in OpenSSL can lead to a denial of
+service in server applications.
+
+Apply patch using:
+
+	cat 016_openssl.patch | (cd /usr/src && patch -p0
+
+Then build and install libssl
+
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+
+Index: lib/libssl/src/ssl/d1_srtp.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_srtp.c,v
+retrieving revision 1.1.1.1
+diff -u -p -r1.1.1.1 d1_srtp.c
+--- lib/libssl/src/ssl/d1_srtp.c	13 Oct 2012 21:23:49 -0000	1.1.1.1
++++ lib/libssl/src/ssl/d1_srtp.c	17 Oct 2014 19:57:51 -0000
+@@ -213,6 +213,7 @@ static int ssl_ctx_make_profiles(const c
+ 		else
+ 			{
+ 			SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
++			sk_SRTP_PROTECTION_PROFILE_free(profiles);
+ 			return 1;
+ 			}
+ 
+Index: lib/libssl/src/ssl/t1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/t1_lib.c,v
+retrieving revision 1.12.8.2
+diff -u -p -r1.12.8.2 t1_lib.c
+--- lib/libssl/src/ssl/t1_lib.c	9 Aug 2014 16:54:58 -0000	1.12.8.2
++++ lib/libssl/src/ssl/t1_lib.c	17 Oct 2014 19:56:17 -0000
+@@ -2188,8 +2188,10 @@ static int tls_decrypt_ticket(SSL *s, co
+ 	HMAC_Update(&hctx, etick, eticklen);
+ 	HMAC_Final(&hctx, tick_hmac, NULL);
+ 	HMAC_CTX_cleanup(&hctx);
+-	if (timingsafe_bcmp(tick_hmac, etick + eticklen, mlen))
++	if (timingsafe_bcmp(tick_hmac, etick + eticklen, mlen)) {
++		EVP_CIPHER_CTX_cleanup(&ctx);
+ 		return 2;
++	}
+ 	/* Attempt to decrypt session data */
+ 	/* Move p after IV to start of encrypted ticket, update length */
+ 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
+
+OpenBSD 5.4 errata 17, Oct 20, 2014:
+
+Executable headers with an unaligned address will trigger a kernel panic.
+
+Apply patch using:
+
+    cat 017_kernexec.patch | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.135
+diff -u -p -r1.135 kern_exec.c
+--- sys/kern/kern_exec.c	17 Jun 2013 19:11:54 -0000	1.135
++++ sys/kern/kern_exec.c	19 Oct 2014 16:58:51 -0000
+@@ -428,10 +428,12 @@ sys_execve(struct proc *p, void *v, regi
+ 
+ 	vm = p->p_vmspace;
+ 	/* Now map address space */
+-	vm->vm_taddr = (char *)pack.ep_taddr;
+-	vm->vm_tsize = atop(round_page(pack.ep_tsize));
+-	vm->vm_daddr = (char *)pack.ep_daddr;
+-	vm->vm_dsize = atop(round_page(pack.ep_dsize));
++	vm->vm_taddr = (char *)trunc_page(pack.ep_taddr);
++	vm->vm_tsize = atop(round_page(pack.ep_taddr + pack.ep_tsize) -
++	    trunc_page(pack.ep_taddr));
++	vm->vm_daddr = (char *)trunc_page(pack.ep_daddr);
++	vm->vm_dsize = atop(round_page(pack.ep_daddr + pack.ep_dsize) -
++	    trunc_page(pack.ep_daddr));
+ 	vm->vm_dused = 0;
+ 	vm->vm_ssize = atop(round_page(pack.ep_ssize));
+ 	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
+
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N931I5zFR8QzfeyD2OQkGJHvzdIeM+94h1HSePXfTzt2eojrqu3AiQ2CHnuS69+livrtk60oBnbrRPAR5dhPtf7wQ=
+
+OpenBSD 5.5 errata 1, Mar 15, 2014:  Memory corruption happens during
+ICMP reflection handling.  ICMP reflection is disabled by default.
+
+Apply patch using:
+    
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 001_icmp.patch.sig -m - | \
+        (cd /usr/src && patch -p0)
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/netinet/ip_icmp.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_icmp.c,v
+retrieving revision 1.114
+diff -u -p -r1.114 ip_icmp.c
+--- sys/netinet/ip_icmp.c	19 Jan 2014 05:01:50 -0000	1.114
++++ sys/netinet/ip_icmp.c	14 Mar 2014 16:24:03 -0000
+@@ -611,9 +611,12 @@ reflect:
+ 		memset(&ssrc, 0, sizeof(ssrc));
+ 		sdst.sin_family = sgw.sin_family = ssrc.sin_family = AF_INET;
+ 		sdst.sin_len = sgw.sin_len = ssrc.sin_len = sizeof(sdst);
+-		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst, sizeof(sdst));
+-		memcpy(&sgw.sin_addr, &icp->icmp_gwaddr, sizeof(sgw));
+-		memcpy(&ssrc.sin_addr, &ip->ip_src, sizeof(ssrc));
++		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst,
++		    sizeof(sdst.sin_addr));
++		memcpy(&sgw.sin_addr, &icp->icmp_gwaddr,
++		    sizeof(sgw.sin_addr));
++		memcpy(&ssrc.sin_addr, &ip->ip_src,
++		    sizeof(ssrc.sin_addr));
+ 
+ #ifdef	ICMPPRINTFS
+ 		if (icmpprintfs) {
+

@@ -1,0 +1,76 @@
+Description of problem:
+1. Filled out information to installa fresh copy of Fedora with the netinsall iso
+ - Cinnamon desktop, no extras
+ - Install to hard drive with standard partitioning
+2. Begin installing and wait
+3. Error happens saying something like "Failed to set boot target for efi. Would you like to continue installation?"
+  - I clicked no / quit
+
+Additional Info:
+- Windows 10 is also installed on this drive
+- There was a 100GB space that I was installing Fedora to
+
+Version-Release number of selected component:
+anaconda-22.20.13-1
+
+The following was filed automatically by anaconda:
+anaconda 22.20.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 1753, in _add_single_efi_boot_target
+    raise BootLoaderError("failed to set new efi boot target. This is most likely a kernel or firmware bug.")
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 1757, in add_efi_boot_target
+    self._add_single_efi_boot_target(self.stage1_device)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 1765, in install
+    self.add_efi_boot_target()
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 1785, in write
+    self.install()
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 2372, in writeBootLoaderFinal
+    storage.bootloader.write()
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/bootloader.py", line 2450, in writeBootLoader
+    writeBootLoaderFinal(storage, payload, instClass, ksdata)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/install.py", line 266, in doInstall
+    writeBootLoader(storage, payload, instClass, ksdata)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+BootLoaderError: failed to set new efi boot target. This is most likely a kernel or firmware bug.
+
+Additional info:
+addons:         com_redhat_kdump
+cmdline:        /usr/bin/python2  /sbin/anaconda
+cmdline_file:   BOOT_IMAGE=/images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-22-x86_64 rd.live.check quiet
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.4-301.fc22.x86_64
+product:        Fedora
+release:        Cannot get release name.
+type:           anaconda
+version:        22
+Created attachment 1044481
+File: anaconda-tb
+Created attachment 1044482
+File: anaconda.log
+Created attachment 1044483
+File: dnf.log
+Created attachment 1044484
+File: dnf.rpm.log
+Created attachment 1044485
+File: environ
+Created attachment 1044486
+File: lsblk_output
+Created attachment 1044487
+File: nmcli_dev_list
+Created attachment 1044488
+File: os_info
+Created attachment 1044489
+File: program.log
+Created attachment 1044490
+File: storage.log
+Created attachment 1044491
+File: syslog
+Created attachment 1044492
+File: ifcfg.log
+Created attachment 1044493
+File: packaging.log
+*** This bug has been marked as a duplicate of bug 1235874 ***

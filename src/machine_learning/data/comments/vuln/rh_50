@@ -1,0 +1,40 @@
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+2015-06-30-poodle
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy overcloud
+2. Log in to Horizon
+3. Click the admin tab, then click 'instances'
+
+Actual results:
+You don't have permissions to access: /dashboard/admin/instances/
+
+Expected results:
+The admin user should be able to access all parts of Horizon
+
+Additional info:
+I can log in to Horizon, click around, but I am getting the error when I click on 'instances' or 'hypervisor'. There is also an error popping up in Horizon that says: "Error: Invalid service catalog service: compute"
+Something is very wrong. I can't see any service endpoints other than Horizon.
+
+This is on an overcloud with 1 compute, 1 controller, and 1 ceph node. I had network isolation enabled, but the networking seems to be working. The build got to CREATE_COMPLETE.
+
+------
+[stack@host01 ~]$ source overcloudrc
+[stack@host01 ~]$ keystone service-list
+/usr/lib/python2.7/site-packages/keystoneclient/shell.py:65: DeprecationWarning: The keystone CLI is deprecated in favor of python-openstackclient. For a Python library, continue using python-keystoneclient.
+  'python-keystoneclient.', DeprecationWarning)
++----------------------------------+----------+----------+---------------------------+
+|                id                |   name   |   type   |        description        |
++----------------------------------+----------+----------+---------------------------+
+| 910e7194846a4e1db23783bb2b4e9ba5 | keystone | identity | Keystone Identity Service |
++----------------------------------+----------+----------+---------------------------+
+[stack@host01 ~]$
+Possibly related is bug 1236136. If this happens on all network isolation setup, this would be a ga blocker.
+This did not happen on several redeploys, so I'm marking this as closed NOTABUG unless it happens again.
+closing per comment 5

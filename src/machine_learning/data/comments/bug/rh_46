@@ -1,0 +1,72 @@
+Description of problem:
+Every time I start Evolution since the last update.
+
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: elf_machine_rela
+executable:     /usr/bin/evolution
+global_pid:     21496
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            500
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 elf_machine_rela at ../sysdeps/x86_64/dl-machine.h:277
+ #1 elf_dynamic_do_Rela at do-rel.h:137
+ #2 _dl_relocate_object at dl-reloc.c:264
+ #3 dl_open_worker at dl-open.c:418
+ #4 _dl_catch_error at dl-error.c:187
+ #5 _dl_open at dl-open.c:652
+ #6 dlopen_doit at dlopen.c:66
+ #7 _dl_catch_error at dl-error.c:187
+ #8 _dlerror_run at dlerror.c:163
+ #9 __dlopen at dlopen.c:87
+
+Potential duplicate: bug 1192845
+Created attachment 1049338
+File: backtrace
+Created attachment 1049339
+File: cgroup
+Created attachment 1049340
+File: core_backtrace
+Created attachment 1049341
+File: dso_list
+Created attachment 1049342
+File: environ
+Created attachment 1049343
+File: limits
+Created attachment 1049344
+File: maps
+Created attachment 1049345
+File: mountinfo
+Created attachment 1049346
+File: namespaces
+Created attachment 1049347
+File: open_fds
+Created attachment 1049348
+File: proc_pid_status
+Created attachment 1049349
+File: var_log_messages
+This is happening every time I try to start Evolution. Suggestions on how to debug/workaround this are welcome as I would really like to access my email again.
+Thanks for a bug report. Could you verify what was updated, please? The backtrace shows that the load of libXcursor.so.1 fails, I do not see/understand why exactly, either the file is broken, or has a wrong architecture, or is built with incorrect flags, or... I do not see the exact reason in the backtrace, just that it failed when opening this library, which is caused by a cursor load in the evolution. This cursor load cannot be disabled. Try to upgrade/downgrade/reinstall libXcursor package, though there do not seem to be any updates for it.
+Does Firefox crash for you as well? If I recall it correctly this happened to me when I updated from F20 to F21 and in the end I had to re-install my system.
+I ran "rpm -Va" and reviewed the output. The only relevant line was this:
+
+..5......    /usr/lib64/libjavascriptcoregtk-4.0.so.18.1.10
+
+It seems this file maybe got corrupt somehow. I then ran "dnf reinstall webkitgtk4" and now evolution is starting fine.
+
+Thanks for your help with this, seems that it was file corruption and not a bug.
+Nice, I'm closing this as such. Thanks. Interestingly, evolution doesn't use webkitgtk4, it uses webkitgtk3.
+Yes you are right. That is seriously weird. evo failed to start a hundred times over several days and reboots before I ran that dnf reinstall and has started fine a dozen times since so it fixed it somehow.
+
+"dnf remove webkitgtk4" tries to remove evolution so it is connected somehow, but ldd and strace -f show only the version 3 in use.
+
+Have to add that to the "life's mysteries box" I think.

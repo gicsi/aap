@@ -1,0 +1,13 @@
+Your package ngrep failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10116678
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047466
+build.log
+Created attachment 1047467
+root.log
+Created attachment 1047468
+state.log
+The cause of this FTBFS is this package's configure script not honoring CFLAGS.
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10308609

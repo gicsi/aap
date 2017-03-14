@@ -1,0 +1,740 @@
+From 8aee635ddc9afcd7fa18acf36ad44bf708144c7e Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 13:08:47 -0400
+Subject: [PATCH] Add proper MANIFEST.MF.
+
+---
+ MANIFEST.MF       | 281 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ bouncycastle.spec |  10 +-
+ 2 files changed, 290 insertions(+), 1 deletion(-)
+ create mode 100644 MANIFEST.MF
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+new file mode 100644
+index 0000000..5fe4fa0
+--- /dev/null
++++ b/MANIFEST.MF
+@@ -0,0 +1,281 @@
++Manifest-Version: 1.0
++Bundle-SymbolicName: org.bouncycastle.bcprov
++Bundle-RequiredExecutionEnvironment: J2SE-1.5
++Implementation-Vendor-Id: org.bouncycastle
++Application-Library-Allowable-Codebase: *
++Import-Package: javax.crypto;resolution:=optional,javax.crypto.interfa
++ ces;resolution:=optional,javax.crypto.spec;resolution:=optional,javax
++ .naming;resolution:=optional,javax.naming.directory;resolution:=optio
++ nal,javax.security.auth.x500;resolution:=optional
++Export-Package: org.bouncycastle;version="1.52",org.bouncycastle.apach
++ e.bzip2;version="1.52",org.bouncycastle.asn1;version="1.52",org.bounc
++ ycastle.asn1.bc;version="1.52";uses:="org.bouncycastle.asn1",org.boun
++ cycastle.asn1.bsi;version="1.52";uses:="org.bouncycastle.asn1",org.bo
++ uncycastle.asn1.cmp;version="1.52";uses:="org.bouncycastle.asn1,org.b
++ ouncycastle.asn1.crmf,org.bouncycastle.asn1.x509",org.bouncycastle.as
++ n1.cms;version="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.a
++ sn1.x500,org.bouncycastle.asn1.x509",org.bouncycastle.asn1.cms.ecc;ve
++ rsion="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.cms",
++ org.bouncycastle.asn1.crmf;version="1.52"; uses:="org.bouncycastle.as
++ n1,  org.bouncycastle.asn1.cmp,  org.bouncycastle.asn1.cms,  org.boun
++ cycastle.asn1.pkcs,  org.bouncycastle.asn1.x500,  org.bouncycastle.as
++ n1.x509",org.bouncycastle.asn1.cryptopro;version="1.52";uses:="org.bo
++ uncycastle.asn1,org.bouncycastle.crypto.params",org.bouncycastle.asn1
++ .dvcs;version="1.52"; uses:="org.bouncycastle.asn1,  org.bouncycastle
++ .asn1.cmp,  org.bouncycastle.asn1.cms,  org.bouncycastle.asn1.x509",o
++ rg.bouncycastle.asn1.eac;version="1.52";uses:="org.bouncycastle.asn1"
++ ,org.bouncycastle.asn1.esf;version="1.52"; uses:="org.bouncycastle.as
++ n1,  org.bouncycastle.asn1.ocsp,  org.bouncycastle.asn1.x500,  org.bo
++ uncycastle.asn1.x509",org.bouncycastle.asn1.ess;version="1.52";uses:=
++ "org.bouncycastle.asn1,org.bouncycastle.asn1.x509",org.bouncycastle.a
++ sn1.gnu;version="1.52";uses:="org.bouncycastle.asn1",org.bouncycastle
++ .asn1.iana;version="1.52";uses:="org.bouncycastle.asn1",org.bouncycas
++ tle.asn1.icao;version="1.52";uses:="org.bouncycastle.asn1,org.bouncyc
++ astle.asn1.x509",org.bouncycastle.asn1.isismtt;version="1.52";uses:="
++ org.bouncycastle.asn1",org.bouncycastle.asn1.isismtt.ocsp;version="1.
++ 52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.x509",org.boun
++ cycastle.asn1.isismtt.x509;version="1.52";uses:="org.bouncycastle.asn
++ 1,org.bouncycastle.asn1.x500,org.bouncycastle.asn1.x509",org.bouncyca
++ stle.asn1.kisa;version="1.52";uses:="org.bouncycastle.asn1",org.bounc
++ ycastle.asn1.microsoft;version="1.52";uses:="org.bouncycastle.asn1",o
++ rg.bouncycastle.asn1.misc;version="1.52";uses:="org.bouncycastle.asn1
++ ",org.bouncycastle.asn1.mozilla;version="1.52";uses:="org.bouncycastl
++ e.asn1,org.bouncycastle.asn1.x509",org.bouncycastle.asn1.nist;version
++ ="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.x9",org.bo
++ uncycastle.asn1.ntt;version="1.52";uses:="org.bouncycastle.asn1",org.
++ bouncycastle.asn1.ocsp;version="1.52";uses:="org.bouncycastle.asn1,or
++ g.bouncycastle.asn1.x500,org.bouncycastle.asn1.x509",org.bouncycastle
++ .asn1.oiw;version="1.52";uses:="org.bouncycastle.asn1",org.bouncycast
++ le.asn1.pkcs;version="1.52";uses:="org.bouncycastle.asn1,org.bouncyca
++ stle.asn1.x500,org.bouncycastle.asn1.x509",org.bouncycastle.asn1.sec;
++ version="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.x9"
++ ,org.bouncycastle.asn1.smime;version="1.52";uses:="org.bouncycastle.a
++ sn1,org.bouncycastle.asn1.cms",org.bouncycastle.asn1.teletrust;versio
++ n="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.x9",org.b
++ ouncycastle.asn1.tsp;version="1.52"; uses:="org.bouncycastle.asn1,  o
++ rg.bouncycastle.asn1.cmp,  org.bouncycastle.asn1.cms,  org.bouncycast
++ le.asn1.x509",org.bouncycastle.asn1.ua;version="1.52";uses:="org.boun
++ cycastle.asn1,org.bouncycastle.crypto.params,org.bouncycastle.math.ec
++ ",org.bouncycastle.asn1.util;version="1.52";uses:="org.bouncycastle.a
++ sn1",org.bouncycastle.asn1.x500;version="1.52";uses:="org.bouncycastl
++ e.asn1",org.bouncycastle.asn1.x500.style;version="1.52";uses:="org.bo
++ uncycastle.asn1,org.bouncycastle.asn1.x500",org.bouncycastle.asn1.x50
++ 9;version="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.p
++ kcs,org.bouncycastle.asn1.x500",org.bouncycastle.asn1.x509.qualified;
++ version="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.x50
++ 9",org.bouncycastle.asn1.x509.sigi;version="1.52";uses:="org.bouncyca
++ stle.asn1,org.bouncycastle.asn1.x500",org.bouncycastle.asn1.x9;versio
++ n="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.math.ec",org.b
++ ouncycastle.crypto;version="1.52";uses:="org.bouncycastle.crypto.para
++ ms",org.bouncycastle.crypto.agreement;version="1.52";uses:="org.bounc
++ ycastle.crypto,org.bouncycastle.crypto.params",org.bouncycastle.crypt
++ o.agreement.jpake;version="1.52";uses:="org.bouncycastle.crypto",org.
++ bouncycastle.crypto.agreement.kdf;version="1.52";uses:="org.bouncycas
++ tle.asn1,org.bouncycastle.crypto",org.bouncycastle.crypto.agreement.s
++ rp;version="1.52";uses:="org.bouncycastle.crypto",org.bouncycastle.cr
++ ypto.commitments;version="1.52";uses:="org.bouncycastle.crypto",org.b
++ ouncycastle.crypto.digests;version="1.52";uses:="org.bouncycastle.cry
++ pto,org.bouncycastle.crypto.params,org.bouncycastle.util",org.bouncyc
++ astle.crypto.ec;version="1.52"; uses:="org.bouncycastle.asn1,  org.bo
++ uncycastle.asn1.x9,  org.bouncycastle.crypto,  org.bouncycastle.math.
++ ec",org.bouncycastle.crypto.encodings;version="1.52";uses:="org.bounc
++ ycastle.crypto",org.bouncycastle.crypto.engines;version="1.52";uses:=
++ "org.bouncycastle.crypto,org.bouncycastle.crypto.generators,org.bounc
++ ycastle.crypto.params",org.bouncycastle.crypto.examples;version="1.52
++ ";uses:="org.bouncycastle.crypto",org.bouncycastle.crypto.generators;
++ version="1.52";uses:="org.bouncycastle.crypto,org.bouncycastle.crypto
++ .params,org.bouncycastle.math.ec",org.bouncycastle.crypto.io;version=
++ "1.52";uses:="org.bouncycastle.crypto,org.bouncycastle.crypto.modes",
++ org.bouncycastle.crypto.kems;version="1.52";uses:="org.bouncycastle.c
++ rypto,org.bouncycastle.crypto.params,org.bouncycastle.math.ec",org.bo
++ uncycastle.crypto.macs;version="1.52";uses:="org.bouncycastle.crypto,
++ org.bouncycastle.crypto.modes,org.bouncycastle.crypto.paddings",org.b
++ ouncycastle.crypto.modes;version="1.52";uses:="org.bouncycastle.crypt
++ o,org.bouncycastle.crypto.modes.gcm",org.bouncycastle.crypto.modes.gc
++ m;version="1.52",org.bouncycastle.crypto.paddings;version="1.52";uses
++ :="org.bouncycastle.crypto",org.bouncycastle.crypto.params;version="1
++ .52";uses:="org.bouncycastle.asn1,org.bouncycastle.crypto,org.bouncyc
++ astle.math.ec",org.bouncycastle.crypto.parsers;version="1.52";uses:="
++ org.bouncycastle.crypto,org.bouncycastle.crypto.params",org.bouncycas
++ tle.crypto.prng;version="1.52";uses:="org.bouncycastle.crypto,org.bou
++ ncycastle.crypto.prng.drbg",org.bouncycastle.crypto.prng.drbg;version
++ ="1.52";uses:="org.bouncycastle.crypto,org.bouncycastle.crypto.prng,o
++ rg.bouncycastle.math.ec",org.bouncycastle.crypto.signers;version="1.5
++ 2";uses:="org.bouncycastle.asn1,org.bouncycastle.crypto,org.bouncycas
++ tle.math.ec",org.bouncycastle.crypto.tls;version="1.52"; uses:="org.b
++ ouncycastle.asn1,  org.bouncycastle.asn1.ocsp,  org.bouncycastle.asn1
++ .x509,  org.bouncycastle.crypto,  org.bouncycastle.crypto.agreement.s
++ rp,  org.bouncycastle.crypto.engines,  org.bouncycastle.crypto.modes,
++   org.bouncycastle.crypto.params,  org.bouncycastle.crypto.prng,  org
++ .bouncycastle.math.ec",org.bouncycastle.crypto.util;version="1.52";us
++ es:="org.bouncycastle.asn1.pkcs,org.bouncycastle.asn1.x509,org.bouncy
++ castle.crypto.params",org.bouncycastle.i18n;version="1.52";uses:="org
++ .bouncycastle.i18n.filter",org.bouncycastle.i18n.filter;version="1.52
++ ",org.bouncycastle.jcajce.io;version="1.52";uses:="javax.crypto",org.
++ bouncycastle.jcajce.provider.asymmetric;version="1.52";uses:="org.bou
++ ncycastle.jcajce.provider.config,org.bouncycastle.jcajce.provider.uti
++ l",org.bouncycastle.jcajce.provider.asymmetric.dh;version="1.52"; use
++ s:="javax.crypto,  javax.crypto.interfaces,  javax.crypto.spec,  org.
++ bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bouncycastle.asn
++ 1.x509,  org.bouncycastle.crypto.engines,  org.bouncycastle.jcajce.pr
++ ovider.asymmetric.util,  org.bouncycastle.jce.interfaces",org.bouncyc
++ astle.jcajce.provider.asymmetric.dsa;version="1.52"; uses:="org.bounc
++ ycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bouncycastle.asn1.x50
++ 9,  org.bouncycastle.crypto,  org.bouncycastle.crypto.params,  org.bo
++ uncycastle.jcajce.provider.asymmetric.util,  org.bouncycastle.jce.int
++ erfaces",org.bouncycastle.jcajce.provider.asymmetric.dstu;version="1.
++ 52"; uses:="org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.
++ bouncycastle.asn1.x509,  org.bouncycastle.crypto.params,  org.bouncyc
++ astle.jcajce.provider.asymmetric.util,  org.bouncycastle.jce.interfac
++ es,  org.bouncycastle.jce.spec,  org.bouncycastle.math.ec",org.bouncy
++ castle.jcajce.provider.asymmetric.ec;version="1.52"; uses:="javax.cry
++ pto,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bouncy
++ castle.asn1.x509,  org.bouncycastle.crypto,  org.bouncycastle.crypto.
++ engines,  org.bouncycastle.crypto.params,  org.bouncycastle.jcajce.pr
++ ovider.asymmetric.util,  org.bouncycastle.jcajce.provider.config,  or
++ g.bouncycastle.jcajce.provider.util,  org.bouncycastle.jce.interfaces
++ ,  org.bouncycastle.jce.spec,  org.bouncycastle.math.ec",org.bouncyca
++ stle.jcajce.provider.asymmetric.ecgost;version="1.52"; uses:="org.bou
++ ncycastle.asn1,  org.bouncycastle.asn1.cryptopro,  org.bouncycastle.a
++ sn1.pkcs,  org.bouncycastle.asn1.x509,  org.bouncycastle.crypto.param
++ s,  org.bouncycastle.jcajce.provider.asymmetric.util,  org.bouncycast
++ le.jce.interfaces,  org.bouncycastle.jce.spec,  org.bouncycastle.math
++ .ec",org.bouncycastle.jcajce.provider.asymmetric.elgamal;version="1.5
++ 2"; uses:="javax.crypto,  javax.crypto.interfaces,  javax.crypto.spec
++ ,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bouncycas
++ tle.asn1.x509,  org.bouncycastle.crypto,  org.bouncycastle.crypto.par
++ ams,  org.bouncycastle.jcajce.provider.asymmetric.util,  org.bouncyca
++ stle.jcajce.provider.symmetric.util,  org.bouncycastle.jce.interfaces
++ ,  org.bouncycastle.jce.spec",org.bouncycastle.jcajce.provider.asymme
++ tric.gost;version="1.52"; uses:="org.bouncycastle.asn1,  org.bouncyca
++ stle.asn1.pkcs,  org.bouncycastle.asn1.x509,  org.bouncycastle.jcajce
++ .provider.asymmetric.util,  org.bouncycastle.jce.interfaces",org.boun
++ cycastle.jcajce.provider.asymmetric.ies;version="1.52";uses:="javax.c
++ rypto,org.bouncycastle.crypto.engines",org.bouncycastle.jcajce.provid
++ er.asymmetric.rsa;version="1.52"; uses:="javax.crypto,  javax.crypto.
++ spec,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bounc
++ ycastle.asn1.x509,  org.bouncycastle.crypto,  org.bouncycastle.jcajce
++ .provider.asymmetric.util,  org.bouncycastle.jce.interfaces",org.boun
++ cycastle.jcajce.provider.asymmetric.util;version="1.52"; uses:="javax
++ .crypto,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bo
++ uncycastle.asn1.x509,  org.bouncycastle.asn1.x9,  org.bouncycastle.cr
++ ypto,  org.bouncycastle.crypto.engines,  org.bouncycastle.crypto.para
++ ms,  org.bouncycastle.jcajce.provider.util,  org.bouncycastle.jce.int
++ erfaces,  org.bouncycastle.jce.spec,  org.bouncycastle.math.ec",org.b
++ ouncycastle.jcajce.provider.asymmetric.x509;version="1.52";uses:="jav
++ ax.security.auth.x500,org.bouncycastle.asn1.x500,org.bouncycastle.asn
++ 1.x509",org.bouncycastle.jcajce.provider.config;version="1.52"; uses:
++ ="javax.crypto.spec,  org.bouncycastle.asn1,  org.bouncycastle.jcajce
++ .provider.util,  org.bouncycastle.jce.spec",org.bouncycastle.jcajce.p
++ rovider.digest;version="1.52"; uses:="javax.crypto,  org.bouncycastle
++ .crypto,  org.bouncycastle.jcajce.provider.config,  org.bouncycastle.
++ jcajce.provider.symmetric.util",org.bouncycastle.jcajce.provider.keys
++ tore;version="1.52";uses:="org.bouncycastle.jcajce.provider.config,or
++ g.bouncycastle.jcajce.provider.util",org.bouncycastle.jcajce.provider
++ .keystore.bc;version="1.52";uses:="javax.crypto,org.bouncycastle.jce.
++ interfaces",org.bouncycastle.jcajce.provider.keystore.pkcs12;version=
++ "1.52"; uses:="org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  o
++ rg.bouncycastle.asn1.x509,  org.bouncycastle.jce.interfaces",org.boun
++ cycastle.jcajce.provider.symmetric;version="1.52"; uses:="javax.crypt
++ o,  org.bouncycastle.asn1,  org.bouncycastle.jcajce.provider.config,
++  org.bouncycastle.jcajce.provider.symmetric.util,  org.bouncycastle.j
++ cajce.provider.util",org.bouncycastle.jcajce.provider.symmetric.util;
++ version="1.52"; uses:="javax.crypto,  javax.crypto.interfaces,  javax
++ .crypto.spec,  org.bouncycastle.asn1,  org.bouncycastle.crypto,  org.
++ bouncycastle.crypto.modes",org.bouncycastle.jcajce.provider.util;vers
++ ion="1.52"; uses:="org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs
++ ,  org.bouncycastle.asn1.x509,  org.bouncycastle.crypto,  org.bouncyc
++ astle.jcajce.provider.config",org.bouncycastle.jcajce.spec;version="1
++ .52"; uses:="javax.crypto,  javax.crypto.spec,  org.bouncycastle.asn1
++ ,  org.bouncycastle.asn1.x509",org.bouncycastle.jcajce.util;version="
++ 1.52";uses:="javax.crypto,org.bouncycastle.asn1",org.bouncycastle.jce
++ ;version="1.52"; uses:="javax.security.auth.x500,  org.bouncycastle.a
++ sn1,  org.bouncycastle.asn1.pkcs,  org.bouncycastle.asn1.x500,  org.b
++ ouncycastle.asn1.x509,  org.bouncycastle.jce.spec,  org.bouncycastle.
++ x509",org.bouncycastle.jce.exception;version="1.52",org.bouncycastle.
++ jce.interfaces;version="1.52";uses:="org.bouncycastle.asn1,org.bouncy
++ castle.jce.spec,org.bouncycastle.math.ec",org.bouncycastle.jce.netsca
++ pe;version="1.52";uses:="org.bouncycastle.asn1,org.bouncycastle.asn1.
++ x509",org.bouncycastle.jce.provider;version="1.52"; uses:="javax.cryp
++ to,  javax.crypto.interfaces,  javax.crypto.spec,  javax.security.aut
++ h.x500,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bou
++ ncycastle.asn1.x500,  org.bouncycastle.asn1.x509,  org.bouncycastle.c
++ rypto,  org.bouncycastle.crypto.params,  org.bouncycastle.jcajce.prov
++ ider.config,  org.bouncycastle.jcajce.provider.symmetric.util,  org.b
++ ouncycastle.jcajce.provider.util,  org.bouncycastle.jce.exception,  o
++ rg.bouncycastle.jce.interfaces,  org.bouncycastle.jce.spec,  org.boun
++ cycastle.math.ec,  org.bouncycastle.util,  org.bouncycastle.x509,  or
++ g.bouncycastle.x509.util",org.bouncycastle.jce.spec;version="1.52"; u
++ ses:="org.bouncycastle.asn1.cryptopro,  org.bouncycastle.jcajce.spec,
++   org.bouncycastle.jce.interfaces,  org.bouncycastle.math.ec",org.bou
++ ncycastle.math.ec;version="1.52";uses:="org.bouncycastle.math.ec.endo
++ ,org.bouncycastle.math.field",org.bouncycastle.math.ec.custom.djb;ver
++ sion="1.52";uses:="org.bouncycastle.math.ec",org.bouncycastle.math.ec
++ .custom.sec;version="1.52";uses:="org.bouncycastle.math.ec",org.bounc
++ ycastle.math.ec.endo;version="1.52";uses:="org.bouncycastle.math.ec",
++ org.bouncycastle.math.ec.tools;version="1.52",org.bouncycastle.math.f
++ ield;version="1.52",org.bouncycastle.math.raw;version="1.52",org.boun
++ cycastle.pqc.asn1;version="1.52"; uses:="org.bouncycastle.asn1,  org.
++ bouncycastle.asn1.x509,  org.bouncycastle.pqc.crypto.gmss,  org.bounc
++ ycastle.pqc.crypto.rainbow,  org.bouncycastle.pqc.math.linearalgebra"
++ ,org.bouncycastle.pqc.crypto;version="1.52";uses:="org.bouncycastle.c
++ rypto",org.bouncycastle.pqc.crypto.gmss;version="1.52"; uses:="org.bo
++ uncycastle.crypto,  org.bouncycastle.crypto.params,  org.bouncycastle
++ .pqc.crypto,  org.bouncycastle.pqc.crypto.gmss.util",org.bouncycastle
++ .pqc.crypto.gmss.util;version="1.52";uses:="org.bouncycastle.crypto",
++ org.bouncycastle.pqc.crypto.mceliece;version="1.52"; uses:="org.bounc
++ ycastle.crypto,  org.bouncycastle.crypto.params,  org.bouncycastle.pq
++ c.crypto,  org.bouncycastle.pqc.math.linearalgebra",org.bouncycastle.
++ pqc.crypto.rainbow;version="1.52";uses:="org.bouncycastle.crypto,org.
++ bouncycastle.crypto.params,org.bouncycastle.pqc.crypto",org.bouncycas
++ tle.pqc.crypto.rainbow.util;version="1.52",org.bouncycastle.pqc.jcajc
++ e.provider;version="1.52"; uses:="org.bouncycastle.asn1,  org.bouncyc
++ astle.asn1.pkcs,  org.bouncycastle.asn1.x509,  org.bouncycastle.jcajc
++ e.provider.config,  org.bouncycastle.jcajce.provider.util",org.bouncy
++ castle.pqc.jcajce.provider.gmss;version="1.52";uses:="org.bouncycastl
++ e.crypto,org.bouncycastle.pqc.crypto.gmss,org.bouncycastle.pqc.jcajce
++ .spec",org.bouncycastle.pqc.jcajce.provider.mceliece;version="1.52";
++ uses:="javax.crypto,  org.bouncycastle.asn1,  org.bouncycastle.asn1.p
++ kcs,  org.bouncycastle.asn1.x509,  org.bouncycastle.crypto,  org.boun
++ cycastle.crypto.params,  org.bouncycastle.pqc.crypto.mceliece,  org.b
++ ouncycastle.pqc.jcajce.provider.util,  org.bouncycastle.pqc.jcajce.sp
++ ec,  org.bouncycastle.pqc.math.linearalgebra",org.bouncycastle.pqc.jc
++ ajce.provider.rainbow;version="1.52"; uses:="org.bouncycastle.asn1.pk
++ cs,  org.bouncycastle.asn1.x509,  org.bouncycastle.crypto,  org.bounc
++ ycastle.crypto.params,  org.bouncycastle.jcajce.provider.util,  org.b
++ ouncycastle.pqc.crypto.rainbow,  org.bouncycastle.pqc.jcajce.spec",or
++ g.bouncycastle.pqc.jcajce.provider.util;version="1.52"; uses:="javax.
++ crypto,  org.bouncycastle.asn1,  org.bouncycastle.asn1.pkcs,  org.bou
++ ncycastle.asn1.x509",org.bouncycastle.pqc.jcajce.spec;version="1.52";
++ uses:="org.bouncycastle.pqc.crypto.gmss,org.bouncycastle.pqc.crypto.r
++ ainbow,org.bouncycastle.pqc.math.linearalgebra",org.bouncycastle.pqc.
++ math.linearalgebra;version="1.52",org.bouncycastle.util;version="1.52
++ ",org.bouncycastle.util.encoders;version="1.52",org.bouncycastle.util
++ .io;version="1.52",org.bouncycastle.util.io.pem;version="1.52",org.bo
++ uncycastle.util.test;version="1.52",org.bouncycastle.x509;version="1.
++ 52"; uses:="javax.security.auth.x500,  org.bouncycastle.asn1,  org.bo
++ uncycastle.asn1.x509,  org.bouncycastle.i18n,  org.bouncycastle.jce,
++  org.bouncycastle.jce.provider,  org.bouncycastle.util,  org.bouncyca
++ stle.x509.util",org.bouncycastle.x509.extension;version="1.52";uses:=
++ "org.bouncycastle.asn1,org.bouncycastle.asn1.x509",org.bouncycastle.x
++ 509.util;version="1.52";uses:="org.bouncycastle.jce,org.bouncycastle.
++ util,org.bouncycastle.x509",org.bouncycastle.jcajce;version="1.52"
++Bundle-Name: Bouncy Castle Provider
++Permissions: all-permissions
++Trusted-Library: true
++Extension-Name: org.bouncycastle.bcprovider
++Application-Name: Bouncy Castle Provider
++Implementation-Version: 1.52.0
++Bundle-ActivationPolicy: lazy
++Bundle-ManifestVersion: 2
++Specification-Vendor: BouncyCastle.org
++Bundle-Vendor: Eclipse Orbit
++Implementation-Vendor: BouncyCastle.org
++Ant-Version: Apache Ant 1.6.5
++Originally-Created-By: 24.51-b03 (Oracle Corporation)
++Bundle-Version: 1.52.0
++Caller-Allowable-Codebase: *
++Codebase: *
++Created-By: 1.5.0_08 (Sun Microsystems Inc.)
++Specification-Version: 1.1
++
+diff --git a/bouncycastle.spec b/bouncycastle.spec
+index 93779b1..f821c83 100644
+--- a/bouncycastle.spec
++++ b/bouncycastle.spec
+@@ -5,12 +5,13 @@
+ Summary:          Bouncy Castle Crypto Package for Java
+ Name:             bouncycastle
+ Version:          %{ver}
+-Release:          2%{?dist}
++Release:          3%{?dist}
+ License:          MIT
+ URL:              http://www.bouncycastle.org
+ # Use original sources from here on out.
+ Source0:          http://www.bouncycastle.org/download/bcprov-%{archivever}.tar.gz
+ Source1:          http://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk15on/%{ver}/bcprov-jdk15on-%{ver}.pom
++Source2:          MANIFEST.MF
+ BuildRequires:    javapackages-tools
+ Requires:         javapackages-tools
+ Requires(post):   javapackages-tools
+@@ -36,6 +37,7 @@ API documentation for the %{name} package.
+ 
+ %prep
+ %setup -q -n bcprov-%{archivever}
++cp %{SOURCE2} .
+ 
+ # Remove provided binaries
+ find . -type f -name "*.class" -exec rm -f {} \;
+@@ -67,6 +69,9 @@ popd
+ install -dm 755 $RPM_BUILD_ROOT%{_sysconfdir}/java/security/security.d
+ touch $RPM_BUILD_ROOT%{_sysconfdir}/java/security/security.d/2000-%{classname}
+ 
++# add proper MANIFEST.MF file to jar
++jar umf MANIFEST.MF bcprov.jar
++
+ # install bouncy castle provider
+ install -dm 755 $RPM_BUILD_ROOT%{_javadir}
+ install -pm 644 bcprov.jar \
+@@ -156,6 +161,9 @@ fi
+ %license LICENSE.html
+ 
+ %changelog
++* Thu Jun 18 2015 Jeff Johnston <jjohnstn@redhat.com> 1.52-3
++- Add proper MANIFEST.MF.
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.52-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.9.3
+
+
+From a1914b078d0dc945dd7e5710c89114b68ffbb5e7 Mon Sep 17 00:00:00 2001
+From: Roland Grunberg <rgrunber@redhat.com>
+Date: Tue, 23 Jun 2015 10:36:46 -0400
+Subject: [PATCH] Remove versioning on Import/Export-Package statements.
+
+- Related: rhbz#1233354
+
+bouncycastle is only able to provide its packages exported at default
+version (0.0.0) due to limitations in the bnd wrap tool so the
+Import/Export statements for this manifest must also match.
+---
+ bouncycastle-pkix-OSGi.bnd | 178 ++++++++++++++++++++++-----------------------
+ bouncycastle-pkix.spec     |   6 +-
+ 2 files changed, 94 insertions(+), 90 deletions(-)
+
+diff --git a/bouncycastle-pkix-OSGi.bnd b/bouncycastle-pkix-OSGi.bnd
+index f51528a..1a7f0f0 100644
+--- a/bouncycastle-pkix-OSGi.bnd
++++ b/bouncycastle-pkix-OSGi.bnd
+@@ -2,95 +2,95 @@
+ Import-Package: \
+  javax.crypto, javax.crypto.spec, javax.security.auth.x500, \
+  javax.naming, javax.naming.directory, \
+- org.bouncycastle.asn1;version="@VERSION@", \
+- org.bouncycastle.asn1.bc;version="@VERSION@", \
+- org.bouncycastle.asn1.bsi;version="@VERSION@", \
+- org.bouncycastle.asn1.cmp;version="@VERSION@", \
+- org.bouncycastle.asn1.cms;version="@VERSION@", \
+- org.bouncycastle.asn1.cms.ecc;version="@VERSION@", \
+- org.bouncycastle.asn1.crmf;version="@VERSION@", \
+- org.bouncycastle.asn1.cryptopro;version="@VERSION@", \
+- org.bouncycastle.asn1.dvcs;version="@VERSION@", \
+- org.bouncycastle.asn1.eac;version="@VERSION@", \
+- org.bouncycastle.asn1.ess;version="@VERSION@", \
+- org.bouncycastle.asn1.kisa;version="@VERSION@", \
+- org.bouncycastle.asn1.iana;version="@VERSION@", \
+- org.bouncycastle.asn1.misc;version="@VERSION@", \
+- org.bouncycastle.asn1.mozilla;version="@VERSION@", \
+- org.bouncycastle.asn1.nist;version="@VERSION@", \
+- org.bouncycastle.asn1.ntt;version="@VERSION@", \
+- org.bouncycastle.asn1.ocsp;version="@VERSION@", \
+- org.bouncycastle.asn1.oiw;version="@VERSION@", \
+- org.bouncycastle.asn1.pkcs;version="@VERSION@", \
+- org.bouncycastle.asn1.sec;version="@VERSION@", \
+- org.bouncycastle.asn1.teletrust;version="@VERSION@", \
+- org.bouncycastle.asn1.tsp;version="@VERSION@", \
+- org.bouncycastle.asn1.x500;version="@VERSION@", \
+- org.bouncycastle.asn1.x509;version="@VERSION@", \
+- org.bouncycastle.asn1.x9;version="@VERSION@", \
+- org.bouncycastle.crypto;version="@VERSION@", \
+- org.bouncycastle.crypto.digests;version="@VERSION@", \
+- org.bouncycastle.crypto.encodings;version="@VERSION@", \
+- org.bouncycastle.crypto.engines;version="@VERSION@", \
+- org.bouncycastle.crypto.generators;version="@VERSION@", \
+- org.bouncycastle.crypto.io;version="@VERSION@", \
+- org.bouncycastle.crypto.macs;version="@VERSION@", \
+- org.bouncycastle.crypto.modes;version="@VERSION@", \
+- org.bouncycastle.crypto.paddings;version="@VERSION@", \
+- org.bouncycastle.crypto.params;version="@VERSION@", \
+- org.bouncycastle.crypto.signers;version="@VERSION@", \
+- org.bouncycastle.crypto.util;version="@VERSION@", \
+- org.bouncycastle.jcajce;version="@VERSION@", \
+- org.bouncycastle.jcajce.io;version="@VERSION@", \
+- org.bouncycastle.jcajce.provider.symmetric.util;version="@VERSION@", \
+- org.bouncycastle.jcajce.spec;version="@VERSION@", \
+- org.bouncycastle.jcajce.util;version="@VERSION@", \
+- org.bouncycastle.jce;version="@VERSION@", \
+- org.bouncycastle.jce.spec;version="@VERSION@", \
+- org.bouncycastle.math.ec;version="@VERSION@", \
+- org.bouncycastle.util;version="@VERSION@", \
+- org.bouncycastle.util.encoders;version="@VERSION@", \
+- org.bouncycastle.util.io;version="@VERSION@", \
+- org.bouncycastle.util.io.pem;version="@VERSION@", \
+- org.bouncycastle.x509;version="@VERSION@
++ org.bouncycastle.asn1, \
++ org.bouncycastle.asn1.bc, \
++ org.bouncycastle.asn1.bsi, \
++ org.bouncycastle.asn1.cmp, \
++ org.bouncycastle.asn1.cms, \
++ org.bouncycastle.asn1.cms.ecc, \
++ org.bouncycastle.asn1.crmf, \
++ org.bouncycastle.asn1.cryptopro, \
++ org.bouncycastle.asn1.dvcs, \
++ org.bouncycastle.asn1.eac, \
++ org.bouncycastle.asn1.ess, \
++ org.bouncycastle.asn1.kisa, \
++ org.bouncycastle.asn1.iana, \
++ org.bouncycastle.asn1.misc, \
++ org.bouncycastle.asn1.mozilla, \
++ org.bouncycastle.asn1.nist, \
++ org.bouncycastle.asn1.ntt, \
++ org.bouncycastle.asn1.ocsp, \
++ org.bouncycastle.asn1.oiw, \
++ org.bouncycastle.asn1.pkcs, \
++ org.bouncycastle.asn1.sec, \
++ org.bouncycastle.asn1.teletrust, \
++ org.bouncycastle.asn1.tsp, \
++ org.bouncycastle.asn1.x500, \
++ org.bouncycastle.asn1.x509, \
++ org.bouncycastle.asn1.x9, \
++ org.bouncycastle.crypto, \
++ org.bouncycastle.crypto.digests, \
++ org.bouncycastle.crypto.encodings, \
++ org.bouncycastle.crypto.engines, \
++ org.bouncycastle.crypto.generators, \
++ org.bouncycastle.crypto.io, \
++ org.bouncycastle.crypto.macs, \
++ org.bouncycastle.crypto.modes, \
++ org.bouncycastle.crypto.paddings, \
++ org.bouncycastle.crypto.params, \
++ org.bouncycastle.crypto.signers, \
++ org.bouncycastle.crypto.util, \
++ org.bouncycastle.jcajce, \
++ org.bouncycastle.jcajce.io, \
++ org.bouncycastle.jcajce.provider.symmetric.util, \
++ org.bouncycastle.jcajce.spec, \
++ org.bouncycastle.jcajce.util, \
++ org.bouncycastle.jce, \
++ org.bouncycastle.jce.spec, \
++ org.bouncycastle.math.ec, \
++ org.bouncycastle.util, \
++ org.bouncycastle.util.encoders, \
++ org.bouncycastle.util.io, \
++ org.bouncycastle.util.io.pem, \
++ org.bouncycastle.x509
+ Export-Package: \
+- org.bouncycastle.cert;version="@VERSION@", \
+- org.bouncycastle.cert.bc;version="@VERSION@", \
+- org.bouncycastle.cert.cmp;version="@VERSION@", \
+- org.bouncycastle.cert.crmf;version="@VERSION@", \
+- org.bouncycastle.cert.crmf.bc;version="@VERSION@", \
+- org.bouncycastle.cert.crmf.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.dane;version="@VERSION@", \
+- org.bouncycastle.cert.dane.fetcher;version="@VERSION@", \
+- org.bouncycastle.cert.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.ocsp;version="@VERSION@", \
+- org.bouncycastle.cert.ocsp.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.path;version="@VERSION@", \
+- org.bouncycastle.cert.path.validations;version="@VERSION@", \
+- org.bouncycastle.cert.selector;version="@VERSION@", \
+- org.bouncycastle.cert.selector.jcajce;version="@VERSION@", \
+- org.bouncycastle.cms;version="@VERSION@", \
+- org.bouncycastle.cms.bc;version="@VERSION@", \
+- org.bouncycastle.cms.jcajce;version="@VERSION@", \
+- org.bouncycastle.dvcs;version="@VERSION@", \
+- org.bouncycastle.eac;version="@VERSION@", \
+- org.bouncycastle.eac.jcajce;version="@VERSION@", \
+- org.bouncycastle.eac.operator;version="@VERSION@", \
+- org.bouncycastle.eac.operator.jcajce;version="@VERSION@", \
+- org.bouncycastle.mozilla;version="@VERSION@", \
+- org.bouncycastle.openssl;version="@VERSION@", \
+- org.bouncycastle.openssl.jcajce;version="@VERSION@", \
+- org.bouncycastle.operator;version="@VERSION@", \
+- org.bouncycastle.operator.bc;version="@VERSION@", \
+- org.bouncycastle.operator.jcajce;version="@VERSION@", \
+- org.bouncycastle.pkcs;version="@VERSION@", \
+- org.bouncycastle.pkcs.bc;version="@VERSION@", \
+- org.bouncycastle.pkcs.jcajce;version="@VERSION@", \
+- org.bouncycastle.pkix;version="@VERSION@", \
+- org.bouncycastle.pkix.jcajce;version="@VERSION@", \
+- org.bouncycastle.tsp;version="@VERSION@", \
+- org.bouncycastle.tsp.cms;version="@VERSION@", \
+- org.bouncycastle.voms;version="@VERSION@"
++ org.bouncycastle.cert, \
++ org.bouncycastle.cert.bc, \
++ org.bouncycastle.cert.cmp, \
++ org.bouncycastle.cert.crmf, \
++ org.bouncycastle.cert.crmf.bc, \
++ org.bouncycastle.cert.crmf.jcajce, \
++ org.bouncycastle.cert.dane, \
++ org.bouncycastle.cert.dane.fetcher, \
++ org.bouncycastle.cert.jcajce, \
++ org.bouncycastle.cert.ocsp, \
++ org.bouncycastle.cert.ocsp.jcajce, \
++ org.bouncycastle.cert.path, \
++ org.bouncycastle.cert.path.validations, \
++ org.bouncycastle.cert.selector, \
++ org.bouncycastle.cert.selector.jcajce, \
++ org.bouncycastle.cms, \
++ org.bouncycastle.cms.bc, \
++ org.bouncycastle.cms.jcajce, \
++ org.bouncycastle.dvcs, \
++ org.bouncycastle.eac, \
++ org.bouncycastle.eac.jcajce, \
++ org.bouncycastle.eac.operator, \
++ org.bouncycastle.eac.operator.jcajce, \
++ org.bouncycastle.mozilla, \
++ org.bouncycastle.openssl, \
++ org.bouncycastle.openssl.jcajce, \
++ org.bouncycastle.operator, \
++ org.bouncycastle.operator.bc, \
++ org.bouncycastle.operator.jcajce, \
++ org.bouncycastle.pkcs, \
++ org.bouncycastle.pkcs.bc, \
++ org.bouncycastle.pkcs.jcajce, \
++ org.bouncycastle.pkix, \
++ org.bouncycastle.pkix.jcajce, \
++ org.bouncycastle.tsp, \
++ org.bouncycastle.tsp.cms, \
++ org.bouncycastle.voms
+ Bundle-ManifestVersion: 2
+ Bundle-Name: bcpkix
+ Bundle-RequiredExecutionEnvironment: J2SE-1.5, JavaSE-1.6, JavaSE-1.7
+@@ -110,4 +110,4 @@ Application-Library-Allowable-Codebase: *
+ Caller-Allowable-Codebase: *
+ Codebase: *
+ Permissions: all-permissions
+-Trusted-Library: true
+\ No newline at end of file
++Trusted-Library: true
+diff --git a/bouncycastle-pkix.spec b/bouncycastle-pkix.spec
+index f8ab52a..93a4d8b 100644
+--- a/bouncycastle-pkix.spec
++++ b/bouncycastle-pkix.spec
+@@ -2,7 +2,7 @@
+ %global archivever  jdk15on-%(echo %{version}|sed 's|\\\.||')
+ Name:          bouncycastle-pkix
+ Version:       1.52
+-Release:       3%{?dist}
++Release:       4%{?dist}
+ Summary:       Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs
+ License:       MIT
+ URL:           http://www.bouncycastle.org/
+@@ -138,6 +138,10 @@ install -pm 644 %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-bcpkix.pom
+ %license LICENSE.html
+ 
+ %changelog
++* Tue Jun 23 2015 Roland Grunberg <rgrunber@redhat.com> - 1.52-4
++- Remove versioning on Import/Export-Package statements.
++- Related: rhbz#1233354
++
+ * Thu Jun 18 2015 gil cattaneo <puntogil@libero.it> 1.52-3
+ - fix OSGi export rhbz#1233359
+ 
+-- 
+2.1.0
+
+
+From b2bcc419a3beee76da8ac7955ad0bd8b0ef117ab Mon Sep 17 00:00:00 2001
+From: Roland Grunberg <rgrunber@redhat.com>
+Date: Tue, 23 Jun 2015 10:36:46 -0400
+Subject: [PATCH] Remove Import/Export-Package listings.
+
+- Related: rhbz#1233354
+
+bouncycastle is only able to provide its packages exported at default
+version (0.0.0) due to limitations in the bnd wrap tool so the
+Import/Export statements for this manifest must also match.
+---
+ bouncycastle-pkix-OSGi.bnd | 96 +---------------------------------------------
+ bouncycastle-pkix.spec     |  6 ++-
+ 2 files changed, 7 insertions(+), 95 deletions(-)
+
+diff --git a/bouncycastle-pkix-OSGi.bnd b/bouncycastle-pkix-OSGi.bnd
+index f51528a..bca9f66 100644
+--- a/bouncycastle-pkix-OSGi.bnd
++++ b/bouncycastle-pkix-OSGi.bnd
+@@ -1,97 +1,5 @@
+ # BND/OSGI Properties by gil
+-Import-Package: \
+- javax.crypto, javax.crypto.spec, javax.security.auth.x500, \
+- javax.naming, javax.naming.directory, \
+- org.bouncycastle.asn1;version="@VERSION@", \
+- org.bouncycastle.asn1.bc;version="@VERSION@", \
+- org.bouncycastle.asn1.bsi;version="@VERSION@", \
+- org.bouncycastle.asn1.cmp;version="@VERSION@", \
+- org.bouncycastle.asn1.cms;version="@VERSION@", \
+- org.bouncycastle.asn1.cms.ecc;version="@VERSION@", \
+- org.bouncycastle.asn1.crmf;version="@VERSION@", \
+- org.bouncycastle.asn1.cryptopro;version="@VERSION@", \
+- org.bouncycastle.asn1.dvcs;version="@VERSION@", \
+- org.bouncycastle.asn1.eac;version="@VERSION@", \
+- org.bouncycastle.asn1.ess;version="@VERSION@", \
+- org.bouncycastle.asn1.kisa;version="@VERSION@", \
+- org.bouncycastle.asn1.iana;version="@VERSION@", \
+- org.bouncycastle.asn1.misc;version="@VERSION@", \
+- org.bouncycastle.asn1.mozilla;version="@VERSION@", \
+- org.bouncycastle.asn1.nist;version="@VERSION@", \
+- org.bouncycastle.asn1.ntt;version="@VERSION@", \
+- org.bouncycastle.asn1.ocsp;version="@VERSION@", \
+- org.bouncycastle.asn1.oiw;version="@VERSION@", \
+- org.bouncycastle.asn1.pkcs;version="@VERSION@", \
+- org.bouncycastle.asn1.sec;version="@VERSION@", \
+- org.bouncycastle.asn1.teletrust;version="@VERSION@", \
+- org.bouncycastle.asn1.tsp;version="@VERSION@", \
+- org.bouncycastle.asn1.x500;version="@VERSION@", \
+- org.bouncycastle.asn1.x509;version="@VERSION@", \
+- org.bouncycastle.asn1.x9;version="@VERSION@", \
+- org.bouncycastle.crypto;version="@VERSION@", \
+- org.bouncycastle.crypto.digests;version="@VERSION@", \
+- org.bouncycastle.crypto.encodings;version="@VERSION@", \
+- org.bouncycastle.crypto.engines;version="@VERSION@", \
+- org.bouncycastle.crypto.generators;version="@VERSION@", \
+- org.bouncycastle.crypto.io;version="@VERSION@", \
+- org.bouncycastle.crypto.macs;version="@VERSION@", \
+- org.bouncycastle.crypto.modes;version="@VERSION@", \
+- org.bouncycastle.crypto.paddings;version="@VERSION@", \
+- org.bouncycastle.crypto.params;version="@VERSION@", \
+- org.bouncycastle.crypto.signers;version="@VERSION@", \
+- org.bouncycastle.crypto.util;version="@VERSION@", \
+- org.bouncycastle.jcajce;version="@VERSION@", \
+- org.bouncycastle.jcajce.io;version="@VERSION@", \
+- org.bouncycastle.jcajce.provider.symmetric.util;version="@VERSION@", \
+- org.bouncycastle.jcajce.spec;version="@VERSION@", \
+- org.bouncycastle.jcajce.util;version="@VERSION@", \
+- org.bouncycastle.jce;version="@VERSION@", \
+- org.bouncycastle.jce.spec;version="@VERSION@", \
+- org.bouncycastle.math.ec;version="@VERSION@", \
+- org.bouncycastle.util;version="@VERSION@", \
+- org.bouncycastle.util.encoders;version="@VERSION@", \
+- org.bouncycastle.util.io;version="@VERSION@", \
+- org.bouncycastle.util.io.pem;version="@VERSION@", \
+- org.bouncycastle.x509;version="@VERSION@
+-Export-Package: \
+- org.bouncycastle.cert;version="@VERSION@", \
+- org.bouncycastle.cert.bc;version="@VERSION@", \
+- org.bouncycastle.cert.cmp;version="@VERSION@", \
+- org.bouncycastle.cert.crmf;version="@VERSION@", \
+- org.bouncycastle.cert.crmf.bc;version="@VERSION@", \
+- org.bouncycastle.cert.crmf.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.dane;version="@VERSION@", \
+- org.bouncycastle.cert.dane.fetcher;version="@VERSION@", \
+- org.bouncycastle.cert.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.ocsp;version="@VERSION@", \
+- org.bouncycastle.cert.ocsp.jcajce;version="@VERSION@", \
+- org.bouncycastle.cert.path;version="@VERSION@", \
+- org.bouncycastle.cert.path.validations;version="@VERSION@", \
+- org.bouncycastle.cert.selector;version="@VERSION@", \
+- org.bouncycastle.cert.selector.jcajce;version="@VERSION@", \
+- org.bouncycastle.cms;version="@VERSION@", \
+- org.bouncycastle.cms.bc;version="@VERSION@", \
+- org.bouncycastle.cms.jcajce;version="@VERSION@", \
+- org.bouncycastle.dvcs;version="@VERSION@", \
+- org.bouncycastle.eac;version="@VERSION@", \
+- org.bouncycastle.eac.jcajce;version="@VERSION@", \
+- org.bouncycastle.eac.operator;version="@VERSION@", \
+- org.bouncycastle.eac.operator.jcajce;version="@VERSION@", \
+- org.bouncycastle.mozilla;version="@VERSION@", \
+- org.bouncycastle.openssl;version="@VERSION@", \
+- org.bouncycastle.openssl.jcajce;version="@VERSION@", \
+- org.bouncycastle.operator;version="@VERSION@", \
+- org.bouncycastle.operator.bc;version="@VERSION@", \
+- org.bouncycastle.operator.jcajce;version="@VERSION@", \
+- org.bouncycastle.pkcs;version="@VERSION@", \
+- org.bouncycastle.pkcs.bc;version="@VERSION@", \
+- org.bouncycastle.pkcs.jcajce;version="@VERSION@", \
+- org.bouncycastle.pkix;version="@VERSION@", \
+- org.bouncycastle.pkix.jcajce;version="@VERSION@", \
+- org.bouncycastle.tsp;version="@VERSION@", \
+- org.bouncycastle.tsp.cms;version="@VERSION@", \
+- org.bouncycastle.voms;version="@VERSION@"
+-Bundle-ManifestVersion: 2
++Export-Package: *
+ Bundle-Name: bcpkix
+ Bundle-RequiredExecutionEnvironment: J2SE-1.5, JavaSE-1.6, JavaSE-1.7
+ Bundle-SymbolicName: bcpkix
+@@ -110,4 +18,4 @@ Application-Library-Allowable-Codebase: *
+ Caller-Allowable-Codebase: *
+ Codebase: *
+ Permissions: all-permissions
+-Trusted-Library: true
+\ No newline at end of file
++Trusted-Library: true
+diff --git a/bouncycastle-pkix.spec b/bouncycastle-pkix.spec
+index f8ab52a..ac0c428 100644
+--- a/bouncycastle-pkix.spec
++++ b/bouncycastle-pkix.spec
+@@ -2,7 +2,7 @@
+ %global archivever  jdk15on-%(echo %{version}|sed 's|\\\.||')
+ Name:          bouncycastle-pkix
+ Version:       1.52
+-Release:       3%{?dist}
++Release:       4%{?dist}
+ Summary:       Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs
+ License:       MIT
+ URL:           http://www.bouncycastle.org/
+@@ -138,6 +138,10 @@ install -pm 644 %{SOURCE1} %{buildroot}%{_mavenpomdir}/JPP-bcpkix.pom
+ %license LICENSE.html
+ 
+ %changelog
++* Tue Jun 23 2015 Roland Grunberg <rgrunber@redhat.com> - 1.52-4
++- Remove Import/Export-Package listings.
++- Related: rhbz#1233354
++
+ * Thu Jun 18 2015 gil cattaneo <puntogil@libero.it> 1.52-3
+ - fix OSGi export rhbz#1233359
+ 
+-- 
+2.1.0
+
+

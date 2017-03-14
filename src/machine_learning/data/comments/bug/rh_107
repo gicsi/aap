@@ -1,0 +1,11 @@
+Your package rubygem-typhoeus failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10151896
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048243
+build.log
+Created attachment 1048244
+root.log
+Created attachment 1048245
+state.log

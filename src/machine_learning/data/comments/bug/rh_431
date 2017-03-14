@@ -1,0 +1,18 @@
+on 30-Jun-15, we'll switch between our new Production-1 to Production-2 support for OSP-5 (RHEL-6 and RHEL-7 variants).
+
+We're no longer supporting:
+1. Backporting of new features
+2. Installer updates         
+3. New partner additions & certification
+
+https://access.redhat.com/support/policy/updates/openstack/platform/
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHBA-2015-1198.html

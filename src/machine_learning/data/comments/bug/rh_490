@@ -1,0 +1,66 @@
+Version-Release number of selected component:
+anaconda-core-22.20.13-1.fc22.x86_64
+
+The following was filed automatically by anaconda:
+anaconda 22.20.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1564, in handleUdevLVMPVFormat
+    raise UnusableConfigurationError("multiple LVM volume groups with the same name")
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1897, in handleUdevDeviceFormat
+    self.handleUdevLVMPVFormat(info, device)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1261, in addUdevDevice
+    self.handleUdevDeviceFormat(info, device)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2193, in _populate
+    self.addUdevDevice(dev)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2127, in populate
+    self._populate()
+  File "/usr/lib/python2.7/site-packages/blivet/blivet.py", line 277, in reset
+    self.devicetree.populate(cleanupOnly=cleanupOnly)
+  File "/usr/lib/python2.7/site-packages/blivet/osinstall.py", line 1116, in storageInitialize
+    storage.reset()
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 115, in wait
+    self.raise_if_error(name)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/packaging/__init__.py", line 1210, in _runThread
+    threadMgr.wait(THREAD_STORAGE)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+UnusableConfigurationError: multiple LVM volume groups with the same name
+
+Additional info:
+cmdline:        /usr/bin/python2  /sbin/anaconda --liveinst --method=livecd:///dev/mapper/live-base
+cmdline_file:   BOOT_IMAGE=/isolinux/vmlinuz0 root=live:LABEL=Fedora-Live-KDE-x86_64-22-3 ro rd.live.image quiet rhgb rd.live.check
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.4-301.fc22.x86_64
+other involved packages: python-libs-2.7.9-6.fc22.x86_64, python-blivet-1.0.9-1.fc22.noarch
+product:        Fedora
+release:        Fedora release 22 (Twenty Two)
+type:           anaconda
+version:        22
+Created attachment 1042944
+File: anaconda-tb
+Created attachment 1042945
+File: anaconda.log
+Created attachment 1042946
+File: environ
+Created attachment 1042947
+File: journalctl
+Created attachment 1042948
+File: lsblk_output
+Created attachment 1042949
+File: nmcli_dev_list
+Created attachment 1042950
+File: os_info
+Created attachment 1042951
+File: program.log
+Created attachment 1042952
+File: storage.log
+Created attachment 1042953
+File: ifcfg.log
+*** This bug has been marked as a duplicate of bug 1208212 ***

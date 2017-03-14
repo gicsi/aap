@@ -1,0 +1,30 @@
+Additional info:
+reporter:       libreport-2.2.3
+WARNING: CPU: 2 PID: 645 at kernel/sched/core.c:7333 __might_sleep+0x7f/0x90()
+do not call blocking ops when !TASK_RUNNING; state=1 set at [<ffffffff810fe6d3>] prepare_to_wait_event+0x63/0x110
+Modules linked in: snd_seq_device(+) snd_pcm snd_timer lpc_ich mfd_core snd i2c_i801 soundcore mei_me shpchp mei parport_pc nuvoton_cir parport rc_core nfsd auth_rpcgss nfs_acl lockd binfmt_misc grace sunrpc radeon i2c_algo_bit firewire_ohci drm_kms_helper firewire_core ttm crc_itu_t ata_generic e1000e pata_acpi drm ptp pps_core
+CPU: 2 PID: 645 Comm: modprobe Not tainted 3.19.8-100.fc20.x86_64+debug #1
+Hardware name:                  /DZ68DB, BIOS DBZ6810H.86A.0032.2011.0928.1502 09/28/2011
+ 0000000000000000 00000000d135d412 ffff88040905bba8 ffffffff8185a380
+ 0000000000000000 ffff88040905bc00 ffff88040905bbe8 ffffffff810ab90a
+ ffffffffa006f0a0 ffffffff81c720ca 000000000000026d 0000000000000000
+Call Trace:
+ [<ffffffff8185a380>] dump_stack+0x4c/0x65
+ [<ffffffff810ab90a>] warn_slowpath_common+0x8a/0xc0
+ [<ffffffff810ab995>] warn_slowpath_fmt+0x55/0x70
+ [<ffffffff810fe6d3>] ? prepare_to_wait_event+0x63/0x110
+ [<ffffffff810fe6d3>] ? prepare_to_wait_event+0x63/0x110
+ [<ffffffff810dbaff>] __might_sleep+0x7f/0x90
+ [<ffffffff818608c7>] mutex_lock_nested+0x47/0x430
+ [<ffffffff8110780f>] ? lock_release_holdtime.part.31+0xf/0x190
+ [<ffffffff818641d6>] ? _raw_spin_unlock_irqrestore+0x36/0x70
+ [<ffffffff8110a4ad>] ? trace_hardirqs_on_caller+0xfd/0x1c0
+ [<ffffffff81153438>] resolve_symbol.isra.41+0x38/0xd0
+ [<ffffffff81155d5b>] load_module+0x1b3b/0x29d0
+ [<ffffffff810fe780>] ? prepare_to_wait_event+0x110/0x110
+ [<ffffffff81151d49>] ? copy_module_from_fd.isra.45+0x129/0x180
+ [<ffffffff81156dc6>] SyS_finit_module+0xa6/0xd0
+ [<ffffffff81864e49>] system_call_fastpath+0x12/0x17
+Created attachment 1041016
+File: dmesg
+Please upgrade your fedora install and reopen if you see this in a newer release.  F20 is going EOL next week.

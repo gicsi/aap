@@ -1,0 +1,132 @@
+Created attachment 1040322
+Import Virtual Machine Snap
+
+Description of problem:
+
+While importing VM's from existing Storage Domain attached to new Data Center
+show no disks and are renamed with prefix External, also the VM's are changed
+from Optimized for Server to Desktop . Detaching and attaching back to old Data Center the issue remains same, the VM show no disks with prefix as External. 
+
+While trying to edit (deleting prefix External) VM name to original fails with
+error "Cannot edit VM. This VM is not managed by the engine" .
+
+
+
+
+Version-Release number of selected component (if applicable): 
+RHEVM 3.5.0
+
+
+How reproducible:
+The issue was seen only on customer setup. 
+
+
+Steps to Reproduce:
+1. Shutdown VM running on existing storage domain to import 
+2. Put Storage Domain into maintenance Mode
+3. Detach Storage Domain 
+4. Attach to new Data Center
+5. Activate the Storage Domain
+6. Try to import VM renamed with Prefix External
+
+Actual results: 
+VM imports but with no disk. Select VM Disk tab show now disks .
+
+
+Expected results:
+VM should import with disks attached to VM 
+
+
+Additional info:
+The VM "ORIGIN" options show as External . Attached screen-shot and
+Data Base output form RHEV-Manager.
+
+LogCollector from New RHEV Data Center is in location :
+
+>> 10.65.231.4:/share/sysreports/1008354/01462587/rhmanager2015061713501434529242
+Created attachment 1040323
+VM with prefix External
+Created attachment 1040325
+Editing VM name to orginal fail erro
+Created attachment 1040326
+Starting VM fail error
+Created attachment 1040327
+DB output for VM and Storage Domain
+Maor, can you take a look please?
+*This* issue is specific to importing guests from an "iSCSI domain".
+This was earlier observed while importing guests from "Export domain" as well.
+https://bugzilla.redhat.com/show_bug.cgi?id=1121089#c9
+
+The common thing between them is : 
+- Why does importing a VM cause it to be marked as "external-xxx"? 
+- Why isnt engine aware about the VM? even though the changes go into the DB.
+- While editing the DB is possible directly via psql queries, webadmin prohibits any changes to the VM properties.
+Hi Anand,
+It sounds like an issue of external VMs.
+External VMs are qemu processes which are still running on the Host and once that Host is registered to the setup those VMs are registered automatically without disks.
+It is recommended to reboot the Host before recovering the oVirt setup to avoid sanlock and external VMs issues (see [1])
+Can you please try to reboot your Host and see if this issue reproduces?
+
+[1] http://www.ovirt.org/Features/ImportStorageDomain#Restrictions:
+"In a disaster recovery scenario, if the Host, which the user about to use, was in the environment which was destroyed, it is recommended to reboot this Host before adding it to the new setup. The reason for that is first, to kill any qemu processes which are still running and might be automatically be added as VMs into the new setup, and also to avoid any sanlock issues."
++++++ Looking at their **current** database (on the 3.5-new_setup):
+
+engine=> SELECT vm_name,vm_guid from vm_static where vm_name like '%external%';
+          vm_name           |               vm_guid                
+----------------------------+--------------------------------------
+ external-DR_NJTran         | 5fdcf084-0b17-4607-9b62-f4dd8a0bd9cf
+ external-I_DR_NJGroupEmail | fd3c415d-6694-4888-bd20-17982ebe09f5
+ external-PLdapR            | e54302d5-f5f5-4646-9db2-64f6a29229c5
+(3 rows)
+
+The external VMs are marked as DOWN and there is no "run_on_vds" for them.
+
+
++++++ Looking at their **old_database** (old 3.5 setup), I also see that it no longer holds any information of hosts (table:vds_static is blank) nor run_on_vds in the following output:
+
+engine=> SELECT vm_guid,run_on_vds from vm_dynamic ;
+               vm_guid                | run_on_vds 
+--------------------------------------+------------
+ 971f271d-4b0a-41e1-b8ad-5e92bd71674e | 
+ 43642577-df29-4322-9339-41fad110b92f | 
+ e54302d5-f5f5-4646-9db2-64f6a29229c5 | 
+(3 rows)
+
+The database does not have any information on which these VMs were running.
+
+I am not able to figure out how we can overcome this ?
+overcome = identify on which hosts they were/are running, reboot those hosts.
+
+are running = if they are using the hypervisors which were previously running any of the above vm's into their - new 3.5_Setup. I am confirming this with them now.
+Hi Anand,
+
+From the attachments I see that those external VMs are part of the OVF_STORE disk, which means that those external VMs were already running in the old setup.
+
+It looks that the previous setup encountered some issues, and I suspect there was some problem with external VMs there which need to be investigated.
+
+is there any chance to get the logs from the previous setup?
+Is this problem reproduces consistently (regarding external VMs)?
+What is the origin of those VMs, when were they last used successfully?
+Created attachment 1041809
+log from old setup
+Looks like there was a problem destroy the VMs.
+From the logs it seems that there was a problem in the VM migration.
+
+For example for vm PLdapR:
+.....
+2015-06-16 16:56:19,706
+VM PLdapR started on Host DRHOVM12
+...
+2015-06-17 09:56:35,805
+VM PLdapR e54302d5-f5f5-4646-9db2-64f6a29229c5 moved from Up --> PoweringDown
+...
+2015-06-17 09:56:38,909
+[org.ovirt.engine.core.vdsbroker.VdsUpdateRunTimeInfo] (DefaultQuartzScheduler_Worker-16) [3bed62c9] VM PLdapR (e54302d5-f5f5-4646-9db2-64f6a29229c5) is running in db and not running in VDS DRHOVM12
+...
+2015-06-17 11:03:40,924
+Importing VM PLdapR as external-PLdapR, as it is running on the on Host, but does not exist in the engine.
+
+Pawan, I've been trying to look into the VDSM log of DRHOVM12 to check if PLdapR encounter any problems shutting down, but could not find the log in the sysreports.
+Can you please attach it to the bug.
+Pending for logs for over two weeks, closing.
+If you can produce these logs, feel free to reopen the BZ.

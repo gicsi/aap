@@ -1,0 +1,23 @@
+Description of problem:
+If the task is finalized using CLI before it's finished on GUI then it never finishes on GUI. That leads to situation when no other task cannot be run from GUI even the volume cannot be stopped from GUI.
+
+Version-Release number of selected component (if applicable):
+rhsc-3.1.0-0.60
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. E.g. run rebalance using GUI
+2. Stop the rebalance task using CLI (before GUI says that the rebalance is finished)
+# gluster volume rebalance <volume_name> stop
+
+Actual results:
+On GUI the task is still displayed as running and it never changes to finished
+
+Expected results:
+At some time GUI finds out the actual state of the task.
+
+Additional info:
+Task could be finished but GUI must not know it yet. Similar behaviour can be simulated with other tasks, e.g remove-brick (stop, commit or retain using CLI)
+After ten minutes GUI says the state as unknown and works again.

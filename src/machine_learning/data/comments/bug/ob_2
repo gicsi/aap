@@ -1,0 +1,5 @@
+SPARCstation 4 and 5 (Microsparc 2) users may see kernel panics when
+using a custom kernel configured for option sun4m only.
+<a href="http://ftp.OpenBSD.org/pub/OpenBSD/patches/2.2/sparc/sun4m.patch">
+A workaround (kernel source patch) is available</a>.  Apply the patch and
+then re-build your kernel.

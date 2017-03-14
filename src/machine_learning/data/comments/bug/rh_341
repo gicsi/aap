@@ -1,0 +1,144 @@
+Description of problem:
+
+lvm vgremove -f VG
+  /run/lvm/lvmetad.socket: connect failed: No such file or directory
+  WARNING: Failed to connect to lvmetad. Falling back to internal scanning.
+[ 2869.078935] BUG: unable to handle kernel NULL pointer dereference at 0000000000000a00
+[ 2869.078935] IP: [<ffffffff8140b1c0>] __blkg_lookup+0x40/0xe0
+[ 2869.078935] PGD 0 
+[ 2869.078935] Oops: 0000 [#5] SMP 
+[ 2869.078935] Modules linked in: fat xfs nls_utf8 isofs btrfs xor raid6_pq kvm_amd kvm snd_pcsp snd_pcm snd_timer snd soundcore serio_raw ata_generic pata_acpi libcrc32c crc8 crc_itu_t crc_ccitt virtio_pci virtio_mmio virtio_input virtio_balloon virtio_scsi sym53c8xx scsi_transport_spi megaraid_sas megaraid_mbox megaraid_mm megaraid ideapad_laptop rfkill sparse_keymap video virtio_net virtio_gpu ttm drm_kms_helper drm virtio_console virtio_rng virtio_blk virtio_ring virtio crc32
+[ 2869.078935] CPU: 0 PID: 6537 Comm: lvm Tainted: G      D         4.2.0-0.rc0.git2.1.fc23.x86_64 #1
+[ 2869.078935] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.1-20150619_004852- 04/01/2014
+[ 2869.078935] task: ffff88001bab0000 ti: ffff88000fc28000 task.ti: ffff88000fc28000
+[ 2869.078935] RIP: 0010:[<ffffffff8140b1c0>]  [<ffffffff8140b1c0>] __blkg_lookup+0x40/0xe0
+[ 2869.078935] RSP: 0018:ffff88000fc2ba28  EFLAGS: 00000046
+[ 2869.078935] RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000002
+[ 2869.078935] RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffffffff832bdb20
+[ 2869.078935] RBP: ffff88000fc2ba48 R08: 0000000000000000 R09: 0000000000000001
+[ 2869.078935] R10: ffff88001bab0000 R11: 0000000000000000 R12: 0000000000000000
+[ 2869.078935] R13: ffffffff832bdb20 R14: 0000000000000000 R15: 0000000000000000
+[ 2869.078935] FS:  00007f3431cbb880(0000) GS:ffff88001ec00000(0000) knlGS:0000000000000000
+[ 2869.078935] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[ 2869.078935] CR2: 0000000000000a00 CR3: 000000001208b000 CR4: 00000000000007f0
+[ 2869.078935] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 2869.078935] DR3: 0000000000000000 DR6: 0000000000000000 DR7: 0000000000000000
+[ 2869.078935] Stack:
+[ 2869.078935]  ffffffff832bdb20 ffff88001bd17c00 ffff88001b874a38 ffff88001b875490
+[ 2869.078935]  ffff88000fc2ba88 ffffffff8140f534 ffffffff8140f4b6 0000000000000046
+[ 2869.078935]  ffffffff813e8068 ffff88001b874a38 ffffffff81ef1980 0000000000000000
+[ 2869.078935] Call Trace:
+[ 2869.078935]  [<ffffffff8140f534>] blk_throtl_drain+0xb4/0x220
+[ 2869.078935]  [<ffffffff8140f4b6>] ? blk_throtl_drain+0x36/0x220
+[ 2869.078935]  [<ffffffff813e8068>] ? blk_queue_bypass_start+0x68/0xb0
+[ 2869.078935]  [<ffffffff8140c35d>] blkcg_drain_queue+0x2d/0x60
+[ 2869.078935]  [<ffffffff813e6689>] __blk_drain_queue+0xc9/0x1a0
+[ 2869.078935]  [<ffffffff813e8068>] ? blk_queue_bypass_start+0x68/0xb0
+[ 2869.078935]  [<ffffffff813e8072>] blk_queue_bypass_start+0x72/0xb0
+[ 2869.078935]  [<ffffffff8140c3c1>] ? blkcg_exit_queue+0x31/0x40
+[ 2869.078935]  [<ffffffff8140a1c9>] blkcg_deactivate_policy+0x39/0x130
+[ 2869.078935]  [<ffffffff8140f7f8>] blk_throtl_exit+0x38/0x50
+[ 2869.078935]  [<ffffffff8140c3c9>] blkcg_exit_queue+0x39/0x40
+[ 2869.078935]  [<ffffffff813ee73e>] blk_release_queue+0x1e/0xc0
+[ 2869.078935]  [<ffffffff8141f16a>] kobject_release+0x7a/0x190
+[ 2869.078935]  [<ffffffff8141f01f>] kobject_put+0x2f/0x60
+[ 2869.078935]  [<ffffffff813e9e5b>] blk_cleanup_queue+0x18b/0x280
+[ 2869.078935]  [<ffffffff8169df9e>] cleanup_mapped_device+0xde/0x110
+[ 2869.078935]  [<ffffffff816a0ea8>] __dm_destroy+0x1a8/0x2c0
+[ 2869.078935]  [<ffffffff816a23f3>] dm_destroy+0x13/0x20
+[ 2869.078935]  [<ffffffff816a7e7d>] dev_remove+0x10d/0x170
+[ 2869.078935]  [<ffffffff816a7d70>] ? dev_suspend+0x280/0x280
+[ 2869.078935]  [<ffffffff816a8582>] ctl_ioctl+0x282/0x550
+[ 2869.078935]  [<ffffffff8138021c>] ? SYSC_semtimedop+0x30c/0x1090
+[ 2869.078935]  [<ffffffff810ff3f5>] ? cpuacct_charge+0x5/0x1a0
+[ 2869.078935]  [<ffffffff810dcee7>] ? finish_task_switch+0x57/0x230
+[ 2869.078935]  [<ffffffff816a8863>] dm_ctl_ioctl+0x13/0x20
+[ 2869.078935]  [<ffffffff8128316e>] do_vfs_ioctl+0x2ee/0x550
+[ 2869.078935]  [<ffffffff8128f706>] ? __fget_light+0x66/0x90
+[ 2869.078935]  [<ffffffff81283449>] SyS_ioctl+0x79/0x90
+[ 2869.078935]  [<ffffffff8186062e>] entry_SYSCALL_64_fastpath+0x12/0x76
+[ 2869.078935] Code: f4 41 89 d6 48 8b 9f 38 01 00 00 e8 6b a1 d1 ff 85 c0 74 09 80 3d f3 19 b5 00 00 74 56 48 85 db 74 09 4c 39 23 0f 84 9a 00 00 00 <49> 63 b4 24 00 0a 00 00 49 8d bd 28 01 00 00 e8 6c 73 01 00 48 
+[ 2869.078935] RIP  [<ffffffff8140b1c0>] __blkg_lookup+0x40/0xe0
+[ 2869.078935]  RSP <ffff88000fc2ba28>
+[ 2869.078935] CR2: 0000000000000a00
+[ 2869.078935] ---[ end trace 4cbbdef4e1a3ff80 ]---
+[ 2869.078935] BUG: sleeping function called from invalid context at include/linux/sched.h:2729
+[ 2869.078935] in_atomic(): 1, irqs_disabled(): 1, pid: 6537, name: lvm
+[ 2869.078935] INFO: lockdep is turned off.
+[ 2869.078935] irq event stamp: 0
+[ 2869.078935] hardirqs last  enabled at (0): [<          (null)>]           (null)
+[ 2869.078935] hardirqs last disabled at (0): [<ffffffff810a8b96>] copy_process.isra.28.part.29+0x5f6/0x1c40
+[ 2869.078935] softirqs last  enabled at (0): [<ffffffff810a8b96>] copy_process.isra.28.part.29+0x5f6/0x1c40
+[ 2869.078935] softirqs last disabled at (0): [<          (null)>]           (null)
+[ 2869.078935] CPU: 0 PID: 6537 Comm: lvm Tainted: G      D         4.2.0-0.rc0.git2.1.fc23.x86_64 #1
+[ 2869.078935] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.1-20150619_004852- 04/01/2014
+[ 2869.078935]  0000000000000000 000000006abe309c ffff88000fc2b6a8 ffffffff81856f03
+[ 2869.078935]  0000000000000000 ffff88001bab0000 ffff88000fc2b6d8 ffffffff810d9f91
+[ 2869.078935]  ffff88000fc2b738 ffffffff81c79335 0000000000000aa9 0000000000000000
+[ 2869.078935] Call Trace:
+[ 2869.078935]  [<ffffffff81856f03>] dump_stack+0x4c/0x65
+[ 2869.078935]  [<ffffffff810d9f91>] ___might_sleep+0x181/0x240
+[ 2869.078935]  [<ffffffff810da09d>] __might_sleep+0x4d/0x90
+[ 2869.078935]  [<ffffffff810be9b3>] exit_signals+0x33/0x150
+[ 2869.078935]  [<ffffffff810ae8e9>] do_exit+0xc9/0xc30
+[ 2869.078935]  [<ffffffff8111c271>] ? kmsg_dump+0x151/0x1a0
+[ 2869.078935]  [<ffffffff8111c154>] ? kmsg_dump+0x34/0x1a0
+[ 2869.078935]  [<ffffffff8102070e>] oops_end+0x9e/0xd0
+[ 2869.078935]  [<ffffffff810701a5>] no_context+0x135/0x390
+[ 2869.078935]  [<ffffffff81070488>] __bad_area_nosemaphore+0x88/0x200
+[ 2869.078935]  [<ffffffff81070613>] bad_area_nosemaphore+0x13/0x20
+[ 2869.078935]  [<ffffffff81070915>] __do_page_fault+0xd5/0x470
+[ 2869.078935]  [<ffffffff81070cdf>] do_page_fault+0x2f/0x80
+[ 2869.078935]  [<ffffffff81861277>] ? native_iret+0x7/0x7
+[ 2869.078935]  [<ffffffff81862848>] page_fault+0x28/0x30
+[ 2869.078935]  [<ffffffff8140b1c0>] ? __blkg_lookup+0x40/0xe0
+[ 2869.078935]  [<ffffffff8140b1a5>] ? __blkg_lookup+0x25/0xe0
+[ 2869.078935]  [<ffffffff8140f534>] blk_throtl_drain+0xb4/0x220
+[ 2869.078935]  [<ffffffff8140f4b6>] ? blk_throtl_drain+0x36/0x220
+[ 2869.078935]  [<ffffffff813e8068>] ? blk_queue_bypass_start+0x68/0xb0
+[ 2869.078935]  [<ffffffff8140c35d>] blkcg_drain_queue+0x2d/0x60
+[ 2869.078935]  [<ffffffff813e6689>] __blk_drain_queue+0xc9/0x1a0
+[ 2869.078935]  [<ffffffff813e8068>] ? blk_queue_bypass_start+0x68/0xb0
+[ 2869.078935]  [<ffffffff813e8072>] blk_queue_bypass_start+0x72/0xb0
+[ 2869.078935]  [<ffffffff8140c3c1>] ? blkcg_exit_queue+0x31/0x40
+[ 2869.078935]  [<ffffffff8140a1c9>] blkcg_deactivate_policy+0x39/0x130
+[ 2869.078935]  [<ffffffff8140f7f8>] blk_throtl_exit+0x38/0x50
+[ 2869.078935]  [<ffffffff8140c3c9>] blkcg_exit_queue+0x39/0x40
+[ 2869.078935]  [<ffffffff813ee73e>] blk_release_queue+0x1e/0xc0
+[ 2869.078935]  [<ffffffff8141f16a>] kobject_release+0x7a/0x190
+[ 2869.078935]  [<ffffffff8141f01f>] kobject_put+0x2f/0x60
+[ 2869.078935]  [<ffffffff813e9e5b>] blk_cleanup_queue+0x18b/0x280
+[ 2869.078935]  [<ffffffff8169df9e>] cleanup_mapped_device+0xde/0x110
+[ 2869.078935]  [<ffffffff816a0ea8>] __dm_destroy+0x1a8/0x2c0
+[ 2869.078935]  [<ffffffff816a23f3>] dm_destroy+0x13/0x20
+[ 2869.078935]  [<ffffffff816a7e7d>] dev_remove+0x10d/0x170
+[ 2869.078935]  [<ffffffff816a7d70>] ? dev_suspend+0x280/0x280
+[ 2869.078935]  [<ffffffff816a8582>] ctl_ioctl+0x282/0x550
+[ 2869.078935]  [<ffffffff8138021c>] ? SYSC_semtimedop+0x30c/0x1090
+[ 2869.078935]  [<ffffffff810ff3f5>] ? cpuacct_charge+0x5/0x1a0
+[ 2869.078935]  [<ffffffff810dcee7>] ? finish_task_switch+0x57/0x230
+[ 2869.078935]  [<ffffffff816a8863>] dm_ctl_ioctl+0x13/0x20
+[ 2869.078935]  [<ffffffff8128316e>] do_vfs_ioctl+0x2ee/0x550
+[ 2869.078935]  [<ffffffff8128f706>] ? __fget_light+0x66/0x90
+[ 2869.078935]  [<ffffffff81283449>] SyS_ioctl+0x79/0x90
+[ 2869.078935]  [<ffffffff8186062e>] entry_SYSCALL_64_fastpath+0x12/0x76
+[ 2869.078935] note: lvm[6537] exited with preempt_count 2
+
+Version-Release number of selected component (if applicable):
+
+kernel 4.2.0-0.rc0.git2.1.fc23
+
+How reproducible:
+
+Unknown.
+
+Steps to Reproduce:
+1. Run the libguestfs test suite.
+
+Actual results:
+
+Look for "FAIL:" in the following file:
+https://kojipkgs.fedoraproject.org//work/tasks/9782/10249782/build.log
+Reasonably sure this is just a duplicate of 1237136.
+
+*** This bug has been marked as a duplicate of bug 1237136 ***

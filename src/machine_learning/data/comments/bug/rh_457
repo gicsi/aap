@@ -1,0 +1,3 @@
+Description of problem:
+gprbuild since 2015 is available on arm so the macros can be removed. I'm rebuilding all packages which had %GPRbuilder_arches
+I added ARM to GPRbuild_arches for now, making GNAT_arches and GPRbuild_arches equal.

@@ -1,0 +1,9 @@
+The kernel was using a fixed and hard-coded location for the arguments
+vector passed from the <strong>/boot</strong> loader.  This prevented
+<strong>/boot</strong> from placing the boot arguments vector at any
+other location, causing a kernel crash early in the autoconfiguration
+stage.  In 2.5, the bootblocks will be modified to use a new location.
+Hence, if you wish old kernels to boot on a new bootblock, those
+kernels will only work if they were linked with this patch.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/i386/bootargv.patch">
+A source code patch exists which remedies this problem.</a>

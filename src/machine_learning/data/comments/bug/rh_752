@@ -1,0 +1,1 @@
+Hi, I'd like to build python-django-filter for Python 3 and since it needs django-discover-runner for tests, I'll need python3-django-discover-runner subpackage. Thanks!

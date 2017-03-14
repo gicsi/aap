@@ -1,0 +1,24 @@
+Description of problem:
+When I choose Heatmap report and click on Hosts in options window which pops up, there's a "Close" button in the list. The button is not displaying whole - it's cropped by bottom of the hosts list. 
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.Login to rhevm-reports
+2.Go to Heatmap report
+3.Click on Hosts option
+
+Actual results:
+Close button not displayed properly
+
+Expected results:
+Close button displayed properly
+Please attach a screenshot.
+Created attachment 1042995
+Screenshot of decribed bug
+
+Here is the screenshot.
+This is a JasperServer issue.
+Please open an upstream bug for Jasper, http://community.jaspersoft.com/bug-tracker
+opened case 00061349

@@ -1,0 +1,52 @@
+Apply by doing:
+	/usr/src
+	patch -p0 < 009_pf.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/pf.c
+===================================================================
+RCS file: /cvs/src/sys/net/pf.c,v
+retrieving revision 1.696
+retrieving revision 1.696.2.1
+diff -u -p -r1.696 -r1.696.2.1
+--- sys/net/pf.c	5 Aug 2010 17:21:19 -0000	1.696
++++ sys/net/pf.c	16 Feb 2011 19:13:21 -0000	1.696.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: pf.c,v 1.696 2010/08/05 17:21:19 bluhm Exp $ */
++/*	$OpenBSD: pf.c,v 1.696.2.1 2011/02/16 19:13:21 sthen Exp $ */
+ 
+ /*
+  * Copyright (c) 2001 Daniel Hartmeier
+@@ -2215,8 +2215,8 @@ pf_match_addr_range(struct pf_addr *b, s
+ 	switch (af) {
+ #ifdef INET
+ 	case AF_INET:
+-		if ((a->addr32[0] < b->addr32[0]) ||
+-		    (a->addr32[0] > e->addr32[0]))
++		if ((ntohl(a->addr32[0]) < ntohl(b->addr32[0])) ||
++		    (ntohl(a->addr32[0]) > ntohl(e->addr32[0])))
+ 			return (0);
+ 		break;
+ #endif /* INET */
+@@ -2226,15 +2226,15 @@ pf_match_addr_range(struct pf_addr *b, s
+ 
+ 		/* check a >= b */
+ 		for (i = 0; i < 4; ++i)
+-			if (a->addr32[i] > b->addr32[i])
++			if (ntohl(a->addr32[i]) > ntohl(b->addr32[i]))
+ 				break;
+-			else if (a->addr32[i] < b->addr32[i])
++			else if (ntohl(a->addr32[i]) < ntohl(b->addr32[i]))
+ 				return (0);
+ 		/* check a <= e */
+ 		for (i = 0; i < 4; ++i)
+-			if (a->addr32[i] < e->addr32[i])
++			if (ntohl(a->addr32[i]) < ntohl(e->addr32[i]))
+ 				break;
+-			else if (a->addr32[i] > e->addr32[i])
++			else if (ntohl(a->addr32[i]) > ntohl(e->addr32[i]))
+ 				return (0);
+ 		break;
+ 	}
+

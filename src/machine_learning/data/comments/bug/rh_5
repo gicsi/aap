@@ -1,0 +1,27 @@
+Description of problem:
+During rhevm-setup on rhel6.7 the default selection of firewall is not accepted
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.run rhevm-setup --ofline
+2.when asked about firewall manager press enter to select default iptables.
+
+Actual results:
+"failed" is displayed and question reappears
+the next question only after "iptables" is manually typed as answer
+
+
+Expected results:
+default iptables selected and next question appears
+
+Additional info:
+Attached screenshot
+Created attachment 1050175
+screnshot
+iptables is showed as option, not as default.
+This is done by design, closing as not a bug.

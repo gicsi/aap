@@ -1,0 +1,39 @@
+Created attachment 1041402
+openssh debug info
+
+ssh couldn't bind local port for dynamic forwarding
+
+Get message: Cannot assign requested address
+
+ netstat -ltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 localhost.locald:domain 0.0.0.0:*               LISTEN      1410/dnsmasq        
+tcp        0      0 0.0.0.0:ssh             0.0.0.0:*               LISTEN      1298/sshd           
+tcp        0      0 localhost.localdoma:ipp 0.0.0.0:*               LISTEN      2631/cupsd          
+tcp6       0      0 [::]:ssh                [::]:*                  LISTEN      1298/sshd           
+tcp6       0      0 localhost6.localdom:ipp [::]:*                  LISTEN      2631/cupsd          
+tcp6       0      0 localhost6.locald:italk [::]:*                  LISTEN      6053/ssh
+Created attachment 1041403
+list upgraded packages
+This occurs after last system update
+Bind IPv6 address was works:
+[mikhail@localhost ~]$ telnet 127.0.0.1 12345
+Trying 127.0.0.1...
+^C
+[mikhail@localhost ~]$ telnet ::1 12345
+Trying ::1...
+Connected to ::1.
+Escape character is '^]'.
+Why do you fill bug on openssh, if you claim that this happened after last update and openssh is not in the list of updated packages?
+
+Unfortunately I can't reproduce your failure with my updated Fedora 22. Can you have a look if you don't have some selinux denial in audit?
+# ausearch -m AVC -ts recent
+
+If you specify -4 option, will it fail the forwarding completely? It looks like somehow wrong configured machine ...
+$ ssh -4 -D12345 crmdev@81.30.214.93 -p 21212 -vvv
+Seems to be related to NM bug:
+https://bugzilla.redhat.com/show_bug.cgi?id=1234121
+
+Can you retest with previous version of NM to make sure it is this one? If so I will close it as duplicate.
+Yes it related to NM bug, I know.

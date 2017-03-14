@@ -1,0 +1,5 @@
+Dolphin returns "Invalid protocol" error message while trying to browse hidden folders
+Steps to Reproduce:
+1. Open Dolphin
+2. click on address bar, erase everything
+3. then start writing the address of an hidden folder like .kde and press enter.

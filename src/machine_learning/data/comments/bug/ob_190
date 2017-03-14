@@ -1,0 +1,6 @@
+Due to changes in the options handling this caused problems with some
+DHCP clients such as Solaris/OpenSolaris and some embedded routers not
+accepting DHCP offers.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/006_dhcpd.patch">
+A source code patch exists which remedies this problem.</a>

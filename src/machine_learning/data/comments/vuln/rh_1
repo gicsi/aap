@@ -1,0 +1,4 @@
+Description of problem:
+
+Please, build xerces-c-3.1 in EPEL6.
+xerces-c is a RH package, not an EPEL package. I couldn't do it if I wanted! What is more, the version you want is not binary-compatible with the current version.

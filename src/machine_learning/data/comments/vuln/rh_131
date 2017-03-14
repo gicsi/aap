@@ -1,0 +1,51 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html/Installation_Guide/chap-Upgrading_Red_Hat_Satellite_and_Capsule_Server.html#sect-Red_Hat_Satellite-Installation_Guide-chap-Upgrading_Red_Hat_Satellite_and_Capsule_Server-Upgrading_Red_Hat_Satellite
+
+
+Section Number and Name: 
+CHAPTER 7. UPGRADING RED HAT SATELLITE SERVER AND CAPSULE SERVER
+
+Describe the issue: 
+subscription-manager commands in upgrade procedure state incorrect repos.
+
+subscription-manager repos --disable rhel-server-7-satellite-6.0-rpms 
+subscription-manager repos --enable rhel-server-7-satellite-6-beta-rpms
+
+
+Suggestions for improvement: 
+
+subscription-manager repos --disable rhel-7-server-satellite-6.0-rpms 
+subscription-manager repos --enable rhel-7-server-satellite-6-beta-rpms
+
+Also, any other Satellite 6.0 repos that are enabled should be disabled and the corresponding Satellite 6.1 Beta repos enabled.
+
+e.g.
+rhel-7-server-satellite-optional-6.0-rpms
+rhel-7-server-satellite-6.0-source-rpms
+rhel-7-server-satellite-6.0-debug-rpms
+rhel-7-server-satellite-optional-6.0-source-rpms
+rhel-7-server-satellite-optional-6.0-debug-rpms
+
+For a capsule:
+rhel-7-server-satellite-capsule-6.0-debug-rpms
+rhel-7-server-satellite-capsule-optional-6.0-debug-rpms
+rhel-7-server-satellite-capsule-6.0-source-rpms
+rhel-7-server-satellite-capsule-optional-6.0-rpms
+rhel-7-server-satellite-capsule-6.0-rpms
+rhel-7-server-satellite-capsule-optional-6.0-source-rpms
+
+
+
+Additional information:
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+This seems to contradict https://bugzilla.redhat.com/show_bug.cgi?id=1233848 which states:
+
+BAD: rhel-7-server-satellite-6-beta-rpms 
+GOOD: rhel-server-7-satellite-6-beta-rpms 
+
+
+Can I get a definite answer before I do any more updates?
+
+Thanks
+Sorry, my bad the above are correct.

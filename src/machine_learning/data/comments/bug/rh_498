@@ -1,0 +1,97 @@
+Description of problem:
+I have allready installed from kickstart file before a big update which included kernel 4.0.4. It doesn't work now. The kickstart file as same as early. Anaconda 21.48.22
+
+Version-Release number of selected component:
+anaconda-core-21.48.22-1.fc21.x86_64
+
+The following was filed automatically by anaconda:
+anaconda 21.48.22-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib/python2.7/site-packages/blivet/devices.py", line 772, in __repr__
+    "formatArgs": self.formatArgs, "origFmt": self.originalFormat.type})
+  File "/usr/lib64/python2.7/logging/__init__.py", line 335, in getMessage
+    msg = msg % self.args
+  File "/usr/lib64/python2.7/logging/__init__.py", line 471, in format
+    record.message = record.getMessage()
+  File "/usr/lib64/python2.7/logging/__init__.py", line 732, in format
+    return fmt.format(record)
+  File "/usr/lib64/python2.7/logging/handlers.py", line 843, in emit
+    msg = self.format(record) + '\000'
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/anaconda_log.py", line 85, in emit
+    SysLogHandler.emit(self, record)
+  File "/usr/lib64/python2.7/logging/__init__.py", line 757, in handle
+    self.emit(record)
+  File "/usr/lib64/python2.7/logging/__init__.py", line 1329, in callHandlers
+    hdlr.handle(record)
+  File "/usr/lib64/python2.7/logging/__init__.py", line 1289, in handle
+    self.callHandlers(record)
+  File "/usr/lib64/python2.7/logging/__init__.py", line 1279, in _log
+    self.handle(record)
+  File "/usr/lib64/python2.7/logging/__init__.py", line 1160, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1230, in addUdevDevice
+    log.info("got device: %r", device)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2172, in _populate
+    self.addUdevDevice(dev)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2107, in populate
+    self._populate()
+  File "/usr/lib/python2.7/site-packages/blivet/__init__.py", line 480, in reset
+    self.devicetree.populate(cleanupOnly=cleanupOnly)
+  File "/usr/lib/python2.7/site-packages/blivet/__init__.py", line 183, in storageInitialize
+    storage.reset()
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 227, in run
+    threading.Thread.run(self, *args, **kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 112, in wait
+    self.raise_if_error(name)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/packaging/__init__.py", line 1227, in _runThread
+    threadMgr.wait(THREAD_STORAGE)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 227, in run
+    threading.Thread.run(self, *args, **kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 112, in wait
+    self.raise_if_error(name)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/ui/gui/spokes/source.py", line 674, in _initialize
+    threadMgr.wait(constants.THREAD_PAYLOAD)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 227, in run
+    threading.Thread.run(self, *args, **kwargs)
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 2: ordinal not in range(128)
+
+Additional info:
+cmdline:        /usr/bin/python  /usr/sbin/anaconda --kickstart=/usr/share/ks/wstation.ks
+cmdline_file:   BOOT_IMAGE=vmlinuz0 initrd=initrd0.img root=live:CDLABEL=Live21 rootfstype=auto ro rd.live.image quiet biosdevname=0 net.ifnames=0 rhgb rd.luks=0 rd.md=0 rd.dm=0 
+executable:     /usr/sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.5-200.fc21.x86_64
+other involved packages: python-blivet-0.61.15-1.fc21.noarch, python-libs-2.7.8-9.fc21.x86_64, anaconda-gui-21.48.22-1.fc21.x86_64
+product:        Fedora"
+release:        Fedora release 21 (Twenty One)
+type:           anaconda
+version:        Fedora
+Created attachment 1042814
+File: anaconda-tb
+Created attachment 1042815
+File: anaconda.log
+Created attachment 1042816
+File: environ
+Created attachment 1042817
+File: journalctl
+Created attachment 1042818
+File: lsblk_output
+Created attachment 1042819
+File: nmcli_dev_list
+Created attachment 1042820
+File: os_info
+Created attachment 1042821
+File: program.log
+Created attachment 1042822
+File: storage.log
+Created attachment 1042823
+File: wstation.ks
+Created attachment 1042824
+File: ifcfg.log
+This is definitely fixed in rawhide, since with the switch to python3 all of the types are now unicode strings. This is probably fixed in Fedora 22.

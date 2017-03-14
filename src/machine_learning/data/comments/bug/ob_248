@@ -1,0 +1,5 @@
+An unprivileged user may hang the system.
+
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.4/common/003_vnode.patch">
+A source code patch exists which remedies this problem.</a>

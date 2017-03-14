@@ -1,0 +1,33 @@
+Description of problem:
+After the update to Thunderbird 38 (thunderbird-38.0.1-2.fc22 the extension Lightning does not work anymore. When Thunderbird starts the following message is shown:
+
+"The binary component required for Lightning could not be loaded, likely because the wrong version combination is being used. You currently have Lightning 4.0.0.1 installed, but should be using a version from the 4.0 series."
+
+The following message is stored in Thunderbird Error Console:
+
+"Failed to load native module at path '/home/user/.thunderbird/d3r5t6t6.default/extensions/{e2fda1a4-762b-4020-b5ad-a41df1933103}/components/libcalbasecomps.so': (80004005) /home/user/.thunderbird/d3r5t6t6.default/extensions/{e2fda1a4-762b-4020-b5ad-a41df1933103}/components/libcalbasecomps.so: failed to map segment from shared object"
+
+Version-Release number of selected component (if applicable):
+Name        : thunderbird
+Arch        : x86_64
+Epoch       : 0
+Version     : 38.0.1
+Release     : 2.fc22
+
+How reproducible:
+Update or re-install Thunderbird, and start it afterwards.
+
+
+Steps to Reproduce:
+1. Update Thunderbird to version 38
+2. Start Thunderbird
+
+Actual results:
+The extension lighting is not loaded/working correctly. 
+
+Expected results:
+A working lightning extension
+
+Additional info:
+I disabled the extension and install version 4.0.0.1 from the Mozilla Repository with the same result. I get the same error message when I start Thunderbird.
+*** This bug has been marked as a duplicate of bug 1236283 ***

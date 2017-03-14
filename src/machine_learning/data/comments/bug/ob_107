@@ -1,0 +1,5 @@
+An improper bounds check in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=semget&amp;sektion=2">semget(2)</a>
+system call can allow a local user to cause a kernel panic.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/002_semget.patch">
+A source code patch exists which remedies this problem.</a>

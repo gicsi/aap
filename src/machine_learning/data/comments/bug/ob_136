@@ -1,0 +1,6 @@
+Under a certain network load the kernel can run out of stack space.  This was
+encountered in an environment using CARP on a VLAN interface.  This issue initially
+manifested itself as a FPU related crash on boot up.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/014_rnd.patch">
+A source code patch exists which remedies this problem.</a>

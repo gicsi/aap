@@ -1,0 +1,166 @@
+Description of problem:
+I configured and enabled cups-browsed.service to see company network printers. Since that time, powering off or rebooting my computer is delayed by 90 seconds, because it waits for stopping cups-browsed.service. I can reproduce it easily by hand, by trying to stop the service manually. It takes 90 seconds and then systemd kills the service. (I think I also saw it taking just 30 seconds, and then it was correctly stopped).
+
+This happens only *once* per boot (within the first attempt to stop it). If I start it again, it can be stopped immediately. Once I reboot, it times out when stopping it for the first time again.
+
+
+$ time sudo systemctl stop cups-browsed
+
+real	1m30.259s
+user	0m0.006s
+sys	0m0.011s
+
+
+I watched it using strace during stop command, and it spends 99% of the time printing this:
+
+poll([{fd=4, events=POLLIN|POLLOUT}], 1, 250) = 0 (Timeout)
+poll([{fd=4, events=POLLIN|POLLOUT}], 1, 250) = 0 (Timeout)
+poll([{fd=4, events=POLLIN|POLLOUT}], 1, 250) = 0 (Timeout)
+poll([{fd=4, events=POLLIN|POLLOUT}], 1, 250) = 0 (Timeout)
+...
+
+There are 3 sections like this in the log, 120 lines each. So it's 0.5 sec timeout for each line -> 30 sec timeout, performed three times.
+
+gstack output during this time is either this:
+
+Thread 2 (Thread 0x7f1365ef5700 (LWP 1011)):
+#0  0x00007f1368ec766d in poll () from /lib64/libc.so.6
+#1  0x00007f13698abdbc in g_main_context_iterate.isra () from /lib64/libglib-2.0.so.0
+#2  0x00007f13698ac142 in g_main_loop_run () from /lib64/libglib-2.0.so.0
+#3  0x00007f1369ecd696 in gdbus_shared_thread_func () from /lib64/libgio-2.0.so.0
+#4  0x00007f13698d30a5 in g_thread_proxy () from /lib64/libglib-2.0.so.0
+#5  0x00007f136aee9555 in start_thread () from /lib64/libpthread.so.0
+#6  0x00007f1368ed2f3d in clone () from /lib64/libc.so.6
+Thread 1 (Thread 0x7f136c2fa800 (LWP 998)):
+#0  0x00007f1368ec766d in poll () from /lib64/libc.so.6
+#1  0x00007f136baa0075 in httpAddrConnect2 () from /lib64/libcups.so.2
+#2  0x00007f136ba9e6e2 in httpReconnect2 () from /lib64/libcups.so.2
+#3  0x00007f136babeadf in cupsSendRequest () from /lib64/libcups.so.2
+#4  0x00007f136babedd4 in cupsDoIORequest () from /lib64/libcups.so.2
+#5  0x00007f136c11b4d2 in handle_cups_queues ()
+#6  0x00007f136c11a2e9 in main ()
+
+or this (one line different):
+
+Thread 2 (Thread 0x7f1365ef5700 (LWP 1011)):
+#0  0x00007f1368ec766d in poll () from /lib64/libc.so.6
+#1  0x00007f13698abdbc in g_main_context_iterate.isra () from /lib64/libglib-2.0.so.0
+#2  0x00007f13698ac142 in g_main_loop_run () from /lib64/libglib-2.0.so.0
+#3  0x00007f1369ecd696 in gdbus_shared_thread_func () from /lib64/libgio-2.0.so.0
+#4  0x00007f13698d30a5 in g_thread_proxy () from /lib64/libglib-2.0.so.0
+#5  0x00007f136aee9555 in start_thread () from /lib64/libpthread.so.0
+#6  0x00007f1368ed2f3d in clone () from /lib64/libc.so.6
+Thread 1 (Thread 0x7f136c2fa800 (LWP 998)):
+#0  0x00007f1368ec766d in poll () from /lib64/libc.so.6
+#1  0x00007f136baa0075 in httpAddrConnect2 () from /lib64/libcups.so.2
+#2  0x00007f136ba9e6e2 in httpReconnect2 () from /lib64/libcups.so.2
+#3  0x00007f136ba9e1d7 in http_send () from /lib64/libcups.so.2
+#4  0x00007f136babe855 in cupsSendRequest () from /lib64/libcups.so.2
+#5  0x00007f136babedd4 in cupsDoIORequest () from /lib64/libcups.so.2
+#6  0x00007f136c11b4d2 in handle_cups_queues ()
+#7  0x00007f136c11a2e9 in main ()
+
+
+I don't see anything interesting in the journal:
+Jul 01 13:17:12 dryad sudo[3193]: kparal : TTY=pts/0 ; PWD=/home/kparal ; USER=root ; COMMAND=/bin/systemctl stop cups-browsed
+Jul 01 13:17:12 dryad audit[3193]: <audit-1123> pid=3193 uid=1000 auid=1000 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='cwd="/home/kparal" cmd=73797374656D63746C2073746F7020637570732D62726F77736564 terminal=pts/0 res=success'
+Jul 01 13:17:12 dryad audit[3193]: <audit-1110> pid=3193 uid=0 auid=1000 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_env,pam_fprintd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'
+Jul 01 13:17:12 dryad sudo[3193]: pam_unix(sudo:session): session opened for user root by kparal(uid=0)
+Jul 01 13:17:12 dryad audit[3193]: <audit-1105> pid=3193 uid=0 auid=1000 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:session_open grantors=pam_keyinit,pam_limits,pam_keyinit,pam_limits,pam_systemd,pam_unix acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'
+Jul 01 13:17:12 dryad polkitd[885]: Registered Authentication Agent for unix-process:3194:25785 (system bus name :1.91 [/usr/bin/pkttyagent --notify-fd 5 --fallback], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.utf8)
+Jul 01 13:17:12 dryad systemd[1]: Stopping Make remote CUPS printers available locally...
+Jul 01 13:18:43 dryad cupsd[902]: [Client 16] Local authentication certificate not found.
+Jul 01 13:18:43 dryad systemd[1]: cups-browsed.service stop-sigterm timed out. Killing.
+Jul 01 13:18:43 dryad systemd[1]: cups-browsed.service: main process exited, code=killed, status=9/KILL
+Jul 01 13:18:43 dryad systemd[1]: Stopped Make remote CUPS printers available locally.
+Jul 01 13:18:43 dryad systemd[1]: Unit cups-browsed.service entered failed state.
+Jul 01 13:18:43 dryad systemd[1]: cups-browsed.service failed.
+Jul 01 13:18:43 dryad audit[1]: <audit-1131> pid=1 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:init_t:s0 msg='unit=cups-browsed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=failed'
+Jul 01 13:18:43 dryad sudo[3193]: pam_unix(sudo:session): session closed for user root
+Jul 01 13:18:43 dryad polkitd[885]: Unregistered Authentication Agent for unix-process:3194:25785 (system bus name :1.91, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale en_US.utf8) (disconnected from bus)
+Jul 01 13:18:43 dryad audit[3193]: <audit-1106> pid=3193 uid=0 auid=1000 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:session_close grantors=pam_keyinit,pam_limits,pam_keyinit,pam_limits,pam_systemd,pam_unix acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'
+Jul 01 13:18:43 dryad audit[3193]: <audit-1104> pid=3193 uid=0 auid=1000 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 msg='op=PAM:setcred grantors=pam_env,pam_fprintd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=/dev/pts/0 res=success'
+
+except for this line:
+Jul 01 13:18:43 dryad cupsd[902]: [Client 16] Local authentication certificate not found.
+
+
+My network interfaces look like this:
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: enp0s25: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 68:f7:28:c1:ad:23 brd ff:ff:ff:ff:ff:ff
+    inet 10.34.28.141/23 brd 10.34.29.255 scope global dynamic enp0s25
+       valid_lft 86049sec preferred_lft 86049sec
+    inet6 2620:52:0:221c:6af7:28ff:fec1:ad23/128 scope global dynamic 
+       valid_lft 2591651sec preferred_lft 604451sec
+    inet6 fe80::6af7:28ff:fec1:ad23/64 scope link 
+       valid_lft forever preferred_lft forever
+3: wlp3s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 34:02:86:89:d8:8e brd ff:ff:ff:ff:ff:ff
+    inet 10.200.139.123/22 brd 10.200.139.255 scope global dynamic wlp3s0
+       valid_lft 6848sec preferred_lft 6848sec
+    inet6 fe80::3602:86ff:fe89:d88e/64 scope link 
+       valid_lft forever preferred_lft forever
+4: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 52:54:00:6d:09:26 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.11.1/24 brd 192.168.11.255 scope global virbr0
+       valid_lft forever preferred_lft forever
+5: virbr0-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq_codel master virbr0 state DOWN group default qlen 500
+    link/ether 52:54:00:6d:09:26 brd ff:ff:ff:ff:ff:ff
+
+
+
+Version-Release number of selected component (if applicable):
+clean Fedora 22 installation
+bluez-cups-5.29-2.fc22.x86_64
+cups-2.0.3-1.fc22.x86_64
+cups-client-2.0.3-1.fc22.x86_64
+cups-filesystem-2.0.3-1.fc22.noarch
+cups-filters-1.0.69-2.fc22.x86_64
+cups-filters-libs-1.0.69-2.fc22.x86_64
+cups-libs-2.0.3-1.fc22.x86_64
+cups-pk-helper-0.2.5-5.fc22.x86_64
+gutenprint-cups-5.2.10-11.fc22.x86_64
+python3-cups-1.9.72-1.fc22.x86_64
+
+
+How reproducible:
+always, once per boot
+
+Steps to Reproduce:
+1. reboot
+2. time systemctl stop cups-browsed.service
+3. in 90 seconds it is killed
+Created attachment 1045006
+cups-browsed.conf
+Created attachment 1045007
+full strace
+Created attachment 1045009
+rpm -qa output
+It's trying to contact cupsd on the IPv6 loopback interface, but this fails.
+
+Could you please follow these steps?:
+
+1. cp /usr/lib/systemd/system/cups-browsed.service /etc/systemd/system/
+2. Edit /etc/systemd/system/cups-browsed.service and change the ExecStart line to read:
+
+ExecStart=/usr/sbin/cups-browsed --debug
+
+3. systemctl daemon-reload
+4. Reboot
+5. systemctl stop cups-browsed.service
+6. journalctl -u cups-browsed.service
+
+That will hopefully tell us what it's up to.
+Created attachment 1045486
+debug log from cups-browsed
+
+Here's the log.
+
+However, if you look into comment 0, it seems I have no IPv6 address assigned to my loopback interface (even though I have it assigned for my wired interface). I have no idea why that is (I know nothing about IPv6), but I guess that could be the reason? I can ping NetworkManager folks.
+
+Also worth mentioning is that our office has IPv6 connectivity, but just inside LAN, and not to the outside world. Since you say only loopback is contacted, I guess it should not matter, but mentioning it anyway.
+It seems to be a kernel problem. I've found out that I receive ipv6 address on loopback device with kernel-4.0.4-301.fc22.x86_64, but I don't with kernel-4.0.5-300.fc22.x86_64. If I have the ipv6 address, there's no problem with cups-browsed. So I'm closing this, thanks a lot for your help, and will report a bug against kernel.

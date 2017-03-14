@@ -1,0 +1,8 @@
+The PC console driver (PCVT) has two bugs. Display problems can result if
+reverse video mode is turned on or off twice in a row. This patch also
+fixes a problem with scrolling region handling that has been seen by many
+users trying to use the BitchX irc client with the screen program.<br>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/i386/014_pcvt.patch">
+A source code patch exists which remedies this problem.</a>
+This is the second revision of the patch.

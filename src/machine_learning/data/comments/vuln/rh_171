@@ -1,0 +1,10 @@
+Description of problem:
+Please, build tokyocabinet in current rawhide (F23).
+
+Version-Release number of selected component (if applicable):
+tokyocabinet-1.4.48
+We are doing mass rebuild. Such important announcement is found on
+devel-anounce mailing list:
+
+
+https://lists.fedoraproject.org/pipermail/devel-announce/2015-June/001613.html

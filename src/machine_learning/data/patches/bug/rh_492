@@ -1,0 +1,36 @@
+From 358c382f167c1ef67080aeb62a1d26f799b4c2a1 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 01:38:42 +0000
+Subject: [PATCH] Update to 4.3.9 (#1235493)
+
+---
+ libxmp.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/libxmp.spec b/libxmp.spec
+index 0ffe1cf..181ea41 100644
+--- a/libxmp.spec
++++ b/libxmp.spec
+@@ -1,6 +1,6 @@
+ Name: libxmp
+-Version: 4.3.8
+-Release: 2%{?dist}
++Version: 4.3.9
++Release: 1%{?dist}
+ Summary: A multi-format module playback library
+ Source0: http://downloads.sourceforge.net/project/xmp/libxmp/%{version}/libxmp-%{version}.tar.gz
+ Provides: bundled(md5-plumb)
+@@ -63,6 +63,9 @@ make check %{?_smp_mflags}
+ %{_libdir}/libxmp.so
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 4.3.9-1
++- Update to 4.3.9 (#1235493)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.3.8-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

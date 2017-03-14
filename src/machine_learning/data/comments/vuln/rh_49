@@ -1,0 +1,73 @@
+Version-Release number of selected component:
+anaconda-13.21.238
+
+Additional info:
+libreport version: 2.0.9
+cmdline:        /usr/bin/python  /usr/bin/anaconda
+kernel:         2.6.32-572.el6.x86_64
+
+description:
+:The following was filed automatically by anaconda:
+:anaconda 13.21.238 exception report
+:Traceback (most recent call first):
+:  File "/usr/lib/anaconda/storage/devicelibs/swap.py", line 49, in mkswap
+:    raise SwapError("mkswap failed for '%s'" % device)
+:  File "/usr/lib/anaconda/storage/formats/swap.py", line 173, in create
+:    swap.mkswap(self.device, label=self.label, progress=w)
+:  File "/usr/lib/anaconda/storage/deviceaction.py", line 290, in execute
+:    options=self.device.formatArgs)
+:  File "/usr/lib/anaconda/storage/devicetree.py", line 722, in processActions
+:    action.execute(intf=self.intf)
+:  File "/usr/lib/anaconda/storage/__init__.py", line 358, in doIt
+:    self.devicetree.processActions()
+:  File "/usr/lib/anaconda/packages.py", line 110, in turnOnFilesystems
+:    anaconda.id.storage.doIt()
+:  File "/usr/lib/anaconda/dispatch.py", line 210, in moveStep
+:    rc = stepFunc(self.anaconda)
+:  File "/usr/lib/anaconda/dispatch.py", line 126, in gotoNext
+:    self.moveStep()
+:  File "/usr/lib/anaconda/gui.py", line 1370, in nextClicked
+:    self.anaconda.dispatch.gotoNext()
+:  File "/usr/lib/anaconda/gui.py", line 1508, in keyRelease
+:    self.nextClicked()
+:SwapError: mkswap failed for '/dev/mapper/VolGroup-lv_swap'
+Created attachment 1045010
+File: environ
+Created attachment 1045011
+File: type
+Created attachment 1045012
+File: exnFileName
+Created attachment 1045013
+File: product
+Created attachment 1045014
+File: anaconda-tb-1Mx1o6
+Created attachment 1045015
+File: last_occurrence
+Created attachment 1045016
+File: hashmarkername
+Created attachment 1045017
+File: version
+Created attachment 1045018
+File: release
+I've experienced this bug with a fresh iBFT disk image (iSCSI emulation in KVM) and default layout. Anaconda wasn't able to create the swap partition.
+I am unable to reproduce the issue.
+
+I just successfully finished installation RHEL-6.7-20150626.0 Server x86_64 on iBFT with success either via kickstart or manually installed. In both cases I used automatic partitioning.
+11:53:12,972 WARNING kernel:__ratelimit: 119 callbacks suppressed
+11:53:12,972 ERR kernel:end_request: I/O error, dev sda, sector 79765504
+11:53:13,164 INFO kernel:sd 2:0:0:0: [sda]  Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
+11:53:13,164 INFO kernel:sd 2:0:0:0: [sda]  Sense Key : Not Ready [current] 
+11:53:13,164 INFO kernel:sd 2:0:0:0: [sda]  Add. Sense: Logical unit communication failure
+11:53:13,164 INFO kernel:sd 2:0:0:0: [sda] CDB: Write(10): 2a 00 04 c1 20 00 00 00 08 00
+11:53:13,164 ERR kernel:end_request: I/O error, dev sda, sector 79765504
+11:53:13,164 WARNING kernel:__ratelimit: 12453 callbacks suppressed
+11:53:13,164 ERR kernel:Buffer I/O error on device dm-1, logical block 0
+11:53:13,164 WARNING kernel:lost page write due to I/O error on dm-1
+
+07:53:12,765 INFO    : Running... ['lvm', 'lvcreate', '-L', '2016m', '-n', 'lv_swap', 'VolGroup']
+07:53:13,044 INFO    :  
+07:53:13,045 ERROR   :   /dev/VolGroup/lv_swap: write failed after 0 of 4096 at 0: Input/output error
+
+Bad disk.
+Development Management has reviewed and declined this request.
+You may appeal this decision by reopening this request.

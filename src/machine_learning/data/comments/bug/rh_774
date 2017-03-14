@@ -1,0 +1,53 @@
+Description of problem:
+I have tried to install LIbreOffice packages.
+
+Version-Release number of selected component:
+apper-0.8.1-1.fc20
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/bin/apper
+crash_function: _IO_new_file_overflow
+executable:     /usr/bin/apper
+kernel:         3.11.10-301.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            0
+
+Truncated backtrace:
+Thread no. 1 (1 frames)
+ #0 _IO_new_file_overflow at fileops.c:863
+Created attachment 1040621
+File: backtrace
+Created attachment 1040622
+File: cgroup
+Created attachment 1040623
+File: core_backtrace
+Created attachment 1040624
+File: dso_list
+Created attachment 1040625
+File: environ
+Created attachment 1040626
+File: exploitable
+Created attachment 1040627
+File: limits
+Created attachment 1040628
+File: maps
+Created attachment 1040629
+File: open_fds
+Created attachment 1040630
+File: proc_pid_status
+Created attachment 1040631
+File: var_log_messages
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

@@ -1,0 +1,1306 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhpOJ2Gh0Zlq8oMinbSzWHJKDNqImihfei6BO6KeO/doNQDCSX6DIhFB9oLsnBnnLogRHHNwaWHhUAJ15ENklKgg=
+
+OpenBSD 5.6 errata 24, Apr 30, 2015:
+
+tar/pax/cpio had multiple issues:
+ * extracting a malicious archive could create files outside of the
+   current directory without using pre-existing symlinks to 'escape',
+   and could change the timestamps and modes on preexisting files
+
+ * tar without -P would permit extraction of paths with ".." components
+
+ * there was a buffer overflow in the handling of pax extension headers,
+
+Apply by doing:
+    cd /usr/src
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 024_tar.patch.sig -m - | \
+        patch -p0
+
+Then build and install pax:
+
+    cd /usr/src/bin/pax
+    make obj
+    make
+    make install
+
+
+Index: bin/pax/ar_subs.c
+===================================================================
+RCS file: /cvs/src/bin/pax/ar_subs.c,v
+retrieving revision 1.39
+diff -u -p -r1.39 ar_subs.c
+--- bin/pax/ar_subs.c	23 May 2014 19:47:49 -0000	1.39
++++ bin/pax/ar_subs.c	30 Apr 2015 05:30:01 -0000
+@@ -165,6 +165,8 @@ extract(void)
+ 	int fd;
+ 	time_t now;
+ 
++	sltab_start();
++
+ 	arcn = &archd;
+ 	/*
+ 	 * figure out archive type; pass any format specific options to the
+@@ -360,6 +362,7 @@ popd:
+ 	(void)(*frmt->end_rd)();
+ 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
+ 	ar_close(0);
++	sltab_process(0);
+ 	proc_dir(0);
+ 	pat_chk();
+ }
+@@ -758,6 +761,8 @@ copy(void)
+ 	ARCHD archd;
+ 	char dirbuf[PAXPATHLEN+1];
+ 
++	sltab_start();
++
+ 	arcn = &archd;
+ 	/*
+ 	 * set up the destination dir path and make sure it is a directory. We
+@@ -969,6 +974,7 @@ copy(void)
+ 	 */
+ 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
+ 	ar_close(0);
++	sltab_process(0);
+ 	proc_dir(0);
+ 	ftree_chk();
+ }
+Index: bin/pax/extern.h
+===================================================================
+RCS file: /cvs/src/bin/pax/extern.h,v
+retrieving revision 1.42
+diff -u -p -r1.42 extern.h
+--- bin/pax/extern.h	14 Jul 2014 06:00:22 -0000	1.42
++++ bin/pax/extern.h	30 Apr 2015 05:30:01 -0000
+@@ -147,6 +147,8 @@ int set_ids(char *, uid_t, gid_t);
+ int fset_ids(char *, int, uid_t, gid_t);
+ void set_pmode(char *, mode_t);
+ void fset_pmode(char *, int, mode_t);
++int set_attr(const struct file_times *, int _force_times, mode_t, int _do_mode,
++    int _in_sig);
+ int file_write(int, char *, int, int *, int *, int, char *);
+ void file_flush(int, char *, int);
+ void rdfile_close(ARCHD *, int *);
+@@ -200,6 +202,7 @@ int pat_sel(ARCHD *);
+ int pat_match(ARCHD *);
+ int mod_name(ARCHD *);
+ int set_dest(ARCHD *, char *, int);
++int has_dotdot(const char *);
+ 
+ /*
+  * pax.c
+@@ -261,18 +264,29 @@ void purg_lnk(ARCHD *);
+ void lnk_end(void);
+ int ftime_start(void);
+ int chk_ftime(ARCHD *);
++int sltab_start(void);
++int sltab_add_sym(const char *_path, const char *_value, mode_t _mode);
++int sltab_add_link(const char *, const struct stat *);
++void sltab_process(int _in_sig);
+ int name_start(void);
+ int add_name(char *, int, char *);
+ void sub_name(char *, int *, size_t);
++#ifndef NOCPIO
+ int dev_start(void);
+ int add_dev(ARCHD *);
+ int map_dev(ARCHD *, u_long, u_long);
++#else
++# define dev_start()	0
++# define add_dev(x)	0
++# define map_dev(x,y,z)	0
++#endif /* NOCPIO */
+ int atdir_start(void);
+ void atdir_end(void);
+ void add_atdir(char *, dev_t, ino_t, time_t, time_t);
+-int get_atdir(dev_t, ino_t, time_t *, time_t *);
++int do_atdir(const char *, dev_t, ino_t);
+ int dir_start(void);
+ void add_dir(char *, struct stat *, int);
++void delete_dir(dev_t, ino_t);
+ void proc_dir(int _in_sig);
+ u_int st_hash(const char *, int, int);
+ 
+Index: bin/pax/file_subs.c
+===================================================================
+RCS file: /cvs/src/bin/pax/file_subs.c,v
+retrieving revision 1.36
+diff -u -p -r1.36 file_subs.c
+--- bin/pax/file_subs.c	14 Jul 2014 05:58:19 -0000	1.36
++++ bin/pax/file_subs.c	30 Apr 2015 05:30:02 -0000
+@@ -57,10 +57,6 @@ mk_link(char *, struct stat *, char *, i
+  * and setting access modes, uid/gid and times of files
+  */
+ 
+-#define FILEBITS		(S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
+-#define SETBITS			(S_ISUID | S_ISGID)
+-#define ABITS			(FILEBITS | SETBITS)
+-
+ /*
+  * file_creat()
+  *	Create and open a file.
+@@ -171,6 +167,7 @@ int
+ lnk_creat(ARCHD *arcn)
+ {
+ 	struct stat sb;
++	int res;
+ 
+ 	/*
+ 	 * we may be running as root, so we have to be sure that link target
+@@ -188,7 +185,18 @@ lnk_creat(ARCHD *arcn)
+ 		return(-1);
+ 	}
+ 
+-	return(mk_link(arcn->ln_name, &sb, arcn->name, 0));
++	res = mk_link(arcn->ln_name, &sb, arcn->name, 0);
++	if (res == 0) {
++		/* check for a hardlink to a placeholder symlink */
++		res = sltab_add_link(arcn->name, &sb);
++
++		if (res < 0) {
++			/* arrgh, it failed, clean up */
++			unlink(arcn->name);
++		}
++	}
++
++	return (res);
+ }
+ 
+ /*
+@@ -292,6 +300,7 @@ mk_link(char *to, struct stat *to_sb, ch
+ 				syswarn(1, errno, "Unable to remove %s", from);
+ 				return(-1);
+ 			}
++			delete_dir(sb.st_dev, sb.st_ino);
+ 		} else if (unlink(from) < 0) {
+ 			if (!ign) {
+ 				syswarn(1, errno, "Unable to remove %s", from);
+@@ -345,7 +354,7 @@ node_creat(ARCHD *arcn)
+ 	struct stat sb;
+ 	char target[MAXPATHLEN];
+ 	char *nm = arcn->name;
+-	int len;
++	int len, defer_pmode = 0;
+ 
+ 	/*
+ 	 * create node based on type, if that fails try to unlink the node and
+@@ -405,7 +414,21 @@ badlink:
+ 			    nm);
+ 			return(-1);
+ 		case PAX_SLK:
+-			res = symlink(arcn->ln_name, nm);
++			if (arcn->ln_name[0] != '/' &&
++			    !has_dotdot(arcn->ln_name))
++				res = symlink(arcn->ln_name, nm);
++			else {
++				/*
++				 * absolute symlinks and symlinks with ".."
++				 * have to be deferred to prevent the archive
++				 * from bootstrapping itself to outside the
++				 * working directory.
++				 */
++				res = sltab_add_sym(nm, arcn->ln_name,
++				    arcn->sb.st_mode);
++				if (res == 0)
++					defer_pmode = 1;
++			}
+ 			break;
+ 		case PAX_CTG:
+ 		case PAX_HLK:
+@@ -459,7 +482,7 @@ badlink:
+ 	 */
+ 	if (!pmode || res)
+ 		arcn->sb.st_mode &= ~(SETBITS);
+-	if (pmode)
++	if (pmode && !defer_pmode)
+ 		set_pmode(nm, arcn->sb.st_mode);
+ 
+ 	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
+@@ -470,33 +493,36 @@ badlink:
+ 		 * rights. This allows nodes in the archive that are children
+ 		 * of this directory to be extracted without failure. Both time
+ 		 * and modes will be fixed after the entire archive is read and
+-		 * before pax exits.
++		 * before pax exits.  To do that safely, we want the dev+ino
++		 * of the directory we created.
+ 		 */
+-		if (access(nm, R_OK | W_OK | X_OK) < 0) {
+-			if (lstat(nm, &sb) < 0) {
+-				syswarn(0, errno,"Could not access %s (stat)",
+-				    arcn->name);
+-				set_pmode(nm,file_mode | S_IRWXU);
+-			} else {
+-				/*
+-				 * We have to add rights to the dir, so we make
+-				 * sure to restore the mode. The mode must be
+-				 * restored AS CREATED and not as stored if
+-				 * pmode is not set.
+-				 */
+-				set_pmode(nm,
+-				    ((sb.st_mode & FILEBITS) | S_IRWXU));
+-				if (!pmode)
+-					arcn->sb.st_mode = sb.st_mode;
+-			}
++		if (lstat(nm, &sb) < 0) {
++			syswarn(0, errno,"Could not access %s (stat)", nm);
++		} else if (access(nm, R_OK | W_OK | X_OK) < 0) {
++			/*
++			 * We have to add rights to the dir, so we make
++			 * sure to restore the mode. The mode must be
++			 * restored AS CREATED and not as stored if
++			 * pmode is not set.
++			 */
++			set_pmode(nm,
++			    ((sb.st_mode & FILEBITS) | S_IRWXU));
++			if (!pmode)
++				arcn->sb.st_mode = sb.st_mode;
+ 
+ 			/*
+-			 * we have to force the mode to what was set here,
+-			 * since we changed it from the default as created.
++			 * we have to force the mode to what was set
++			 * here, since we changed it from the default
++			 * as created.
+ 			 */
++			arcn->sb.st_dev = sb.st_dev;
++			arcn->sb.st_ino = sb.st_ino;
+ 			add_dir(nm, &(arcn->sb), 1);
+-		} else if (pmode || patime || pmtime)
++		} else if (pmode || patime || pmtime) {
++			arcn->sb.st_dev = sb.st_dev;
++			arcn->sb.st_ino = sb.st_ino;
+ 			add_dir(nm, &(arcn->sb), 0);
++		}
+ 	}
+ 
+ 	if (patime || pmtime)
+@@ -540,6 +566,7 @@ unlnk_exist(char *name, int type)
+ 			syswarn(1,errno,"Unable to remove directory %s", name);
+ 			return(-1);
+ 		}
++		delete_dir(sb.st_dev, sb.st_ino);
+ 		return(0);
+ 	}
+ 
+@@ -767,6 +794,60 @@ fset_pmode(char *fnm, int fd, mode_t mod
+ }
+ 
+ /*
++ * set_attr()
++ *	Given a DIRDATA, restore the mode and times as indicated, but
++ *	only after verifying that it's the directory that we wanted.
++ */
++int
++set_attr(const struct file_times *ft, int force_times, mode_t mode,
++    int do_mode, int in_sig)
++{
++	struct stat sb;
++	int fd, r;
++
++	if (!do_mode && !force_times && !patime && !pmtime)
++		return (0);
++
++	/*
++	 * We could legitimately go through a symlink here,
++	 * so do *not* use O_NOFOLLOW.  The dev+ino check will
++	 * protect us from evil.
++	 */
++	fd = open(ft->ft_name, O_RDONLY | O_DIRECTORY);
++	if (fd == -1) {
++		if (!in_sig)
++			syswarn(1, errno, "Unable to restore mode and times"
++			    " for directory: %s", ft->ft_name);
++		return (-1);
++	}
++
++	if (fstat(fd, &sb) == -1) {
++		if (!in_sig)
++			syswarn(1, errno, "Unable to stat directory: %s",
++			    ft->ft_name);
++		r = -1;
++	} else if (ft->ft_ino != sb.st_ino || ft->ft_dev != sb.st_dev) {
++		if (!in_sig)
++			paxwarn(1, "Directory vanished before restoring"
++			    " mode and times: %s", ft->ft_name);
++		r = -1;
++	} else {
++		/* Whew, it's a match!  Is there anything to change? */
++		if (do_mode && (mode & ABITS) != (sb.st_mode & ABITS))
++			fset_pmode(ft->ft_name, fd, mode);
++		if (((force_times || patime) && ft->ft_atime != sb.st_atime) ||
++		    ((force_times || pmtime) && ft->ft_mtime != sb.st_mtime))
++			fset_ftime(ft->ft_name, fd, ft->ft_mtime,
++			    ft->ft_atime, force_times);
++		r = 0;
++	}
++	close(fd);
++
++	return (r);
++}
++
++
++/*
+  * file_write()
+  *	Write/copy a file (during copy or archive extract). This routine knows
+  *	how to copy files with lseek holes in it. (Which are read as file
+@@ -958,15 +1039,15 @@ rdfile_close(ARCHD *arcn, int *fd)
+ 	if (*fd < 0)
+ 		return;
+ 
+-	(void)close(*fd);
+-	*fd = -1;
+-	if (!tflag)
+-		return;
+-
+ 	/*
+ 	 * user wants last access time reset
+ 	 */
+-	set_ftime(arcn->org_name, arcn->sb.st_mtime, arcn->sb.st_atime, 1);
++	if (tflag)
++		fset_ftime(arcn->org_name, *fd, arcn->sb.st_mtime,
++		    arcn->sb.st_atime, 1);
++
++	(void)close(*fd);
++	*fd = -1;
+ }
+ 
+ /*
+Index: bin/pax/ftree.c
+===================================================================
+RCS file: /cvs/src/bin/pax/ftree.c,v
+retrieving revision 1.32
+diff -u -p -r1.32 ftree.c
+--- bin/pax/ftree.c	11 Jul 2014 07:51:48 -0000	1.32
++++ bin/pax/ftree.c	30 Apr 2015 05:30:02 -0000
+@@ -337,8 +337,6 @@ int
+ next_file(ARCHD *arcn)
+ {
+ 	int cnt;
+-	time_t atime;
+-	time_t mtime;
+ 
+ 	/*
+ 	 * ftree_sel() might have set the ftree_skip flag if the user has the
+@@ -393,10 +391,10 @@ next_file(ARCHD *arcn)
+ 			 * remember to force the time (this is -t on a read
+ 			 * directory, not a created directory).
+ 			 */
+-			if (!tflag || (get_atdir(ftent->fts_statp->st_dev,
+-			    ftent->fts_statp->st_ino, &mtime, &atime) < 0))
++			if (!tflag)
+ 				continue;
+-			set_ftime(ftent->fts_path, mtime, atime, 1);
++			do_atdir(ftent->fts_path, ftent->fts_statp->st_dev,
++			    ftent->fts_statp->st_ino);
+ 			continue;
+ 		case FTS_DC:
+ 			/*
+Index: bin/pax/pat_rep.c
+===================================================================
+RCS file: /cvs/src/bin/pax/pat_rep.c,v
+retrieving revision 1.34
+diff -u -p -r1.34 pat_rep.c
+--- bin/pax/pat_rep.c	24 May 2014 18:51:00 -0000	1.34
++++ bin/pax/pat_rep.c	30 Apr 2015 05:30:02 -0000
+@@ -583,6 +583,25 @@ range_match(char *pattern, int test)
+ }
+ 
+ /*
++ * has_dotdot()
++ *	Returns true iff the supplied path contains a ".." component.
++ */
++
++int
++has_dotdot(const char *path)
++{
++	const char *p = path;
++
++	while ((p = strstr(p, "..")) != NULL) {
++		if ((p == path || p[-1] == '/') &&
++		    (p[2] == '/' || p[2] == '\0'))
++			return (1);
++		p += 2;
++	}
++	return (0);
++}
++
++/*
+  * mod_name()
+  *	modify a selected file name. first attempt to apply replacement string
+  *	expressions, then apply interactive file rename. We apply replacement
+@@ -630,6 +649,30 @@ mod_name(ARCHD *arcn)
+ 		if (rmleadslash < 2) {
+ 			rmleadslash = 2;
+ 			paxwarn(0, "Removing leading / from absolute path names in the archive");
++		}
++	}
++	if (rmleadslash) {
++		const char *last = NULL;
++		const char *p = arcn->name;
++
++		while ((p = strstr(p, "..")) != NULL) {
++			if ((p == arcn->name || p[-1] == '/') &&
++			    (p[2] == '/' || p[2] == '\0'))
++				last = p + 2;
++			p += 2;
++		}
++		if (last != NULL) {
++			last++;
++			paxwarn(1, "Removing leading \"%.*s\"",
++			    (int)(last - arcn->name), arcn->name);
++			arcn->nlen = strlen(last);
++			if (arcn->nlen > 0)
++				memmove(arcn->name, last, arcn->nlen + 1);
++			else {
++				arcn->name[0] = '.';
++				arcn->name[1] = '\0';
++				arcn->nlen = 1;
++			}
+ 		}
+ 	}
+ 
+Index: bin/pax/pax.c
+===================================================================
+RCS file: /cvs/src/bin/pax/pax.c,v
+retrieving revision 1.37
+diff -u -p -r1.37 pax.c
+--- bin/pax/pax.c	24 May 2014 03:49:49 -0000	1.37
++++ bin/pax/pax.c	30 Apr 2015 05:30:02 -0000
+@@ -311,6 +311,7 @@ sig_cleanup(int which_sig)
+ 	(void) write(STDERR_FILENO, errbuf, strlen(errbuf));
+ 
+ 	ar_close(1);
++	sltab_process(1);
+ 	proc_dir(1);
+ 	if (tflag)
+ 		atdir_end();
+Index: bin/pax/pax.h
+===================================================================
+RCS file: /cvs/src/bin/pax/pax.h,v
+retrieving revision 1.18
+diff -u -p -r1.18 pax.h
+--- bin/pax/pax.h	30 Jan 2014 13:30:11 -0000	1.18
++++ bin/pax/pax.h	30 Apr 2015 05:30:02 -0000
+@@ -211,6 +211,20 @@ typedef struct {
+ } FSUB;
+ 
+ /*
++ * Time data for a given file.  This is usually embedded in a structure
++ * indexed by dev+ino, by name, by order in the archive, etc.  set_attr()
++ * takes one of these and will only change the times or mode if the file
++ * at the given name has the indicated dev+ino.
++ */
++struct file_times {
++	ino_t	ft_ino;		/* inode number to verify */
++	time_t	ft_mtime;	/* times to set */
++	time_t	ft_atime;
++	char	*ft_name;	/* name of file to set the times on */
++	dev_t	ft_dev;		/* device number to verify */
++};
++
++/*
+  * Format Specific Options List
+  *
+  * Used to pass format options to the format options handler
+@@ -230,6 +244,10 @@ typedef struct oplist {
+ #define MAJOR(x)	major(x)
+ #define MINOR(x)	minor(x)
+ #define TODEV(x, y)	makedev((x), (y))
++
++#define FILEBITS		(S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
++#define SETBITS			(S_ISUID | S_ISGID)
++#define ABITS			(FILEBITS | SETBITS)
+ 
+ /*
+  * General Defines
+Index: bin/pax/tables.c
+===================================================================
+RCS file: /cvs/src/bin/pax/tables.c,v
+retrieving revision 1.36
+diff -u -p -r1.36 tables.c
+--- bin/pax/tables.c	14 Jul 2014 06:00:22 -0000	1.36
++++ bin/pax/tables.c	30 Apr 2015 05:30:03 -0000
+@@ -74,8 +74,6 @@ static size_t dirsize;		/* size of dirp 
+ static size_t dircnt = 0;	/* entries in dir time/mode storage */
+ static int ffd = -1;		/* tmp file for file time table name storage */
+ 
+-static DEVT *chk_dev(dev_t, int);
+-
+ /*
+  * hard link table routines
+  *
+@@ -464,6 +462,343 @@ chk_ftime(ARCHD *arcn)
+ }
+ 
+ /*
++ * escaping (absolute or w/"..") symlink table routines
++ *
++ * By default, an archive shouldn't be able extract to outside of the
++ * current directory.  What should we do if the archive contains a symlink
++ * whose value is either absolute or contains ".." components?  What we'll
++ * do is initially create the path as an empty file (to block attempts to
++ * reference _through_ it) and instead record its path and desired
++ * final value and mode.  Then once all the other archive
++ * members are created (but before the pass to set timestamps on
++ * directories) we'll process those records, replacing the placeholder with
++ * the correct symlink and setting them to the correct mode, owner, group,
++ * and timestamps.
++ *
++ * Note: we also need to handle hardlinks to symlinks (barf) as well as
++ * hardlinks whose target is replaced by a later entry in the archive (barf^2).
++ *
++ * So we track things by dev+ino of the placeholder file, associating with
++ * that the value and mode of the final symlink and a list of paths that
++ * should all be hardlinks of that.  We'll 'store' the symlink's desired
++ * timestamps, owner, and group by setting them on the placeholder file.
++ *
++ * The operations are:
++ * a) create an escaping symlink: create the placeholder file and add an entry
++ *    for the new link
++ * b) create a hardlink: do the link.  If the target turns out to be a
++ *    zero-length file whose dev+ino are in the symlink table, then add this
++ *    path to the list of names for that link
++ * c) perform deferred processing: for each entry, check each associated path:
++ *    if it's a zero-length file with the correct dev+ino then recreate it as
++ *    the specified symlink or hardlink to the first such
++ */
++
++struct slpath {
++	char	*sp_path;
++	struct	slpath *sp_next;
++};
++struct slinode {
++	ino_t	sli_ino;
++	char	*sli_value;
++	struct	slpath sli_paths;
++	struct	slinode *sli_fow;		/* hash table chain */
++	dev_t	sli_dev;
++	mode_t	sli_mode;
++};
++
++static struct slinode **slitab = NULL;
++
++/*
++ * sltab_start()
++ *	create the hash table
++ * Return:
++ *	0 if the table and file was created ok, -1 otherwise
++ */
++
++int
++sltab_start(void)
++{
++
++	if ((slitab = calloc(SL_TAB_SZ, sizeof *slitab)) == NULL) {
++		syswarn(1, errno, "symlink table");
++		return(-1);
++	}
++
++	return(0);
++}
++
++/*
++ * sltab_add_sym()
++ *	Create the placeholder and tracking info for an escaping symlink.
++ * Return:
++ *	0 on success, -1 otherwise
++ */
++
++int
++sltab_add_sym(const char *path0, const char *value0, mode_t mode)
++{
++	struct stat sb;
++	struct slinode *s;
++	struct slpath *p;
++	char *path, *value;
++	u_int indx;
++	int fd;
++
++	/* create the placeholder */
++	fd = open(path0, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
++	if (fd == -1)
++		return (-1);
++	if (fstat(fd, &sb) == -1) {
++		unlink(path0);
++		close(fd);
++		return (-1);
++	}
++	close(fd);
++
++	if (havechd && *path0 != '/') {
++		if ((path = realpath(path0, NULL)) == NULL) {
++			syswarn(1, errno, "Cannot canonicalize %s", path0);
++			unlink(path0);
++			return (-1);
++		}
++	} else if ((path = strdup(path0)) == NULL) {
++		syswarn(1, errno, "defered symlink path");
++		unlink(path0);
++		return (-1);
++	}
++	if ((value = strdup(value0)) == NULL) {
++		syswarn(1, errno, "defered symlink value");
++		unlink(path);
++		free(path);
++		return (-1);
++	}
++
++	/* now check the hash table for conflicting entry */
++	indx = (sb.st_ino ^ sb.st_dev) % SL_TAB_SZ;
++	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
++		if (s->sli_ino != sb.st_ino || s->sli_dev != sb.st_dev)
++			continue;
++
++		/*
++		 * One of our placeholders got removed behind our back and
++		 * we've reused the inode.  Weird, but clean up the mess.
++		 */
++		free(s->sli_value);
++		free(s->sli_paths.sp_path);
++		p = s->sli_paths.sp_next;
++		while (p != NULL) {
++			struct slpath *next_p = p->sp_next;
++
++			free(p->sp_path);
++			free(p);
++			p = next_p;
++		}
++		goto set_value;
++	}
++
++	/* Normal case: create a new node */
++	if ((s = malloc(sizeof *s)) == NULL) {
++		syswarn(1, errno, "defered symlink");
++		unlink(path);
++		free(path);
++		free(value);
++		return (-1);
++	}
++	s->sli_ino = sb.st_ino;
++	s->sli_dev = sb.st_dev;
++	s->sli_fow = slitab[indx];
++	slitab[indx] = s;
++
++set_value:
++	s->sli_paths.sp_path = path;
++	s->sli_paths.sp_next = NULL;
++	s->sli_value = value;
++	s->sli_mode = mode;
++	return (0);
++}
++
++/*
++ * sltab_add_link()
++ *	A hardlink was created; if it looks like a placeholder, handle the
++ *	tracking.
++ * Return:
++ *	0 if things are ok, -1 if something went wrong
++ */
++
++int
++sltab_add_link(const char *path, const struct stat *sb)
++{
++	struct slinode *s;
++	struct slpath *p;
++	u_int indx;
++
++	if (!S_ISREG(sb->st_mode) || sb->st_size != 0)
++		return (1);
++
++	/* find the hash table entry for this hardlink */
++	indx = (sb->st_ino ^ sb->st_dev) % SL_TAB_SZ;
++	for (s = slitab[indx]; s != NULL; s = s->sli_fow) {
++		if (s->sli_ino != sb->st_ino || s->sli_dev != sb->st_dev)
++			continue;
++
++		if ((p = malloc(sizeof *p)) == NULL) {
++			syswarn(1, errno, "deferred symlink hardlink");
++			return (-1);
++		}
++		if (havechd && *path != '/') {
++			if ((p->sp_path = realpath(path, NULL)) == NULL) {
++				syswarn(1, errno, "Cannot canonicalize %s",
++				    path);
++				free(p);
++				return (-1);
++			}
++		} else if ((p->sp_path = strdup(path)) == NULL) {
++			syswarn(1, errno, "defered symlink hardlink path");
++			free(p);
++			return (-1);
++		}
++
++		/* link it in */
++		p->sp_next = s->sli_paths.sp_next;
++		s->sli_paths.sp_next = p;
++		return (0);
++	}
++
++	/* not found */
++	return (1);
++}
++
++
++static int
++sltab_process_one(struct slinode *s, struct slpath *p, const char *first,
++    int in_sig)
++{
++	struct stat sb;
++	char *path = p->sp_path;
++	mode_t mode;
++	int err;
++
++	/*
++	 * is it the expected placeholder?  This can fail legimately
++	 * if the archive overwrote the link with another, later entry,
++	 * so don't warn.
++	 */
++	if (stat(path, &sb) != 0 || !S_ISREG(sb.st_mode) || sb.st_size != 0 ||
++	    sb.st_ino != s->sli_ino || sb.st_dev != s->sli_dev)
++		return (0);
++
++	if (unlink(path) && errno != ENOENT) {
++		if (!in_sig)
++			syswarn(1, errno, "deferred symlink removal");
++		return (0);
++	}
++
++	err = 0;
++	if (first != NULL) {
++		/* add another hardlink to the existing symlink */
++		if (linkat(AT_FDCWD, first, AT_FDCWD, path, 0) == 0)
++			return (0);
++
++		/*
++		 * Couldn't hardlink the symlink for some reason, so we'll
++		 * try creating it as its own symlink, but save the error
++		 * for reporting if that fails.
++		 */
++		err = errno;
++	}
++
++	if (symlink(s->sli_value, path)) {
++		if (!in_sig) {
++			const char *qualifier = "";
++			if (err)
++				qualifier = " hardlink";
++			else
++				err = errno;
++
++			syswarn(1, err, "deferred symlink%s: %s",
++			    qualifier, path);
++		}
++		return (0);
++	}
++
++	/* success, so set the id, mode, and times */
++	mode = s->sli_mode;
++	if (pids) {
++		/* if can't set the ids, force the set[ug]id bits off */
++		if (set_ids(path, sb.st_uid, sb.st_gid))
++			mode &= ~(SETBITS);
++	}
++
++	if (pmode)
++		set_pmode(path, mode);
++
++	if (patime || pmtime)
++		set_ftime(path, sb.st_mtime, sb.st_atime, 0);
++
++	/*
++	 * If we tried to link to first but failed, then this new symlink
++	 * might be a better one to try in the future.  Guess from the errno.
++	 */
++	if (err == 0 || err == ENOENT || err == EMLINK || err == EOPNOTSUPP)
++		return (1);
++	return (0);
++}
++
++/*
++ * sltab_process()
++ *	Do all the delayed process for escape symlinks
++ */
++
++void
++sltab_process(int in_sig)
++{
++	struct slinode *s;
++	struct slpath *p;
++	char *first;
++	u_int indx;
++
++	if (slitab == NULL)
++		return;
++
++	/* walk across the entire hash table */
++	for (indx = 0; indx < SL_TAB_SZ; indx++) {
++		while ((s = slitab[indx]) != NULL) {
++			/* pop this entry */
++			slitab[indx] = s->sli_fow;
++
++			first = NULL;
++			p = &s->sli_paths;
++			while (1) {
++				struct slpath *next_p;
++
++				if (sltab_process_one(s, p, first, in_sig)) {
++					if (!in_sig)
++						free(first);
++					first = p->sp_path;
++				} else if (!in_sig)
++					free(p->sp_path);
++
++				if ((next_p = p->sp_next) == NULL)
++					break;
++				*p = *next_p;
++				if (!in_sig)
++					free(next_p);
++			}
++			if (!in_sig) {
++				free(first);
++				free(s->sli_value);
++				free(s);
++			}
++		}
++	}
++	if (!in_sig)
++		free(slitab);
++	slitab = NULL;
++}
++
++
++/*
+  * Interactive rename table routines
+  *
+  * The interactive rename table keeps track of the new names that the user
+@@ -608,6 +943,7 @@ sub_name(char *oname, int *onamelen, siz
+ 	 */
+ }
+ 
++#ifndef NOCPIO
+ /*
+  * device/inode mapping table routines
+  * (used with formats that store device and inodes fields)
+@@ -648,6 +984,8 @@ sub_name(char *oname, int *onamelen, siz
+  * (for more info see table.h for the data structures involved).
+  */
+ 
++static DEVT *chk_dev(dev_t, int);
++
+ /*
+  * dev_start()
+  *	create the device mapping table
+@@ -873,6 +1211,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_
+ 	paxwarn(0, "Archive may create improper hard links when extracted");
+ 	return(0);
+ }
++#endif /* NOCPIO */
+ 
+ /*
+  * directory access/mod time reset table routines (for directories READ by pax)
+@@ -939,7 +1278,7 @@ atdir_end(void)
+ 		 * not read by pax. Read time reset is controlled by -t.
+ 		 */
+ 		for (; pt != NULL; pt = pt->fow)
+-			set_ftime(pt->name, pt->mtime, pt->atime, 1);
++			set_attr(&pt->ft, 1, 0, 0, 0);
+ 	}
+ }
+ 
+@@ -969,7 +1308,7 @@ add_atdir(char *fname, dev_t dev, ino_t 
+ 	indx = ((unsigned)ino) % A_TAB_SZ;
+ 	if ((pt = atab[indx]) != NULL) {
+ 		while (pt != NULL) {
+-			if ((pt->ino == ino) && (pt->dev == dev))
++			if ((pt->ft.ft_ino == ino) && (pt->ft.ft_dev == dev))
+ 				break;
+ 			pt = pt->fow;
+ 		}
+@@ -987,11 +1326,11 @@ add_atdir(char *fname, dev_t dev, ino_t 
+ 	sigfillset(&allsigs);
+ 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
+ 	if ((pt = malloc(sizeof *pt)) != NULL) {
+-		if ((pt->name = strdup(fname)) != NULL) {
+-			pt->dev = dev;
+-			pt->ino = ino;
+-			pt->mtime = mtime;
+-			pt->atime = atime;
++		if ((pt->ft.ft_name = strdup(fname)) != NULL) {
++			pt->ft.ft_dev = dev;
++			pt->ft.ft_ino = ino;
++			pt->ft.ft_mtime = mtime;
++			pt->ft.ft_atime = atime;
+ 			pt->fow = atab[indx];
+ 			atab[indx] = pt;
+ 			sigprocmask(SIG_SETMASK, &savedsigs, NULL);
+@@ -1016,7 +1355,7 @@ add_atdir(char *fname, dev_t dev, ino_t 
+  */
+ 
+ int
+-get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
++do_atdir(const char *name, dev_t dev, ino_t ino)
+ {
+ 	ATDIR *pt;
+ 	ATDIR **ppt;
+@@ -1034,7 +1373,7 @@ get_atdir(dev_t dev, ino_t ino, time_t *
+ 
+ 	ppt = &(atab[indx]);
+ 	while (pt != NULL) {
+-		if ((pt->ino == ino) && (pt->dev == dev))
++		if ((pt->ft.ft_ino == ino) && (pt->ft.ft_dev == dev))
+ 			break;
+ 		/*
+ 		 * no match, go to next one
+@@ -1046,19 +1385,19 @@ get_atdir(dev_t dev, ino_t ino, time_t *
+ 	/*
+ 	 * return if we did not find it.
+ 	 */
+-	if (pt == NULL)
++	if (pt == NULL || pt->ft.ft_name == NULL ||
++	    strcmp(name, pt->ft.ft_name) == 0)
+ 		return(-1);
+ 
+ 	/*
+-	 * found it. return the times and remove the entry from the table.
++	 * found it. set the times and remove the entry from the table.
+ 	 */
++	set_attr(&pt->ft, 1, 0, 0, 0);
+ 	sigfillset(&allsigs);
+ 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
+ 	*ppt = pt->fow;
+ 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
+-	*mtime = pt->mtime;
+-	*atime = pt->atime;
+-	free(pt->name);
++	free(pt->ft.ft_name);
+ 	free(pt);
+ 	return(0);
+ }
+@@ -1078,12 +1417,8 @@ get_atdir(dev_t dev, ino_t ino, time_t *
+  * times and file permissions specified by the archive are stored. After all
+  * files have been extracted (or copied), these directories have their times
+  * and file modes reset to the stored values. The directory info is restored in
+- * reverse order as entries were added to the data file from root to leaf. To
+- * restore atime properly, we must go backwards. The data file consists of
+- * records with two parts, the file name followed by a DIRDATA trailer. The
+- * fixed sized trailer contains the size of the name plus the off_t location in
+- * the file. To restore we work backwards through the file reading the trailer
+- * then the file name.
++ * reverse order as entries were added from root to leaf: to restore atime
++ * properly, we must go backwards.
+  */
+ 
+ /*
+@@ -1151,14 +1486,16 @@ add_dir(char *name, struct stat *psb, in
+ 		sigprocmask(SIG_SETMASK, &savedsigs, NULL);
+ 	}
+ 	dblk = &dirp[dircnt];
+-	if ((dblk->name = strdup(name)) == NULL) {
++	if ((dblk->ft.ft_name = strdup(name)) == NULL) {
+ 		paxwarn(1, "Unable to store mode and times for created"
+ 		    " directory: %s", name);
+ 		return;
+ 	}
+-	dblk->mode = psb->st_mode & 0xffff;
+-	dblk->mtime = psb->st_mtime;
+-	dblk->atime = psb->st_atime;
++	dblk->ft.ft_mtime = psb->st_mtime;
++	dblk->ft.ft_atime = psb->st_atime;
++	dblk->ft.ft_ino = psb->st_ino;
++	dblk->ft.ft_dev = psb->st_dev;
++	dblk->mode = psb->st_mode & ABITS;
+ 	dblk->frc_mode = frc_mode;
+ 	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
+ 	++dircnt;
+@@ -1166,6 +1503,35 @@ add_dir(char *name, struct stat *psb, in
+ }
+ 
+ /*
++ * delete_dir()
++ *	When we rmdir a directory, we may want to make sure we don't
++ *	later warn about being unable to set its mode and times.
++ */
++
++void
++delete_dir(dev_t dev, ino_t ino)
++{
++	DIRDATA *dblk;
++	char *name;
++	size_t i;
++
++	if (dirp == NULL)
++		return;
++	for (i = 0; i < dircnt; i++) {
++		dblk = &dirp[i];
++
++		if (dblk->ft.ft_name == NULL)
++			continue;
++		if (dblk->ft.ft_dev == dev && dblk->ft.ft_ino == ino) {
++			name = dblk->ft.ft_name;
++			dblk->ft.ft_name = NULL;
++			free(name);
++			break;
++		}
++	}
++}
++
++/*
+  * proc_dir(int in_sig)
+  *	process all file modes and times stored for directories CREATED
+  *	by pax.  If in_sig is set, we're in a signal handler and can't
+@@ -1185,17 +1551,22 @@ proc_dir(int in_sig)
+ 	 */
+ 	cnt = dircnt;
+ 	while (cnt-- > 0) {
++		dblk = &dirp[cnt];
++		/*
++		 * If we remove a directory we created, we replace the
++		 * ft_name with NULL.  Ignore those.
++		 */
++		if (dblk->ft.ft_name == NULL)
++			continue;
++
+ 		/*
+ 		 * frc_mode set, make sure we set the file modes even if
+ 		 * the user didn't ask for it (see file_subs.c for more info)
+ 		 */
+-		dblk = &dirp[cnt];
+-		if (pmode || dblk->frc_mode)
+-			set_pmode(dblk->name, dblk->mode);
+-		if (patime || pmtime)
+-			set_ftime(dblk->name, dblk->mtime, dblk->atime, 0);
++		set_attr(&dblk->ft, 0, dblk->mode, pmode || dblk->frc_mode,
++		    in_sig);
+ 		if (!in_sig)
+-			free(dblk->name);
++			free(dblk->ft.ft_name);
+ 	}
+ 
+ 	if (!in_sig)
+Index: bin/pax/tables.h
+===================================================================
+RCS file: /cvs/src/bin/pax/tables.h,v
+retrieving revision 1.8
+diff -u -p -r1.8 tables.h
+--- bin/pax/tables.h	5 Aug 2006 23:05:13 -0000	1.8
++++ bin/pax/tables.h	30 Apr 2015 05:30:03 -0000
+@@ -50,6 +50,7 @@
+ #define N_TAB_SZ	541		/* interactive rename hash table */
+ #define D_TAB_SZ	317		/* unique device mapping table */
+ #define A_TAB_SZ	317		/* ftree dir access time reset table */
++#define SL_TAB_SZ	317		/* escape symlink tables */
+ #define MAXKEYLEN	64		/* max number of chars for hash */
+ #define DIRP_SIZE	64		/* initial size of created dir table */
+ 
+@@ -143,11 +144,7 @@ typedef struct dlist {
+  */
+ 
+ typedef struct atdir {
+-	char *name;	/* name of directory to reset */
+-	dev_t dev;	/* dev and inode for fast lookup */
+-	ino_t ino;
+-	time_t mtime;	/* access and mod time to reset to */
+-	time_t atime;
++	struct file_times ft;
+ 	struct atdir *fow;
+ } ATDIR;
+ 
+@@ -162,9 +159,7 @@ typedef struct atdir {
+  */
+ 
+ typedef struct dirdata {
+-	char *name;	/* file name */
+-	time_t mtime;	/* mtime to set */
+-	time_t atime;	/* atime to set */
+-	u_int16_t mode;	/* file mode to restore */
++	struct file_times ft;
++	u_int16_t mode;		/* file mode to restore */
+ 	u_int16_t frc_mode;	/* do we force mode settings? */
+ } DIRDATA;
+Index: bin/pax/tar.c
+===================================================================
+RCS file: /cvs/src/bin/pax/tar.c,v
+retrieving revision 1.53
+diff -u -p -r1.53 tar.c
+--- bin/pax/tar.c	19 Feb 2014 03:59:47 -0000	1.53
++++ bin/pax/tar.c	30 Apr 2015 05:30:03 -0000
+@@ -58,7 +58,7 @@ static char *name_split(char *, int);
+ static int ul_oct(u_long, char *, int, int);
+ static int uqd_oct(u_quad_t, char *, int, int);
+ #ifndef SMALL
+-static int rd_xheader(ARCHD *, char *, off_t, char);
++static int rd_xheader(ARCHD *arcn, int, off_t);
+ #endif
+ 
+ static uid_t uid_nobody;
+@@ -734,7 +734,7 @@ ustar_id(char *blk, int size)
+ int
+ ustar_rd(ARCHD *arcn, char *buf)
+ {
+-	HD_USTAR *hd;
++	HD_USTAR *hd = (HD_USTAR *)buf;
+ 	char *dest;
+ 	int cnt = 0;
+ 	dev_t devmajor;
+@@ -746,18 +746,30 @@ ustar_rd(ARCHD *arcn, char *buf)
+ 	 */
+ 	if (ustar_id(buf, BLKMULT) < 0)
+ 		return(-1);
++
++#ifndef SMALL
++reset:
++#endif
+ 	memset(arcn, 0, sizeof(*arcn));
+ 	arcn->org_name = arcn->name;
+ 	arcn->sb.st_nlink = 1;
+-	hd = (HD_USTAR *)buf;
+ 
+ #ifndef SMALL
+-	/* Process the Extended header. */
++	/* Process Extended headers. */
+ 	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE) {
+-		if (rd_xheader(arcn, buf,
+-		    (off_t)asc_ul(hd->size, sizeof(hd->size), OCT),
+-		    hd->typeflag) < 0)
++		if (rd_xheader(arcn, hd->typeflag == GHDRTYPE,
++		    (off_t)asc_ul(hd->size, sizeof(hd->size), OCT)) < 0)
+ 			return (-1);
++
++		/* Update and check the ustar header. */
++		if (rd_wrbuf(buf, BLKMULT) != BLKMULT)
++			return (-1);
++		if (ustar_id(buf, BLKMULT) < 0)
++			return(-1);
++
++		/* if the next block is another extension, reset the values */
++		if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE)
++			goto reset;
+ 	}
+ #endif
+ 
+@@ -1193,51 +1205,84 @@ expandname(char *buf, size_t len, char *
+ 
+ #ifndef SMALL
+ 
+-#define MINXHDRSZ	6
++/* shortest possible extended record: "5 a=\n" */
++#define MINXHDRSZ	5
++
++/* longest record we'll accept */
++#define MAXXHDRSZ	BLKMULT
+ 
+ static int
+-rd_xheader(ARCHD *arcn, char *buf, off_t size, char typeflag)
++rd_xheader(ARCHD *arcn, int global, off_t size)
+ {
+-	off_t len;
++	char buf[MAXXHDRSZ];
++	unsigned long len;
+ 	char *delim, *keyword;
+-	char *nextp, *p;
++	char *nextp, *p, *end;
++	int pad, ret = 0;
+ 
+-	if (size < MINXHDRSZ) {
+-		paxwarn(1, "Invalid extended header length");
+-		return (-1);
+-	}
+-	if (rd_wrbuf(buf, size) != size)
+-		return (-1);
+-	if (rd_skip((off_t)BLKMULT - size) < 0)
+-		return (-1);
++	/* before we alter size, make note of how much we have to skip */
++	pad = TAR_PAD((unsigned)size);
+ 
+-	for (p = buf; size > 0; size -= len, p = nextp) {
+-		if (!isdigit((unsigned char)*p)) {
++	p = end = buf;
++	while (size > 0 || p < end) {
++		if (size > 0) {
++			int rdlen;
++
++			/* shift stuff down */
++			if (p > buf) {
++				memmove(buf, p, end - p);
++				end -= p - buf;
++				p = buf;
++			}
++
++			/* fill starting at end */
++			rdlen = MIN(size, (buf + sizeof buf) - end);
++			if (rd_wrbuf(end, rdlen) != rdlen) {
++				ret = -1;
++				break;
++			}
++			size -= rdlen;
++			end += rdlen;
++		}
++
++		/* [p, end) is good */
++		if (memchr(p, ' ', end - p) == NULL ||
++		    !isdigit((unsigned char)*p)) {
+ 			paxwarn(1, "Invalid extended header record");
+-			return (-1);
++			ret = -1;
++			break;
+ 		}
+ 		errno = 0;
+-		len = strtoll(p, &delim, 10);
+-		if (*delim != ' ' || (errno == ERANGE &&
+-		    (len == LLONG_MIN || len == LLONG_MAX)) ||
++		len = strtoul(p, &delim, 10);
++		if (*delim != ' ' || (errno == ERANGE && len == ULONG_MAX) ||
+ 		    len < MINXHDRSZ) {
+ 			paxwarn(1, "Invalid extended header record length");
+-			return (-1);
++			ret = -1;
++			break;
+ 		}
+-		if (len > size) {
+-			paxwarn(1, "Extended header record length %lld is "
+-			    "out of range", (long long)len);
+-			return (-1);
++		if (len > end - p) {
++			paxwarn(1, "Extended header record length %lu is "
++			    "out of range", len);
++			/* if we can just toss this record, do so */
++			len -= end - p;
++			if (len <= size && rd_skip(len) == 0) {
++				size -= len;
++				p = end = buf;
++				continue;
++			}
++			ret = -1;
++			break;
+ 		}
+ 		nextp = p + len;
+ 		keyword = p = delim + 1;
+ 		p = memchr(p, '=', len);
+ 		if (!p || nextp[-1] != '\n') {
+ 			paxwarn(1, "Malformed extended header record");
+-			return (-1);
++			ret = -1;
++			break;
+ 		}
+ 		*p++ = nextp[-1] = '\0';
+-		if (typeflag == XHDRTYPE) {
++		if (!global) {
+ 			if (!strcmp(keyword, "path")) {
+ 				arcn->nlen = strlcpy(arcn->name, p,
+ 				    sizeof(arcn->name));
+@@ -1246,11 +1291,11 @@ rd_xheader(ARCHD *arcn, char *buf, off_t
+ 				    sizeof(arcn->ln_name));
+ 			}
+ 		}
++		p = nextp;
+ 	}
+ 
+-	/* Update the ustar header. */
+-	if (rd_wrbuf(buf, BLKMULT) != BLKMULT)
++	if (rd_skip(size + pad) < 0)
+ 		return (-1);
+-	return (0);
++	return (ret);
+ }
+ #endif
+

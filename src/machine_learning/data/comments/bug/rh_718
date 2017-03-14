@@ -1,0 +1,271 @@
+Spec URL: https://jjames.fedorapeople.org/gap-pkg-autodoc/gap-pkg-autodoc.spec
+SRPM URL: https://jjames.fedorapeople.org/gap-pkg-autodoc/gap-pkg-autodoc-2015.04.29-1.fc23.src.rpm
+Fedora Account System Username: jjames
+Description: This package is an addon to GAPDoc that enables generating documentation from GAP source code.
+I do have a question regarding use of {?_isa} in the Requires, mainly for my
+own understanding going forward.
+
+I reviewed:  https://fedoraproject.org/wiki/Packaging:Guidelines#Requires_2
+It mentions:  "As a rule of thumb, if the version is not required, don't add it just for fun."
+
+It doesn't directly apply that to arch, but I felt the inference carried over to the other items.
+
+In my own package which was noarch, I added several Requires, but didn't specify arch; since the 386 version or the x86 version would work fine.  
+
+Since this package is also noarch, why would you specify arch?  Is there a technical reason or just preference?
+
+None of the items listed below are blockers.  If you wish to incorporate some of the suggestions, do so and post the new Spec so I can approve.  If not, just advise and I then approve the current Spec.
+
+Package Review
+==============
+
+Legend:
+[x] = Pass, [!] = Fail, [-] = Not applicable, [?] = Not evaluated
+[ ] = Manual review needed
+
+SHOULD:
+
+- RPMLINT is complaining about zero length files:
+  E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutomaticDocumentation.bbl
+  E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutoDoc.bbl
+  These should be removed if not needed for something.  
+  You can do this in   %install section:
+  ====> find $RPM_BUILD_ROOT -size "0" -exec rm -f {} ';'
+
+- The spell checker is complaining about "addon", 
+  and in this case it is correct.  It should be
+  add-on; however, if you change it, it probably will 
+  report that as a misspelling.  <sigh>
+
+- gap-pkg-autodoc.noarch: W: only-non-binary-in-usr-lib
+  I found this:  https://bugzilla.redhat.com/show_bug.cgi?id=483199
+  and from what I can gather this shouldn't have been generated because
+  you have noarch specified.  Thoughts?
+
+- Note: Checking patched sources after %prep for licenses. Licenses
+  found: "Unknown or generated". 5 files have unknown license.
+  It is suggested you advise upstream.
+
+- %check is present and all tests pass.
+
+
+===== MUST items =====
+
+Generic:
+[x]: Package is licensed with an open-source compatible license and meets
+     other legal requirements as defined in the legal section of Packaging
+     Guidelines.
+[x]: License field in the package spec file matches the actual license.
+     Note: Checking patched sources after %prep for licenses. Licenses
+     found: "Unknown or generated". 5 files have unknown license. Detailed
+     output of licensecheck in /home/gbcox/bugzilla_fedora_review/1233984
+     -gap-pkg-autodoc/licensecheck.txt
+[x]: Package contains no bundled libraries without FPC exception.
+[x]: Changelog in prescribed format.
+[x]: Sources contain only permissible code or content.
+[-]: Package contains desktop file if it is a GUI application.
+[-]: Development files must be in a -devel package
+[x]: Package uses nothing in %doc for runtime.
+[x]: Package consistently uses macros (instead of hard-coded directory
+     names).
+[x]: Package is named according to the Package Naming Guidelines.
+[x]: Package does not generate any conflict.
+[x]: Package obeys FHS, except libexecdir and /usr/target.
+[-]: If the package is a rename of another package, proper Obsoletes and
+     Provides are present.
+[x]: Requires correct, justified where necessary.
+[x]: Spec file is legible and written in American English.
+[-]: Package contains systemd file(s) if in need.
+[x]: Package is not known to require an ExcludeArch tag.
+[x]: Large documentation must go in a -doc subpackage. Large could be size
+     (~1MB) or number of files.
+     Note: Documentation size is 10240 bytes in 1 files.
+[x]: Package complies to the Packaging Guidelines
+[x]: Package successfully compiles and builds into binary rpms on at least
+     one supported primary architecture.
+[x]: Package installs properly.
+[x]: Rpmlint is run on all rpms the build produces.
+     Note: There are rpmlint messages (see attachment).
+[x]: If (and only if) the source package includes the text of the
+     license(s) in its own file, then that file, containing the text of the
+     license(s) for the package is included in %license.
+[x]: Package requires other packages for directories it uses.
+[x]: Package must own all directories that it creates.
+[x]: Package does not own files or directories owned by other packages.
+[x]: All build dependencies are listed in BuildRequires, except for any
+     that are listed in the exceptions section of Packaging Guidelines.
+[x]: Package uses either %{buildroot} or $RPM_BUILD_ROOT
+[x]: Package does not run rm -rf %{buildroot} (or $RPM_BUILD_ROOT) at the
+     beginning of %install.
+[x]: Macros in Summary, %description expandable at SRPM build time.
+[x]: Dist tag is present.
+[x]: Package does not contain duplicates in %files.
+[x]: Permissions on files are set properly.
+[x]: Package use %makeinstall only when make install DESTDIR=... doesn't
+     work.
+[x]: Package is named using only allowed ASCII characters.
+[x]: Package is not relocatable.
+[x]: Sources used to build the package match the upstream source, as
+     provided in the spec URL.
+[x]: Spec file name must match the spec package %{name}, in the format
+     %{name}.spec.
+[x]: File names are valid UTF-8.
+[x]: Packages must not store files under /srv, /opt or /usr/local
+
+===== SHOULD items =====
+
+Generic:
+[-]: If the source package does not include license text(s) as a separate
+     file from upstream, the packager SHOULD query upstream to include it.
+[x]: Final provides and requires are sane (see attachments).
+[?]: Package functions as described.
+[x]: Latest version is packaged.
+[x]: Package does not include license text files separate from upstream.
+[x]: Scriptlets must be sane, if used.
+[-]: Description and summary sections in the package spec file contains
+     translations for supported Non-English languages, if available.
+[x]: Package should compile and build into binary rpms on all supported
+     architectures.
+[!]: %check is present and all tests pass.
+[x]: Packages should try to preserve timestamps of original installed
+     files.
+[x]: Packager, Vendor, PreReq, Copyright tags should not be in spec file
+[x]: Sources can be downloaded from URI in Source: tag
+[x]: Reviewer should test that the package builds in mock.
+[x]: Buildroot is not present
+[x]: Package has no %clean section with rm -rf %{buildroot} (or
+     $RPM_BUILD_ROOT)
+[x]: No file requires outside of /etc, /bin, /sbin, /usr/bin, /usr/sbin.
+[x]: SourceX is a working URL.
+[x]: Spec use %global instead of %define unless justified.
+
+===== EXTRA items =====
+
+Generic:
+[x]: Rpmlint is run on all installed packages.
+     Note: There are rpmlint messages (see attachment).
+[x]: Spec file according to URL is the same as in SRPM.
+
+
+Rpmlint
+-------
+Checking: gap-pkg-autodoc-2015.04.29-1.fc23.noarch.rpm
+          gap-pkg-autodoc-2015.04.29-1.fc23.src.rpm
+gap-pkg-autodoc.noarch: W: spelling-error %description -l en_US addon -> ad don, ad-don, add on
+gap-pkg-autodoc.noarch: W: only-non-binary-in-usr-lib
+gap-pkg-autodoc.noarch: E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutomaticDocumentation.bbl
+gap-pkg-autodoc.noarch: E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutoDoc.bbl
+gap-pkg-autodoc.src: W: spelling-error %description -l en_US addon -> ad don, ad-don, add on
+2 packages and 0 specfiles checked; 2 errors, 3 warnings.
+
+
+
+
+Rpmlint (installed packages)
+----------------------------
+gap-pkg-autodoc.noarch: W: spelling-error %description -l en_US addon -> ad don, ad-don, add on
+gap-pkg-autodoc.noarch: W: only-non-binary-in-usr-lib
+gap-pkg-autodoc.noarch: E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutomaticDocumentation.bbl
+gap-pkg-autodoc.noarch: E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutoDoc.bbl
+1 packages and 0 specfiles checked; 2 errors, 2 warnings.
+
+
+
+Requires
+--------
+gap-pkg-autodoc (rpmlib, GLIBC filtered):
+    /usr/bin/update-gap-workspace
+    gap-core(x86-64)
+
+
+
+Provides
+--------
+gap-pkg-autodoc:
+    gap-pkg-autodoc
+
+
+
+Source checksums
+----------------
+http://wwwb.math.rwth-aachen.de/~gutsche/gap_packages/AutoDoc/AutoDoc.tar.gz :
+  CHECKSUM(SHA256) this package     : 873090d894de76f80907c07d44b6eb08b26c226933a7ed9405c5da2876365e33
+  CHECKSUM(SHA256) upstream package : 873090d894de76f80907c07d44b6eb08b26c226933a7ed9405c5da2876365e33
+
+
+Generated by fedora-review 0.6.0 (3c5c9d7) last change: 2015-05-20
+Command line :/usr/bin/fedora-review -b 1233984 -m fedora-rawhide-x86_64
+Buildroot used: fedora-rawhide-x86_64
+Active plugins: Generic, Shell-api
+Disabled plugins: Java, C/C++, Python, fonts, SugarActivity, Ocaml, Perl, Haskell, R, PHP, Ruby
+Disabled flags: EXARCH, DISTTAG, EPEL5, BATCH, EPEL6
+Disabled flags: EXARCH, DISTTAG, EPEL5, BATCH, EPEL6
+(In reply to Gerald Cox from comment #1)
+> I do have a question regarding use of {?_isa} in the Requires, mainly for my
+> own understanding going forward.
+
+Short story: I copied another, arch-specific, spec file I had just worked on to start, and just forgot to remove the %{?_isa} tags.  You are correct: this is a noarch package and %{?_isa} is not useful.  Removed.
+
+> - RPMLINT is complaining about zero length files:
+>   E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutomaticDocumentation.bbl
+>   E: zero-length /usr/lib/gap/pkg/AutoDoc/doc/AutoDoc.bbl
+>   These should be removed if not needed for something.  
+>   You can do this in   %install section:
+>   ====> find $RPM_BUILD_ROOT -size "0" -exec rm -f {} ';'
+
+Done.
+
+> - The spell checker is complaining about "addon", 
+>   and in this case it is correct.  It should be
+>   add-on; however, if you change it, it probably will 
+>   report that as a misspelling.  <sigh>
+
+Fixed.
+
+> - gap-pkg-autodoc.noarch: W: only-non-binary-in-usr-lib
+>   I found this:  https://bugzilla.redhat.com/show_bug.cgi?id=483199
+>   and from what I can gather this shouldn't have been generated because
+>   you have noarch specified.  Thoughts?
+
+This is an artifact of how gap itself is packaged, I suspect.  Anyway, there's nothing I can do about it in this package.  The files need to go where they go.
+
+> - Note: Checking patched sources after %prep for licenses. Licenses
+>   found: "Unknown or generated". 5 files have unknown license.
+>   It is suggested you advise upstream.
+
+This is common practice in the GAP world.  GAP package authors tend to not put any notices in their source files, but to note the license for the entire project in the documentation.  (In this case, doc/AutoDoc.tex and doc/AutomaticDocumentation.tex both identify the license.)
+
+> - %check is present and all tests pass.
+
+While many GAP packages come with test code, this one, sadly, does not.  I'm not sure what to do about that.
+
+By the way, when you take a review, you should mark the bug status as Assigned.  See step 3 of https://fedoraproject.org/wiki/Package_Review_Process#Reviewer.
+
+New URLs:
+Spec URL: https://jjames.fedorapeople.org/gap-pkg-autodoc/gap-pkg-autodoc.spec
+SRPM URL: https://jjames.fedorapeople.org/gap-pkg-autodoc/gap-pkg-autodoc-2015.04.29-2.fc23.src.rpm
+(In reply to Jerry James from comment #2)
+
+> By the way, when you take a review, you should mark the bug status as
+> Assigned.  See step 3 of
+> https://fedoraproject.org/wiki/Package_Review_Process#Reviewer.
+> 
+
+I thought it did that automatically.  I took the bug, and changed the fedora-review flag to '?'.  
+
+Anyway, approved.  ;-)
+BTW, thanks for pointing that out.  I always wondered why so many bugs always showed status of "NEW"... I'm going to file a bug request on this.  They should be able to automatically change the status to "ASSIGNED" when someone "TAKES" the bug report.  That's the way I thought it worked, and as my bug list shows, quite a few other folks are thinking the same thing.
+Yeah, I've pointed that out to quite a few people.  Thanks for the review.  I owe you.
+New Package SCM Request
+=======================
+Package Name: gap-pkg-autodoc
+Short Description: Generate documentation from GAP source code
+Upstream URL: http://wwwb.math.rwth-aachen.de/~gutsche/gap_packages/AutoDoc/
+Owners: jjames
+Branches: f22
+InitialCC:
+Git done (by process-git-requests).
+gap-pkg-autodoc-2015.04.29-2.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/gap-pkg-autodoc-2015.04.29-2.fc22
+gap-pkg-autodoc-2015.04.29-2.fc22 has been pushed to the Fedora 22 testing repository.
+gap-pkg-autodoc-2015.04.29-2.fc22 has been pushed to the Fedora 22 stable repository.

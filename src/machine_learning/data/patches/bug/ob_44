@@ -1,0 +1,239 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 015_aty2k.patch
+	cd usr.bin/at
+	make
+	make install
+
+Index: usr.bin/at/at.c
+===================================================================
+RCS file: /cvs/src/usr.bin/at/at.c,v
+retrieving revision 1.16
+retrieving revision 1.17
+diff -u -r1.16 -r1.17
+--- usr.bin/at/at.c	1998/07/09 20:40:58	1.16
++++ usr.bin/at/at.c	1999/12/15 05:33:06	1.17
+@@ -197,7 +197,7 @@
+ 
+ 	sigaction(SIGINT, &act, NULL);
+ 
+-	(void)strcpy(atfile, _PATH_ATJOBS);
++	(void)strlcpy(atfile, _PATH_ATJOBS, sizeof atfile);
+ 	ppos = atfile + strlen(atfile);
+ 
+ 	/*
+Index: usr.bin/at/parsetime.c
+===================================================================
+RCS file: /cvs/src/usr.bin/at/parsetime.c,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -r1.8 -r1.9
+--- usr.bin/at/parsetime.c	1999/03/21 04:04:42	1.8
++++ usr.bin/at/parsetime.c	2000/01/05 08:06:25	1.9
+@@ -443,21 +443,23 @@
+ 	struct tm *tm;
+ 	int mday, mon, year;
+ {
+-	if (year > 99) {
+-	    if (year >= TM_YEAR_BASE)
+-		    year -= TM_YEAR_BASE;
+-	    else
+-		    panic("garbled time");
+-	} else if (year != -1) {
+-		/*
+-		 * check if the specified year is in the next century.
+-		 * allow for one year of user error as many people will
+-		 * enter n - 1 at the start of year n.
+-		 */
+-		if (year < tm->tm_year % 100 - 1)
+-			year += 100;
+-		/* adjust for the year 2000 and beyond */
+-		year += tm->tm_year - (tm->tm_year % 100);
++
++	/*
++	 * Convert year into tm_year format (year - 1900).
++	 * We may be given the year in 2 digit, 4 digit, or tm_year format.
++	 */
++	if (year != -1) {
++		if (year >= TM_YEAR_BASE)
++			year -= TM_YEAR_BASE;	/* convert from 4 digit year */
++		else if (year < 100) {
++			/* Convert to tm_year assuming current century */
++			year += (tm->tm_year / 100) * 100;
++
++			if (year == tm->tm_year - 1)
++				year++;		/* Common off by one error */
++			else if (year < tm->tm_year)
++				year += 100;	/* must be in next century */
++		}
+ 	}
+ 
+ 	if (year < 0 &&
+
+This is revision 2 of this patch.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 014_eepromy2k.patch
+	rm usr.sbin/eeprom/getdate.y
+	cd usr.sbin/eeprom
+	make
+	make install
+
+Index: usr.sbin/eeprom/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/eeprom/Makefile,v
+retrieving revision 1.2
+diff -u -r1.2 Makefile
+--- usr.sbin/eeprom/Makefile	1997/09/21 11:43:38	1.2
++++ usr.sbin/eeprom/Makefile	2000/01/03 19:46:51
+@@ -6,6 +6,10 @@
+ BINGRP=	kmem
+ BINMODE=2555
+ 
++# Get getdate.y from cvs distro
++.PATH:  ${.CURDIR}/../../gnu/usr.bin/cvs/lib
++CFLAGS+=-DTIME_WITH_SYS_TIME -DHAVE_SYS_TIMEB_H -DSTDC_HEADERS -DHAVE_BCOPY
++
+ SRCS=	eehandlers.c getdate.c main.c
+ 
+ .if ${MACHINE} == "sparc"
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 013_addusery2k.patch
+	cd usr.sbin/adduser
+	make
+	make install
+
+Index: usr.sbin/adduser/adduser.perl
+===================================================================
+RCS file: /cvs/src/usr.sbin/adduser/adduser.perl,v
+retrieving revision 1.19
+retrieving revision 1.20
+diff -u -r1.19 -r1.20
+--- usr.sbin/adduser/adduser.perl	1999/09/06 16:48:41	1.19
++++ usr.sbin/adduser/adduser.perl	2000/01/03 19:30:00	1.20
+@@ -1057,9 +1057,10 @@
+     return 1 if $logfile eq "no";
+ 
+     local($sec, $min, $hour, $mday, $mon, $year) = localtime;
++    $year += 1900;
+     $mon++;
+ 
+-    foreach $e ('sec', 'min', 'hour', 'mday', 'mon', 'year') {
++    foreach $e ('sec', 'min', 'hour', 'mday', 'mon') {
+ 	# '7' -> '07'
+ 	eval "\$$e = 0 . \$$e" if (eval "\$$e" < 10);
+     }
+
+Return-Path: jason@thought.net
+Received: from deep.thought.net (IDENT:root@ns.thought.net [63.87.48.65])
+	by cvs.openbsd.org (8.9.3/8.9.1) with ESMTP id SAA08682
+	for <deraadt@cvs.openbsd.org>; Sun, 2 Jan 2000 18:05:45 -0700 (MST)
+Received: from 600mp.thought.net (IDENT:jason@600mp.thought.net [63.87.48.105])
+	by deep.thought.net (8.9.3/8.9.3) with ESMTP id UAA02050
+	for <deraadt@cvs.openbsd.org>; Sun, 2 Jan 2000 20:08:38 -0500 (EST)
+Received: (from jason@localhost)
+	by 600mp.thought.net (8.9.3/8.9.1) id UAA30116
+	for deraadt@cvs.openbsd.org; Sun, 2 Jan 2000 20:05:42 -0500 (EST)
+Date: Sun, 2 Jan 2000 20:05:41 -0500
+From: Jason Wright <jason@thought.net>
+To: deraadt@cvs.openbsd.org
+Subject: 3c900b-tpo fix
+Message-ID: <20000102200540.I19740@600mp.thought.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.1.1i
+
+
+Here's the patch against 2.6-release.
+
+
+The 3C900B-TPO fails to select the correct media type (it never sees or
+sends packets).
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 012_3c900b.patch
+
+And then rebuild your kernel.
+
+--- sys/dev/pci/if_xl.c.orig	Sun Jan  2 15:28:49 2000
++++ sys/dev/pci/if_xl.c	Sun Jan  2 15:28:49 2000
+@@ -179,7 +179,7 @@
+ u_int8_t xl_calchash	__P((caddr_t));
+ void xl_setmulti	__P((struct xl_softc *));
+ void xl_setmulti_hash	__P((struct xl_softc *));
+-void xl_reset		__P((struct xl_softc *));
++void xl_reset		__P((struct xl_softc *, int));
+ int xl_list_rx_init	__P((struct xl_softc *));
+ int xl_list_tx_init	__P((struct xl_softc *));
+ void xl_wait		__P((struct xl_softc *));
+@@ -822,13 +822,16 @@
+ 	XL_SEL_WIN(7);
+ }
+ 
+-void xl_reset(sc)
++void xl_reset(sc, hard)
+ 	struct xl_softc		*sc;
+ {
+ 	register int		i;
+ 
+ 	XL_SEL_WIN(0);
+-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
++	if (hard)
++		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
++	else
++		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET | 0x0010);
+ 	xl_wait(sc);
+ 
+ 	for (i = 0; i < XL_TIMEOUT; i++) {
+@@ -1364,7 +1367,7 @@
+ 		}
+ 
+ 		if (status & XL_STAT_ADFAIL) {
+-			xl_reset(sc);
++			xl_reset(sc, 0);
+ 			xl_init(sc);
+ 		}
+ 
+@@ -2014,7 +2017,7 @@
+ 	xl_txeoc(sc);
+ 	xl_txeof(sc);
+ 	xl_rxeof(sc);
+-	xl_reset(sc);
++	xl_reset(sc, 0);
+ 	xl_init(sc);
+ 
+ 	if (ifp->if_snd.ifq_head != NULL)
+@@ -2213,7 +2216,7 @@
+ 	}
+ 	printf(": %s", intrstr);
+ 
+-	xl_reset(sc);
++	xl_reset(sc, 1);
+ 
+ 	/*
+ 	 * Get station address from the EEPROM.
+@@ -2315,8 +2318,10 @@
+ 	 * a 10/100 card of some kind, we need to force the transceiver
+ 	 * type to something sane.
+ 	 */
+-	if (sc->xl_xcvr == XL_XCVR_AUTO)
++	if (sc->xl_xcvr == XL_XCVR_AUTO) {
+ 		xl_choose_xcvr(sc, 0);
++		xl_reset(sc, 0);
++	}
+ 
+ 	if (sc->xl_media & XL_MEDIAOPT_BT) {
+ 		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
+@@ -2414,6 +2419,7 @@
+ {
+ 	struct xl_softc	*sc = (struct xl_softc *)v;
+ 
++	xl_reset(sc, 1);
+ 	xl_stop(sc);
+ }
+ 
+

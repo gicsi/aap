@@ -1,0 +1,14 @@
+Your package python-collada failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10142339
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047781
+build.log
+Created attachment 1047782
+root.log
+Created attachment 1047783
+state.log
+Fixed:
+
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10306911

@@ -1,0 +1,39 @@
+Compilation of caml-crush fails in rawhide:
+https://kojipkgs.fedoraproject.org//work/tasks/5549/10195549/build.log
+
+The issue seems to be related to files from ocamlnet.
+
+ocamlfind ocamlopt -I ../filter/filter -I ../filter/frontend -package "str,netplex,config-file"  -linkpkg ../bindings-pkcs11/pkcs11.cmxa ../filter/backend/backend.cmx ../filter/filter/filter_common.cmx ../filter/filter/filter_actions.cmx ../filter/filter/filter_configuration.cmx ../filter/filter/filter.cmx  ../filter/frontend/frontend.cmx ../rpc-pkcs11/pkcs11_rpclib.cmxa server.cmx -cclib -lpthread -cclib -lcamlidl -cclib -L../bindings-pkcs11 -ccopt -O2 -ccopt -fPIC -ccopt -fPIE -ccopt -Wl,-z,relro,-z,now -ccopt -fstack-protector -ccopt -DFORTIFY_SOURCE=2 -o pkcs11proxyd
+File "_none_", line 1:
+Error: Files /usr/lib/ocaml/netsys/netsys_oothr.cmxa
+       and /usr/lib/ocaml/stdlib.cmxa
+       make inconsistent assumptions over implementation CamlinternalOO
+Makefile:13: recipe for target 'all' failed
+make[1]: *** [all] Error 2
+Unfortunately we're going to have to mass-rebuild the OCaml
+packages.  See:
+
+https://sympa.inria.fr/sympa/arc/caml-list/2015-06/msg00173.html
+
+and especially Edwin's reply for details.
+
+I am waiting to see if there is some way to encode the implementation
+hash into the dependencies.
+Not sure if this is the proper place to add my thoughts (is there a corresponding bug for rpm?)
+
+I'd suggest to use a dependency of the form ocaml(Modulename.cmx)=md5sum
+for implementations.
+
+For example when you parse ocamlobjinfo output for gettextBase.cmxa
+you'd add a dependency on ocaml(Pervasives.cmx)=962eecd4c90eeaab0ac38b54cbdd5b0f,
+and when you parse gettext.cmx you'd add a provides for ocaml(Gettext.cmx)=ca2cb488da57963ca7767ff80a83ba0a (CRC of implementation,
+which you could also get by parsing the .cmxa but at that point its not sure whether the .cmx will be part of the package or not).
+Yes I agree we're going to have to do that.
+
+I've completed the current mass rebuild (with no change to how
+we generate dependencies), so this bug is fixed.  To the reporter:
+please retry your build if necessary.
+
+I have opened a new bug about getting the dependency generation
+changed, which you can follow here:
+https://bugzilla.redhat.com/show_bug.cgi?id=1235561

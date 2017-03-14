@@ -1,0 +1,90 @@
+Description of problem:
+to_timestamp is off by one hour as used in satellite 5 / spacewalk
+https://github.com/spacewalkproject/spacewalk/blob/e36bc98e7e7a9e8c07b513ff1ab073e303469b3b/java/code/src/com/redhat/rhn/common/db/datasource/xml/System_queries.xml#L840
+
+Version-Release number of selected component (if applicable):
+postgresql-server-8.4.20-2.el6_6
+
+How reproducible:
+if you have a spacewalk db and it's in CEST:
+select (to_timestamp('1970-01-01', 'YYYY-MM-DD') + numtodsinterval(S.last_boot, 'second')) from rhnServer S;
+
+Steps to Reproduce:
+1. use select and compare with date :)
+2.
+3.
+
+Actual results:
+timestamp off by one hour
+
+Expected results:
+timestamp correct
+
+Additional info:
+--
+rhnschema=# select (to_timestamp('1970-01-01', 'YYYY-MM-DD') + numtodsinterval(S.last_boot, 'second')) from rhnServer S;
+           ?column?            
+-------------------------------
+ 2014-12-09 12:48:39.634732+01
+ 2014-12-16 09:36:06.98596+01
+ 2014-09-29 10:40:41.794724+02
+ 2014-12-16 13:34:05.383304+01
+ 2014-12-09 11:20:40.231759+01
+ 2014-12-01 15:38:50.426996+01
+ 2014-12-16 14:45:28.400369+01
+ 2014-12-16 14:54:40.501109+01
+ 2015-04-24 11:41:50.632984+02
+ 2015-01-23 12:30:47.343457+01
+ 2015-03-11 16:23:56.493301+01
+ 2015-04-27 10:31:22.163158+02
+(12 rows)
+
+rhnschema=# select S.last_boot from rhnServer S;
+     last_boot      
+--------------------
+  1418129319.634732
+   1418722566.98596
+  1411983641.794724
+ 1418736845.3833041
+ 1418124040.2317591
+  1417448330.426996
+ 1418741128.4003689
+ 1418741680.5011089
+ 1429872110.6329839
+  1422016247.343457
+ 1426091036.4933009
+ 1430127082.1631579
+(12 rows)
+
+date -d @1418129319
+Di 9. Dez 13:48:39 CET 2014
+
+date -d @1430127082
+Mo 27. Apr 11:31:22 CEST 2015
+Klaas, this should be probably filed against spacewalk.  I'm not sure which
+version - so I'm closing as PostgreSQL NOTABUG.  You could reopen against
+spacewalk.  Its possible to set session timezone to GMT, or use TIMESTAMP WITH
+TIMEZONE type or work with 'epoch'.
+
+Note that this is bug tracking system, it is not a mechanism for requesting
+support, and we are not able to guarantee the timeliness or suitability of a
+resolution.
+
+If this issue is critical or in any way time sensitive, please raise a ticket
+through your regular Red Hat support channels to make certain  it receives the
+proper attention and prioritization to assure a timely resolution.
+
+For information on how to contact the Red Hat production support team, please
+visit https://www.redhat.com/support/process/production/#howto
+I don't really understand why its not a bug in postgresql though :)
+http://www.postgresql.org/docs/8.4/static/functions-formatting.html states that to_timestamp should convert to a timestamp with timezone -- it does so but its off by one hour and it does not seem to be a timezone issue because it shows correct timezone (+01 and +02 for CET and CEST) :) anyways I'll refile against spacewalk
+You run your session in CEST;  '1970-01-01' then refers to your timezone
+and not GMT.
+Okay I get the problem now :) But shouldn't it then be off by two hours?
+Meh, that is probably because 1. of January does not include DST shift?  And
+DST was not used in 1970 anyway at least here in CZE:
+https://en.wikipedia.org/wiki/Daylight_saving_time_by_country
+
+Something like cast "select 'epoch'::timestamptz;" could be reliable.
+Okay, now I understand it.
+Thanks for taking the time to explain it :)

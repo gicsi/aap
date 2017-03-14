@@ -1,0 +1,6 @@
+A logic error in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pool&amp;sektion=9">pool</a>
+kernel memory allocator could cause memory corruption in low-memory situations,
+causing the system to crash.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/004_pool.patch">
+A source code patch exists which remedies this problem.</a>

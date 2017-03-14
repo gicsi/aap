@@ -1,0 +1,29 @@
+Your package mldonkey failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10115018
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047382
+build.log
+Created attachment 1047383
+root.log
+Created attachment 1047384
+state.log
+The error is:
+
+ocamlopt.opt -inline 10    -I src/utils/extlib  -I src/utils/cdk  -I src/utils/bitstring  -I src/utils/lib  -I src/utils/ocamlrss  -I src/utils/xml-light  -I src/utils/net  -I tools  -I src/daemon/common  -I src/daemon/driver  -I src/utils/mp3tagui  -I src/config/unix  -I src/gtk2/gui  -I src/gtk2/gui/x11  -I src/gtk2/gui/win32  -I icons/rsvg  -I +lablgtk2  -I src/networks/direct_connect  -I src/networks/fasttrack  -I src/networks/fileTP  -I src/networks/bittorrent  -I src/networks/donkey -I +camlp4 -c src/utils/cdk/unix2.ml
+File "src/daemon/common/commonOptions.ml", line 1:
+Error: Corrupted compiled interface
+src/utils/lib/date.cmi
+Makefile:5447: recipe for target 'src/daemon/common/commonOptions.cmo' failed
+
+This usually indicates that parallel builds are enabled, and
+one compile has half-overwritten another compile of the target
+file (date.cmi).
+
+I will try a rebuild soon to see if that fixes it.
+Looks like it was just a race in a Makefile somewhere.  In any case,
+it rebuilds now without any change.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10291485
+Thanks for the rebuild.

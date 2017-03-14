@@ -1,0 +1,105 @@
+From 18da7e2d259a2d49f7ca5f7ac5d0456c20269586 Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 14:59:11 -0400
+Subject: [PATCH] Add OSGi MANIFEST.MF.
+
+---
+ MANIFEST.MF        | 15 +++++++++++++++
+ add-manifest.patch | 21 +++++++++++++++++++++
+ jnr-enxio.spec     |  9 ++++++++-
+ 3 files changed, 44 insertions(+), 1 deletion(-)
+ create mode 100644 MANIFEST.MF
+ create mode 100644 add-manifest.patch
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+new file mode 100644
+index 0000000..8b4b4af
+--- /dev/null
++++ b/MANIFEST.MF
+@@ -0,0 +1,15 @@
++Manifest-Version: 1.0
++Bundle-SymbolicName: jnr.enxio
++Export-Package: jnr.enxio.channels;version="0.9.0"
++Bundle-Name: Java Native Runtime Enhanced X-platform I/O
++Bundle-Version: 0.9.0
++Bundle-ManifestVersion: 2
++Bundle-ActivationPolicy: lazy
++Bundle-RequiredExecutionEnvironment: JavaSE-1.7
++Bundle-Vendor: Eclipse Orbit
++Import-Package: com.kenai.jffi;version="1.2.7",jnr.constants.platform;
++ version="0.8.6",jnr.ffi;version="2.0.1",jnr.ffi.annotations;version="
++ 2.0.1",jnr.ffi.mapper;version="2.0.1",jnr.ffi.provider.converters;ver
++ sion="2.0.1",jnr.ffi.provider.jffi;version="2.0.1",jnr.ffi.types;vers
++ ion="2.0.1"
++
+diff --git a/add-manifest.patch b/add-manifest.patch
+new file mode 100644
+index 0000000..59d84a8
+--- /dev/null
++++ b/add-manifest.patch
+@@ -0,0 +1,21 @@
++diff -up ./pom.xml.fix ./pom.xml
++--- ./pom.xml.fix	2015-06-17 17:26:21.760222144 -0400
+++++ ./pom.xml	2015-06-17 17:26:25.952292078 -0400
++@@ -81,4 +81,17 @@
++       </dependencies>
++     </profile>
++   </profiles>
+++  <build>
+++    <plugins>
+++      <plugin>
+++        <groupId>org.apache.maven.plugins</groupId>
+++        <artifactId>maven-jar-plugin</artifactId>
+++        <configuration>
+++          <archive>
+++            <manifestFile>MANIFEST.MF</manifestFile>
+++          </archive>
+++        </configuration>
+++      </plugin>
+++    </plugins>
+++  </build>
++ </project>
+diff --git a/jnr-enxio.spec b/jnr-enxio.spec
+index 75d332e..9380662 100644
+--- a/jnr-enxio.spec
++++ b/jnr-enxio.spec
+@@ -1,6 +1,6 @@
+ Name:           jnr-enxio
+ Version:        0.9
+-Release:        2%{?dist}
++Release:        3%{?dist}
+ Summary:        Unix sockets for Java
+ Group:          Development/Libraries
+ # src/main/java/jnr/enxio/channels/PollSelectionKey.java is LGPLv3
+@@ -8,6 +8,8 @@ Group:          Development/Libraries
+ License:        ASL 2.0 and LGPLv3
+ URL:            http://github.com/jnr/%{name}/
+ Source0:        https://github.com/jnr/%{name}/archive/%{version}.tar.gz
++Source1:	MANIFEST.MF
++Patch0:		add-manifest.patch
+ BuildArch:      noarch
+ 
+ BuildRequires:  java-devel
+@@ -38,6 +40,8 @@ This package contains the API documentation for %{name}.
+ 
+ %prep
+ %setup -q
++cp %{SOURCE1} .
++%patch0
+ 
+ find ./ -name '*.jar' -delete
+ find ./ -name '*.class' -delete
+@@ -55,6 +59,9 @@ find ./ -name '*.class' -delete
+ %doc LICENSE
+ 
+ %changelog
++* Wed Jun 17 2015 Jeff Johnston <jjohnstn@redhat.com> - 0.9-3
++- Add proper MANIFEST.MF.
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.9.3
+
+

@@ -1,0 +1,52 @@
+When trying to use mock to debug a build failure with the following any of the commands run after the first fail.
+
+eg if I try a build that fails and then try to get into the non cleaned up chroot to debug with the following two commands I get the following crash:
+
+/usr/bin/mock -r fedora-rawhide-aarch64 --yum --rebuild --no-cleanup-after blah.src.rpm
+
+/usr/bin/mock -r fedora-rawhide-aarch64 --yum --no-cleanup-after --shell
+
+
+INFO: mock.py version 1.2.9 starting (python version = 2.7.8)...
+Start: init plugins
+INFO: selinux enabled
+Finish: init plugins
+Start: run
+Start: chroot init
+INFO: calling preinit hooks
+INFO: enabled root cache
+INFO: enabled yum cache
+Start: cleaning yum metadata
+Finish: cleaning yum metadata
+INFO: enabled ccache
+Traceback (most recent call last):
+  File "/usr/sbin/mock", line 831, in <module>
+    main()
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 653, in main
+    run_command(options, args, config_opts, commands, buildroot, state)
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 684, in run_command
+    commands.init(do_log=False)
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/lib/python2.7/site-packages/mockbuild/backend.py", line 123, in init
+    self.buildroot.initialize(**kwargs)
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/lib/python2.7/site-packages/mockbuild/buildroot.py", line 84, in initialize
+    self._init(prebuild=prebuild, do_log=do_log)
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/lib/python2.7/site-packages/mockbuild/buildroot.py", line 128, in _init
+    self._setup_devices()
+  File "/usr/lib/python2.7/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/lib/python2.7/site-packages/mockbuild/buildroot.py", line 442, in _setup_devices
+    os.symlink("/proc/self/mounts", self.make_chroot_path('etc', 'mtab'))
+OSError: [Errno 17] File exists
+This is already fixed in mock-1.2.10
+
+*** This bug has been marked as a duplicate of bug 1224732 ***

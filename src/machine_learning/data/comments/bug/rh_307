@@ -1,0 +1,22 @@
+Description of problem:
+It would be handy to have access to an EPEL7 branch of SDL2.  I would not expect any wayland support.
+
+Version-Release number of selected component (if applicable):SDL2-2.0.3-6.fc23
+
+
+How reproducible:100%
+
+
+Steps to Reproduce:
+1.no EPEL7 branch
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+I won't support EL*, if you want and you are packager - I can request this branch for you.

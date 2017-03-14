@@ -1,0 +1,10 @@
+Fix for a potential security issue in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sendmail&amp;sektion=8">sendmail(8)</a>
+with respect to DNS maps. This only affects
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sendmail&amp;sektion=8">sendmail(8)</a>
+configurations that use the "enhdnsbl"
+feature. The default OpenBSD
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sendmail&amp;sektion=8">sendmail(8)</a>
+config does not use this.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/016_sendmail.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,57 @@
+Description of problem:
+I dragged a message hoping to drop it into another folder ... then i changed my mind and hit ESC ---> *CRASH*
+
+Version-Release number of selected component:
+evolution-3.17.3-1.fc23
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: g_type_check_instance_is_fundamentally_a
+executable:     /usr/bin/evolution
+global_pid:     3465
+kernel:         4.2.0-0.rc0.git4.1.fc23.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 g_type_check_instance_is_fundamentally_a at /lib64/libgobject-2.0.so.0
+ #1 g_object_ref at /lib64/libgobject-2.0.so.0
+ #2 set_icon_helper at /lib64/libgtk-3.so.0
+ #3 gtk_drag_begin_internal at /lib64/libgtk-3.so.0
+ #4 gtk_drag_begin at /lib64/libgtk-3.so.0
+ #5 et_real_start_drag at /usr/lib64/evolution/libevolution-util.so
+ #10 item_start_drag at /usr/lib64/evolution/libevolution-util.so
+ #11 e_marshal_BOOLEAN__INT_INT_BOXED at /usr/lib64/evolution/libevolution-util.so
+ #16 eti_event at /usr/lib64/evolution/libevolution-util.so
+ #17 ffi_call_unix64 at /lib64/libffi.so.6
+Created attachment 1050078
+File: backtrace
+Created attachment 1050079
+File: cgroup
+Created attachment 1050080
+File: core_backtrace
+Created attachment 1050081
+File: dso_list
+Created attachment 1050082
+File: environ
+Created attachment 1050083
+File: limits
+Created attachment 1050084
+File: maps
+Created attachment 1050085
+File: mountinfo
+Created attachment 1050086
+File: namespaces
+Created attachment 1050087
+File: open_fds
+Created attachment 1050088
+File: proc_pid_status
+Created attachment 1050089
+File: var_log_messages
+Thanks for a bug report. This had been a gtk3 issue, fixed at [1]. The fix will be included in the next gtk3 release.
+
+[1] https://bugzilla.gnome.org/show_bug.cgi?id=751401

@@ -1,0 +1,173 @@
+--- a/lxsession.spec	2015-06-21 22:28:54.950668334 +0100
++++ b/lxsession.spec	2015-06-21 22:22:46.275326096 +0100
+@@ -3,34 +3,42 @@
+ # https://bugzilla.redhat.com/show_bug.cgi?id=442268
+ 
+ Name:           lxsession
+-Version:        0.4.6.1
+-Release:        9%{?dist}
++Version:        0.5.2
++Release:        1%{?dist}
+ Summary:        Lightweight X11 session manager
+ Summary(de):    Leichtgewichtiger X11 Sitzungsverwalter
+ 
+ Group:          User Interface/Desktops
+ License:        GPLv2+
+-URL:            http://lxde.sourceforge.net/
+-Source0:        http://downloads.sourceforge.net/sourceforge/lxde/%{name}-%{version}.tar.gz
+-Patch0:         lxsession-0.4.1-dsofix.patch
+-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
++URL:            https://github.com/lxde/
++Source0:        https://github.com/lxde/lxsession/archive/%{version}.tar.gz
+ 
+-BuildRequires:  gtk2-devel > 2.6 dbus-glib-devel
+-BuildRequires:  docbook-utils intltool gettext
++BuildRequires:  gtk2-devel > 2.6
++BuildRequires:  dbus-glib-devel
++BuildRequires:  desktop-file-utils
++BuildRequires:  docbook-style-xsl
++BuildRequires:  docbook-utils
++BuildRequires:  intltool gettext
++BuildRequires:  libxslt
++BuildRequires:  polkit-devel
++BuildRequires:  unique-devel
++BuildRequires:  vala
+ # name changed back from lxsession-lite to lxsession
+ Obsoletes:      lxsession-lite <= 0.3.6-6
+ Provides:       lxsession-lite = %{version}-%{release}
+ # lxde-settings-daemon was merged into lxsession
+ Obsoletes:      lxde-settings-daemon <= 0.4.1-2
+ Provides:       lxde-settings-daemon = 0.4.1-3
+-# required for suspend and hibernate
+-Requires:       ConsoleKit
+-Requires:       upower
+-
++# lxsession-edit was merged into lxsession
++Obsoletes:      lxsession-edit <= 0.2.0-9
++Provides:       lxsession-edit = %{version}-%{release}
++# lxpolkit was merged into lxsession
++Obsoletes:      lxpolkit <= 0.1.0-11
++Provides:       lxpolkit = %{version}-%{release}
+ 
+ %description
+ LXSession is a standard-compliant X11 session manager with shutdown/
+-reboot/suspend support via HAL. In connection with gdm it also supports user 
++reboot/suspend support via systemd. In connection with gdm it also supports user 
+ switching.
+ 
+ LXSession is derived from XSM and is developed as default X11 session manager 
+@@ -39,7 +47,7 @@ it's totally desktop-independent and onl
+ 
+ %description -l de
+ LXSession Lite ist ein Standard konformer X11 Sitzungsverwalter mit 
+-Unterstützung für Herunterfahren, Neustart und Schlafmodus mittels HAL. 
++Unterstützung für Herunterfahren, Neustart und Schlafmodus mittels systemd. 
+ Zusammen mit GDM unterstützt auch Benutzerwechsel.
+ 
+ LXSession Lite ist von XSM abgeleitet und wird als Sitzungsverwalter von LXDE,
+@@ -50,8 +58,7 @@ Abhängigkeiten.
+ 
+ %prep
+ %setup -q
+-#%patch0 -p1 -b .dsofix
+-
++NOCONFIGURE=1 ./autogen.sh
+ 
+ %build
+ %configure --enable-man
+@@ -59,27 +66,45 @@ make %{?_smp_mflags}
+ 
+ 
+ %install
+-rm -rf $RPM_BUILD_ROOT
+-make install DESTDIR=$RPM_BUILD_ROOT INSTALL='install -p'
+-%find_lang %{name}
+-mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/xdg/%{name}
++%{make_install}
+ 
+-%clean
+-rm -rf $RPM_BUILD_ROOT
++mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/xdg/lxsession
+ 
++desktop-file-validate $RPM_BUILD_ROOT%{_sysconfdir}/xdg/autostart/lxpolkit.desktop
++desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/lxsession-default-apps.desktop
++desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/lxsession-edit.desktop
++
++%find_lang %{name}
+ 
+ %files -f %{name}.lang
+-%defattr(-,root,root,-)
+-%doc AUTHORS ChangeLog COPYING README desktop.conf.example
+-%{_bindir}/%{name}
+-%{_bindir}/%{name}-logout
++%doc AUTHORS ChangeLog README data/*.conf.example
++%license COPYING
++%{_bindir}/lxclipboard
++%{_bindir}/lxpolkit
++%{_bindir}/lxsession
++%{_bindir}/lxsession-db
++%{_bindir}/lxsession-default
++%{_bindir}/lxsession-default-apps
++%{_bindir}/lxsession-default-terminal
++%{_bindir}/lxsession-edit
++%{_bindir}/lxsession-xdg-autostart
++%{_bindir}/lxsession-xsettings
++%{_bindir}/lxsettings-daemon
++%{_bindir}/lxsession-logout
+ %{_bindir}/lxlock
+-%{_datadir}/%{name}/
+-%{_mandir}/man*/%{name}*.*
++%{_datadir}/lxsession/
++%{_datadir}/applications/lxsession-default-apps.desktop
++%{_datadir}/applications/lxsession-edit.desktop
++%{_mandir}/man*/*.*
++
+ # we need to own
+ %dir %{_sysconfdir}/xdg/%{name}
++%{_sysconfdir}/xdg/autostart/lxpolkit.desktop
+ 
+ %changelog
++* Sun Jun 21 2015 Leigh Scott <leigh123linux@googlemail.com> - 0.5.2-1
++- Update to 0.5.2
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.4.6.1-9
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+
+--- a/lxsession.spec	2015-06-22 19:52:16.116331507 +0100
++++ b/lxsession.spec	2015-06-22 19:51:36.121749605 +0100
+@@ -4,7 +4,7 @@
+ 
+ Name:           lxsession
+ Version:        0.5.2
+-Release:        1%{?dist}
++Release:        2%{?dist}
+ Summary:        Lightweight X11 session manager
+ Summary(de):    Leichtgewichtiger X11 Sitzungsverwalter
+ 
+@@ -70,7 +70,13 @@ make %{?_smp_mflags} V=1
+ 
+ mkdir -p -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/xdg/lxsession
+ 
+-desktop-file-validate $RPM_BUILD_ROOT%{_sysconfdir}/xdg/autostart/lxpolkit.desktop
++desktop-file-install \
++    --remove-key="NotShowIn" \
++    --add-only-show-in="LXDE;" \
++    --delete-original \
++    --dir=$RPM_BUILD_ROOT%{_sysconfdir}/xdg/autostart \
++    $RPM_BUILD_ROOT%{_sysconfdir}/xdg/autostart/%{name}.desktop
++
+ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/lxsession-default-apps.desktop
+ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/lxsession-edit.desktop
+ 
+@@ -102,6 +108,9 @@ desktop-file-validate $RPM_BUILD_ROOT%{_
+ %{_sysconfdir}/xdg/autostart/lxpolkit.desktop
+ 
+ %changelog
++* Mon Jun 22 2015 Leigh Scott <leigh123linux@googlemail.com> - 0.5.2-2
++- Add only-show-in LXDE
++
+ * Sun Jun 21 2015 Leigh Scott <leigh123linux@googlemail.com> - 0.5.2-1
+ - Update to 0.5.2
+ 
+

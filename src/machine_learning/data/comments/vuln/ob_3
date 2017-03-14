@@ -1,0 +1,4 @@
+A DNS-based vulnerability exists when uucpd is used.  By default uucpd
+is not enabled in the OpenBSD releases, but some sites may have enabled it.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/common/uucpd.patch">
+A patch is available which corrects this behaviour</a>.

@@ -1,0 +1,5 @@
+getsockopt(2) with any of IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL,
+IP_IPCOMP_LEVEL will crash the system.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.5/common/009_getsockopt.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,25 @@
+Description of problem:
+When a system has two interfaces for example eth1 and eth0 in two different subnets, bringing one of them down should display the status information as "eth1:down".
+
+Version-Release number of selected component (if applicable):
+nagios-server-addons-0.2.1-3.el6rhs.noarch
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Have a system which has two interfaces say eth0 and eth1 with ip addresses in two different subnets.
+2. Now bring down one of the interface.
+3.
+
+Actual results:
+Status information shows "could not complete ssl handshake"
+
+Expected results:
+status information should display "eth1:down,eth0:UP"
+
+Additional info:
+This issue seems to be an issue with network configuration - the reverse lookup of  hostname (nagios server) is failing when one of the interfaces is brought down
+
+The issue is not related to nagios or nrpe.
+As per comment 3, closing this

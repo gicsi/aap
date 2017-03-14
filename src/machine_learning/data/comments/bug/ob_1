@@ -1,0 +1,7 @@
+The Intel P5 F00F bug was discovered after the CDRs had already been
+sent to the manufacturer.  This problem permits any user who has an account
+to lock your machine up using a 4-line program.  The problem only affects
+Intel P5 processors (the i386, i486, P-Pro, and P-II are not vulnerable,
+nor are processors by other manufacturers).
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/i386/f00f.patch">
+A kernel source-code patch is available</a>.

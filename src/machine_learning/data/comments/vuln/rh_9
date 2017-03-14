@@ -1,0 +1,336 @@
+RAISING THIS BUG FOR UPSTREAM TRACKING OF DOWNSTREAM BUG 1240925 
+
+Description:
+============
+When I file in hot tier is idle for sometime, it is marked for demotion. But before the demote happens, if the file is accessed again, by say reading the file or changing file metadata, then the file ideally should continue to stay in hot tier. But this is not the case. It is currently getting demoted, once marked for demotion irrespective of file being re-accessed or not
+
+Steps:
+=====
+A file marked for demotion is getting demoted even if the file is being accessed:
+1) i created a hot file as below
+[root@rhs-client6 vol2]# touch xyz
+[root@rhs-client6 vol2]# stat xyz
+  File: `xyz'
+  Size: 0         	Blocks: 0          IO Block: 1048576 regular empty file
+Device: 1bh/27d	Inode: 13353154674754277901  Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2015-07-08 01:25:09.000000000 +0530
+Modify: 2015-07-08 01:25:09.000000000 +0530
+Change: 2015-07-08 01:25:09.097999988 +0530
+2)checked backend brick, file was in hot tier and epoch was stamped
+[root@nchilaka-tier03 ~]# echo "== c1 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick1/vol2/.glusterfs/vol2.db; echo "== c2 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick2/vol2/.glusterfs/vol2.db; echo "== h1 ==" ; echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick3/vol2/.glusterfs/vol2.db
+== c1 ==
+Error: unable to open database "/rhs/brick1/vol2/.glusterfs/vol2.db": unable to open database file
+== c2 ==
+Error: unable to open database "/rhs/brick2/vol2/.glusterfs/vol2.db": unable to open database file
+== h1 ==
+68ab61db-c15f-497c-b94f-ef6dbb93520d|1436298909|97064|0|0|0|0|0|0|1|1
+68ab61db-c15f-497c-b94f-ef6dbb93520d|00000000-0000-0000-0000-000000000001|xyz|/xyz|0|0
+
+
+3)used touch to re-access file again after 30 sec
+[root@rhs-client6 vol2]# touch xyz
+[root@rhs-client6 vol2]# stat xyz
+  File: `xyz'
+  Size: 0         	Blocks: 0          IO Block: 1048576 regular empty file
+Device: 1bh/27d	Inode: 13353154674754277901  Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2015-07-08 01:25:38.000000000 +0530
+Modify: 2015-07-08 01:25:38.000000000 +0530
+Change: 2015-07-08 01:25:38.882000001 +0530
+
+4)saw brickend and ctime was stamped successfully as below
+[root@nchilaka-tier03 ~]# echo "== c1 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick1/vol2/.glusterfs/vol2.db; echo "== c2 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick2/vol2/.glusterfs/vol2.db; echo "== h1 ==" ; echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick3/vol2/.glusterfs/vol2.db
+== c1 ==
+Error: unable to open database "/rhs/brick1/vol2/.glusterfs/vol2.db": unable to open database file
+== c2 ==
+Error: unable to open database "/rhs/brick2/vol2/.glusterfs/vol2.db": unable to open database file
+== h1 ==
+68ab61db-c15f-497c-b94f-ef6dbb93520d|1436298938|880419|0|0|0|0|0|0|1|1
+68ab61db-c15f-497c-b94f-ef6dbb93520d|00000000-0000-0000-0000-000000000001|xyz|/xyz|0|0
+
+
+5)HOWEVER, Now within a few seconds  the file got demoted (below was the ctime)
+[root@rhs-client6 vol2]# stat xyz
+  File: `xyz'
+  Size: 0         	Blocks: 0          IO Block: 1048576 regular empty file
+Device: 1bh/27d	Inode: 13353154674754277901  Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2015-07-08 01:25:38.000000000 +0530
+Modify: 2015-07-08 01:25:38.000000000 +0530
+Change: 2015-07-08 01:26:00.583000149 +0530
+
+
+6)brick backend
+[root@nchilaka-tier01 ~]# echo "== c1 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick1/vol2/.glusterfs/vol2.db; echo "== c2 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick2/vol2/.glusterfs/vol2.db; echo "== h1 ==" ; echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick3/vol2/.glusterfs/vol2.db
+== c1 ==
+== c2 ==
+52ef1723-f985-4d47-9f6f-0fd302e3553d|0|0|0|0|0|0|0|0|1|1
+68ab61db-c15f-497c-b94f-ef6dbb93520d|0|0|0|0|0|0|0|0|1|1
+90bc6ab0-e836-415f-940a-c955b2a4544c|0|0|0|0|0|0|0|0|1|1
+52ef1723-f985-4d47-9f6f-0fd302e3553d|00000000-0000-0000-0000-000000000001|f1|/f1|0|0
+68ab61db-c15f-497c-b94f-ef6dbb93520d|00000000-0000-0000-0000-000000000001|xyz|/xyz|0|0
+90bc6ab0-e836-415f-940a-c955b2a4544c|00000000-0000-0000-0000-000000000001|newnew|/newnew|0|0
+== h1 ==
+[root@nchilaka-tier01 ~]# 
+
+[root@nchilaka-tier03 ~]# echo "== c1 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick1/vol2/.glusterfs/vol2.db; echo "== c2 ==" ;  echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick2/vol2/.glusterfs/vol2.db; echo "== h1 ==" ; echo "select * from gf_file_tb; select * from gf_flink_tb;" | sqlite3 /rhs/brick3/vol2/.glusterfs/vol2.db
+== c1 ==
+Error: unable to open database "/rhs/brick1/vol2/.glusterfs/vol2.db": unable to open database file
+== c2 ==
+Error: unable to open database "/rhs/brick2/vol2/.glusterfs/vol2.db": unable to open database file
+== h1 ==
+[root@nchilaka-tier03 ~]# 
+
+
+
+
+
+
+####################
+Tiering reblancer logs
+
+
+[root@nchilaka-tier03 glusterfs]# ########################################
+[root@nchilaka-tier03 glusterfs]# ########################################
+[root@nchilaka-tier03 glusterfs]# ########################################
+[root@nchilaka-tier03 glusterfs]# ########################################
+[root@nchilaka-tier03 glusterfs]# tail -f vol2-tier.log
+[2015-07-07 19:32:00.967420] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:32:00.967534] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:32:00.968528] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+########deleted all files #############
+[2015-07-07 19:32:58.421870] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89069.00 secs
+[2015-07-07 19:32:58.421942] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 26, size: 0, lookups: 27, failures: 1, skipped: 0
+[2015-07-07 19:33:11.970021] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89082.00 secs
+[2015-07-07 19:33:12.222025] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89083.00 secs
+[2015-07-07 19:33:48.813434] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89119.00 secs
+The message "I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 26, size: 0, lookups: 27, failures: 1, skipped: 0" repeated 3 times between [2015-07-07 19:32:58.421942] and [2015-07-07 19:33:48.813561]
+[2015-07-07 19:33:49.094588] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89120.00 secs
+[2015-07-07 19:33:49.094739] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 26, size: 0, lookups: 27, failures: 1, skipped: 0
+[2015-07-07 19:34:00.981909] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:34:00.982043] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:34:00.984646] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file f1
+[2015-07-07 19:34:00.985517] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /f1: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:34:00.998607] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:34:00.998702] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:34:00.998997] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /f1: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:34:01.031010] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /f1 from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:34:01.031799] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+#######created file f1############
+[2015-07-07 19:34:55.168130] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89186.00 secs
+[2015-07-07 19:34:55.168185] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 27, size: 0, lookups: 28, failures: 1, skipped: 0
+[2015-07-07 19:36:00.047138] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:36:00.047231] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:36:00.048014] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:34:55.404911] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89186.00 secs
+[2015-07-07 19:34:55.404915] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 27, size: 0, lookups: 28, failures: 1, skipped: 0
+[2015-07-07 19:38:00.060926] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:38:00.061097] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:38:00.062975] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:38:47.855203] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89418.00 secs
+[2015-07-07 19:38:47.855383] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 27, size: 0, lookups: 28, failures: 1, skipped: 0
+[2015-07-07 19:38:48.081794] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89419.00 secs
+[2015-07-07 19:40:00.077018] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:40:00.077103] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:40:00.078110] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:38:48.081922] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 27, size: 0, lookups: 28, failures: 1, skipped: 0
+[2015-07-07 19:42:00.091865] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:42:00.091960] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:42:00.094502] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file f1
+[2015-07-07 19:42:00.095208] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /f1: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:42:00.108946] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:42:00.109035] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:42:00.109545] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /f1: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:42:00.147199] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /f1 from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:42:00.148794] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:44:00.161117] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:44:00.161200] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:44:00.162053] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:46:00.173749] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:46:00.173838] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:46:00.174854] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:48:00.188318] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:48:00.188476] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:48:00.190805] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file f1
+[2015-07-07 19:48:00.191778] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /f1: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:48:00.200294] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:48:00.200387] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:48:00.200686] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /f1: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:48:00.230904] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /f1 from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:48:00.231830] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:50:00.246291] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:50:00.246492] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:50:00.247128] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:52:00.260568] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:52:00.260683] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:52:00.261636] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:54:00.273972] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:54:00.274134] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:54:00.276288] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file newnew
+[2015-07-07 19:54:00.277311] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /newnew: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:54:00.284817] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:54:00.284820] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:54:00.285127] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /newnew: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:54:00.310826] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /newnew from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:54:00.311582] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:56:00.326270] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:56:00.326356] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:56:00.328671] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file xyz
+[2015-07-07 19:56:00.329502] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /xyz: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:56:00.338673] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:56:00.338809] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:56:00.339200] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /xyz: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:56:00.370221] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /xyz	 from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:56:00.372545] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 0 src_subvol vol2-hot-dht file newnew
+[2015-07-07 19:56:00.374297] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /newnew: attempting to move from vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:56:00.382836] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-2: remote operation failed [Permission denied]
+[2015-07-07 19:56:00.382904] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-3: remote operation failed [Permission denied]
+[2015-07-07 19:56:00.383281] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /newnew: failed to set xattr on vol2-cold-dht (Permission denied)
+[2015-07-07 19:56:00.412371] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /newnew from subvolume vol2-hot-dht to vol2-cold-dht
+[2015-07-07 19:56:00.413245] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:58:00.424964] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 19:58:00.425047] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 19:58:00.426146] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 20:00:00.438396] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 20:00:00.438488] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 20:00:00.439240] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 20:02:00.531611] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 20:02:00.531727] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 20:02:00.532694] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 20:04:00.546901] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6709
+[2015-07-07 20:04:00.546984] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/promotequeryfile-6709 for migration
+[2015-07-07 20:04:00.547872] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+
+
+
+
+
+
+
+[root@nchilaka-tier01 glusterfs]# ########################################
+[root@nchilaka-tier01 glusterfs]# ########################################
+[root@nchilaka-tier01 glusterfs]# ########################################
+[root@nchilaka-tier01 glusterfs]# ########################################
+[root@nchilaka-tier01 glusterfs]# tail -f vol2-tier.log
+########deleted all files #############
+[2015-07-07 19:32:58.639229] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89069.00 secs
+[2015-07-07 19:32:58.639314] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0
+[2015-07-07 19:33:12.187151] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89083.00 secs
+[2015-07-07 19:33:49.032889] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89120.00 secs
+#######created file f1############
+[2015-07-07 19:33:12.438199] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89083.00 secs
+[2015-07-07 19:33:49.311872] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89120.00 secs
+The message "I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0" repeated 4 times between [2015-07-07 19:32:58.639314] and [2015-07-07 19:33:49.311875]
+[2015-07-07 19:34:55.386510] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89186.00 secs
+[2015-07-07 19:34:55.386576] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0
+[2015-07-07 19:34:55.623864] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89186.00 secs
+[2015-07-07 19:34:55.623867] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0
+[2015-07-07 19:38:48.072710] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89419.00 secs
+[2015-07-07 19:38:48.072768] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0
+[2015-07-07 19:40:00.843725] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file f1
+[2015-07-07 19:40:00.844920] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /f1: attempting to move from vol2-cold-dht to vol2-hot-dht
+[2015-07-07 19:40:00.855922] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-5: remote operation failed [Permission denied]
+[2015-07-07 19:40:00.856003] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /f1: failed to set xattr on vol2-hot-dht (Permission denied)
+[2015-07-07 19:40:00.890948] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /f1 from subvolume vol2-cold-dht to vol2-hot-dht
+[2015-07-07 19:38:48.300146] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89419.00 secs
+[2015-07-07 19:38:48.300150] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 37, size: 0, lookups: 37, failures: 0, skipped: 0
+[2015-07-07 19:46:00.931646] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file f1
+[2015-07-07 19:46:00.932667] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /f1: attempting to move from vol2-cold-dht to vol2-hot-dht
+[2015-07-07 19:46:00.939392] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-5: remote operation failed [Permission denied]
+[2015-07-07 19:46:00.939492] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /f1: failed to set xattr on vol2-hot-dht (Permission denied)
+[2015-07-07 19:46:00.968211] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /f1 from subvolume vol2-cold-dht to vol2-hot-dht
+[2015-07-07 19:56:00.021155] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file newnew
+[2015-07-07 19:56:00.022004] I [dht-rebalance.c:1002:dht_migrate_file] 0-vol2-tier-dht: /newnew: attempting to move from vol2-cold-dht to vol2-hot-dht
+[2015-07-07 19:56:00.029370] W [MSGID: 114031] [client-rpc-fops.c:1977:client3_3_fsetxattr_cbk] 0-vol2-client-5: remote operation failed [Permission denied]
+[2015-07-07 19:56:00.029449] W [MSGID: 109023] [dht-rebalance.c:546:__dht_rebalance_create_dst_file] 0-vol2-tier-dht: /newnew: failed to set xattr on vol2-hot-dht (Permission denied)
+[2015-07-07 19:56:00.060819] I [MSGID: 109022] [dht-rebalance.c:1282:dht_migrate_file] 0-vol2-tier-dht: completed migration of /newnew from subvolume vol2-cold-dht to vol2-hot-dht
+
+
+
+[root@nchilaka-tier02 glusterfs]# ########################################
+[root@nchilaka-tier02 glusterfs]# ########################################
+[root@nchilaka-tier02 glusterfs]# ########################################
+[root@nchilaka-tier02 glusterfs]# ########################################
+[root@nchilaka-tier02 glusterfs]# tail -f vol2-tier.log
+[2015-07-07 19:32:00.080967] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:32:00.081057] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:32:00.081121] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+########deleted all files #############
+[2015-07-07 19:32:58.954230] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89068.00 secs
+[2015-07-07 19:32:58.954307] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0
+[2015-07-07 19:33:12.502584] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89082.00 secs
+[2015-07-07 19:33:49.345711] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89119.00 secs
+[2015-07-07 19:34:00.094622] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:34:00.094711] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:34:00.094767] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+#######created file f1############
+[2015-07-07 19:33:12.753532] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89082.00 secs
+[2015-07-07 19:33:49.627265] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89119.00 secs
+The message "I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0" repeated 4 times between [2015-07-07 19:32:58.954307] and [2015-07-07 19:33:49.627268]
+[2015-07-07 19:34:55.699793] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89185.00 secs
+[2015-07-07 19:34:55.699856] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0
+[2015-07-07 19:36:00.108488] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:36:00.108650] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:36:00.108773] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:34:55.936619] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89185.00 secs
+[2015-07-07 19:34:55.936622] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0
+[2015-07-07 19:38:00.122471] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:38:00.122588] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:38:00.122698] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:38:48.385543] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89418.00 secs
+[2015-07-07 19:38:48.385595] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0
+[2015-07-07 19:40:00.138322] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:40:00.138515] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:40:00.138643] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:40:00.148329] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file f1
+[2015-07-07 19:40:00.148938] I [MSGID: 109038] [tier.c:109:tier_check_same_node] 0-vol2-tier-dht: /f1 does not belong to this node
+[2015-07-07 19:40:00.149330] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:38:48.615115] I [MSGID: 109028] [dht-rebalance.c:3029:gf_defrag_status_get] 0-glusterfs: Rebalance is in progress. Time taken is 89418.00 secs
+[2015-07-07 19:38:48.615118] I [MSGID: 109028] [dht-rebalance.c:3033:gf_defrag_status_get] 0-glusterfs: Files migrated: 0, size: 0, lookups: 22, failures: 22, skipped: 0
+[2015-07-07 19:42:00.162120] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:42:00.162136] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6736
+[2015-07-07 19:42:00.162471] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:42:00.162615] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:44:00.178019] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:44:00.178118] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:44:00.178182] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:46:00.192907] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:46:00.193013] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:46:00.193077] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:46:00.198343] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file f1
+[2015-07-07 19:46:00.198752] I [MSGID: 109038] [tier.c:109:tier_check_same_node] 0-vol2-tier-dht: /f1 does not belong to this node
+[2015-07-07 19:46:00.198989] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:48:00.212514] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6736
+[2015-07-07 19:48:00.212514] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:48:00.212662] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:48:00.212750] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:50:00.229031] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:50:00.229138] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:50:00.229285] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:52:00.242040] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:52:00.242198] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:52:00.242369] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:54:00.256207] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:54:00.256336] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:54:00.256428] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:56:00.270555] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:56:00.270645] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:56:00.270707] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 19:56:00.276106] I [MSGID: 109038] [tier.c:350:tier_migrate_using_query_file] 0-vol2-tier-dht: Tier 1 src_subvol vol2-cold-dht file newnew
+[2015-07-07 19:56:00.276498] I [MSGID: 109038] [tier.c:109:tier_check_same_node] 0-vol2-tier-dht: /newnew does not belong to this node
+[2015-07-07 19:56:00.276751] E [MSGID: 109037] [tier.c:908:tier_start] 0-vol2-tier-dht: Promotion failed!
+[2015-07-07 19:58:00.291193] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 19:58:00.291327] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 19:58:00.291225] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/promotequeryfile-6736
+[2015-07-07 19:58:00.291475] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 20:00:00.306421] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 20:00:00.306515] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 20:00:00.306574] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 20:02:00.319567] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 20:02:00.319670] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 20:02:00.319726] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+[2015-07-07 20:04:00.335432] I [MSGID: 109038] [tier.c:572:tier_build_migration_qfile] 0-vol2-tier-dht: Failed to remove /var/run/gluster/demotequeryfile-6736
+[2015-07-07 20:04:00.335522] E [MSGID: 109051] [tier.c:614:tier_migrate_files_using_qfile] 0-tier: Failed opening /var/run/gluster/demotequeryfile-6736 for migration
+[2015-07-07 20:04:00.335590] E [MSGID: 109037] [tier.c:898:tier_start] 0-vol2-tier-dht: Demotion failed!
+*** This bug has been marked as a duplicate of bug 1240970 ***

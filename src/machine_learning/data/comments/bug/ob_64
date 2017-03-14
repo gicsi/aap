@@ -1,0 +1,3 @@
+Allow ThunderLAN cards to share interrupts nicely.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/016_tl.patch">
+A source code patch exists which remedies this problem.</a>

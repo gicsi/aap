@@ -1,0 +1,36 @@
+From 251e35f63e56a7f3822d432b7f823a8e152981a9 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Mon, 29 Jun 2015 00:15:54 +0000
+Subject: [PATCH] Update to 4 (#1236428)
+
+---
+ boost-gdb-printers.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/boost-gdb-printers.spec b/boost-gdb-printers.spec
+index f7b98e2..5ee6d70 100644
+--- a/boost-gdb-printers.spec
++++ b/boost-gdb-printers.spec
+@@ -1,6 +1,6 @@
+ Name: boost-gdb-printers
+-Version: 3
+-Release: 6%{?dist}
++Version: 4
++Release: 1%{?dist}
+ Summary: GDB pretty printers for boost
+ 
+ Group: Development/Debug
+@@ -44,6 +44,9 @@ make %{?_smp_mflags} check
+ %doc AUTHORS ChangeLog COPYING NEWS README
+ 
+ %changelog
++* Mon Jun 29 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 4-1
++- Update to 4 (#1236428)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3-6
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

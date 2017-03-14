@@ -1,0 +1,27 @@
+Description of problem:
+When doing an CDDB Search in Easytag, it only works once, not a second time.
+
+Version-Release number of selected component (if applicable):
+easytag-2.3.7-3.fc22.x86_64
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Open Easytag
+2. Select a few tracks (album)
+3. Do a CDDB Search --> Sucess
+4. Do it a second time (also with another album)--> It will fail with a "The server retuned a bad responce".
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Thanks for the bug report. I just fixed this upstream:
+
+https://git.gnome.org/browse/easytag/commit/?id=4f2daf8860378b2903d078d054adc452d516835c
+
+The fix will be in the next release, which should be 2.4.0 and will probably be out later today. Until then, you can work around the problem by keeping the CDDB dialogue open between searches.

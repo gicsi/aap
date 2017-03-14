@@ -1,0 +1,32 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html-single/User_Guide/index.html#sect-Red_Hat_Satellite-User_Guide-Configuring_a_Red_Hat_Satellite_Capsule_Server
+
+Section Number and Name: 
+18.1
+
+Describe the issue: 
+Step 1 warns that enough space must be available for the backup. But it fails to specify where. Also, is kattelo-backup able to specify a target location? Where is the online backup option? How to backup a capsule? Is it needed?
+
+Suggestions for improvement: 
+Describe the missing pieces
+
+Additional information: 
+Given the time a full backup takes, customer could opt for doing a online backup of the DB's and snapshot the filesystem for the pulp content (if the OS or hypervisor supports it).
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+So the docs say:
+
+
+ Run the backup script:
+
+# /usr/bin/katello-backup
+
+
+However this is incorrect, it should be:
+
+ Run the backup script:
+
+# /usr/bin/katello-backup /path/to/backup/location
+
+where /path/to/backup/location is a valid path and has enough space.
+*** This bug has been marked as a duplicate of bug 1172415 ***

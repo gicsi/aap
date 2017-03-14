@@ -1,0 +1,55 @@
+Description of problem:
+Crashes sometimes without a clear reason.
+
+Version-Release number of selected component:
+libreoffice-core-4.4.3.2-6.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/lib64/libreoffice/program/soffice.bin --writer --splash-pipe=5
+crash_function: signalHandler
+executable:     /usr/lib64/libreoffice/program/soffice.bin
+global_pid:     7091
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #5 signalHandler at /usr/src/debug/java-1.8.0-openjdk-1.8.0.45-40.b14.fc22.x86_64/jdk8/hotspot/src/os/linux/vm/os_linux.cpp:4268
+ #7 SwViewShell::getIDocumentRedlineAccess at /usr/src/debug/libreoffice-4.4.3.2/sw/source/core/view/viewsh.cxx:2529
+ #8 SwDocShell::HasChangeRecordProtection at /usr/src/debug/libreoffice-4.4.3.2/sw/source/uibase/app/docsh.cxx:1278
+ #9 SwView::GetState at /usr/src/debug/libreoffice-4.4.3.2/sw/source/uibase/uiview/viewstat.cxx:281
+ #10 CallState at /usr/src/debug/libreoffice-4.4.3.2/include/sfx2/shell.hxx:211
+ #11 SfxDispatcher::_FillState at /usr/src/debug/libreoffice-4.4.3.2/sfx2/source/control/dispatch.cxx:1888
+ #12 SfxBindings::Update_Impl at /usr/src/debug/libreoffice-4.4.3.2/sfx2/source/control/bindings.cxx:343
+ #13 SfxBindings::NextJob_Impl at /usr/src/debug/libreoffice-4.4.3.2/sfx2/source/control/bindings.cxx:1542
+ #14 Invoke at /usr/src/debug/libreoffice-4.4.3.2/vcl/source/app/timer.cxx:54
+ #15 Timer::ImplTimerCallbackProc at /usr/src/debug/libreoffice-4.4.3.2/vcl/source/app/timer.cxx:162
+Created attachment 1041899
+File: backtrace
+Created attachment 1041900
+File: cgroup
+Created attachment 1041901
+File: core_backtrace
+Created attachment 1041902
+File: dso_list
+Created attachment 1041903
+File: environ
+Created attachment 1041904
+File: limits
+Created attachment 1041905
+File: maps
+Created attachment 1041906
+File: mountinfo
+Created attachment 1041907
+File: namespaces
+Created attachment 1041908
+File: open_fds
+Created attachment 1041909
+File: proc_pid_status
+Created attachment 1041910
+File: var_log_messages
+*** This bug has been marked as a duplicate of bug 1234793 ***

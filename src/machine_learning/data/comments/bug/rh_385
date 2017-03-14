@@ -1,0 +1,19 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-MooseX-Configuration/perl-MooseX-Configuration.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-MooseX-Configuration/perl-MooseX-Configuration-0.02-1.fc23.src.rpm
+Description:
+This module lets you define attributes which can come from a configuration
+file. It also adds a role to your class which allows you to write a
+configuration file.
+
+Fedora Account System Username: jplesnik@redhat.com
+No packaging issues found.  Approving.
+New Package SCM Request
+=======================
+Package Name: perl-MooseX-Configuration
+Short Description: Define attributes which come from configuration files
+Upstream URL: http://search.cpan.org/dist/MooseX-Configuration/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

@@ -1,0 +1,5 @@
+Fix detection of tape blocksize during device open. Corrects problem with
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=restore&sektion=8">restore(8)</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/001_st.patch">
+A source code patch exists which remedies this problem.</a>

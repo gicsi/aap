@@ -1,0 +1,12 @@
+xlockmore has a localhost attack against it which allows recovery of the encrypted
+hash of the root password.  The damage to systems using DES passwords from this
+attack is pretty heavy, but to systems with a well-chosen root password under
+blowfish encoding
+(see <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=crypt&amp;sektion=3">
+crypt(3)</a>)
+the impact is much reduced.<br>
+(Aside:  We do not consider this a localhost root hole in the default install,
+since we have not seen a fast blowfish cracker yet ;-)<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/022_xlockmore.patch">
+A source code patch exists which remedies this problem.</a>
+This is the 2nd patch designed to solve this problem.

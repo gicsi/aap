@@ -1,0 +1,62 @@
+Version-Release number of selected component:
+mate-control-center-1.10.0-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        mate-appearance-properties
+crash_function: _g_log_abort
+executable:     /usr/bin/mate-appearance-properties
+global_pid:     22740
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (7 frames)
+ #0 _g_log_abort at gmessages.c:315
+ #3 g_settings_set_property at gsettings.c:526
+ #4 object_set_property at gobject.c:1415
+ #5 g_object_new_internal at gobject.c:1808
+ #6 g_object_new_valist at gobject.c:2033
+ #8 g_settings_new at gsettings.c:898
+ #9 init_appearance_data at appearance-main.c:76
+Created attachment 1041841
+File: backtrace
+Created attachment 1041842
+File: cgroup
+Created attachment 1041843
+File: core_backtrace
+Created attachment 1041844
+File: dso_list
+Created attachment 1041845
+File: environ
+Created attachment 1041846
+File: limits
+Created attachment 1041847
+File: maps
+Created attachment 1041848
+File: mountinfo
+Created attachment 1041849
+File: namespaces
+Created attachment 1041850
+File: open_fds
+Created attachment 1041851
+File: proc_pid_status
+mate-control-center-1.10.0-2.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/mate-control-center-1.10.0-2.fc22
+I solved the problem.
+I uninstalled sound mixer (Sound menu ) , and I had also deleted the daemon mate , I reinstalled later and it all worked out.
+anyway thanks.
+Package mate-control-center-1.10.0-2.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing mate-control-center-1.10.0-2.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10681/mate-control-center-1.10.0-2.fc22
+then log in and leave karma (feedback).
+mate-control-center-1.10.0-2.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

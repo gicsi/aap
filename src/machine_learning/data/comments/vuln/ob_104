@@ -1,0 +1,6 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sshd&amp;sektion=8&amp;format=html">sshd(8)</a>
+allows users to delete arbitrary files named "cookies" if X11
+forwarding is enabled. X11 forwarding is disabled by default.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/006_sshcookie.patch">
+A source code patch exists which remedies this problem.</a>

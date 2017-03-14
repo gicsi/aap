@@ -1,0 +1,76 @@
+Description of problem:
+bfo boot of f22 server x86_64 on NUC with DVD
+
+Version-Release number of selected component:
+anaconda-22.20.13-1
+
+The following was filed automatically by anaconda:
+anaconda 22.20.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1564, in handleUdevLVMPVFormat
+    raise UnusableConfigurationError("multiple LVM volume groups with the same name")
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1897, in handleUdevDeviceFormat
+    self.handleUdevLVMPVFormat(info, device)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 1261, in addUdevDevice
+    self.handleUdevDeviceFormat(info, device)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2193, in _populate
+    self.addUdevDevice(dev)
+  File "/usr/lib/python2.7/site-packages/blivet/devicetree.py", line 2127, in populate
+    self._populate()
+  File "/usr/lib/python2.7/site-packages/blivet/blivet.py", line 277, in reset
+    self.devicetree.populate(cleanupOnly=cleanupOnly)
+  File "/usr/lib/python2.7/site-packages/blivet/osinstall.py", line 1116, in storageInitialize
+    storage.reset()
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 115, in wait
+    self.raise_if_error(name)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/timezone.py", line 75, in time_initialize
+    threadMgr.wait(THREAD_STORAGE)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+UnusableConfigurationError: multiple LVM volume groups with the same name
+
+Additional info:
+addons:         com_redhat_kdump
+cmdline:        /usr/bin/python2  /sbin/anaconda
+cmdline_file:   repo=http://download.fedoraproject.org/pub/fedora/linux/releases/22/Server/x86_64/os/ initrd=http://download.fedoraproject.org/pub/fedora/linux/releases/22/Server/x86_64/os/images/pxeboot/initrd.img BOOT_IMAGE=http://download.fedoraproject.org/pub/fedora/linux/releases/22/Server/x86_64/os/images/pxeboot/vmlinuz 
+dnf.rpm.log:    Jul 02 18:01:53 INFO --- logging initialized ---
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.4-301.fc22.x86_64
+product:        Fedora
+release:        Cannot get release name.
+type:           anaconda
+version:        22
+Created attachment 1045583
+File: anaconda-tb
+Created attachment 1045584
+File: anaconda.log
+Created attachment 1045585
+File: dnf.log
+Created attachment 1045586
+File: environ
+Created attachment 1045587
+File: lsblk_output
+Created attachment 1045588
+File: nmcli_dev_list
+Created attachment 1045589
+File: os_info
+Created attachment 1045590
+File: storage.log
+Created attachment 1045591
+File: syslog
+Created attachment 1045592
+File: ifcfg.log
+Created attachment 1045593
+File: packaging.log
+Created attachment 1045594
+File: program.log
+Rawhide includes a dialog for UnusableConfigurationError that lets you retry after fixing the underlying problem. As for the underlying problem, it's right there in the error message.
+
+*** This bug has been marked as a duplicate of bug 1208212 ***

@@ -1,0 +1,2 @@
+We need to bump sosreport package for rhel 6.7 to include the changes made for bz1173766.
+We also need to include commit ae98e1e119d2abfe771cfa6c286e2e4e177d86d7.

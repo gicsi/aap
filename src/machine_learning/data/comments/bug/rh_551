@@ -1,0 +1,8 @@
+Taskbar sometimes freezes.
+I'm unable to reproduce it manually.
+Workaround: kill and start 'plasmashell'
+
+I'm running latest f22 + updates-testing.
+Probably a dup of bug #1193742 (dri/xcb deadlock)
+
+*** This bug has been marked as a duplicate of bug 1193742 ***

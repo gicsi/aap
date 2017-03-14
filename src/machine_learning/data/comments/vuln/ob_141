@@ -1,0 +1,5 @@
+Incorrect argument checking in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=getrlimit&amp;sektion=2">getrlimit(2)</a>
+system call may allow an attacker to crash the kernel.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.1/common/018_kernresource.patch">
+A source code patch exists which remedies this problem.</a>

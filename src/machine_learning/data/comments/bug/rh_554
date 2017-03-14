@@ -1,0 +1,32 @@
+Description of problem:
+In rawhide I'm unable to compile caml-crush any more. spatch seems to fail.
+
+Steps to Reproduce:
+fedpkg clone caml-crush
+cd caml-crush && fedpkg scratch-build
+
+
+Actual results:
+sed -i "s/* int/\* nativeint/g" ./pkcs11.mli
+sed -i "s/* int/\* nativeint/g" ./pkcs11.ml
+spatch --no-show-diff --in-place --sp-file ./pkcs11_stubs.cocci ./pkcs11_stubs.c
+There is no standard.iso in /builddir/build/BUILD/caml-crush-1.0.6/src/bindings-pkcs11.
+Are you sure you run a properly installed version of spatch ?\nNo 'spatch' nor 'spatch.opt' found in /builddir/build/BUILD/caml-crush-1.0.6/src/bindings-pkcs11
+Makefile:24: recipe for target 'idl' failed
+
+
+Expected results: (results from f22)
+sed -i "s/* int/\* nativeint/g" ./pkcs11.mli
+sed -i "s/* int/\* nativeint/g" ./pkcs11.ml
+spatch --no-show-diff --in-place --sp-file ./pkcs11_stubs.cocci ./pkcs11_stubs.c
+init_defs_builtins: /usr/share/coccinelle/standard.h
+What is the full output?  In particular which versions of which
+packages do you have installed?
+The output is from mockbuild. The failed build logs are available at:
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10189514
+
+According to that, coccinelle-1.0.1-1.fc23 was used.
+Can you try this version:
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10190618
+coccinelle-1.0.1-3.fc23
+That works, thanks.

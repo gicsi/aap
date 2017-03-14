@@ -1,0 +1,6 @@
+After a recent update, my touchpad does not detect two fingers every time when attempting to scroll. Putting my fingers wide apart always works, but when I have them close together, it sees it as only one finger. This prevents it from scrolling, and also causes a huge pointer jump when I lift my fingers.
+
+Not sure that this is exactly libinput's fault. I'll try to bisect the problem and figure out the troublesome update.
+
+(the touchpad is a PS/2 Syaptics touchpad)
+*** This bug has been marked as a duplicate of bug 1212230 ***

@@ -1,0 +1,201 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 026_httpd3.patch
+
+And then rebuild and install httpd and its modules:
+        cd usr.sbin/httpd
+        make -f Makefile.bsd-wrapper obj
+        make -f Makefile.bsd-wrapper cleandir
+        make -f Makefile.bsd-wrapper depend
+        make -f Makefile.bsd-wrapper
+        make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+        apachectl stop
+before running "make install", and
+        apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/modules/standard/mod_include.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_include.c,v
+retrieving revision 1.11
+retrieving revision 1.11.2.1
+diff -u -p -r1.11 -r1.11.2.1
+--- usr.sbin/httpd/src/modules/standard/mod_include.c	17 Nov 2003 18:57:06 -0000	1.11
++++ usr.sbin/httpd/src/modules/standard/mod_include.c	9 Jan 2005 03:27:13 -0000	1.11.2.1
+@@ -352,9 +352,10 @@ otilde\365oslash\370ugrave\371uacute\372
+  * the tag value is html decoded if dodecode is non-zero
+  */
+ 
+-static char *get_tag(pool *p, FILE *in, char *tag, int tagbuf_len, int dodecode)
++static char *get_tag(request_rec *r, FILE *in, char *tag, int tagbuf_len, int dodecode)
+ {
+     char *t = tag, *tag_val, c, term;
++    pool *p = r->pool;
+ 
+     /* makes code below a little less cluttered */
+     --tagbuf_len;
+@@ -380,7 +381,7 @@ static char *get_tag(pool *p, FILE *in, 
+ 
+     /* find end of tag name */
+     while (1) {
+-        if (t - tag == tagbuf_len) {
++        if (t == tag + tagbuf_len) {
+             *t = '\0';
+             return NULL;
+         }
+@@ -414,16 +415,30 @@ static char *get_tag(pool *p, FILE *in, 
+     term = c;
+     while (1) {
+         GET_CHAR(in, c, NULL, p);
+-        if (t - tag == tagbuf_len) {
++        if (t == tag + tagbuf_len) {
+             *t = '\0';
++            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
++                          "mod_include: value length exceeds limit"
++                          " (%d) in %s", tagbuf_len, r->filename);
+             return NULL;
+         }
+-/* Want to accept \" as a valid character within a string. */
++	/* Want to accept \" as a valid character within a string. */
+         if (c == '\\') {
+-            *(t++) = c;         /* Add backslash */
+             GET_CHAR(in, c, NULL, p);
+-            if (c == term) {    /* Only if */
+-                *(--t) = c;     /* Replace backslash ONLY for terminator */
++            /* Insert backslash only if not escaping a terminator char */
++            if (c != term) {
++                *(t++) = '\\';
++                /*
++                 * check to make sure that adding in the backslash won't cause
++                 * an overflow, since we're now 1 character ahead.
++                 */
++                if (t == tag + tagbuf_len) {
++                    *t = '\0';
++                    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
++                                  "mod_include: value length exceeds limit"
++                                  " (%d) in %s", tagbuf_len, r->filename);
++                    return NULL;
++                }
+             }
+         }
+         else if (c == term) {
+@@ -659,7 +674,7 @@ static int handle_include(FILE *in, requ
+     char *tag_val;
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         if (!strcmp(tag, "file") || !strcmp(tag, "virtual")) {
+@@ -882,7 +897,7 @@ static int handle_exec(FILE *in, request
+     char parsed_string[MAX_STRING_LEN];
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         if (!strcmp(tag, "cmd")) {
+@@ -933,7 +948,7 @@ static int handle_echo(FILE *in, request
+     encode = E_ENTITY;
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         if (!strcmp(tag, "var")) {
+@@ -995,7 +1010,7 @@ static int handle_perl(FILE *in, request
+         return DECLINED;
+     }
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             break;
+         }
+         if (strnEQ(tag, "sub", 3)) {
+@@ -1028,7 +1043,7 @@ static int handle_config(FILE *in, reque
+     table *env = r->subprocess_env;
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 0))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 0))) {
+             return 1;
+         }
+         if (!strcmp(tag, "errmsg")) {
+@@ -1144,7 +1159,7 @@ static int handle_fsize(FILE *in, reques
+     char parsed_string[MAX_STRING_LEN];
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         else if (!strcmp(tag, "done")) {
+@@ -1184,7 +1199,7 @@ static int handle_flastmod(FILE *in, req
+     char parsed_string[MAX_STRING_LEN];
+ 
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         else if (!strcmp(tag, "done")) {
+@@ -1960,7 +1975,7 @@ static int handle_if(FILE *in, request_r
+ 
+     expr = NULL;
+     while (1) {
+-        tag_val = get_tag(r->pool, in, tag, sizeof(tag), 0);
++        tag_val = get_tag(r, in, tag, sizeof(tag), 0);
+         if (!tag_val || *tag == '\0') {
+             return 1;
+         }
+@@ -2003,7 +2018,7 @@ static int handle_elif(FILE *in, request
+ 
+     expr = NULL;
+     while (1) {
+-        tag_val = get_tag(r->pool, in, tag, sizeof(tag), 0);
++        tag_val = get_tag(r, in, tag, sizeof(tag), 0);
+         if (!tag_val || *tag == '\0') {
+             return 1;
+         }
+@@ -2050,7 +2065,7 @@ static int handle_else(FILE *in, request
+ {
+     char tag[MAX_STRING_LEN];
+ 
+-    if (!get_tag(r->pool, in, tag, sizeof(tag), 1)) {
++    if (!get_tag(r, in, tag, sizeof(tag), 1)) {
+         return 1;
+     }
+     else if (!strcmp(tag, "done")) {
+@@ -2078,7 +2093,7 @@ static int handle_endif(FILE *in, reques
+ {
+     char tag[MAX_STRING_LEN];
+ 
+-    if (!get_tag(r->pool, in, tag, sizeof(tag), 1)) {
++    if (!get_tag(r, in, tag, sizeof(tag), 1)) {
+         return 1;
+     }
+     else if (!strcmp(tag, "done")) {
+@@ -2108,7 +2123,7 @@ static int handle_set(FILE *in, request_
+ 
+     var = (char *) NULL;
+     while (1) {
+-        if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++        if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+             return 1;
+         }
+         else if (!strcmp(tag, "done")) {
+@@ -2145,7 +2160,7 @@ static int handle_printenv(FILE *in, req
+     table_entry *elts = (table_entry *) arr->elts;
+     int i;
+ 
+-    if (!(tag_val = get_tag(r->pool, in, tag, sizeof(tag), 1))) {
++    if (!(tag_val = get_tag(r, in, tag, sizeof(tag), 1))) {
+         return 1;
+     }
+     else if (!strcmp(tag, "done")) {
+

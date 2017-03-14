@@ -1,0 +1,5 @@
+An incorrect memcpy call would result in corrupted MAC addresses when
+using PPPOE.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/017_pppoe.patch.sig">
+A source code patch exists which remedies this problem.</a>

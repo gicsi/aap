@@ -1,0 +1,8 @@
+Due to the failure to correctly validate LCP configuration option lengths,
+it is possible for an attacker to send LCP packets via an
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sppp&amp;sektion=4">sppp(4)</a>
+connection causing the kernel to panic.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-4304">CVE-2006-4304</a>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/009_sppp.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,4 @@
+There are printf-style format string bugs in several privileged programs.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/028_format_strings.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,16 @@
+/usr/bin/perl is not linked with -z now. The -z now is defined by -specs=/usr/lib/rpm/redhat/redhat-hardened-ld:
+
+gcc -o libperl.so -shared -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -m64 -mtune=generic -Wl,-z,relro -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -L/usr/local/lib -Wl,-soname -Wl,libperl.so.5.22 op.o perl.o  gv.o toke.o perly.o pad.o regcomp.o dump.o util.o mg.o reentr.o mro_core.o keywords.o hv.o av.o run.o pp_hot.o sv.o pp.o scope.o pp_ctl.o pp_sys.o doop.o doio.o regexec.o utf8.o taint.o deb.o universal.o globals.o perlio.o perlapi.o numeric.o mathoms.o locale.o pp_pack.o pp_sort.o caretx.o  perldtrace.o DynaLoader.o -lpthread -lresolv -lnsl -ldl -lm -lcrypt -lutil -lc
+Processing extracted/DCombiningClass.txt
+Processing extracted/DNumType.txt
+gcc -o perl -fstack-protector-strong -L/usr/local/lib -Wl,--enable-new-dtags perlmain.o  libperl.so `cat ext.libs` -lpthread -lresolv -lnsl -ldl -lm -lcrypt -lutil -lc
+
+The reason is we configure perl as:
+
+/bin/sh Configure -des -Doptimize="$RPM_OPT_FLAGS" \
+        -Dccdlflags="-Wl,--enable-new-dtags" \
+        -Dlddlflags="-shared $RPM_OPT_FLAGS $RPM_LD_FLAGS" \
+
+The $RPM_LD_FLAGS should go into ccdlflags too. ccdlflags is for linking programs dynamycally, lddlflags if for linking libraries dynamically.
+
+Configure supports ldflags, but I worry this is has to be actively used by Makefile.PLs, so it is not much helpful.

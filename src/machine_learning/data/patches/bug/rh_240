@@ -1,0 +1,36 @@
+From 47b65656936e8f9579dd4e830fe441058127ed87 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 3 Jul 2015 01:24:20 +0000
+Subject: [PATCH] Update to 0.041 (#1238898)
+
+---
+ perl-PPIx-Regexp.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-PPIx-Regexp.spec b/perl-PPIx-Regexp.spec
+index bae75b9..d9896f7 100644
+--- a/perl-PPIx-Regexp.spec
++++ b/perl-PPIx-Regexp.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-PPIx-Regexp
+-Version:        0.040
+-Release:        3%{?dist}
++Version:        0.041
++Release:        1%{?dist}
+ Summary:        Represent a regular expression of some sort
+ License:        GPL+ or Artistic
+ Group:          Development/Libraries
+@@ -72,6 +72,9 @@ perl Build.PL installdirs=vendor
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Fri Jul 03 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.041-1
++- Update to 0.041 (#1238898)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.040-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

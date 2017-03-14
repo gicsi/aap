@@ -1,0 +1,4 @@
+syslog(3) would not try to reopen the socket, thus, nightly newsyslog(8)
+would cause syslogd(8) to not see new messages.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/020_syslog.patch">
+A source code patch exists which remedies this problem.</a>

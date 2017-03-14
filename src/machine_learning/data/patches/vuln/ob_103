@@ -1,0 +1,54 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 007_kernexec.patch
+And then rebuild your kernel. 
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.48
+retrieving revision 1.49
+diff -u -r1.48 -r1.49
+--- sys/kern/kern_exec.c	2001/04/01 21:30:33	1.48
++++ sys/kern/kern_exec.c	2001/06/15 11:10:18	1.49
+@@ -133,6 +133,15 @@
+ 	    (p->p_flag & P_TRACED) || p->p_fd->fd_refcnt > 1)
+ 		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
+ 
++	/*
++	 * Set the P_SUID* flags early so that we won't be fiddled with when
++	 * we sleep later in this code.
++	 * XXX - this could give us a few false positives and the caller must
++	 *       make sure to save and restore the flags if exec fails.
++	 */
++	if (epp->ep_vap->va_mode & (VSUID|VSGID))
++		p->p_flag |= P_SUGID|P_SUGIDEXEC;
++
+ 	/* check access.  for root we have to see if any exec bit on */
+ 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+ 		goto bad1;
+@@ -244,6 +253,7 @@
+ 	char **tmpfap;
+ 	int szsigcode;
+ 	extern struct emul emul_native;
++	int saved_sugid;
+ 
+ 	/*
+ 	 * figure out the maximum size of an exec header, if necessary.
+@@ -274,6 +284,7 @@
+ 	pack.ep_emul = &emul_native;
+ 	pack.ep_flags = 0;
+ 
++	saved_sugid = p->p_flag & (P_SUGID|P_SUGIDEXEC);
+ 	/* see if we can run it. */
+ 	if ((error = check_exec(p, &pack)) != 0) {
+ 		goto freehdr;
+@@ -646,6 +657,7 @@
+ 
+ freehdr:
+ 	free(pack.ep_hdr, M_EXEC);
++	p->p_flag = (p->p_flag & ~(P_SUGID|P_SUGIDEXEC)) | saved_sugid;
+ 	return (error);
+ 
+ exec_abort:
+

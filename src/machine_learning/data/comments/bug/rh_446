@@ -1,0 +1,7 @@
+Mouse-2.4.2 gives wrong results when used from threads since perl-5.22.0. See <https://github.com/gfx/p5-Mouse/issues/29>. Even the t/900_mouse_bugs/017_issue29.t test is skipped now for that reason.
+
+This bug breaks for example perl-Text-Xslate (bug #1231271, <https://github.com/xslate/p5-Text-Xslate/issues/139>).
+
+Upstream report provides a fix which I'd like to apply if it is possible.
+Indeed it fixes the issue and makes Text-Xslate happy. I will apply the patch conditionally because it does not build with older perls.
+Go for it.

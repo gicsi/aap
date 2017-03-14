@@ -1,0 +1,7 @@
+The screen package shipped with 2.7 does not install itself properly.  The
+existing package in 2.7/packages/_ARCH_/screen-3.9.5.tgz has been renamed to
+screen-3.9.5.tgz.old and a replacement package has been provided under the
+name screen-3.9.5p1.tgz.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/ports/017_screen.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,29 @@
+Renaming a product causes an error:
+
+Note that this doesn't occur with new products but only with old products.
+
+
+When doing the following
+
+1. Rename a product from NAME1 to NAME2
+2. Rename the same product back from NAME2 to NAME2
+
+You get the error
+ Product with name 'xxx' already exists in this organization
+
+Customer ran some database queries to locate the Product.
+
+It appears to be created in marketing_products
+
+foreman=# select * from katello_products where name LIKE '%Openwave%';
+ id |   name    | description |     cp_id     | multiplier | provider_id |         created_at         |         updated_at         | gpg_key_id |           type            | sync_plan_id |         label          | organization_id
+----+-----------+-------------+---------------+------------+-------------+----------------------------+----------------------------+------------+---------------------------+--------------+------------------------+-----------------
+ 39 | Openwave  |             | 1431491295115 |            |           4 | 2015-06-29 13:49:00.159878 | 2015-06-29 13:49:00.159878 |            | Katello::MarketingProduct |              | Openwave_1431491295115 |               3
+ 34 | Openwave3 |             | 1431491295115 |            |           3 | 2015-05-13 04:28:14.849533 | 2015-07-02 04:07:26.908304 |          3 | Katello::Product          |              | Openwave               |               3
+(2 rows)
+
+
+Is this bug resolved in 6.1 and if not, can we have a workaround?
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+*** This bug has been marked as a duplicate of bug 1239077 ***

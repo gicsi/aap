@@ -1,0 +1,4 @@
+The rzsz port was removed from the ports collection, as it collects and
+sends user information to a designated email address, effectively spying on
+you.  <em>It is recommended that you remove this package if you installed
+it</em>.

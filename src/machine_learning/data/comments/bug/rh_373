@@ -1,0 +1,52 @@
+Version-Release number of selected component:
+evolution-3.16.3-2.1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: g_mutex_clear
+executable:     /usr/bin/evolution
+global_pid:     24163
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (8 frames)
+ #2 g_mutex_clear at gthread-posix.c:1300
+ #3 ews_connection_finalize at e-ews-connection.c:1621
+ #5 g_value_unset at gvalue.c:272
+ #6 g_object_new_valist at gobject.c:2036
+ #8 e_ews_notification_new at e-ews-notification.c:121
+ #9 e_ews_connection_enable_notifications_sync at e-ews-connection.c:9371
+ #10 start_notifications_thread at camel-ews-store.c:1046
+ #11 g_thread_proxy at gthread.c:764
+Created attachment 1044385
+File: backtrace
+Created attachment 1044386
+File: cgroup
+Created attachment 1044387
+File: core_backtrace
+Created attachment 1044388
+File: dso_list
+Created attachment 1044389
+File: environ
+Created attachment 1044390
+File: limits
+Created attachment 1044391
+File: maps
+Created attachment 1044392
+File: mountinfo
+Created attachment 1044393
+File: namespaces
+Created attachment 1044394
+File: open_fds
+Created attachment 1044395
+File: proc_pid_status
+Thanks for a bug report. I cannot tell for sure, but it seems to me that you hit a certain thread interleaving issue, which caused that an EWS connection object being use din one thread was freed meanwhile in another thread, causing this double free (it looks like a double free at least).
+
+I moved this upstream as [1]. Please see [1] for any further updates. If possible, please CC yourself there, in case upstream developers will have additional questions.
+
+[1] https://bugzilla.gnome.org/show_bug.cgi?id=751725

@@ -1,0 +1,24 @@
+Description of problem:
+HMMM. SSL obviously gets installed but is nowhere to be found.libssl package is NOWHERE to be found yet packages and applications depend on it.This is a common dependency and should NOT be missing.
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+post-install, always
+
+Steps to Reproduce:
+1. install fedora
+2. (app needs libssl to build or run)
+
+Actual results:
+MISSING packages?
+
+Expected results:
+These packages should be found.
+
+Additional info:
+trying to run bitcoin-scrypt "wallet" application.
+
+error while loading shared libraries: libssl.so.1.0.0: cannot open shared object file: No such file or directory
+ARG-V! Is there a way to link openssl -> ssl? Seems package confusion is running amok here.Libssl is disguised as openssl-devel.This may help someone else with other packages as well.

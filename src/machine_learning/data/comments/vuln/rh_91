@@ -1,0 +1,28 @@
+Description of problem:
+Testing the following example: https://access.redhat.com/solutions/1421633 makes CF UI hangs with an infinite "spinning wheel"
+
+Version-Release number of selected component (if applicable):
+CloudForms 3.2
+
+How reproducible:
+Follow the steps provided in the KCS to create a custom dialog with two dynamic dropdowns, one of them is dependant of the other.
+
+Steps to Reproduce:
+1. Create a custom dialog with two dynamic dropdowns following the KCS instructions
+2. Create a generic service and attach the dialog (just to test it)
+3. Try to refresh the second dynamic dropdown
+
+Actual results:
+An infinite spninning wheel is shown
+
+Expected results:
+The dynamic dropdown is refreshed correctly and the values are returned successfully
+
+Additional info:
+Log shows that everything is ok, showing the correct values.
+Created attachment 1043471
+dialog and methods reproducer
+
+The zip file contains a dialog with both dynamic dropdowns, and a exported domain with the tested methods.
+If you remove the "refresh" button, and select some value in the first field, when you select other value in the second field, it refreshes automatically.
+*** This bug has been marked as a duplicate of bug 1236522 ***

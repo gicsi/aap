@@ -1,0 +1,47 @@
+Created attachment 1048736
+subscription-manager-gui version
+
+Description of problem:
+Subscription-manager version id displayed as "RPM_VERSION " in the "ABOUT" window of GUI as well on CLI subscription-manager version command
+
+Version-Release number of selected component (if applicable):
+
+
+subscription-manager-gui-1.15.2-1.git.90.3c43eb8.el7.x86_64
+subscription-manager-plugin-container-1.15.2-1.git.90.3c43eb8.el7.x86_64
+subscription-manager-migration-data-2.0.22-1.git.0.4260892.el7.noarch
+subscription-manager-plugin-ostree-1.15.2-1.git.90.3c43eb8.el7.x86_64
+subscription-manager-1.15.2-1.git.90.3c43eb8.el7.x86_64
+subscription-manager-initial-setup-addon-1.15.2-1.git.90.3c43eb8.el7.x86_64
+subscription-manager-migration-1.15.2-1.git.90.3c43eb8.el7.x86_64
+python-rhsm: 1.15.2-1.git.12.e61eaee.el7
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+
+GUI:
+1.launch subscription-manager-gui
+2.click on Help ---> select about 
+
+
+CLI:
+
+[root@dhcp35-236 ~]# subscription-manager version
+server type: Red Hat Subscription Management
+subscription management server: 2.0.3-1
+subscription management rules: 5.16
+subscription-manager: RPM_VERSION
+python-rhsm: 1.15.2-1.git.12.e61eaee.el7
+
+
+Actual results:
+Subscription-manager version: RPM_VERSION
+
+Expected results:
+Subscription-manager version:<version subscription-manager installed>
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1241184 ***

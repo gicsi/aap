@@ -1,0 +1,66 @@
+Description of problem:
+I started scheduled system upgrade and download the kernel 4.0.6, libinput 0.18 and other new packages. After update, instead of scrolling the cursor runs off the other way. It happens very often!
+
+Version-Release number of selected component (if applicable):
+libinput-0.18.0-3.fc22.x86_64
+libinput-devel-0.18.0-3.fc22.x86_64
+xorg-x11-drv-libinput-0.10.0-5.fc22.x86_64
+kernel-core-4.0.6-300.fc22.x86_64
+
+Steps to Reproduce:
+1. Find some latest thinkpad, for example x1(3rd Gen).
+2. Get latest Fedora updates from official repository
+3. Try scrolling.
+
+Expected results:
+It just works as previous version
+
+Additional info:
+If my fingers are on the same line, scrolling works almost always correct.
+If the fingers are close to or are not on the same line, the scrolling does not work properly.
+Sorry, I understood pattern. Scrolling does not work well only when the fingers are at a short distance (less than or equal centimeter)
+Probably the same as bug 1236642, please provide an evemu-record of one of these scroll sequences that's misdetected.
+Created attachment 1044616
+recording when scrolling work wrong
+Created attachment 1044617
+recording when scrolling work right
+I tried replaying those recordings and aside from the two attachment being the same file, it doesn't trigger any scroll events here, even on 0.17.
+
+There is virtually no movement of the finger positions in that recording, X moves by 4 units, y also by 5 units only. Given the resolution of your device, that's less than a tenth of a mm.
+
+Please try recording again, you can verify that the recording reproduces the bug by running
+  sudo evemu-play /dev/input/eventX < recordings-file
+Created attachment 1044967
+wrong (new)
+Created attachment 1044968
+right (new)
+I recorded a video where you can see how the bug appears: https://youtu.be/aTzvkLAHrTo
+whoah, this is a busted kernel driver. the ABS_MT_SLOT events are missing, just look at this example here:
+
+E: 0.058783 0003 0035 3045      # EV_ABS / ABS_MT_POSITION_X    3045
+E: 0.058783 0003 0036 2951      # EV_ABS / ABS_MT_POSITION_Y    2951
+E: 0.058783 0003 003a 0054      # EV_ABS / ABS_MT_PRESSURE      54
+<------ there should be an ABS_MT_SLOT HERE
+E: 0.058783 0003 0035 3708      # EV_ABS / ABS_MT_POSITION_X    3708 
+E: 0.058783 0003 0036 2696      # EV_ABS / ABS_MT_POSITION_Y    2696
+E: 0.058783 0003 003a 0040      # EV_ABS / ABS_MT_PRESSURE      40
+E: 0.058783 0003 0000 3708      # EV_ABS / ABS_X                3708
+E: 0.058783 0003 0001 2696      # EV_ABS / ABS_Y                2696
+E: 0.058783 0003 0018 0040      # EV_ABS / ABS_PRESSURE         40
+E: 0.058783 0001 0145 0000      # EV_KEY / BTN_TOOL_FINGER      0
+E: 0.058783 0001 014d 0001      # EV_KEY / BTN_TOOL_DOUBLETAP   1
+
+
+without the slot event, libinput thinks that this is a single finger moving which both explains the jump and why two-finger scrolling doesn't trigger correctly.
+
+can you try some older kernel versions if you still have them around? and figure out which one the first one is that broke this?
+downgrade to kernel 4.0.5-300 fixes it so I suspect bug 1212230. still scratch-building kernels for more testing though.
+*** Bug 1238160 has been marked as a duplicate of this bug. ***
+right, it is a regression, caused by the fixes to bug 1212230.
+
+*** This bug has been marked as a duplicate of bug 1212230 ***
+I do not watch such a bug in Arch linux.
+Packages:
+libinput 0.18.0-1
+xf86-input-libinput
+linux 4.0.7-2

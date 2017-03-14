@@ -1,0 +1,23 @@
+Description of problem:
+There are some reports from the FSF that Linus is releasing non-free kernels by default and there is movement to fix this.Unfortunately by doing so hardware that is non-free(what isnt non-free these days) is broken or fails with this type of install.Not all of us can afford to do our homework when buying a PC or have Linux in mind initially when buying PC components.
+
+My ROG/AMD 9590 combination is perfect example.Sata controller isnt ICH by defalt.
+Video drivers usually must be non-free to get things like opencl to work.Fedora has gotten around this obstacle.Wireless drivers are known to break when doing this.
+
+Version-Release number of selected component (if applicable):
+Fedora as a whole
+
+How reproducible:
+always
+
+Steps to Reproduce:
+Run ISO or install Linux.
+
+Actual results:
+Are we free or non-free? Some distros dont care about the kernel and focus more on packages.
+
+Expected results:
+Shouldnt Fedora be FREE? (or is this asking too much?) Maybe Linus needs some more COFFEE so he can wake up.
+
+Additional info:
+http://www.fsfla.org/ikiwiki/selibre/linux-libre/freed-ora.en.html

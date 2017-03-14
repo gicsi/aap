@@ -1,0 +1,92 @@
+Apply by doing
+	cd /usr/src/sys/netinet
+	patch -p0 < ipsec.patch
+
+And then rebuild your kernel.
+
+Index: src/sys/netinet/ip_esp_new.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_esp_new.c,v
+retrieving revision 1.9
+diff -u -r1.9 ip_esp_new.c
+--- ip_esp_new.c	1997/10/02 02:31:04	1.9
++++ ip_esp_new.c	1998/05/05 09:54:45
+@@ -501,7 +501,7 @@
+     /* Skip the IP header, IP options, SPI, SN and IV and minus Auth Data*/
+     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof (u_int32_t) - 
+ 	   xd->edx_ivlen - alen;
+-    if (plen & (blks - 1))
++    if ((plen & (blks - 1)) || (plen <= 0))
+     {
+ #ifdef ENCDEBUG
+ 	if (encdebug)
+@@ -719,6 +719,16 @@
+ 
+     if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+     {
++        if (blk[6] + 2 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
++        {
++#ifdef ENCDEBUG
++	    if (encdebug)
++	      printf("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
++#endif /* ENCDEBUG */	    
++	    espstat.esps_badilen++;
++	    m_freem(m);
++	    return NULL;
++	}
+         if ((blk[6] != blk[5]) && (blk[6] != 0))
+ 	{
+ 	    if (encdebug)
+@@ -731,6 +741,16 @@
+     }
+     else
+     {
++        if (blk[6] + 1 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
++        {
++#ifdef ENCDEBUG
++	    if (encdebug)
++	      printf("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
++#endif /* ENCDEBUG */	    
++	    espstat.esps_badilen++;
++	    m_freem(m);
++	    return NULL;
++	}
+ 	if (blk[6] == 0)
+ 	{
+ 	    if (encdebug)
+Index: src/sys/netinet/ip_esp_old.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_esp_old.c,v
+retrieving revision 1.9
+diff -u -r1.9 ip_esp_old.c
+--- ip_esp_old.c	1997/10/02 02:31:05	1.9
++++ ip_esp_old.c	1998/05/05 09:54:45
+@@ -326,7 +326,7 @@
+     /* Skip the IP header, IP options, SPI and IV */
+     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
+ 	   xd->edx_ivlen;
+-    if (plen & (blks - 1))
++    if ((plen & (blks - 1)) || (plen <= 0))
+     {
+ #ifdef ENCDEBUG
+ 	if (encdebug)
+@@ -454,6 +454,18 @@
+      * We cannot verify the decryption here (as in ip_esp_new.c), since
+      * the padding may be random.
+      */
++    
++    if (blk[6] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
++	xd->edx_ivlen)
++    {
++#ifdef ENCDEBUG
++        if (encdebug)
++	  printf("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
++#endif /* ENCDEBUG */
++	espstat.esps_badilen++;
++	m_freem(m);
++	return NULL;
++    }
+ 
+     m_adj(m, -blk[6] - 2);
+     m_adj(m, 4 + xd->edx_ivlen);
+

@@ -1,0 +1,5 @@
+The XF86Setup(1) configuration tool for XFree86 3.3.6 is producing
+corrupted /etc/XF86Config files.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/i386/009_XF86Setup.patch">
+A source code patch exists which remedies this problem.</a>
+It does so by linking XF86Setup against the XFree86 3.3.6 version of libXxf86vm.a.

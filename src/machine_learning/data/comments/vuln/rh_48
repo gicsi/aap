@@ -1,0 +1,50 @@
+Description of problem:
+After updating php-google-apiclient from 1.0.6-0.3.beta.fc21 to 1.1.4-1.fc21, my owncloud installation returned only HTTP error 500 with the following error log line:
+{"reqId":"06feddffa02602e2cf3cab79fe08e140","remoteAddr":"2001:41d0:1:d9bf::1","app":"PHP","message":"Class 'Google_Service' not found at \/usr\/share\/php\/Google\/Service\/Drive.php#32","level":3,"time":"2015-07-01T13:18:20+00:00"}
+
+Version-Release number of selected component (if applicable):
+0:1.1.4-1.fc21
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Have a working installation of owncloud 8.0.
+2. Update php-google-apiclient to 0:1.1.4-1.fc21
+3.
+
+Actual results:
+HTTP error 500 returned to every request after login.
+
+Expected results:
+Usual working HTTP requests.
+
+Additional info:
+I'm reassigning this to the owncloud package because I believe it just needs to load "/usr/share/php/Google/autoload.php".
+
+Here is my quick test:
+> $ php -r 'require "/usr/share/php/Google/Service/Drive.php";'
+> PHP Fatal error:  Class 'Google_Service' not found in /usr/share/php/Google/Service/Drive.php on line 32
+> $ php -r 'require "/usr/share/php/Google/autoload.php"; require "/usr/share/php/Google/Service/Drive.php";'
+> $
+That's more or less true, the only problem is that upstream ownCloud has not yet updated their copy of the Google lib to a version with the autoloader, so I can't possibly send the patch upstream...
+
+anyway, try http://koji.fedoraproject.org/koji/taskinfo?taskID=10265961 when it's done.
+Well I actually ended up removing the packet which I apparently didn't need and it's working again, so no hurry.
+It'd be good if you can confirm that the fix works...
+Well, the thing is that, to be totally honest, I didn't install ownCloud from the repositories or even the .rpm but rather manually (I'm using lighttpd). So mea culpa on that. Nevertheless, is there a patch or a diff of your modification that I could use to check if it fixes my ownCloud instance?
+Sure, I'll attach the patch. I'll test and see if the bug actually affects my packaged OC later, I guess.
+Created attachment 1045536
+OC patch
+The provided patch solves the issue. Thanks a lot!
+So, this works in packaged ownCloud, and I think I know why - the Composer autoloader (which, in packaged ownCloud, is configured to use the systemwide paths - including /usr/share/php - as a fallback) happens to work well enough to find the necessary classes. The Google library is *almost* but not quite PEAR/PSR-0 compliant; it follows the PEAR convention that underscores in class names are directory separators in constructing a class path, except that it uses a maximum directory depth of two directories under Google/. So you get:
+
+Google_Service -> Google/Service.php
+
+Google_Service_Drive -> Google/Service/Drive.php
+
+Google_Service_Drive_Foo -> Google/Service/Drive_Foo.php
+
+so until the 'maximum depth' thing kicks in, a PEAR/PSR-0 autoloader (like Composer's) can find the classes under /usr/share/php/Google . In this case the class we need to find is Google_Service, so it finds it.
+
+Still, that's kind of 'lucky' and not really intended behaviour, so I might wind up applying the patch to the package just to make sure this doesn't break in future, when the Drive stuff starts needing to find a class that triggers the max depth thing or something.

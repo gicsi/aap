@@ -1,0 +1,37 @@
+From 2e7eb104cb21b71c95d89b75306696620db44257 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 2 Jul 2015 00:49:32 +0000
+Subject: [PATCH] Update to 3.59 (#1238495)
+
+---
+ iso-codes.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/iso-codes.spec b/iso-codes.spec
+index af2138e..aea3153 100644
+--- a/iso-codes.spec
++++ b/iso-codes.spec
+@@ -1,7 +1,7 @@
+ Name:       iso-codes
+ Summary:    ISO code lists and translations
+-Version:    3.58
+-Release:    2%{?dist}
++Version:    3.59
++Release:    1%{?dist}
+ License:    LGPLv2+
+ Group:      System Environment/Base
+ URL:        http://alioth.debian.org/projects/pkg-isocodes/
+@@ -47,6 +47,9 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALL="install -p"
+ %{_datadir}/pkgconfig/iso-codes.pc
+ 
+ %changelog
++* Thu Jul 02 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 3.59-1
++- Update to 3.59 (#1238495)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.58-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

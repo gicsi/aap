@@ -1,0 +1,58 @@
+Before following the instructions below, make sure that 025_glob.patch
+has been applied fully.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 026_globlimit.patch
+	cd libexec/ftpd
+	make obj
+	make depend
+	make
+	make install
+
+
+Index: libexec/ftpd/ftpd.c
+===================================================================
+RCS file: /cvs/src/libexec/ftpd/ftpd.c,v
+retrieving revision 1.84
+diff -u -r1.84 ftpd.c
+--- libexec/ftpd/ftpd.c	2000/12/04 10:49:31	1.84
++++ libexec/ftpd/ftpd.c	2001/04/23 21:23:50
+@@ -2560,11 +2560,11 @@
+ 	glob_t gl;
+ 
+ 	if (strpbrk(whichf, "~{[*?") != NULL) {
+-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+-
+ 		memset(&gl, 0, sizeof(gl));
+ 		freeglob = 1;
+-		if (glob(whichf, flags, 0, &gl)) {
++		if (glob(whichf,
++		    GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT,
++		    0, &gl)) {
+ 			reply(550, "not found");
+ 			goto out;
+ 		} else if (gl.gl_pathc == 0) {
+Index: libexec/ftpd/popen.c
+===================================================================
+RCS file: /cvs/src/libexec/ftpd/popen.c,v
+retrieving revision 1.11
+diff -u -r1.11 popen.c
+--- libexec/ftpd/popen.c	1999/12/08 13:15:21	1.11
++++ libexec/ftpd/popen.c	2001/04/23 21:23:50
+@@ -104,10 +104,11 @@
+ 	gargv[0] = argv[0];
+ 	for (gargc = argc = 1; argv[argc]; argc++) {
+ 		glob_t gl;
+-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+ 
+ 		memset(&gl, 0, sizeof(gl));
+-		if (glob(argv[argc], flags, NULL, &gl)) {
++		if (glob(argv[argc],
++		    GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT,
++		    NULL, &gl)) {
+ 			if (gargc < MAX_GARGV-1) {
+ 				gargv[gargc++] = strdup(argv[argc]);
+ 				if (gargv[gargc -1] == NULL)
+
+

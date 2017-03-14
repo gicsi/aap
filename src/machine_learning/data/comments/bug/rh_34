@@ -1,0 +1,104 @@
+Description of problem:
+Fedora 22 is unable tot urn the power off or reboot the HP Pavilion 11-n003ng x360 2in1 Notebook. You see the Text "Powerig of and it whon't do this so i muss press the powerbutten to  turn the Power off.
+
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible: Everytime
+
+
+Steps to Reproduce:
+1.Install fedora 22
+2.Reboot or restart fedora 22
+3.Shutdown or Reboot stuck on "Powering off" text
+
+Actual results:
+I must prees Powerbutton on netbook to turn power off
+
+Expected results:
+
+
+Additional info:
+
+Base Board Information
+Manufacturer: Hewlett-Packard
+Product Name: 2209
+Version: 57.37
+Serial Number: PEQACC21V7UMSP
+Asset Tag: Type2 - Board Asset Tag
+Features:
+Board is a hosting board
+Board is replaceable
+Location In Chassis: Type2 - Board Chassis Location
+Chassis Handle: 0x0003
+Type: Motherboard
+Contained Object Handles: 0
+
+Handle 0x0003, DMI type 3, 24 bytes
+Chassis Information
+Manufacturer: Hewlett-Packard
+Type: Notebook
+Lock: Not Present
+Version: Chassis Version
+Serial Number: Chassis Serial Number
+Asset Tag: Chassis Asset Tag
+Boot-up State: Safe
+Power Supply State: Safe
+Thermal State: Safe
+Security Status: None
+OEM Information: 0x0000005F
+Height: Unspecified
+Number Of Power Cords: 1
+Contained Elements: 0
+SKU Number: Not Specified
+
+Characteristics:
+PCI is supported
+BIOS is upgradeable
+BIOS shadowing is allowed
+Boot from CD is supported
+Selectable boot is supported
+EDD is supported
+8042 keyboard services are supported (int 9h)
+Serial services are supported (int 14h)
+Printer services are supported (int 17h)
+CGA/mono video services are supported (int 10h)
+ACPI is supported
+USB legacy is supported
+ATAPI Zip drive boot is supported
+BIOS boot specification is supported
+Function key-initiated network boot is supported
+Targeted content distribution is supported
+BIOS Revision: 15.21
+Firmware Revision: 57.37
+
+Handle 0x0001, DMI type 1, 27 bytes
+System Information
+Manufacturer: Hewlett-Packard
+Product Name: HP Pavilion 11 x360 PC
+Version: 0977100000405F00010420180
+Serial Number: CND45288C0
+UUID: EBDF1A43-F983-E411-A26A-D0BF9C58FD06
+Wake-up Type: Power Switch
+SKU Number: L0M41EA#ABD
+Family: 103C_5335KV G=N L=CON B=HP S=PAV X=MIN
+it looks like an ACPI bug in the actual kernel
+currently i use the actual kernel 4.0.6
+and on this Bug you can find this problem again on fedora 21.
+https://bugzilla.redhat.com/show_bug.cgi?id=1184273
+Does blacklisting dw_dmac and dw_dmac_core fix it as mentioned in bug 1184273?
+can you tell me how i can do that?
+sry i am a newcomer
+i´ ve solved the problem by doing:
+
+echo "blacklist dw_dmac" | sudo tee -a /etc/modprobe.d/blacklist.conf
+echo "blacklist dw_dmac_core" | sudo tee -a /etc/modprobe.d/blacklist.conf
+
+and the Bug is gone :-)
+
+The netbook is now rebooting / shutting down correctly
+
+It look like that the kernel modules are broken
+*** This bug has been marked as a duplicate of bug 1184273 ***

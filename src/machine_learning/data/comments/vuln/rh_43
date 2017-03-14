@@ -1,0 +1,27 @@
+Description of problem:
+'kwrite' is missing in the 'Component' list at https://bugzilla.redhat.com for 'Product: Fedora'
+
+Version-Release number of selected component (if applicable):
+version 4.4.9032-3
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Login to https://bugzilla.redhat.com/ with your login credentials
+2. Click New [https://bugzilla.redhat.com/enter_bug.cgi]
+3. Select 'Product: Fedora'
+4. Type 'kwrite' in 'Component:' text field 
+
+Actual results:
+kwrite is not available
+
+Expected results:
+Kwrite should be available
+
+Additional info:
+I encountered a bug with kwrite-15.04.0-1.fc22 [https://bugzilla.redhat.com/show_bug.cgi?id=1238611]. Since 'kwrite' was not available in the 'Component' list, thereby filed this bugzilla report.
+The kwrite package is generated from the kate src.rpm which is present in the component list.
+
+Moving to the 'Bugzilla' product which is a more appropriate place for this bug.
+yep, notabug, triaging other bug against kate now.

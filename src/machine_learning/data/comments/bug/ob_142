@@ -1,0 +1,8 @@
+As discovered by Stefan Miltchev calling
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=getsockopt&sektion=2">getsockopt(2)</a>
+to get
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ipsec&sektion=4">ipsec(4)</a>
+credentials for a socket can result in a kernel panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/017_getsockopt.patch">
+A source code patch exists which remedies this problem.</a>

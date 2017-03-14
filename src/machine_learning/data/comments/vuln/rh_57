@@ -1,0 +1,115 @@
+Description of problem:
+-----------------------
+overcloud-compute-0 is ACTIVE in nova after stack was deleted using 'heat stack-delete overcloud' 
+
+Version-Release number of selected component (if applicable):
+------------------------------------
+puddle from June 26.
+
+rhos-release-0.62-1.noarch
+
+python-rdomanager-oscplugin-0.0.8-13.el7ost.noarch
+
+$ rpm -qa | grep heat
+openstack-heat-engine-2015.1.0-4.el7ost.noarch
+openstack-heat-api-cfn-2015.1.0-4.el7ost.noarch
+openstack-heat-api-2015.1.0-4.el7ost.noarch
+heat-cfntools-1.2.8-2.el7.noarch
+openstack-heat-common-2015.1.0-4.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-19.el7ost.noarch
+openstack-heat-templates-0-0.6.20150605git.el7ost.noarch
+python-heatclient-0.6.0-1.el7ost.noarch
+openstack-heat-api-cloudwatch-2015.1.0-4.el7ost.noarch
+
+$ rpm -qa | grep nova
+openstack-nova-novncproxy-2015.1.0-13.el7ost.noarch
+openstack-nova-compute-2015.1.0-13.el7ost.noarch
+openstack-nova-conductor-2015.1.0-13.el7ost.noarch
+python-nova-2015.1.0-13.el7ost.noarch
+openstack-nova-common-2015.1.0-13.el7ost.noarch
+python-novaclient-2.23.0-1.el7ost.noarch
+openstack-nova-api-2015.1.0-13.el7ost.noarch
+openstack-nova-console-2015.1.0-13.el7ost.noarch
+openstack-nova-scheduler-2015.1.0-13.el7ost.noarch
+openstack-nova-cert-2015.1.0-13.el7ost.noarch
+
+
+How reproducible:
+-------------------------
+100%
+
+Steps to Reproduce:
+1.deploy overcloud 1 controller, 1 compute and 1 ceph
+2.tried to scale compute to 3 and failed (known issue) - it succeed to scale to 2 computes, all the rest stay as was before (e.g 1 controller, 1 ceph)
+3. on the failed deployment tried to run update packages using:
+export OVERCLOUD_PLAN_NAME=overcloud
+openstack overcloud update stack overcloud
+Update failed.
+4. Deleted the stack using 'heat stack-delete"
+5. run heat stack-list to check whether the stack was indeed deleted
+6. run nova list to check that all deployed nodes were removed
+
+
+Actual results:
+-------------------------
+Not all compute nodes were removed from nova
+
+$ nova list
++--------------------------------------+---------------------+--------+------------+-------------+---------------------+
+| ID                                   | Name                | Status | Task State | Power State | Networks            |
++--------------------------------------+---------------------+--------+------------+-------------+---------------------+
+| 651b753b-ecc4-4a91-ae7f-e0f277c044f1 | overcloud-compute-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.12 |
++--------------------------------------+---------------------+--------+------------+-------------+---------------------+
+
+
+Expected results:
+all is clean. no nodes in nova and stack-list is empty
+
+Additional info:
+$ heat stack-list
++----+------------+--------------+---------------+
+| id | stack_name | stack_status | creation_time |
++----+------------+--------------+---------------+
++----+------------+--------------+---------------+
+
+
+logs will be attached shortly
+Created attachment 1044695
+logs.tar.xz
+Hi, 
+
+I don't think this bug is related to Ironic, it seems some Nova + Heat integration problem.
+
+Looking at the nova-compute log, I can see that the delete was never called for instance 651b753b-ecc4-4a91-ae7f-e0f277c044f1. At the same logs I can see that the Ironic node which this instance is associated to is the a276961e-4c03-463a-8095-926198ad63bb. So when I look for the nodes which destroy() was called in the Nova Ironic driver I can see only three: 
+
+2015-06-30 05:31:44.607 28961 DEBUG nova.virt.ironic.driver [-] [instance: f9e34d3e-c4f4-4286-883e-e689df04f47a] Ironic node c8abcb13-9152-4212-92c3-ef7926c03370 is in state available, instance is now unprovisioned. _wait_for_provision_state /usr/lib/python2.7/site-packages/nova/virt/ironic/driver.py:774
+
+2015-06-30 05:32:04.737 28961 DEBUG nova.virt.ironic.driver [-] [instance: 5f22f7a1-e41a-40dc-ad8a-1515a798d5f2] Ironic node c07944c7-c257-4ccd-95d1-1886543c9b4e is in state cleaning, instance is now unprovisioned. _wait_for_provision_state /usr/lib/python2.7/site-packages/nova/virt/ironic/driver.py:774
+
+2015-06-30 05:31:53.566 28961 DEBUG nova.virt.ironic.driver [-] [instance: d172ede4-e61c-4aa2-b41c-9541e329e727] Ironic node ed2da415-0a20-42d9-b47c-b156e8ea7468 is in state cleaning, instance is now unprovisioned. _wait_for_provision_state /usr/lib/python2.7/site-packages/nova/virt/ironic/driver.py:774
+
+Which I'm assuming it corresponds to the 1 controller, 1 compute and 1 ceph node that you have in your deployment.
+
+So at one point you had 4 instances ACTIVE, but the heat stack-delete only called destroy() for 3.
+
+I don't know much about heat, but it seems something that may have happened when you tried to scale the the deployment and it failed, somehow that instance (651b753b-ecc4-4a91-ae7f-e0f277c044f1) got orphan in heat and was left there.
+
+I'm assigning this to someone from the Heat team since this problem is outside the Ironic scope.
+Could be a duplicate of bug 1228324?
+This doesn't seem like a heat issue to me. In the logs, it looks like the instance starts to 404 in the Nova API. I can't really tell *why* from the logs, but it seems like heat is doing the sane thing here.
+
+It asks Nova "Hey, you made me server <ID>, what's its status" and gets a 404, then doesn't try to delete it assuming it's deleted already. 
+
+I think this is either a problem in Nova or in the nova/ironic driver. 
+
+Here are the (I think) relevant log segments, trimmed to comment-size. Grep the full logs for more info.
+# Here, the node is available
+2015-06-29 13:21:54.171 26882 INFO 192.0.2.1 "GET /v2/ce32f1759bb84c43bbef9d7d3f64a8b1/servers/651b753b-ecc4-4a91-ae7f-e0f277c044f1 HTTP/1.1" status: 200 len: 1806 
+# 5 minutes later, the instance can't be found
+2015-06-29 13:26:07.007 26882 INFO nova.api.openstack.wsgi HTTP exception thrown: Instance 651b753b-ecc4-4a91-ae7f-e0f277c044f1 could not be found.
+
+After that time (13:26:08) heat doesn't look like it's ever able to get information from nova about that instance again.
+Eoghan,  Can we get someone from the nova team to help with this?
+This appears to be something related to scaling. Can you show what's happening with nova-list on each step, scale to 2 and show nova-list again, so we can see if our scaling logic is creating an instance and removing it?
+Ola, can you also comment on what the known issue is that you refer to in your 2nd step to reproduce? We'd like to know if that's been addressed and what the status of it is.
+Please reopen if you can reproduce this.  We can't in dev.

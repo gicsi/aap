@@ -1,0 +1,37 @@
+Description of problem:
+
+Guest install from cdrom used to work, and, for example, this works (but note the date of the compose used)
+
+/usr/libexec/qemu-kvm -machine virt,accel=kvm -cpu host \
+-nographic -smp 4 -m 2048 \
+-drive if=pflash,format=raw,file=/usr/share/AAVMF/AAVMF_CODE.fd,readonly \
+-drive if=pflash,format=raw,file=vars.fd \
+-netdev user,id=net0 -device virtio-net-device,netdev=net0 \
+-device virtio-scsi-device,id=scsi0 \
+-drive file=img.qcow2,if=none,id=disk0,format=qcow2 \
+-device scsi-hd,bus=scsi0.0,drive=disk0 \
+-drive id=cd0,if=none,format=raw,readonly,file=/home/isos/RHELSA-7.1-20150616.0-Server-aarch64-dvd1.iso \
+-device scsi-cd,bus=scsi0.0,drive=cd0
+
+The same command line now fails with RHELSA-7.1-20150629.n.0-Server-aarch64-boot.iso. Booting works, but then the Installation source remains "(Processing...)", and selecting CD/DVD gets "(Error setting up software source)"
+
+Version-Release number of selected component (if applicable):
+
+RHELSA-7.1-20150629.n.0-Server-aarch64
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+
+See qemu cmdline above (it also reproduces using virt-install)
+Please attach the logs from /tmp as individual, text/plain attachments.
+How do I get to the shell doing a text mode install using QEMU's serial console? Even with virt-manager, which supports 'Send Key', sending ctrl+alt+F2 doesn't switch me to a shell - it does nothing.
+
+Thanks
+Is tmux running on the serial console? (it should be, I think it's only s390 that has anaconda running directly) If you hit Ctrl-B, then 2, it will switch to a tmux pane running a shell.
+Created attachment 1044428
+logs from /tmp
+
+Thanks for that tip! I'll stash that one! Attaching tarball with all logs.

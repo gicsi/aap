@@ -1,0 +1,5 @@
+Various improvements have been made to the IDE/ATAPI subsystem since
+the 2.6 release shipped.<br>
+Some of these improvements make some recalcitrant devices work much better.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/009_atapi.patch"><br>
+Revision 1 of this jumbo source code patch exists.</a><br>

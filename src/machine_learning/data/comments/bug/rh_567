@@ -1,0 +1,18 @@
+perl-Syntax-Highlight-Perl6-0.88-13.fc23 fails to build in F23 because tests fail because the package does not declare dependency on `perl(open)':
+
+t/01-syntax.t .............. ok
+Can't locate open.pm in @INC (you may need to install the open module) (@INC contains: lib /builddir/build/BUILD/Syntax-Highlight-Perl6-0.88/blib/lib /builddir/build/BUILD/Syntax-Highlight-Perl6-0.88/blib/arch /usr/local/lib/perl5 /usr/local/share/perl5 /usr/lib/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib/perl5 /usr/share/perl5 .) at blib/script/hilitep6 line 98.
+BEGIN failed--compilation aborted at blib/script/hilitep6 line 98.
+perl-Syntax-Highlight-Perl6-0.88-12.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/perl-Syntax-Highlight-Perl6-0.88-12.fc22
+Package perl-Syntax-Highlight-Perl6-0.88-12.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing perl-Syntax-Highlight-Perl6-0.88-12.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10584/perl-Syntax-Highlight-Perl6-0.88-12.fc22
+then log in and leave karma (feedback).
+perl-Syntax-Highlight-Perl6-0.88-12.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

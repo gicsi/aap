@@ -1,0 +1,11 @@
+Your package rubygem-rails-observers failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10151326
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048147
+build.log
+Created attachment 1048148
+root.log
+Created attachment 1048149
+state.log

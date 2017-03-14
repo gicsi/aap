@@ -1,0 +1,4 @@
+A US daylight saving time rules change takes effect in 2007.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/009_timezone.patch">
+A source code patch exists which syncs the timezone data files with tzdata2007a</a>.<br>

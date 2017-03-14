@@ -1,0 +1,69 @@
+redhat-certification does not see tests, and prints a complaint about incorrect function arguments when run with --debug=high
+
+redhat-certification-1.0-20150618.el6.noarch
+redhat-certification-hardware-1.6.6-20150619.el6.noarch
+dt-15.14-2.EL6.x86_64
+lmbench-3.0a7-7a.EL6.x86_64
+stress-0.18.8-1.3.EL6.x86_64
+
+
+How reproducible:
+reliably.  looking for first occurance to determine when regression occurred, and workarounds.
+
+Steps to Reproduce:
+1. install redhat-certification and redhat-certification-hardware
+2. run `rhcert-backend --debug=high plan` OR
+3. register the host as an SUT for itself as LTS
+4. attach the host to a hardware certification
+5. click "continue" to go to the test results page and launch tests
+
+Actual results:
+CLI will complain like this:
+# rhcert-backend --debug=high plan
+/usr/lib/python2.6/site-packages/rhcert/crypto.py:16: DeprecationWarning: the md5 module is deprecated; use hashlib instead
+  import os, md5, M2Crypto, magic
+Verifying test plan
+Searching /usr/lib/python2.7/site-packages/rhcert/suites...
+sys.path:
+['/usr/bin', '/usr/lib64/python26.zip', '/usr/lib64/python2.6', '/usr/lib64/python2.6/plat-linux2', '/usr/lib64/python2.6/lib-tk', '/usr/lib64/python2.6/lib-old', '/usr/lib64/python2.6/lib-dynload', '/usr/lib64/python2.6/site-packages', '/usr/lib64/python2.6/site-packages/gtk-2.0', '/usr/lib/python2.6/site-packages', '/usr/lib/python2.6/site-packages/setuptools-0.6c11-py2.6.egg-info', u'/usr/lib/python2.7/site-packages/rhcert/suites']
+Skipping class <class 'rhcert.test.Test'> - constructor takes 2 args
+Skipping class <class 'rhcert.test.UnitTest'> - constructor takes 5 args
+Warning: default plan called
+Error: no tests!
+After Sorting:
+---
+new:
+prior:
+saved test plan to /var/rhcert/results.xml
+
+The web ui will not list tests.  Additionally, /var/log/rhcert disappears when the host is attached to the certification.
+
+
+
+Expected results:
+redhat-certification sees the -hardware tests, and either plans them in the CLI or displays them in the web ui.  Logs should not disappear.  If a tail -f is running on the logs, no new information is printed.
+
+Additional info:
+Services provided by lmbench for network testing are not started with the server, and no output is given for them indicating an attempted start.
+Statement about tail -f in Expected results above belongs under Additional info
+there's a mix of complaints about python2.6 and python2.7
+I see some python2.7 listed in the above.  Is this related perhaps to the default xml having python2.7 in it?
+
+   <suite-directory>/usr/lib/python2.7/site-packages/rhcert/suites</suite-directory>
+    <library-directory>/usr/lib/python2.7/site-packages/rhcert/rhcert</library-directory>
+
+on RHEL6, should these be python2.6?
+changing /etc/rhcert.xml to refer to python2.6 instead of python2.7 resolves these problems in both the CLU and web ui.
+... both the CLI and web ui
+This bug is not present in 20150520.el6
+verified in redhat-certification-1.0-20150623.el6.noarch
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHBA-2015-1202.html

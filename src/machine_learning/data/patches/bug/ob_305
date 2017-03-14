@@ -1,0 +1,115 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_ifrtlabel.patch
+
+And then build, install and boot a new kernel:
+	cd /usr/src/sys/arch/`arch -s`/conf
+	config GENERIC
+	cd ../compile/GENERIC
+	make depend && make && sudo make install
+
+If you are using the multiprocessor kernel, replace GENERIC by
+GENERIC.MP above.
+
+Index: sys/net/if.c
+===================================================================
+RCS file: /cvs/src/sys/net/if.c,v
+retrieving revision 1.165
+retrieving revision 1.165.2.1
+diff -u -p -r1.165 -r1.165.2.1
+--- sys/net/if.c	6 Jul 2007 14:00:59 -0000	1.165
++++ sys/net/if.c	11 Jan 2008 12:41:26 -0000	1.165.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: if.c,v 1.165 2007/07/06 14:00:59 naddy Exp $	*/
++/*	$OpenBSD: if.c,v 1.165.2.1 2008/01/11 12:41:26 henning Exp $	*/
+ /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
+ 
+ /*
+@@ -1293,10 +1293,13 @@ ifioctl(struct socket *so, u_long cmd, c
+ 		break;
+ 
+ 	case SIOCGIFRTLABEL:
+-		label = rtlabel_id2name(ifp->if_rtlabelid);
+-		strlcpy(ifrtlabelbuf, label, RTLABEL_LEN);
+-		error = copyoutstr(ifrtlabelbuf, ifr->ifr_data, RTLABEL_LEN,
+-		    &bytesdone);
++		if (ifp->if_rtlabelid &&
++		    (label = rtlabel_id2name(ifp->if_rtlabelid)) != NULL) {
++			strlcpy(ifrtlabelbuf, label, RTLABEL_LEN);
++			error = copyoutstr(ifrtlabelbuf, ifr->ifr_data,
++			    RTLABEL_LEN, &bytesdone);
++		} else
++			error = ENOENT;
+ 		break;
+ 
+ 	case SIOCSIFRTLABEL:
+Index: sys/net/route.c
+===================================================================
+RCS file: /cvs/src/sys/net/route.c,v
+retrieving revision 1.84
+retrieving revision 1.84.2.1
+diff -u -p -r1.84 -r1.84.2.1
+--- sys/net/route.c	14 Jun 2007 18:31:49 -0000	1.84
++++ sys/net/route.c	11 Jan 2008 12:41:26 -0000	1.84.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: route.c,v 1.84 2007/06/14 18:31:49 reyk Exp $	*/
++/*	$OpenBSD: route.c,v 1.84.2.1 2008/01/11 12:41:26 henning Exp $	*/
+ /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
+ 
+ /*
+@@ -1031,8 +1031,8 @@ rtinit(struct ifaddr *ifa, int cmd, int 
+ 	info.rti_flags = flags | ifa->ifa_flags;
+ 	info.rti_info[RTAX_DST] = dst;
+ 	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+-	if (ifa->ifa_ifp->if_rtlabelid) {
+-		label = rtlabel_id2name(ifa->ifa_ifp->if_rtlabelid);
++	if (ifa->ifa_ifp->if_rtlabelid &&
++	    (label = rtlabel_id2name(ifa->ifa_ifp->if_rtlabelid)) != NULL) {
+ 		bzero(&sa_rl, sizeof(sa_rl));
+ 		sa_rl.sr_len = sizeof(sa_rl);
+ 		sa_rl.sr_family = AF_UNSPEC;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_pf.patch
+
+And then build, install and boot a new kernel:
+	cd /usr/src/sys/arch/`arch -s`/conf
+	config GENERIC
+	cd ../compile/GENERIC
+	make depend && make && sudo make install
+
+If you are using the multiprocessor kernel, replace GENERIC by
+GENERIC.MP above.
+
+Index: sys/net/pf.c
+===================================================================
+RCS file: /cvs/src/sys/net/pf.c,v
+retrieving revision 1.552
+retrieving revision 1.552.2.1
+diff -u -p -r1.552 -r1.552.2.1
+--- sys/net/pf.c	21 Aug 2007 15:57:27 -0000	1.552
++++ sys/net/pf.c	27 Nov 2007 16:37:57 -0000	1.552.2.1
+@@ -819,6 +819,8 @@ pf_insert_state(struct pfi_kif *kif, str
+ 		TAILQ_FOREACH(sp, &cur->states, next)
+ 			if (sp->kif == kif) {	/* collision! */
+ 				pf_stateins_err("tree_lan_ext", s, kif);
++				pf_detach_state(s,
++				    PF_DT_SKIP_LANEXT|PF_DT_SKIP_EXTGWY);
+ 				return (-1);
+ 			}
+ 		pf_detach_state(s, PF_DT_SKIP_LANEXT|PF_DT_SKIP_EXTGWY);
+@@ -961,10 +963,8 @@ pf_src_tree_remove_state(struct pf_state
+ 	u_int32_t timeout;
+ 
+ 	if (s->src_node != NULL) {
+-		if (s->state_key->proto == IPPROTO_TCP) {
+-			if (s->src.tcp_est)
+-				--s->src_node->conn;
+-		}
++		if (s->src.tcp_est)
++			--s->src_node->conn;
+ 		if (--s->src_node->states <= 0) {
+ 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
+ 			if (!timeout)
+

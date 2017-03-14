@@ -1,0 +1,28 @@
+Various problems in X11 libraries have various side effects.  We provide a
+jumbo patch to fix them.<p>
+<ul>
+    <li><a href="http://www.securityfocus.com/templates/archive.pike?list=1&amp;date=2000-05-15&amp;msg=Pine.LNX.4.21.0005181947210.17658-100000@ferret.lmh.ox.ac.uk">
+    Nasty X Server Dos</a><br>
+    This is fixed by the patch to <b>xc/programs/Xsever/os/secauth.c</b>.
+    <li><a href="http://www.securityfocus.com/templates/archive.pike?list=1&amp;date=2000-06-15&amp;msg=Pine.LNX.4.21.0006192251480.9945-100000@ferret.lmh.ox.ac.uk">
+    Various nasty libX11 holes</a><br>
+    This is covered by the patches to <b>xc/lib/X11</b>.
+    <li><a href="http://www.securityfocus.com/templates/archive.pike?list=1&amp;date=2000-06-15&amp;msg=Pine.LNX.4.21.0006192220220.9945-100000@ferret.lmh.ox.ac.uk">
+    libICE DoS</a><br>
+    This is covered by the patches to <b>xc/lib/ICE</b>.
+    <li><a href="http://www.securityfocus.com/templates/archive.pike?list=1&amp;date=2000-04-15&amp;msg=Pine.LNX.4.10.10004161835150.863-100000@localhost">
+    Server overflow</a><br>
+    This is covered by the patches to <b>xc/programs/Xserver/xkb</b>.
+    <br>
+    Note that the default OpenBSD install is not vulnerable to this, since
+    the XFree86 Xwrapper already has tests for bad arguments.
+</ul>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/021_X11_libs.patch">
+A source code patch exists which remedies this problem.</a>
+<strong>Note 1:</strong> tcl/tk is required to build X11 from source.<br>
+<strong>Note 2:</strong> When re-building use the command
+`make DESTDIR=/ build' or you will get an error in the last
+step of the build (makewhatis).  If you forget to set DESTDIR you can
+ignore the build error.   The whatis database will be rebuilt the next
+time /etc/weekly runs.

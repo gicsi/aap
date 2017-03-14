@@ -1,0 +1,59 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 034_zsconsole.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/sparc/dev/zs.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/zs.c,v
+retrieving revision 1.22
+retrieving revision 1.22.6.1
+diff -u -r1.22 -r1.22.6.1
+--- sys/arch/sparc/dev/zs.c	1999/09/20 02:49:25	1.22
++++ sys/arch/sparc/dev/zs.c	2000/11/10 20:19:25	1.22.6.1
+@@ -948,7 +948,7 @@
+ #endif
+ 		ienab_bis(IE_ZSSOFT);
+ 	}
+-	return (intflags & ZSHARD_WAS_SERVICED);
++	return (intflags & ZSHARD_WAS_SERVICED) ? 1 : -1 /* XXX */;
+ }
+ 
+ static int
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 033_execsubr.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/exec_subr.c
+===================================================================
+RCS file: /cvs/src/sys/kern/exec_subr.c,v
+retrieving revision 1.7
+diff -u -r1.7 exec_subr.c
+--- sys/kern/exec_subr.c	1999/11/05 01:18:01	1.7
++++ sys/kern/exec_subr.c	2000/11/06 18:57:27
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: exec_subr.c,v 1.7 1999/11/05 01:18:01 mickey Exp $	*/
++/*	$OpenBSD: exec_subr.c,v 1.9 2000/11/06 16:19:52 art Exp $	*/
+ /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
+ 
+ /*
+@@ -154,12 +154,13 @@
+ 	 * map the vnode in using uvm_map.
+ 	 */
+ 
+-	/* checks imported from uvm_mmap, needed? */
+         if (cmd->ev_len == 0)
+                 return(0);
+         if (cmd->ev_offset & PAGE_MASK)
+                 return(EINVAL);
+ 	if (cmd->ev_addr & PAGE_MASK)
++		return(EINVAL);
++	if (cmd->ev_len & PAGE_MASK)
+ 		return(EINVAL);
+ 
+ 	/*
+

@@ -1,0 +1,38 @@
+Created attachment 1049876
+Sample implemenation of flush-all-connection-gracefully-in-pool
+
+Description of problem:
+
+A new operation for flushing all connections in pool GRACEFULLY is needed. It was available in JBoss EAP 5 and is missing in EAP 6.
+
+Currently JBoss EAP 6 provides two options to flush pools:
+1) flush-idle-connection-in-pool
+   Closes connections not used by application (in pool)
+2) flush-all-connection-in-pool
+   Closes all connections in pool. This operations causes exceptions on connections that are in use by application.
+
+A third operation is needed to flush all connections in pool without immediate kill of in-use connections. It should operate as follows:
+
+1) close idle connections (just as flush-idle-connection-in-pool)
+2) mark all in-use connections for need of destroying when returned to pool
+3) immediately on return of connection to by application to pool close the connection
+
+This operation is needed to support load-balancing of connections in clusters for external providers. Examples:
+1) JMS connections even load-balacing of connections. After JMS server restart, connections need to be reopened to evenly spread connections among servers.
+2) Oracle RAC service migration. After the service is migrated between RAC nodes, DB connections to old node can linger for very long time (many days) to old node.
+3) operation teams need to refresh all connections sometimes (external server maintanance)
+
+
+Version-Release number of selected component (if applicable): JBoss EAP 6.x
+
+How reproducible: always
+
+Steps to Reproduce: not possible, functionallity is missing
+
+Expected results: new operation available on JMS and DB pools
+
+Additional info: a sample implementation provided in attachment as patches to 6.4.1 (ironjacamar and jboss-as-connector). The new operation is named "flush-all-connection-gracefully-in-pool" and is available for JMS and DB pools. It doesn't modify any other places like web console, etc.
+if this is really meant for "jbossas" - this belong to JIRA(issues.jboss.org) or jboss forums.
+
+If this FR is to be targeted at EAP it is wrong. All EAP realted issues( bugs, RFEs) are handled by GSS via customer portal. If you have subscription, please file this RFE in it, otherwise please contact sales.
+RFE must be filed upstream before closing it down.

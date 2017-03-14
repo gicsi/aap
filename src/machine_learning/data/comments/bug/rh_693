@@ -1,0 +1,145 @@
+Description of problem:
+
+Same trouble as in pass (see Bug 965637). After installing CouchDB on Fedora 21, starting it with systemctl and by running the executable directly fails. 
+
+Selinux is switch off.
+
+
+[root@prag or]# systemctl status couchdb.service
+● couchdb.service - CouchDB Server
+   Loaded: loaded (/usr/lib/systemd/system/couchdb.service; enabled)
+   Active: failed (Result: start-limit) since Sat 2015-06-20 09:15:42 CEST; 1min
+8s ago
+  Process: 1931 ExecStart=/usr/libexec/couchdb +Bd -noinput -sasl errlog_type
+error +K true +A 4 -couch_ini /etc/couchdb/default.ini /etc/couchdb/default.d/
+/etc/couchdb/local.d/ /etc/couchdb/local.ini -s couch -pidfile
+/var/run/couchdb/couchdb.pid (code=exited, status=1/FAILURE)
+ Main PID: 1931 (code=exited, status=1/FAILURE)
+
+Jun 20 09:15:42 prag.fritz.box systemd[1]: Unit couchdb.service entered failed
+state.
+Jun 20 09:15:42 prag.fritz.box systemd[1]: couchdb.service failed.
+Jun 20 09:15:42 prag.fritz.box systemd[1]: start request repeated too quickly
+for couchdb.service
+Jun 20 09:15:42 prag.fritz.box systemd[1]: Failed to start CouchDB Server.
+Jun 20 09:15:42 prag.fritz.box systemd[1]: Unit couchdb.service entered failed
+state.
+Jun 20 09:15:42 prag.fritz.box systemd[1]: couchdb.service failed.
+
+Jun 20 09:22:15 prag.fritz.box systemd[1]: Unit couchdb.service entered failed
+state.
+Jun 20 09:22:15 prag.fritz.box systemd[1]: couchdb.service failed.
+Jun 20 09:22:16 prag.fritz.box couchdb[2987]: Apache CouchDB 1.6.1
+(LogLevel=info) is logging to /var/log/couchdb/couch.log.
+Jun 20 09:22:16 prag.fritz.box couchdb[2987]: {"init terminating in
+do_boot",{{badmatch,{error,{bad_return,{{couch_app,start,[normal,["
+Jun 20 09:22:16 prag.fritz.box couchdb[2987]: [os_mon] cpu supervisor port
+(cpu_sup): Erlang has closed
+Jun 20 09:22:16 prag.fritz.box couchdb[2987]: init terminating in do_boot ()
+Jun 20 09:22:16 prag.fritz.box couchdb[2987]: [os_mon] memory supervisor port
+(memsup): Erlang has closed
+Jun 20 09:22:16 prag.fritz.box systemd[1]: couchdb.service: main process exited,
+code=exited, status=1/FAILURE
+Jun 20 09:22:16 prag.fritz.box systemd[1]: Failed to start CouchDB Server.
+-- Subject: Unit couchdb.service has failed
+-- Defined-By: systemd
+-- Support: http://lists.freedesktop.org/mailman/listinfo/systemd-devel
+-- 
+-- Unit couchdb.service has failed.
+-- 
+-- The result is failed.
+Jun 20 09:22:16 prag.fritz.box systemd[1]: Unit couchdb.service entered failed
+state.
+Jun 20 09:22:16 prag.fritz.box systemd[1]: couchdb.service failed.
+
+[root@prag or]# cat /var/log/couchdb/couch.log
+[Sat, 20 Jun 2015 07:22:15 GMT] [error] [<0.127.0>] {error_report,<0.30.0>,
+                     {<0.127.0>,crash_report,
+                      [[{initial_call,{couch_file,init,['Argument__1']}},
+                        {pid,<0.127.0>},
+                        {registered_name,[]},
+                        {error_info,
+                         {exit,
+                          {{badmatch,{error,eacces}},
+                           [{couch_file,init,1,
+                             [{file,"couch_file.erl"},{line,314}]},
+                            {gen_server,init_it,6,
+                             [{file,"gen_server.erl"},{line,306}]},
+                            {proc_lib,init_p_do_apply,3,
+                             [{file,"proc_lib.erl"},{line,237}]}]},
+                          [{gen_server,init_it,6,
+                            [{file,"gen_server.erl"},{line,330}]},
+                           {proc_lib,init_p_do_apply,3,
+                            [{file,"proc_lib.erl"},{line,237}]}]}},
+                        {ancestors,[<0.126.0>]},
+                        {messages,[]},
+                        {links,[#Port<0.2191>,<0.126.0>]},
+                        {dictionary,[]},
+                        {trap_exit,true},
+                        {status,running},
+                        {heap_size,610},
+                        {stack_size,27},
+                        {reductions,537}],
+                       [{neighbour,
+                         [{pid,<0.126.0>},
+                          {registered_name,[]},
+                          {initial_call,{erlang,apply,2}},
+                          {current_function,{proc_lib,sync_wait,2}},
+                          {ancestors,[]},
+                          {messages,
+                           [{ack,<0.127.0>,
+                             {error,
+                              {{badmatch,{error,eacces}},
+                               [{couch_file,init,1,
+                                 [{file,"couch_file.erl"},{line,314}]},
+                                {gen_server,init_it,6,
+                                 [{file,"gen_server.erl"},{line,306}]},
+                                {proc_lib,init_p_do_apply,3,
+                                 [{file,"proc_lib.erl"},{line,237}]}]}}}]},
+                          {links,[<0.89.0>,<0.127.0>]},
+                          {dictionary,[]},
+                          {trap_exit,false},
+                          {status,runnable},
+                          {heap_size,233},
+                          {stack_size,20},
+                          {reductions,28}]}]]}}
+
+
+Installed Packages
+Name        : couchdb
+Arch        : x86_64
+Epoch       : 0
+Version     : 1.6.1
+Release     : 4.fc21
+Size        : 11 M
+Repo        : @System
+From repo   : updates
+I've just made fresh install (really fresh - with old data and config-files removed) and can't confirm this. Looks like the contents of the /var/lib/couchdb is unreadable for 'couchdb' user. Please check it:
+
+$ sudo ls -la /var/lib/couchdb
+
+It should be something like that:
+
+Auriga ~/Desktop: ls -la  /var/lib/couchdb/
+итого 28
+drwxr-xr-x.  3 couchdb couchdb 4096 янв 27 23:32 .
+drwxr-xr-x. 49 root    root    4096 июн 21 16:36 ..
+drwxr-xr-x.  2 couchdb couchdb 4096 июл 26  2014 .delete
+-rw-r--r--.  1 couchdb couchdb 4194 июл 26  2014 _replicator.couch
+-rw-r--r--.  1 couchdb couchdb 4194 июл 26  2014 _users.couch
+Auriga ~/Desktop:
+Also check /var/run/couchdb for proper access rights. 
+
+if something was wrong you can easily restore everything. See this HOWTO for further details (just make sure ypu've adjusted file paths before applying any of these commands):
+
+http://docs.couchdb.org/en/1.6.1/install/unix.html#security-considerations
+Yes Peter, my access rights was wrong, but I don't now why. I reset the rights and restart couchdb and now is running fine.
+(In reply to Olaf Radicke from comment #3)
+> Yes Peter, my access rights was wrong, but I don't now why. I reset the
+> rights and restart couchdb and now is running fine.
+
+Ok, good to know. 
+
+Btw you really shouldn't do something. First you shouldn't disable SElinux - Warren Togami did a great job investigating and fixing SELinux issues with CouchDB and it should work fine now. Second - you shouldn't run CouchDB from superuser (root - with sudo or whatever).
+
+Closing this ticket for now.

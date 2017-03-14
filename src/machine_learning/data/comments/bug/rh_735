@@ -1,0 +1,59 @@
+Example:
+
+$ mkdir -p a/b
+$ sudo mount --bind a a/b
+$ find a
+a
+find: File system loop detected; ‘a/b’ is part of the same file system loop as ‘a’.
+$ echo $?
+1
+
+But, find issued only an warning, it makes a calls like this:
+      error (0, 0,
+	     _("File system loop detected; "
+	       "%s is part of the same file system loop as %s."),
+      ...
+
+where the two 0s are:
+error (int status, int errnum, const char *message, ...)
+and it will only exit if status != 0.
+
+But, then, the code that calls looks like this:
+
+  else if (ent->fts_info == FTS_DC)
+    {
+      issue_loop_warning (ent);
+      error_severity (EXIT_FAILURE);
+      return;
+    }
+
+what means even tough it just warned, it will set the
+global state.exit_status to 1.
+
+As an example, using the above bind mount:
+
+$ echo a > a/x
+$ grep a -r a
+grep: warning: a/b: recursive directory loop
+a/x:a
+$ echo $?
+0
+
+So, find as well should only warn, and not exit with
+an error status, what may cause trouble with some
+scripts.
+
+NOTE: run
+
+$ sudo umount a/b
+
+before attempting to remove the test directory.
+This behavior was changed on purpose when find was ported to gnulib's fts module for file system traversal:
+
+http://git.savannah.gnu.org/cgit/findutils.git/commit/?id=f0759ab8
+
+The current behavior complies with POSIX, which even admits an implementation of 'find' that terminates if a loop is detected:
+
+http://pubs.opengroup.org/onlinepubs/9699919799/utilities/find.html#tag_20_47_03
+
+In any case, we cannot change the behavior in a released version of RHEL.  If you need to make legacy scripts work on RHEL-6+, you can consider using 'oldfind' instead of 'find'.  Other file system traversing utilities (chmod, chown, ...) also changed their behavior between RHEL-5 and RHEL-6 in this aspect.

@@ -1,0 +1,3 @@
+The <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=random&amp;sektion=4">rnd(4)</a> device does not use all of its input when data is written to it.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/017_rnd.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,6 @@
+Various OpenSSH improvements have been made since the 2.6 release shipped.<br>
+To resolve the various (non-security related) features which users may want,
+we are making a jumbo patch available.  <strong>This is now at VERSION FOUR.</strong><br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/005_sshjumbo.patch">
+Revision 4 of this jumbo source code patch exists.</a><br>
+<strong>NOTE: /etc/sshd_config and /etc/ssh_config may need changes.</strong>

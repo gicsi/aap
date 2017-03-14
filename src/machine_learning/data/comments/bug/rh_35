@@ -1,0 +1,38 @@
+Description of problem: If you use the find command with the or (-o) option, it will operate on only the second expression and ignore the first
+
+
+Version-Release number of selected component (if applicable):4.5.11-3.el7.x86_64
+
+
+How reproducible:Easily
+
+
+Steps to Reproduce:
+1. run a find with an or of two expressions:
+# find / -type s -o -type p -exec file {} \;
+2.
+3.
+
+Actual results:
+It returns only the pipe type of file, when there are socket files also.
+
+Expected results:
+It should return both pipe and socket types
+
+Additional info:
+I also tried "-or" and "-type s,-type p", but was unable to list both types of files.  If you reverse the order then it lists only sockets and not pipes, so it operates on the second expression and completely ignores the first.  I also tried with other flags and the "or" operator did not work still.
+(In reply to biodunr from comment #0)
+> Description of problem: If you use the find command with the or (-o) option,
+> it will operate on only the second expression and ignore the first
+
+You can easily check that both expressions are evaluated -- try to swap them:
+
+# find / -type p -exec file {} \; -o -type s
+
+> Steps to Reproduce:
+> 1. run a find with an or of two expressions:
+> # find / -type s -o -type p -exec file {} \;
+
+You wanted to write it like this:
+
+# find / \( -type s -o -type p \) -exec file {} \;

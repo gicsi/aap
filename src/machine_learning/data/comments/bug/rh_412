@@ -1,0 +1,57 @@
+Description of problem:
+marking mails as junk using the icon
+
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: g_hash_table_resize
+executable:     /usr/bin/evolution
+global_pid:     2999
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Tue 2015-06-02 21:09:57 CEST, end at Sat 2015-06-27 13:21:47 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (9 frames)
+ #7 g_hash_table_resize at ghash.c:618
+ #8 g_hash_table_maybe_resize at ghash.c:645
+ #9 g_hash_table_remove_internal at ghash.c:1358
+ #10 remove_binding_qdata at gbinding.c:225
+ #11 weak_unbind at gbinding.c:250
+ #12 weak_refs_notify at gobject.c:2629
+ #14 handle_http_request at e-http-request.c:465
+ #15 e_util_simple_async_result_thread at e-misc-utils.c:3100
+ #17 g_thread_proxy at gthread.c:764
+
+Potential duplicate: bug 974177
+Created attachment 1043868
+File: backtrace
+Created attachment 1043869
+File: cgroup
+Created attachment 1043870
+File: core_backtrace
+Created attachment 1043871
+File: dso_list
+Created attachment 1043872
+File: environ
+Created attachment 1043873
+File: limits
+Created attachment 1043874
+File: maps
+Created attachment 1043875
+File: mountinfo
+Created attachment 1043876
+File: namespaces
+Created attachment 1043877
+File: open_fds
+Created attachment 1043878
+File: proc_pid_status
+Thanks for a bug report. I see you wrote a similar occasion in bug #1235935. I guess both are related. This one provides better backtrace. I mark this as a duplicate of the other, just to not try to solve one thing in two places.
+
+*** This bug has been marked as a duplicate of bug 1235935 ***

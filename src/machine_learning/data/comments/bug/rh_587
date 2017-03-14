@@ -1,0 +1,27 @@
+Description of problem:
+
+When an OSD reaches "full" capacity the associated ceph-journal will accept and ack writes then subsequent reads will fail since the journal write is not committed to the OSD itself.  This seems to be bad practice since it will cause confusion when a write is completed then a read of the "successful" write fails. I have not encountered this, just learned it in training and consider it poor design to allow. It makes more sense to flag the journal against accepting reads the moment the OSD if "full" so no false write acks are given to clients.
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible: N/A
+
+
+Steps to Reproduce: N/A
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+This isn't really how it works.  The osd considers itself full and stops accepting writes before the actual filesystem fills up.  Also, the journal itself does not interact directly with client requests -- it's just an implementation detail of how we send client IO transactionally to the disk.  I'm not really sure to what you are referring.
+Samuel - If I have the wrong understanding then this can be closed.  My understanding is writes will be journalled (invisible to the client - just internal process) then "rolled" onto the OSD subsequently, so a write could be accepted by the journal and ack'd back to the client, then due to the OSD being full the "rollover" to the OSD disk would fail.  The client would think the write succeeded and a subsequent read would fail due to it NOT being on the OSD disk.  Obviously this should be a rare situation since a good storage manager would act at the first HWM warning not wait until this situation was possible.  I am basing my suggestion that the Journal somehow also be flagged to fail to accept writes when the OSD reaches this HWM (95% default ??) rather than accept writes than cannot be committed to the OSD disk so no such confusion can occur.
+
+Again - if my understanding of the data flow is incorrect then this may be moot and the BZ closed.  I will defer to those of you who know it better.

@@ -1,0 +1,854 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-02-15 23:19+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: aap_app/apps.py:9 templates/aap/index.html:22
+#: templates/aap/index.html.py:23
+msgid "Análisis de parches"
+msgstr ""
+
+#: aap_app/cron.py:24
+msgid "Proceso cron inciado"
+msgstr ""
+
+#: aap_app/cron.py:38
+#, python-format
+msgid "Error al cargar código de regla/plugin: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:40
+#, python-format
+msgid "Código de reglas/plugins cargados: %s"
+msgstr ""
+
+#: aap_app/cron.py:47
+#, python-format
+msgid "Repositorio %s desactivado"
+msgstr ""
+
+#: aap_app/cron.py:51
+#, python-format
+msgid "Se procesará rama o branch %s de %s"
+msgstr ""
+
+#: aap_app/cron.py:57
+#, python-format
+msgid "Repositorio %s aún no clonado"
+msgstr ""
+
+#: aap_app/cron.py:63
+msgid "Error al clonar repositorio"
+msgstr ""
+
+#: aap_app/cron.py:68
+msgid "Repositorio clonado exitosamente"
+msgstr ""
+
+#: aap_app/cron.py:74
+#, python-format
+msgid "Error al ejecutar checkout inicial de %s"
+msgstr ""
+
+#: aap_app/cron.py:80
+#, python-format
+msgid "Error al ejecutar pull de %s"
+msgstr ""
+
+#: aap_app/cron.py:88
+#, python-format
+msgid "Error al ejecutar checkout de %s"
+msgstr ""
+
+#: aap_app/cron.py:102 aap_app/cron.py:114
+#, python-format
+msgid "Error al recuperar últimos commits de %s"
+msgstr ""
+
+#: aap_app/cron.py:135
+#, python-format
+msgid "Error al instanciar regla/plugin: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:163
+#, python-format
+msgid "Error al recuperar body de commit de %s"
+msgstr ""
+
+#: aap_app/cron.py:170 aap_app/cron.py:177
+#, python-format
+msgid "Error al recuperar notes de commit de %s"
+msgstr ""
+
+#: aap_app/cron.py:184
+#, python-format
+msgid "Error al recuperar parches de commit de %s"
+msgstr ""
+
+#: aap_app/cron.py:211
+#, python-format
+msgid "Error al ejecutar testeo vía plugin: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:215
+#, python-format
+msgid "Error al procesar commit: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:223
+#, python-format
+msgid "Se registrará alerta: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:224 aap_app/cron.py:229 aap_app/models.py:204
+msgid "regla de análisis"
+msgstr ""
+
+#: aap_app/cron.py:227 aap_app/models.py:190 aap_app/models.py:210
+#: aap_app/models.py:257
+msgid "repositorio"
+msgstr ""
+
+#: aap_app/cron.py:228 aap_app/models.py:220 aap_app/models.py:228
+msgid "rama o branch"
+msgstr ""
+
+#: aap_app/cron.py:230 aap_app/models.py:230
+msgid "configuración"
+msgstr ""
+
+#: aap_app/cron.py:237
+#, python-format
+msgid "Se enviará mail a: %s"
+msgstr ""
+
+#: aap_app/cron.py:239
+msgid "AAP - Aviso de alerta"
+msgstr ""
+
+#: aap_app/cron.py:241
+#, python-format
+msgid "Error al enviar mail: %s: %s"
+msgstr ""
+
+#: aap_app/cron.py:246
+#, python-format
+msgid "Error al recuperar último commit de %s"
+msgstr ""
+
+#: aap_app/cron.py:252
+#, python-format
+msgid "Rama %s del repositorio %s procesada."
+msgstr ""
+
+#: aap_app/cron.py:254
+msgid "Proceso cron finalizado."
+msgstr ""
+
+#: aap_app/models.py:19
+msgid "ALTA"
+msgstr ""
+
+#: aap_app/models.py:20
+msgid "MEDIA"
+msgstr ""
+
+#: aap_app/models.py:21
+msgid "BAJA"
+msgstr ""
+
+#: aap_app/models.py:29
+msgid "INFO"
+msgstr ""
+
+#: aap_app/models.py:30
+msgid "WARN"
+msgstr ""
+
+#: aap_app/models.py:31
+msgid "ERROR"
+msgstr ""
+
+#: aap_app/models.py:32
+msgid "FATAL"
+msgstr ""
+
+#: aap_app/models.py:113 aap_app/models.py:123 aap_app/models.py:133
+#: aap_app/models.py:146 aap_app/models.py:196
+msgid "nombre"
+msgstr ""
+
+#: aap_app/models.py:113 aap_app/models.py:123 aap_app/models.py:133
+#: aap_app/models.py:146 aap_app/models.py:196
+msgid "Nombre de referencia"
+msgstr ""
+
+#: aap_app/models.py:114 aap_app/models.py:124 aap_app/models.py:134
+#: aap_app/models.py:147 aap_app/models.py:197 aap_app/models.py:245
+msgid "descripción"
+msgstr ""
+
+#: aap_app/models.py:114 aap_app/models.py:124 aap_app/models.py:134
+#: aap_app/models.py:147 aap_app/models.py:197
+msgid "Descripción detallada"
+msgstr ""
+
+#: aap_app/models.py:117
+msgid "categoría de proyecto"
+msgstr ""
+
+#: aap_app/models.py:118
+msgid "categorías de proyectos"
+msgstr ""
+
+#: aap_app/models.py:127
+msgid "sistema operativo"
+msgstr ""
+
+#: aap_app/models.py:128 aap_app/models.py:144
+msgid "sistemas operativos"
+msgstr ""
+
+#: aap_app/models.py:137
+msgid "lenguaje de desarrollo"
+msgstr ""
+
+#: aap_app/models.py:138
+msgid "lenguajes de desarrollo"
+msgstr ""
+
+#: aap_app/models.py:143
+msgid "categoría de proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:143
+msgid "Categoría de proyecto del proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:144
+msgid "Sistemas operativos del proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:145
+msgid "lenguaje de programación"
+msgstr ""
+
+#: aap_app/models.py:145
+msgid "Lenguaje de progrmación utilizado en el proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:148
+msgid "analistas"
+msgstr ""
+
+#: aap_app/models.py:148
+msgid "Analistas asignados al proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:149 aap_app/models.py:183 aap_app/models.py:214
+msgid "observaciones"
+msgstr ""
+
+#: aap_app/models.py:149 aap_app/models.py:183 aap_app/models.py:214
+msgid "Observaciones generales"
+msgstr ""
+
+#: aap_app/models.py:152 aap_app/models.py:158 aap_app/models.py:177
+#: aap_app/models.py:256
+msgid "proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:153
+msgid "proyectos de software"
+msgstr ""
+
+#: aap_app/models.py:158
+msgid "Proyecto de software asignado"
+msgstr ""
+
+#: aap_app/models.py:159
+msgid "analista"
+msgstr ""
+
+#: aap_app/models.py:159
+msgid "Analista asignado al proyecto de softawre"
+msgstr ""
+
+#: aap_app/models.py:160
+msgid "tarea"
+msgstr ""
+
+#: aap_app/models.py:160
+msgid "Tarea/s asignada/s al analista"
+msgstr ""
+
+#: aap_app/models.py:161
+msgid "recibe emails"
+msgstr ""
+
+#: aap_app/models.py:161
+msgid "Este analista recibirá emails automáticos?"
+msgstr ""
+
+#: aap_app/models.py:162
+msgid "fecha de asignación"
+msgstr ""
+
+#: aap_app/models.py:162
+msgid "Fecha y hora de asignación del analista al proyecto de software"
+msgstr ""
+
+#: aap_app/models.py:165
+msgid "usuario analista"
+msgstr ""
+
+#: aap_app/models.py:166
+msgid "usuarios analistas"
+msgstr ""
+
+#: aap_app/models.py:177
+msgid "Proyecto de software del repositorio"
+msgstr ""
+
+#: aap_app/models.py:178
+msgid "Git URL"
+msgstr ""
+
+#: aap_app/models.py:178
+msgid "URL del repositorio (https:// o file://)"
+msgstr ""
+
+#: aap_app/models.py:179
+msgid "usuario"
+msgstr ""
+
+#: aap_app/models.py:179
+msgid "Nombre de usuario para acceder a URL"
+msgstr ""
+
+#: aap_app/models.py:180
+msgid "contraseña"
+msgstr ""
+
+#: aap_app/models.py:180
+msgid "Contraseña para acceder a URL"
+msgstr ""
+
+#: aap_app/models.py:181
+msgid "ruta local"
+msgstr ""
+
+#: aap_app/models.py:181
+msgid "Ruta/path local donde será clonado el repositorio"
+msgstr ""
+
+#: aap_app/models.py:182
+msgid "compara ramas"
+msgstr ""
+
+#: aap_app/models.py:182
+msgid "Se comparará la rama o branch default contra el resto de ramas?"
+msgstr ""
+
+#: aap_app/models.py:184
+msgid "fecha inicial"
+msgstr ""
+
+#: aap_app/models.py:184
+msgid "Fecha inicial de análisis (a partir de cuándo analizar repositorio)"
+msgstr ""
+
+#: aap_app/models.py:185
+msgid "clonado"
+msgstr ""
+
+#: aap_app/models.py:185
+msgid "Ya fue clonado?"
+msgstr ""
+
+#: aap_app/models.py:186
+msgid "fecha de último pull"
+msgstr ""
+
+#: aap_app/models.py:186
+msgid "Fecha y hora de la última vez que se actualizó el repositorio"
+msgstr ""
+
+#: aap_app/models.py:187
+msgid "activo"
+msgstr ""
+
+#: aap_app/models.py:187
+msgid "Se encuentra activo?"
+msgstr ""
+
+#: aap_app/models.py:191
+msgid "repositorios"
+msgstr ""
+
+#: aap_app/models.py:198
+msgid "código de regla"
+msgstr ""
+
+#: aap_app/models.py:198
+msgid "Código fuente (python) de la implementación de la regla"
+msgstr ""
+
+#: aap_app/models.py:199
+msgid "criticidad de regla"
+msgstr ""
+
+#: aap_app/models.py:199
+msgid "Criticidad de regla para alertas"
+msgstr ""
+
+#: aap_app/models.py:200
+msgid "configuración default/ejemplo"
+msgstr ""
+
+#: aap_app/models.py:200
+msgid "Configuración de ejemplo, default o por defecto de la regla"
+msgstr ""
+
+#: aap_app/models.py:201 aap_app/models.py:217 aap_app/models.py:232
+msgid "activa"
+msgstr ""
+
+#: aap_app/models.py:201 aap_app/models.py:217 aap_app/models.py:232
+msgid "Se encuentra activa?"
+msgstr ""
+
+#: aap_app/models.py:205
+msgid "reglas de análisis"
+msgstr ""
+
+#: aap_app/models.py:210
+msgid "Repositorio de esta rama o branch"
+msgstr ""
+
+#: aap_app/models.py:211 aap_app/models.py:241 aap_app/models.py:258
+msgid "rama"
+msgstr ""
+
+#: aap_app/models.py:211
+msgid "Nombre de la rama o branch del repositorio"
+msgstr ""
+
+#: aap_app/models.py:212
+msgid "rama default"
+msgstr ""
+
+#: aap_app/models.py:212
+msgid "Es la rama por defecto o default? (típicamente llamada master)"
+msgstr ""
+
+#: aap_app/models.py:213
+msgid "reglas"
+msgstr ""
+
+#: aap_app/models.py:213
+msgid "Reglas configuradas para la rama o branch"
+msgstr ""
+
+#: aap_app/models.py:215
+msgid "fecha de último análisis"
+msgstr ""
+
+#: aap_app/models.py:215
+msgid ""
+"Fecha y hora del último análisis realizado a esta rama o branch del "
+"repositorio"
+msgstr ""
+
+#: aap_app/models.py:216
+msgid "Hash de último commit"
+msgstr ""
+
+#: aap_app/models.py:216
+msgid "Hash de último commit analizado de esta rama o branch del repositorio"
+msgstr ""
+
+#: aap_app/models.py:221
+msgid "ramas o branches"
+msgstr ""
+
+#: aap_app/models.py:228
+msgid "Rama configurada"
+msgstr ""
+
+#: aap_app/models.py:229
+msgid "regla"
+msgstr ""
+
+#: aap_app/models.py:229
+msgid "Regla configurada"
+msgstr ""
+
+#: aap_app/models.py:230
+msgid "Configuración particular de la regla de análisis"
+msgstr ""
+
+#: aap_app/models.py:231
+msgid "fecha de configuración"
+msgstr ""
+
+#: aap_app/models.py:231
+msgid "Fecha y hora de configuración de la regla"
+msgstr ""
+
+#: aap_app/models.py:235
+msgid "regla configurada"
+msgstr ""
+
+#: aap_app/models.py:236
+msgid "reglas configuradas"
+msgstr ""
+
+#: aap_app/models.py:241
+msgid "Rama o branch de alerta"
+msgstr ""
+
+#: aap_app/models.py:242 aap_app/models.py:260 aap_app/models.py:272
+msgid "fecha"
+msgstr ""
+
+#: aap_app/models.py:242
+msgid "Fecha y hora de registro de alerta"
+msgstr ""
+
+#: aap_app/models.py:243
+msgid "criticidad"
+msgstr ""
+
+#: aap_app/models.py:243
+msgid "Criticidad de alerta"
+msgstr ""
+
+#: aap_app/models.py:244
+msgid "mensaje"
+msgstr ""
+
+#: aap_app/models.py:244
+msgid "Mensaje de alerta"
+msgstr ""
+
+#: aap_app/models.py:245
+msgid "Descripción detallada de alerta"
+msgstr ""
+
+#: aap_app/models.py:246
+msgid "revisada"
+msgstr ""
+
+#: aap_app/models.py:246
+msgid "Alerta revisada?"
+msgstr ""
+
+#: aap_app/models.py:249 aap_app/models.py:255
+msgid "alerta"
+msgstr ""
+
+#: aap_app/models.py:250
+msgid "alertas"
+msgstr ""
+
+#: aap_app/models.py:255
+msgid "Alerta relacionada a nota"
+msgstr ""
+
+#: aap_app/models.py:256
+msgid "Proyecto de software relacionado a nota"
+msgstr ""
+
+#: aap_app/models.py:257
+msgid "Repositorio relacionado a nota"
+msgstr ""
+
+#: aap_app/models.py:258
+msgid "Rama o branch relacionada a nota"
+msgstr ""
+
+#: aap_app/models.py:259
+msgid "autor"
+msgstr ""
+
+#: aap_app/models.py:259
+msgid "Autor de la nota"
+msgstr ""
+
+#: aap_app/models.py:260
+msgid "Fecha y hora de registro de nota"
+msgstr ""
+
+#: aap_app/models.py:261
+msgid "título"
+msgstr ""
+
+#: aap_app/models.py:261
+msgid "Título de la nota"
+msgstr ""
+
+#: aap_app/models.py:262
+msgid "contenido"
+msgstr ""
+
+#: aap_app/models.py:262
+msgid "Contenido de la nota"
+msgstr ""
+
+#: aap_app/models.py:263
+msgid "importante"
+msgstr ""
+
+#: aap_app/models.py:263
+msgid "Nota importante?"
+msgstr ""
+
+#: aap_app/models.py:266
+msgid "nota de analista"
+msgstr ""
+
+#: aap_app/models.py:267
+msgid "notas de analistas"
+msgstr ""
+
+#: aap_app/models.py:272
+msgid "Fecha y hora de registro del log"
+msgstr ""
+
+#: aap_app/models.py:273
+msgid "log"
+msgstr ""
+
+#: aap_app/models.py:273
+msgid "Línea de log"
+msgstr ""
+
+#: aap_app/models.py:274
+msgid "detalle"
+msgstr ""
+
+#: aap_app/models.py:274
+msgid "Detalle de log"
+msgstr ""
+
+#: aap_app/models.py:275
+msgid "nivel"
+msgstr ""
+
+#: aap_app/models.py:275
+msgid "Nivel de log"
+msgstr ""
+
+#: aap_app/models.py:278
+msgid "log general"
+msgstr ""
+
+#: aap_app/models.py:279
+msgid "logs generales"
+msgstr ""
+
+#: aap_app/views.py:77
+msgid "Proyectos por Categorías"
+msgstr ""
+
+#: aap_app/views.py:78
+msgid "Categoría"
+msgstr ""
+
+#: aap_app/views.py:79 aap_app/views.py:89 aap_app/views.py:99
+msgid "Cantidad"
+msgstr ""
+
+#: aap_app/views.py:87
+msgid "Proyectos por Lenguajes/Tecnologías"
+msgstr ""
+
+#: aap_app/views.py:88
+msgid "Lenguaje"
+msgstr ""
+
+#: aap_app/views.py:97
+msgid "Proyectos por Sistemas Operativos"
+msgstr ""
+
+#: aap_app/views.py:98
+msgid "Sistema Operativo"
+msgstr ""
+
+#: templates/aap/index.html:13 templates/admin/base.html:79
+msgid "ver."
+msgstr ""
+
+#: templates/aap/index.html:27
+msgid "Dashboard"
+msgstr ""
+
+#: templates/aap/index.html:32 templates/aap/index.html.py:33
+msgid "Acceso admin"
+msgstr "Acceso administrativo"
+
+#: templates/aap/index.html:47 templates/admin/app_index.html:10
+#: templates/admin/base.html:159
+msgid "Home"
+msgstr "Inicio"
+
+#: templates/aap/index.html:50 templates/aap/login.html:29
+#: templates/admin/base_site.html:4 templates/admin/login.html:29
+msgid "Análisis Automático de Parches"
+msgstr ""
+
+#: templates/aap/index.html:65
+msgid "Alertas aún NO revisadas"
+msgstr ""
+
+#: templates/aap/index.html:71
+msgid "Fecha/Hora"
+msgstr ""
+
+#: templates/aap/index.html:72
+msgid "Respositorio/Rama"
+msgstr ""
+
+#: templates/aap/index.html:73
+msgid "Mensaje"
+msgstr ""
+
+#: templates/aap/index.html:74
+msgid "Descripción"
+msgstr ""
+
+#: templates/aap/index.html:85
+msgid "ALERTA REVISADA"
+msgstr ""
+
+#: templates/aap/index.html:89
+msgid "Nota agregada el "
+msgstr ""
+
+#: templates/aap/index.html:99
+msgid "Agregar nueva Nota"
+msgstr ""
+
+#: templates/aap/index.html:102
+msgid "AGREGAR NOTA"
+msgstr ""
+
+#: templates/aap/index.html:112
+msgid "Repositorios y ramas/branches activos y asignados:"
+msgstr ""
+
+#: templates/aap/index.html:126
+msgid "Reglas activas:"
+msgstr ""
+
+#: templates/aap/login.html:25 templates/aap/login.html.py:38
+#: templates/admin/base.html:76 templates/admin/base.html.py:104
+#: templates/admin/base.html:111 templates/admin/login.html:25
+#: templates/admin/login.html.py:38
+msgid "Django administration"
+msgstr "Administración"
+
+#: templates/aap/login.html:30 templates/admin/login.html:30
+msgid "versión"
+msgstr ""
+
+#: templates/aap/login.html:54 templates/admin/login.html:54
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Favor de corregir el siguiente error."
+msgstr[1] "Favor de corregir los siguientes errores."
+
+#: templates/aap/login.html:97 templates/aap/login.html.py:105
+#: templates/admin/login.html:97 templates/admin/login.html.py:105
+msgid "Log in"
+msgstr "Iniciar"
+
+#: templates/aap/login.html:116 templates/admin/login.html:116
+msgid "Forgotten your password or username?"
+msgstr "Olvidó su nombre de usuario o contraseña"
+
+#: templates/admin/base.html:134 templates/admin/base.html.py:148
+msgid "Documentation"
+msgstr "Documentación"
+
+#: templates/admin/base.html:139
+msgid "Change password"
+msgstr "Cambiar contraseña"
+
+#: templates/admin/base.html:143 templates/admin/base.html.py:150
+msgid "Log out"
+msgstr "Salir"
+
+#: templates/admin/base.html:169
+msgid "Close"
+msgstr "Cerrar"
+
+#: templates/admin/index.html:18 templates/admin/index.html.py:31
+msgid "Apps"
+msgstr "Opciones"
+
+#: templates/admin/index.html:21 templates/admin/index.html.py:22
+#: templates/admin/index.html:80
+msgid "Recent Actions"
+msgstr "Acciones recientes"
+
+#: templates/admin/index.html:37 templates/admin/index.html.py:67
+msgid "Search"
+msgstr "Buscar"
+
+#: templates/admin/index.html:42
+msgid "Action"
+msgstr "Acción"
+
+#: templates/admin/index.html:52 templates/admin/index.html.py:58
+#: templates/bootstrap_admin/sidebar_menu.html:6
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr "Aplicación %(name)s"
+
+#: templates/admin/index.html:65
+msgid "Add"
+msgstr "Agregar"
+
+#: templates/admin/index.html:66
+msgid "Change"
+msgstr "Cambiar"
+
+#: templates/admin/index.html:80
+msgid "My Actions"
+msgstr "Mis acciones"
+
+#: templates/admin/index.html:85
+msgid "None available"
+msgstr "Ninguno disponible"
+
+#: templates/admin/index.html:111
+msgid "Unknown content"
+msgstr "Contexto desconocido."
+
+#: templates/admin/index.html:139
+#: templates/bootstrap_admin/sidebar_menu.html:12
+#: templates/bootstrap_admin/sidebar_menu.html:27
+msgid "You don't have permission to edit anything."
+msgstr "No tiene permisos para editar."
+
+#: templates/bootstrap_admin/sidebar_menu.html:20
+#: templates/bootstrap_admin/sidebar_menu.html:21
+msgid "Acceso como usuario"
+msgstr ""

@@ -1,0 +1,2016 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhswc4xbXD01rhx1+T2nG0N/NlVICVOW187z5BoZQ7PJjx6OAijnCk1AJJqUOODgov/JniEFHmQIE5tis+61NDAo=
+
+OpenBSD 5.6 errata 18, Mar 13, 2015:
+
+Another fix for buffer overflows in malformed fonts.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 018_freetype.patch.sig \
+        -m - | (cd /usr/xenocara && patch -p0)
+
+Then build and install a new libfreetype:
+
+    cd /usr/xenocara/lib/freetype
+    make obj
+    make build
+
+Index: lib/freetype/include/ftimage.h
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/include/ftimage.h,v
+retrieving revision 1.1
+diff -u -p -r1.1 ftimage.h
+--- lib/freetype/include/ftimage.h	12 Jan 2014 15:08:26 -0000	1.1
++++ lib/freetype/include/ftimage.h	11 Mar 2015 19:13:58 -0000
+@@ -318,13 +318,13 @@ FT_BEGIN_HEADER
+   /*                                                                       */
+   typedef struct  FT_Bitmap_
+   {
+-    int             rows;
+-    int             width;
++    unsigned int    rows;
++    unsigned int    width;
+     int             pitch;
+     unsigned char*  buffer;
+-    short           num_grays;
+-    char            pixel_mode;
+-    char            palette_mode;
++    unsigned short  num_grays;
++    unsigned char   pixel_mode;
++    unsigned char   palette_mode;
+     void*           palette;
+ 
+   } FT_Bitmap;
+Index: lib/freetype/src/autofit/afblue.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afblue.c,v
+retrieving revision 1.2
+diff -u -p -r1.2 afblue.c
+--- lib/freetype/src/autofit/afblue.c	14 Mar 2014 08:18:01 -0000	1.2
++++ lib/freetype/src/autofit/afblue.c	11 Mar 2015 19:14:01 -0000
+@@ -64,8 +64,7 @@
+     '\xE4', '\xBB', '\x96', '\xE4', '\xBB', '\xAC', '\xE4', '\xBD', '\xA0', '\xE4', '\xBE', '\x86', '\xE5', '\x80', '\x91', '\xE5', '\x88', '\xB0', '\xE5', '\x92', '\x8C', '\xE5', '\x9C', '\xB0',  /* 他们你來們到和地 */
+     '\xE5', '\xAF', '\xB9', '\xE5', '\xB0', '\x8D', '\xE5', '\xB0', '\xB1', '\xE5', '\xB8', '\xAD', '\xE6', '\x88', '\x91', '\xE6', '\x97', '\xB6', '\xE6', '\x99', '\x82', '\xE6', '\x9C', '\x83',  /* 对對就席我时時會 */
+     '\xE6', '\x9D', '\xA5', '\xE7', '\x82', '\xBA', '\xE8', '\x83', '\xBD', '\xE8', '\x88', '\xB0', '\xE8', '\xAA', '\xAA', '\xE8', '\xAF', '\xB4', '\xE8', '\xBF', '\x99', '\xE9', '\x80', '\x99',  /* 来為能舰說说这這 */
+-    '\xE9', '\xBD', '\x8A',  /* 齊 */
+-    '\0',
++    '\xE9', '\xBD', '\x8A', '|',  /* 齊 | */
+     '\xE5', '\x86', '\x9B', '\xE5', '\x90', '\x8C', '\xE5', '\xB7', '\xB2', '\xE6', '\x84', '\xBF', '\xE6', '\x97', '\xA2', '\xE6', '\x98', '\x9F', '\xE6', '\x98', '\xAF', '\xE6', '\x99', '\xAF',  /* 军同已愿既星是景 */
+     '\xE6', '\xB0', '\x91', '\xE7', '\x85', '\xA7', '\xE7', '\x8E', '\xB0', '\xE7', '\x8F', '\xBE', '\xE7', '\x90', '\x86', '\xE7', '\x94', '\xA8', '\xE7', '\xBD', '\xAE', '\xE8', '\xA6', '\x81',  /* 民照现現理用置要 */
+     '\xE8', '\xBB', '\x8D', '\xE9', '\x82', '\xA3', '\xE9', '\x85', '\x8D', '\xE9', '\x87', '\x8C', '\xE9', '\x96', '\x8B', '\xE9', '\x9B', '\xB7', '\xE9', '\x9C', '\xB2', '\xE9', '\x9D', '\xA2',  /* 軍那配里開雷露面 */
+@@ -74,8 +73,7 @@
+     '\xE4', '\xB8', '\xAA', '\xE4', '\xB8', '\xBA', '\xE4', '\xBA', '\xBA', '\xE4', '\xBB', '\x96', '\xE4', '\xBB', '\xA5', '\xE4', '\xBB', '\xAC', '\xE4', '\xBD', '\xA0', '\xE4', '\xBE', '\x86',  /* 个为人他以们你來 */
+     '\xE5', '\x80', '\x8B', '\xE5', '\x80', '\x91', '\xE5', '\x88', '\xB0', '\xE5', '\x92', '\x8C', '\xE5', '\xA4', '\xA7', '\xE5', '\xAF', '\xB9', '\xE5', '\xB0', '\x8D', '\xE5', '\xB0', '\xB1',  /* 個們到和大对對就 */
+     '\xE6', '\x88', '\x91', '\xE6', '\x97', '\xB6', '\xE6', '\x99', '\x82', '\xE6', '\x9C', '\x89', '\xE6', '\x9D', '\xA5', '\xE7', '\x82', '\xBA', '\xE8', '\xA6', '\x81', '\xE8', '\xAA', '\xAA',  /* 我时時有来為要說 */
+-    '\xE8', '\xAF', '\xB4',  /* 说 */
+-    '\0',
++    '\xE8', '\xAF', '\xB4', '|',  /* 说 | */
+     '\xE4', '\xB8', '\xBB', '\xE4', '\xBA', '\x9B', '\xE5', '\x9B', '\xA0', '\xE5', '\xAE', '\x83', '\xE6', '\x83', '\xB3', '\xE6', '\x84', '\x8F', '\xE7', '\x90', '\x86', '\xE7', '\x94', '\x9F',  /* 主些因它想意理生 */
+     '\xE7', '\x95', '\xB6', '\xE7', '\x9C', '\x8B', '\xE7', '\x9D', '\x80', '\xE7', '\xBD', '\xAE', '\xE8', '\x80', '\x85', '\xE8', '\x87', '\xAA', '\xE8', '\x91', '\x97', '\xE8', '\xA3', '\xA1',  /* 當看着置者自著裡 */
+     '\xE8', '\xBF', '\x87', '\xE8', '\xBF', '\x98', '\xE8', '\xBF', '\x9B', '\xE9', '\x80', '\xB2', '\xE9', '\x81', '\x8E', '\xE9', '\x81', '\x93', '\xE9', '\x82', '\x84', '\xE9', '\x87', '\x8C',  /* 过还进進過道還里 */
+@@ -85,8 +83,7 @@
+     '\xE4', '\xBA', '\x9B', '\xE4', '\xBB', '\xAC', '\xE4', '\xBD', '\xA0', '\xE4', '\xBE', '\x86', '\xE5', '\x80', '\x91', '\xE5', '\x88', '\xB0', '\xE5', '\x92', '\x8C', '\xE5', '\x9C', '\xB0',  /* 些们你來們到和地 */
+     '\xE5', '\xA5', '\xB9', '\xE5', '\xB0', '\x86', '\xE5', '\xB0', '\x87', '\xE5', '\xB0', '\xB1', '\xE5', '\xB9', '\xB4', '\xE5', '\xBE', '\x97', '\xE6', '\x83', '\x85', '\xE6', '\x9C', '\x80',  /* 她将將就年得情最 */
+     '\xE6', '\xA0', '\xB7', '\xE6', '\xA8', '\xA3', '\xE7', '\x90', '\x86', '\xE8', '\x83', '\xBD', '\xE8', '\xAA', '\xAA', '\xE8', '\xAF', '\xB4', '\xE8', '\xBF', '\x99', '\xE9', '\x80', '\x99',  /* 样樣理能說说这這 */
+-    '\xE9', '\x80', '\x9A',  /* 通 */
+-    '\0',
++    '\xE9', '\x80', '\x9A', '|',  /* 通 | */
+     '\xE5', '\x8D', '\xB3', '\xE5', '\x90', '\x97', '\xE5', '\x90', '\xA7', '\xE5', '\x90', '\xAC', '\xE5', '\x91', '\xA2', '\xE5', '\x93', '\x81', '\xE5', '\x93', '\x8D', '\xE5', '\x97', '\x8E',  /* 即吗吧听呢品响嗎 */
+     '\xE5', '\xB8', '\x88', '\xE5', '\xB8', '\xAB', '\xE6', '\x94', '\xB6', '\xE6', '\x96', '\xAD', '\xE6', '\x96', '\xB7', '\xE6', '\x98', '\x8E', '\xE7', '\x9C', '\xBC', '\xE9', '\x96', '\x93',  /* 师師收断斷明眼間 */
+     '\xE9', '\x97', '\xB4', '\xE9', '\x99', '\x85', '\xE9', '\x99', '\x88', '\xE9', '\x99', '\x90', '\xE9', '\x99', '\xA4', '\xE9', '\x99', '\xB3', '\xE9', '\x9A', '\x8F', '\xE9', '\x9A', '\x9B',  /* 间际陈限除陳随際 */
+@@ -95,8 +92,7 @@
+     '\xE4', '\xBA', '\x8B', '\xE5', '\x89', '\x8D', '\xE5', '\xAD', '\xB8', '\xE5', '\xB0', '\x86', '\xE5', '\xB0', '\x87', '\xE6', '\x83', '\x85', '\xE6', '\x83', '\xB3', '\xE6', '\x88', '\x96',  /* 事前學将將情想或 */
+     '\xE6', '\x94', '\xBF', '\xE6', '\x96', '\xAF', '\xE6', '\x96', '\xB0', '\xE6', '\xA0', '\xB7', '\xE6', '\xA8', '\xA3', '\xE6', '\xB0', '\x91', '\xE6', '\xB2', '\x92', '\xE6', '\xB2', '\xA1',  /* 政斯新样樣民沒没 */
+     '\xE7', '\x84', '\xB6', '\xE7', '\x89', '\xB9', '\xE7', '\x8E', '\xB0', '\xE7', '\x8F', '\xBE', '\xE7', '\x90', '\x83', '\xE7', '\xAC', '\xAC', '\xE7', '\xB6', '\x93', '\xE8', '\xB0', '\x81',  /* 然特现現球第經谁 */
+-    '\xE8', '\xB5', '\xB7',  /* 起 */
+-    '\0',
++    '\xE8', '\xB5', '\xB7', '|',  /* 起 | */
+     '\xE4', '\xBE', '\x8B', '\xE5', '\x88', '\xA5', '\xE5', '\x88', '\xAB', '\xE5', '\x88', '\xB6', '\xE5', '\x8A', '\xA8', '\xE5', '\x8B', '\x95', '\xE5', '\x90', '\x97', '\xE5', '\x97', '\x8E',  /* 例別别制动動吗嗎 */
+     '\xE5', '\xA2', '\x9E', '\xE6', '\x8C', '\x87', '\xE6', '\x98', '\x8E', '\xE6', '\x9C', '\x9D', '\xE6', '\x9C', '\x9F', '\xE6', '\x9E', '\x84', '\xE7', '\x89', '\xA9', '\xE7', '\xA1', '\xAE',  /* 增指明朝期构物确 */
+     '\xE7', '\xA7', '\x8D', '\xE8', '\xAA', '\xBF', '\xE8', '\xB0', '\x83', '\xE8', '\xB2', '\xBB', '\xE8', '\xB4', '\xB9', '\xE9', '\x82', '\xA3', '\xE9', '\x83', '\xBD', '\xE9', '\x96', '\x93',  /* 种調调費费那都間 */
+@@ -142,22 +138,14 @@
+     { AF_BLUE_STRING_HEBREW_DESCENDER, 0                             },
+     { AF_BLUE_STRING_MAX,              0                             },
+ #ifdef AF_CONFIG_OPTION_CJK
+-    { AF_BLUE_STRING_CJK_TOP_FILL,      AF_BLUE_PROPERTY_CJK_TOP |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    },
+-    { AF_BLUE_STRING_CJK_TOP_UNFILL,    AF_BLUE_PROPERTY_CJK_TOP     },
+-    { AF_BLUE_STRING_CJK_BOTTOM_FILL,   AF_BLUE_PROPERTY_CJK_FILL    },
+-    { AF_BLUE_STRING_CJK_BOTTOM_UNFILL, 0                            },
++    { AF_BLUE_STRING_CJK_TOP,    AF_BLUE_PROPERTY_CJK_TOP     },
++    { AF_BLUE_STRING_CJK_BOTTOM, 0                            },
+ #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
+-    { AF_BLUE_STRING_CJK_LEFT_FILL,     AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    },
+-    { AF_BLUE_STRING_CJK_LEFT_UNFILL,   AF_BLUE_PROPERTY_CJK_HORIZ   },
+-    { AF_BLUE_STRING_CJK_RIGHT_FILL,    AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_RIGHT |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    },
+-    { AF_BLUE_STRING_CJK_RIGHT_UNFILL,  AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_RIGHT   },
++    { AF_BLUE_STRING_CJK_LEFT,   AF_BLUE_PROPERTY_CJK_HORIZ   },
++    { AF_BLUE_STRING_CJK_RIGHT,  AF_BLUE_PROPERTY_CJK_HORIZ |
++                                 AF_BLUE_PROPERTY_CJK_RIGHT   },
+ #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
+-    { AF_BLUE_STRING_MAX,               0                            },
++    { AF_BLUE_STRING_MAX,        0                            },
+ #endif /* AF_CONFIG_OPTION_CJK                */
+ 
+   };
+Index: lib/freetype/src/autofit/afblue.dat
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afblue.dat,v
+retrieving revision 1.1
+diff -u -p -r1.1 afblue.dat
+--- lib/freetype/src/autofit/afblue.dat	12 Jan 2014 15:08:27 -0000	1.1
++++ lib/freetype/src/autofit/afblue.dat	11 Mar 2015 19:14:01 -0000
+@@ -2,7 +2,7 @@
+ //
+ //    Auto-fitter data for blue strings.
+ //
+-//  Copyright 2013 by
++//  Copyright 2013, 2014 by
+ //  David Turner, Robert Wilhelm, and Werner Lemberg.
+ //
+ //  This file is part of the FreeType project, and may only be used,
+@@ -63,6 +63,8 @@
+ // characters, not bytes.
+ 
+ 
++// The blue zone string data, to be used in the blue stringsets below.
++
+ AF_BLUE_STRING_ENUM AF_BLUE_STRINGS_ARRAY AF_BLUE_STRING_MAX_LEN:
+ 
+   AF_BLUE_STRING_LATIN_CAPITAL_TOP
+@@ -105,22 +107,20 @@ AF_BLUE_STRING_ENUM AF_BLUE_STRINGS_ARRA
+ 
+ #ifdef AF_CONFIG_OPTION_CJK
+ 
+-  AF_BLUE_STRING_CJK_TOP_FILL
++  AF_BLUE_STRING_CJK_TOP
+     "他们你來們到和地"
+     "对對就席我时時會"
+     "来為能舰說说这這"
+-    "齊"
+-  AF_BLUE_STRING_CJK_TOP_UNFILL
++    "齊 |"
+     "军同已愿既星是景"
+     "民照现現理用置要"
+     "軍那配里開雷露面"
+     "顾"
+-  AF_BLUE_STRING_CJK_BOTTOM_FILL
++  AF_BLUE_STRING_CJK_BOTTOM
+     "个为人他以们你來"
+     "個們到和大对對就"
+     "我时時有来為要說"
+-    "说"
+-  AF_BLUE_STRING_CJK_BOTTOM_UNFILL
++    "说 |"
+     "主些因它想意理生"
+     "當看着置者自著裡"
+     "过还进進過道還里"
+@@ -128,22 +128,20 @@ AF_BLUE_STRING_ENUM AF_BLUE_STRINGS_ARRA
+ 
+ #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
+ 
+-  AF_BLUE_STRING_CJK_LEFT_FILL
++  AF_BLUE_STRING_CJK_LEFT
+     "些们你來們到和地"
+     "她将將就年得情最"
+     "样樣理能說说这這"
+-    "通"
+-  AF_BLUE_STRING_CJK_LEFT_UNFILL
++    "通 |"
+     "即吗吧听呢品响嗎"
+     "师師收断斷明眼間"
+     "间际陈限除陳随際"
+     "隨"
+-  AF_BLUE_STRING_CJK_RIGHT_FILL
++  AF_BLUE_STRING_CJK_RIGHT
+     "事前學将將情想或"
+     "政斯新样樣民沒没"
+     "然特现現球第經谁"
+-    "起"
+-  AF_BLUE_STRING_CJK_RIGHT_UNFILL
++    "起 |"
+     "例別别制动動吗嗎"
+     "增指明朝期构物确"
+     "种調调費费那都間"
+@@ -154,6 +152,79 @@ AF_BLUE_STRING_ENUM AF_BLUE_STRINGS_ARRA
+ #endif /* AF_CONFIG_OPTION_CJK                */
+ 
+ 
++// The blue zone stringsets, as used in the script styles, cf. `afstyles.h'.
++//
++// The AF_BLUE_PROPERTY_XXX flags are defined in `afblue.h'; here some
++// explanations.
++//
++// A blue zone in general is defined by a reference and an overshoot line.
++// During the hinting process, all coordinate values between those two lines
++// are set equal to the reference value, provided that the blue zone is not
++// wider than 0.75 pixels (otherwise the blue zone gets ignored).  All
++// entries must have `AF_BLUE_STRING_MAX' as the final line.
++//
++//
++// latin auto-hinter
++// -----------------
++//
++// Characters in a blue string are automatically classified as having a flat
++// (reference) or a round (overshoot) extremum.  The blue zone is then set
++// up by the mean values of all flat extrema and all round extrema,
++// respectively.  Only horizontal blue zones (i.e., adjusting vertical
++// coordinate values) are supported.
++//
++// For the latin auto-hinter, the overshoot should be larger than the
++// reference for top zones, and vice versa for bottom zones.
++//
++//   LATIN_TOP
++//     Take the maximum flat and round coordinate values of the blue string
++//     characters.  If not set, take the minimum values.
++//
++//   LATIN_X_HEIGHT
++//     Scale all glyphs vertically from the corresponding script to make the
++//     reference line of this blue zone align on the grid.  The scaling
++//     takes place before all other blue zones get aligned to the grid.
++//     Only one blue character string of a script style can have this flag.
++//
++//   LATIN_LONG
++//     Apply an additional constraint for blue zone values: Don't
++//     necessarily use the extremum as-is but a segment of the topmost (or
++//     bottommost) contour that is longer than a heuristic threshold, and
++//     which is not too far away vertically from the real extremum.  This
++//     ensures that small bumps in the outline are ignored (for example, the
++//     `vertical serifs' found in many Hebrew glyph designs).
++//
++//     The segment must be at least EM/25 font units long, and the distance
++//     to the extremum must be smaller than EM/4.
++//
++//
++// cjk auto-hinter
++// ---------------
++//
++// Characters in a blue string are *not* automatically classified.  Instead,
++// first come the characters used for the overshoot value, then the
++// character `|', then the characters used for the reference value.  The
++// blue zone is then set up by the mean values of all reference values and
++// all overshoot values, respectively.  Both horizontal and vertical blue
++// zones (i.e., adjusting vertical and horizontal coordinate values,
++// respectively) are supported.
++//
++// For the cjk auto-hinter, the overshoot should be smaller than the
++// reference for top zones, and vice versa for bottom zones.
++//
++//   CJK_TOP
++//     Take the maximum flat and round coordinate values of the blue string
++//     characters.  If not set, take the minimum values.
++//
++//   CJK_RIGHT
++//     A synonym for CJK_TOP.  If CJK_HORIZ is set, this flag indicates the
++//     right blue zone, taking horizontal maximum values.
++//
++//   CJK_HORIZ
++//     Define a blue zone for horizontal hinting (i.e., vertical blue
++//     zones).  If not set, this is a blue zone for vertical hinting.
++
++
+ AF_BLUE_STRINGSET_ENUM AF_BLUE_STRINGSETS_ARRAY AF_BLUE_STRINGSET_MAX_LEN:
+ 
+   AF_BLUE_STRINGSET_LATN
+@@ -195,22 +266,14 @@ AF_BLUE_STRINGSET_ENUM AF_BLUE_STRINGSET
+ #ifdef AF_CONFIG_OPTION_CJK
+ 
+   AF_BLUE_STRINGSET_HANI
+-    { AF_BLUE_STRING_CJK_TOP_FILL,      AF_BLUE_PROPERTY_CJK_TOP |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    }
+-    { AF_BLUE_STRING_CJK_TOP_UNFILL,    AF_BLUE_PROPERTY_CJK_TOP     }
+-    { AF_BLUE_STRING_CJK_BOTTOM_FILL,   AF_BLUE_PROPERTY_CJK_FILL    }
+-    { AF_BLUE_STRING_CJK_BOTTOM_UNFILL, 0                            }
++    { AF_BLUE_STRING_CJK_TOP,    AF_BLUE_PROPERTY_CJK_TOP     }
++    { AF_BLUE_STRING_CJK_BOTTOM, 0                            }
+ #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
+-    { AF_BLUE_STRING_CJK_LEFT_FILL,     AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    }
+-    { AF_BLUE_STRING_CJK_LEFT_UNFILL,   AF_BLUE_PROPERTY_CJK_HORIZ   }
+-    { AF_BLUE_STRING_CJK_RIGHT_FILL,    AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_RIGHT |
+-                                        AF_BLUE_PROPERTY_CJK_FILL    }
+-    { AF_BLUE_STRING_CJK_RIGHT_UNFILL,  AF_BLUE_PROPERTY_CJK_HORIZ |
+-                                        AF_BLUE_PROPERTY_CJK_RIGHT   }
++    { AF_BLUE_STRING_CJK_LEFT,   AF_BLUE_PROPERTY_CJK_HORIZ   }
++    { AF_BLUE_STRING_CJK_RIGHT,  AF_BLUE_PROPERTY_CJK_HORIZ |
++                                 AF_BLUE_PROPERTY_CJK_RIGHT   }
+ #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
+-    { AF_BLUE_STRING_MAX,               0                            }
++    { AF_BLUE_STRING_MAX,        0                            }
+ 
+ #endif /* AF_CONFIG_OPTION_CJK                */
+ 
+Index: lib/freetype/src/autofit/afblue.h
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afblue.h,v
+retrieving revision 1.2
+diff -u -p -r1.2 afblue.h
+--- lib/freetype/src/autofit/afblue.h	14 Mar 2014 08:18:01 -0000	1.2
++++ lib/freetype/src/autofit/afblue.h	11 Mar 2015 19:14:01 -0000
+@@ -7,7 +7,7 @@
+ /*                                                                         */
+ /*    Auto-fitter data for blue strings (specification).                   */
+ /*                                                                         */
+-/*  Copyright 2013 by                                                      */
++/*  Copyright 2013, 2014 by                                                */
+ /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
+ /*                                                                         */
+ /*  This file is part of the FreeType project, and may only be used,       */
+@@ -67,7 +67,7 @@ FT_BEGIN_HEADER
+   /* At the bottommost level, we define strings for finding blue zones. */
+ 
+ 
+-#define AF_BLUE_STRING_MAX_LEN  25
++#define AF_BLUE_STRING_MAX_LEN  51
+ 
+   /* The AF_Blue_String enumeration values are offsets into the */
+   /* `af_blue_strings' array.                                   */
+@@ -93,16 +93,12 @@ FT_BEGIN_HEADER
+     AF_BLUE_STRING_HEBREW_DESCENDER = 203,
+     af_blue_1_1 = 213,
+ #ifdef AF_CONFIG_OPTION_CJK
+-    AF_BLUE_STRING_CJK_TOP_FILL = af_blue_1_1 + 1,
+-    AF_BLUE_STRING_CJK_TOP_UNFILL = af_blue_1_1 + 77,
+-    AF_BLUE_STRING_CJK_BOTTOM_FILL = af_blue_1_1 + 153,
+-    AF_BLUE_STRING_CJK_BOTTOM_UNFILL = af_blue_1_1 + 229,
++    AF_BLUE_STRING_CJK_TOP = af_blue_1_1 + 1,
++    AF_BLUE_STRING_CJK_BOTTOM = af_blue_1_1 + 153,
+     af_blue_1_1_1 = af_blue_1_1 + 304,
+ #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
+-    AF_BLUE_STRING_CJK_LEFT_FILL = af_blue_1_1_1 + 1,
+-    AF_BLUE_STRING_CJK_LEFT_UNFILL = af_blue_1_1_1 + 77,
+-    AF_BLUE_STRING_CJK_RIGHT_FILL = af_blue_1_1_1 + 153,
+-    AF_BLUE_STRING_CJK_RIGHT_UNFILL = af_blue_1_1_1 + 229,
++    AF_BLUE_STRING_CJK_LEFT = af_blue_1_1_1 + 1,
++    AF_BLUE_STRING_CJK_RIGHT = af_blue_1_1_1 + 153,
+     af_blue_1_1_2 = af_blue_1_1_1 + 304,
+ #else
+     af_blue_1_1_2 = af_blue_1_1_1 + 0,
+@@ -140,13 +136,12 @@ FT_BEGIN_HEADER
+ #define AF_BLUE_PROPERTY_LATIN_X_HEIGHT  ( 1 << 1 )
+ #define AF_BLUE_PROPERTY_LATIN_LONG      ( 1 << 2 )
+ 
+-#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1 << 0 )
+-#define AF_BLUE_PROPERTY_CJK_TOP    ( 1 << 1 )
+-#define AF_BLUE_PROPERTY_CJK_FILL   ( 1 << 2 )
++#define AF_BLUE_PROPERTY_CJK_TOP    ( 1 << 0 )
++#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1 << 1 )
+ #define AF_BLUE_PROPERTY_CJK_RIGHT  AF_BLUE_PROPERTY_CJK_TOP
+ 
+ 
+-#define AF_BLUE_STRINGSET_MAX_LEN  9
++#define AF_BLUE_STRINGSET_MAX_LEN  7
+ 
+   /* The AF_Blue_Stringset enumeration values are offsets into the */
+   /* `af_blue_stringsets' array.                                   */
+@@ -160,9 +155,9 @@ FT_BEGIN_HEADER
+     af_blue_2_1 = 24,
+ #ifdef AF_CONFIG_OPTION_CJK
+     AF_BLUE_STRINGSET_HANI = af_blue_2_1 + 0,
+-    af_blue_2_1_1 = af_blue_2_1 + 4,
++    af_blue_2_1_1 = af_blue_2_1 + 2,
+ #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
+-    af_blue_2_1_2 = af_blue_2_1_1 + 4,
++    af_blue_2_1_2 = af_blue_2_1_1 + 2,
+ #else
+     af_blue_2_1_2 = af_blue_2_1_1 + 0,
+ #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
+Index: lib/freetype/src/autofit/afblue.hin
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afblue.hin,v
+retrieving revision 1.2
+diff -u -p -r1.2 afblue.hin
+--- lib/freetype/src/autofit/afblue.hin	14 Mar 2014 08:18:01 -0000	1.2
++++ lib/freetype/src/autofit/afblue.hin	11 Mar 2015 19:14:01 -0000
+@@ -4,7 +4,7 @@
+ /*                                                                         */
+ /*    Auto-fitter data for blue strings (specification).                   */
+ /*                                                                         */
+-/*  Copyright 2013 by                                                      */
++/*  Copyright 2013, 2014 by                                                */
+ /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
+ /*                                                                         */
+ /*  This file is part of the FreeType project, and may only be used,       */
+@@ -100,9 +100,8 @@ FT_BEGIN_HEADER
+ #define AF_BLUE_PROPERTY_LATIN_X_HEIGHT  ( 1 << 1 )
+ #define AF_BLUE_PROPERTY_LATIN_LONG      ( 1 << 2 )
+ 
+-#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1 << 0 )
+-#define AF_BLUE_PROPERTY_CJK_TOP    ( 1 << 1 )
+-#define AF_BLUE_PROPERTY_CJK_FILL   ( 1 << 2 )
++#define AF_BLUE_PROPERTY_CJK_TOP    ( 1 << 0 )
++#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1 << 1 )
+ #define AF_BLUE_PROPERTY_CJK_RIGHT  AF_BLUE_PROPERTY_CJK_TOP
+ 
+ 
+Index: lib/freetype/src/autofit/afcjk.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afcjk.c,v
+retrieving revision 1.12
+diff -u -p -r1.12 afcjk.c
+--- lib/freetype/src/autofit/afcjk.c	14 Mar 2014 08:18:01 -0000	1.12
++++ lib/freetype/src/autofit/afcjk.c	11 Mar 2015 19:14:01 -0000
+@@ -261,6 +261,8 @@
+     FT_Int      num_fills;
+     FT_Int      num_flats;
+ 
++    FT_Bool     fill;
++
+     AF_CJKBlue  blue;
+     FT_Error    error;
+     AF_CJKAxis  axis;
+@@ -271,22 +273,6 @@
+     AF_Blue_Stringset         bss = sc->blue_stringset;
+     const AF_Blue_StringRec*  bs  = &af_blue_stringsets[bss];
+ 
+-#ifdef FT_DEBUG_LEVEL_TRACE
+-    FT_String*  cjk_blue_name[4] =
+-    {
+-      (FT_String*)"bottom",    /* --   , --  */
+-      (FT_String*)"top",       /* --   , TOP */
+-      (FT_String*)"left",      /* HORIZ, --  */
+-      (FT_String*)"right"      /* HORIZ, TOP */
+-    };
+-
+-    FT_String*  cjk_blue_type_name[2] =
+-    {
+-      (FT_String*)"unfilled",  /* --   */
+-      (FT_String*)"filled"     /* FILL */
+-    };
+-#endif
+-
+ 
+     /* we walk over the blue character strings as specified in the   */
+     /* style's entry in the `af_blue_stringset' array, computing its */
+@@ -308,15 +294,29 @@
+       else
+         axis = &metrics->axis[AF_DIMENSION_VERT];
+ 
+-      FT_TRACE5(( "blue zone %d:\n", axis->blue_count ));
++#ifdef FT_DEBUG_LEVEL_TRACE
++      {
++        FT_String*  cjk_blue_name[4] =
++        {
++          (FT_String*)"bottom",    /* --   , --  */
++          (FT_String*)"top",       /* --   , TOP */
++          (FT_String*)"left",      /* HORIZ, --  */
++          (FT_String*)"right"      /* HORIZ, TOP */
++        };
++
++
++        FT_TRACE5(( "blue zone %d (%s):\n",
++                    axis->blue_count,
++                    cjk_blue_name[AF_CJK_IS_HORIZ_BLUE( bs ) |
++                                  AF_CJK_IS_TOP_BLUE( bs )   ] ));
++      }
++#endif /* FT_DEBUG_LEVEL_TRACE */
+ 
+       num_fills = 0;
+       num_flats = 0;
+ 
+-      FT_TRACE5(( "  cjk blue %s/%s\n",
+-                  cjk_blue_name[AF_CJK_IS_HORIZ_BLUE( bs ) |
+-                                AF_CJK_IS_TOP_BLUE( bs )   ],
+-                  cjk_blue_type_name[!!AF_CJK_IS_FILLED_BLUE( bs )] ));
++      fill = 1;  /* start with characters that define fill values */
++      FT_TRACE5(( "  [overshoot values]\n" ));
+ 
+       while ( *p )
+       {
+@@ -330,6 +330,14 @@
+ 
+         GET_UTF8_CHAR( ch, p );
+ 
++        /* switch to characters that define flat values */
++        if ( ch == '|' )
++        {
++          fill = 0;
++          FT_TRACE5(( "  [reference values]\n" ));
++          continue;
++        }
++
+         /* load the character in the face -- skip unknown or empty ones */
+         af_get_char_index( &metrics->root, ch, &glyph_index, &y_offset );
+         if ( glyph_index == 0 )
+@@ -417,7 +425,7 @@
+           FT_TRACE5(( "  U+%04lX: best_pos = %5ld\n", ch, best_pos ));
+         }
+ 
+-        if ( AF_CJK_IS_FILLED_BLUE( bs ) )
++        if ( fill )
+           fills[num_fills++] = best_pos;
+         else
+           flats[num_flats++] = best_pos;
+@@ -429,15 +437,15 @@
+          *  we couldn't find a single glyph to compute this blue zone,
+          *  we will simply ignore it then
+          */
+-        FT_TRACE5(( "    empty\n" ));
++        FT_TRACE5(( "  empty\n" ));
+         continue;
+       }
+ 
+-      /* we have computed the contents of the `fill' and `flats' tables, */
+-      /* now determine the reference position of the blue zone --        */
+-      /* we simply take the median value after a simple sort             */
+-      af_sort_pos( num_flats, flats );
++      /* we have computed the contents of the `fill' and `flats' tables,   */
++      /* now determine the reference and overshoot position of the blue -- */
++      /* we simply take the median value after a simple sort               */
+       af_sort_pos( num_fills, fills );
++      af_sort_pos( num_flats, flats );
+ 
+       blue       = &axis->blues[axis->blue_count];
+       blue_ref   = &blue->ref.org;
+@@ -476,7 +484,7 @@
+           *blue_ref   =
+           *blue_shoot = ( shoot + ref ) / 2;
+ 
+-          FT_TRACE5(( "  [overshoot smaller than reference,"
++          FT_TRACE5(( "  [reference smaller than overshoot,"
+                       " taking mean value]\n" ));
+         }
+       }
+@@ -1230,8 +1238,10 @@
+         /* zone, check for left edges                                      */
+         /*                                                                 */
+         /* of course, that's for TrueType                                  */
+-        is_top_right_blue = FT_BOOL( blue->flags & AF_CJK_BLUE_TOP );
+-        is_major_dir      = FT_BOOL( edge->dir == axis->major_dir );
++        is_top_right_blue =
++          (FT_Byte)( ( blue->flags & AF_CJK_BLUE_TOP ) != 0 );
++        is_major_dir =
++          FT_BOOL( edge->dir == axis->major_dir );
+ 
+         /* if it is a top zone, the edge must be against the major    */
+         /* direction; if it is a bottom zone, it must be in the major */
+@@ -1528,6 +1538,12 @@
+ 
+ 
+     stem_edge->pos = base_edge->pos + fitted_width;
++
++    FT_TRACE5(( "  CJKLINK: edge %d @%d (opos=%.2f) linked to %.2f,"
++                " dist was %.2f, now %.2f\n",
++                stem_edge - hints->axis[dim].edges, stem_edge->fpos,
++                stem_edge->opos / 64.0, stem_edge->pos / 64.0,
++                dist / 64.0, fitted_width / 64.0 ));
+   }
+ 
+ 
+Index: lib/freetype/src/autofit/afcjk.h
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/afcjk.h,v
+retrieving revision 1.7
+diff -u -p -r1.7 afcjk.h
+--- lib/freetype/src/autofit/afcjk.h	14 Mar 2014 08:18:01 -0000	1.7
++++ lib/freetype/src/autofit/afcjk.h	11 Mar 2015 19:14:01 -0000
+@@ -4,7 +4,7 @@
+ /*                                                                         */
+ /*    Auto-fitter hinting routines for CJK writing system (specification). */
+ /*                                                                         */
+-/*  Copyright 2006, 2007, 2011-2013 by                                     */
++/*  Copyright 2006, 2007, 2011-2014 by                                     */
+ /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
+ /*                                                                         */
+ /*  This file is part of the FreeType project, and may only be used,       */
+@@ -50,8 +50,6 @@ FT_BEGIN_HEADER
+           ( (b)->properties & AF_BLUE_PROPERTY_CJK_TOP )
+ #define AF_CJK_IS_HORIZ_BLUE( b ) \
+           ( (b)->properties & AF_BLUE_PROPERTY_CJK_HORIZ )
+-#define AF_CJK_IS_FILLED_BLUE( b ) \
+-          ( (b)->properties & AF_BLUE_PROPERTY_CJK_FILL )
+ #define AF_CJK_IS_RIGHT_BLUE  AF_CJK_IS_TOP_BLUE
+ 
+ #define AF_CJK_MAX_WIDTHS  16
+Index: lib/freetype/src/autofit/aflatin.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/autofit/aflatin.c,v
+retrieving revision 1.13
+diff -u -p -r1.13 aflatin.c
+--- lib/freetype/src/autofit/aflatin.c	14 Mar 2014 08:18:01 -0000	1.13
++++ lib/freetype/src/autofit/aflatin.c	11 Mar 2015 19:14:01 -0000
+@@ -2159,7 +2159,7 @@
+ 
+     FT_TRACE5(( "  LINK: edge %d (opos=%.2f) linked to %.2f,"
+                 " dist was %.2f, now %.2f\n",
+-                stem_edge-hints->axis[dim].edges, stem_edge->opos / 64.0,
++                stem_edge - hints->axis[dim].edges, stem_edge->opos / 64.0,
+                 stem_edge->pos / 64.0, dist / 64.0, fitted_width / 64.0 ));
+   }
+ 
+Index: lib/freetype/src/base/ftbitmap.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/base/ftbitmap.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 ftbitmap.c
+--- lib/freetype/src/base/ftbitmap.c	14 Mar 2014 08:18:01 -0000	1.11
++++ lib/freetype/src/base/ftbitmap.c	11 Mar 2015 19:14:02 -0000
+@@ -62,7 +62,7 @@
+ 
+     if ( pitch < 0 )
+       pitch = -pitch;
+-    size = (FT_ULong)( pitch * source->rows );
++    size = (FT_ULong)pitch * source->rows;
+ 
+     if ( target->buffer )
+     {
+@@ -72,7 +72,7 @@
+ 
+       if ( target_pitch < 0  )
+         target_pitch = -target_pitch;
+-      target_size = (FT_ULong)( target_pitch * target->rows );
++      target_size = (FT_ULong)target_pitch * target->rows;
+ 
+       if ( target_size != size )
+         (void)FT_QREALLOC( target->buffer, target_size, size );
+@@ -106,7 +106,7 @@
+     int             pitch;
+     int             new_pitch;
+     FT_UInt         bpp;
+-    FT_Int          i, width, height;
++    FT_UInt         i, width, height;
+     unsigned char*  buffer = NULL;
+ 
+ 
+@@ -144,17 +144,17 @@
+     if ( ypixels == 0 && new_pitch <= pitch )
+     {
+       /* zero the padding */
+-      FT_Int  bit_width = pitch * 8;
+-      FT_Int  bit_last  = ( width + xpixels ) * bpp;
++      FT_UInt  bit_width = pitch * 8;
++      FT_UInt  bit_last  = ( width + xpixels ) * bpp;
+ 
+ 
+       if ( bit_last < bit_width )
+       {
+         FT_Byte*  line  = bitmap->buffer + ( bit_last >> 3 );
+         FT_Byte*  end   = bitmap->buffer + pitch;
+-        FT_Int    shift = bit_last & 7;
++        FT_UInt   shift = bit_last & 7;
+         FT_UInt   mask  = 0xFF00U >> shift;
+-        FT_Int    count = height;
++        FT_UInt   count = height;
+ 
+ 
+         for ( ; count > 0; count--, line += pitch, end += pitch )
+@@ -180,7 +180,7 @@
+ 
+     if ( bitmap->pitch > 0 )
+     {
+-      FT_Int  len = ( width * bpp + 7 ) >> 3;
++      FT_UInt  len = ( width * bpp + 7 ) >> 3;
+ 
+ 
+       for ( i = 0; i < bitmap->rows; i++ )
+@@ -189,7 +189,7 @@
+     }
+     else
+     {
+-      FT_Int  len = ( width * bpp + 7 ) >> 3;
++      FT_UInt  len = ( width * bpp + 7 ) >> 3;
+ 
+ 
+       for ( i = 0; i < bitmap->rows; i++ )
+@@ -220,7 +220,8 @@
+   {
+     FT_Error        error;
+     unsigned char*  p;
+-    FT_Int          i, x, y, pitch;
++    FT_Int          i, x, pitch;
++    FT_UInt         y;
+     FT_Int          xstr, ystr;
+ 
+ 
+@@ -460,7 +461,7 @@
+     case FT_PIXEL_MODE_BGRA:
+       {
+         FT_Int   pad;
+-        FT_Long  old_size;
++        FT_ULong  old_size;
+ 
+ 
+         old_size = target->rows * target->pitch;
+Index: lib/freetype/src/base/ftmac.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/base/ftmac.c,v
+retrieving revision 1.8
+diff -u -p -r1.8 ftmac.c
+--- lib/freetype/src/base/ftmac.c	12 Jan 2014 15:08:27 -0000	1.8
++++ lib/freetype/src/base/ftmac.c	11 Mar 2015 19:14:02 -0000
+@@ -440,9 +440,10 @@
+       style = (StyleTable*)p;
+       p += sizeof ( StyleTable );
+       string_count = EndianS16_BtoN( *(short*)(p) );
++      string_count = FT_MIN( 64, string_count );
+       p += sizeof ( short );
+ 
+-      for ( i = 0; i < string_count && i < 64; i++ )
++      for ( i = 0; i < string_count; i++ )
+       {
+         names[i] = p;
+         p       += names[i][0];
+@@ -459,7 +460,7 @@
+           ps_name[ps_name_len] = 0;
+         }
+         if ( style->indexes[face_index] > 1 &&
+-             style->indexes[face_index] <= FT_MIN( string_count, 64 ) )
++             style->indexes[face_index] <= string_count )
+         {
+           unsigned char*  suffixes = names[style->indexes[face_index] - 1];
+ 
+Index: lib/freetype/src/base/ftobjs.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/base/ftobjs.c,v
+retrieving revision 1.17
+diff -u -p -r1.17 ftobjs.c
+--- lib/freetype/src/base/ftobjs.c	14 Mar 2014 08:18:01 -0000	1.17
++++ lib/freetype/src/base/ftobjs.c	11 Mar 2015 19:14:02 -0000
+@@ -1583,9 +1583,9 @@
+     FT_Memory  memory = library->memory;
+     FT_Byte*   pfb_data = NULL;
+     int        i, type, flags;
+-    FT_Long    len;
+-    FT_Long    pfb_len, pfb_pos, pfb_lenpos;
+-    FT_Long    rlen, temp;
++    FT_ULong   len;
++    FT_ULong   pfb_len, pfb_pos, pfb_lenpos;
++    FT_ULong   rlen, temp;
+ 
+ 
+     if ( face_index == -1 )
+@@ -1601,11 +1601,34 @@
+       error = FT_Stream_Seek( stream, offsets[i] );
+       if ( error )
+         goto Exit;
+-      if ( FT_READ_LONG( temp ) )
++      if ( FT_READ_ULONG( temp ) )
+         goto Exit;
++
++      /* FT2 allocator takes signed long buffer length,
++       * too large value causing overflow should be checked
++       */
++      FT_TRACE4(( "                 POST fragment #%d: length=0x%08x\n",
++                  i, temp));
++      if ( 0x7FFFFFFFUL < temp || pfb_len + temp + 6 < pfb_len )
++      {
++        FT_TRACE2(( "             too long fragment length makes"
++                    " pfb_len confused: temp=0x%08x\n", temp ));
++        error = FT_THROW( Invalid_Offset );
++        goto Exit;
++      }
++
+       pfb_len += temp + 6;
+     }
+ 
++    FT_TRACE2(( "             total buffer size to concatenate %d"
++                " POST fragments: 0x%08x\n",
++                 resource_cnt, pfb_len + 2));
++    if ( pfb_len + 2 < 6 ) {
++      FT_TRACE2(( "             too long fragment length makes"
++                  " pfb_len confused: pfb_len=0x%08x\n", pfb_len ));
++      error = FT_THROW( Array_Too_Large );
++      goto Exit;
++    }
+     if ( FT_ALLOC( pfb_data, (FT_Long)pfb_len + 2 ) )
+       goto Exit;
+ 
+@@ -1625,16 +1648,30 @@
+       error = FT_Stream_Seek( stream, offsets[i] );
+       if ( error )
+         goto Exit2;
+-      if ( FT_READ_LONG( rlen ) )
+-        goto Exit;
++      if ( FT_READ_ULONG( rlen ) )
++        goto Exit2;
++
++      /* FT2 allocator takes signed long buffer length,
++       * too large fragment length causing overflow should be checked
++       */
++      if ( 0x7FFFFFFFUL < rlen )
++      {
++        error = FT_THROW( Invalid_Offset );
++        goto Exit2;
++      }
++
+       if ( FT_READ_USHORT( flags ) )
+-        goto Exit;
++        goto Exit2;
+       FT_TRACE3(( "POST fragment[%d]: offsets=0x%08x, rlen=0x%08x, flags=0x%04x\n",
+                    i, offsets[i], rlen, flags ));
+ 
++      error = FT_ERR( Array_Too_Large );
+       /* postpone the check of rlen longer than buffer until FT_Stream_Read() */
+       if ( ( flags >> 8 ) == 0 )        /* Comment, should not be loaded */
++      {
++        FT_TRACE3(( "    Skip POST fragment #%d because it is a comment\n", i ));
+         continue;
++      }
+ 
+       /* the flags are part of the resource, so rlen >= 2.  */
+       /* but some fonts declare rlen = 0 for empty fragment */
+@@ -1647,6 +1684,8 @@
+         len += rlen;
+       else
+       {
++        FT_TRACE3(( "    Write POST fragment #%d header (4-byte) to buffer"
++                    " 0x%p + 0x%08x\n", i, pfb_data, pfb_lenpos ));
+         if ( pfb_lenpos + 3 > pfb_len + 2 )
+           goto Exit2;
+         pfb_data[pfb_lenpos    ] = (FT_Byte)( len );
+@@ -1657,6 +1696,8 @@
+         if ( ( flags >> 8 ) == 5 )      /* End of font mark */
+           break;
+ 
++        FT_TRACE3(( "    Write POST fragment #%d header (6-byte) to buffer"
++                    " 0x%p + 0x%08x\n", i, pfb_data, pfb_pos ));
+         if ( pfb_pos + 6 > pfb_len + 2 )
+           goto Exit2;
+         pfb_data[pfb_pos++] = 0x80;
+@@ -1672,16 +1713,18 @@
+         pfb_data[pfb_pos++] = 0;
+       }
+ 
+-      error = FT_ERR( Cannot_Open_Resource );
+       if ( pfb_pos > pfb_len || pfb_pos + rlen > pfb_len )
+         goto Exit2;
+ 
++      FT_TRACE3(( "    Load POST fragment #%d (%d byte) to buffer"
++                  " 0x%p + 0x%08x\n", i, rlen, pfb_data, pfb_pos ));
+       error = FT_Stream_Read( stream, (FT_Byte *)pfb_data + pfb_pos, rlen );
+       if ( error )
+         goto Exit2;
+       pfb_pos += rlen;
+     }
+ 
++    error = FT_ERR( Array_Too_Large );
+     if ( pfb_pos + 2 > pfb_len + 2 )
+       goto Exit2;
+     pfb_data[pfb_pos++] = 0x80;
+@@ -1702,6 +1745,13 @@
+                                   aface );
+ 
+   Exit2:
++    if ( error == FT_ERR( Array_Too_Large ) )
++      FT_TRACE2(( "  Abort due to too-short buffer to store"
++                  " all POST fragments\n" ));
++    else if ( error == FT_ERR( Invalid_Offset ) )
++      FT_TRACE2(( "  Abort due to invalid offset in a POST fragment\n" ));
++    if ( error )
++      error = FT_ERR( Cannot_Open_Resource );
+     FT_FREE( pfb_data );
+ 
+   Exit:
+Index: lib/freetype/src/base/ftoutln.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/base/ftoutln.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 ftoutln.c
+--- lib/freetype/src/base/ftoutln.c	14 Mar 2014 08:18:01 -0000	1.11
++++ lib/freetype/src/base/ftoutln.c	11 Mar 2015 19:14:02 -0000
+@@ -1027,7 +1027,7 @@
+   FT_EXPORT_DEF( FT_Orientation )
+   FT_Outline_Get_Orientation( FT_Outline*  outline )
+   {
+-    FT_BBox     cbox;
++    FT_BBox     cbox = {0,0,0,0};
+     FT_Int      xshift, yshift;
+     FT_Vector*  points;
+     FT_Vector   v_prev, v_cur;
+Index: lib/freetype/src/bdf/bdflib.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/bdf/bdflib.c,v
+retrieving revision 1.16
+diff -u -p -r1.16 bdflib.c
+--- lib/freetype/src/bdf/bdflib.c	14 Mar 2014 08:18:01 -0000	1.16
++++ lib/freetype/src/bdf/bdflib.c	11 Mar 2015 19:14:03 -0000
+@@ -169,6 +169,18 @@
+                         sizeof ( _bdf_properties[0] );
+ 
+ 
++  /* An auxiliary macro to parse properties, to be used in conditionals. */
++  /* It behaves like `strncmp' but also tests the following character    */
++  /* whether it is a whitespace or NULL.                                 */
++  /* `property' is a constant string of length `n' to compare with.      */
++#define _bdf_strncmp( name, property, n )      \
++          ( ft_strncmp( name, property, n ) || \
++            !( name[n] == ' '  ||              \
++               name[n] == '\0' ||              \
++               name[n] == '\n' ||              \
++               name[n] == '\r' ||              \
++               name[n] == '\t' )            )
++
+   /* Auto correction messages. */
+ #define ACMSG1   "FONT_ASCENT property missing.  " \
+                  "Added `FONT_ASCENT %hd'.\n"
+@@ -1408,7 +1420,7 @@
+ 
+     /* If the property happens to be a comment, then it doesn't need */
+     /* to be added to the internal hash table.                       */
+-    if ( ft_strncmp( name, "COMMENT", 7 ) != 0 )
++    if ( _bdf_strncmp( name, "COMMENT", 7 ) != 0 )
+     {
+       /* Add the property to the font property table. */
+       error = hash_insert( fp->name,
+@@ -1426,13 +1438,13 @@
+     /* FONT_ASCENT and FONT_DESCENT need to be assigned if they are        */
+     /* present, and the SPACING property should override the default       */
+     /* spacing.                                                            */
+-    if ( ft_strncmp( name, "DEFAULT_CHAR", 12 ) == 0 )
++    if ( _bdf_strncmp( name, "DEFAULT_CHAR", 12 ) == 0 )
+       font->default_char = fp->value.l;
+-    else if ( ft_strncmp( name, "FONT_ASCENT", 11 ) == 0 )
++    else if ( _bdf_strncmp( name, "FONT_ASCENT", 11 ) == 0 )
+       font->font_ascent = fp->value.l;
+-    else if ( ft_strncmp( name, "FONT_DESCENT", 12 ) == 0 )
++    else if ( _bdf_strncmp( name, "FONT_DESCENT", 12 ) == 0 )
+       font->font_descent = fp->value.l;
+-    else if ( ft_strncmp( name, "SPACING", 7 ) == 0 )
++    else if ( _bdf_strncmp( name, "SPACING", 7 ) == 0 )
+     {
+       if ( !fp->value.atom )
+       {
+@@ -1490,7 +1502,7 @@
+     memory = font->memory;
+ 
+     /* Check for a comment. */
+-    if ( ft_strncmp( line, "COMMENT", 7 ) == 0 )
++    if ( _bdf_strncmp( line, "COMMENT", 7 ) == 0 )
+     {
+       linelen -= 7;
+ 
+@@ -1507,7 +1519,7 @@
+     /* The very first thing expected is the number of glyphs. */
+     if ( !( p->flags & _BDF_GLYPHS ) )
+     {
+-      if ( ft_strncmp( line, "CHARS", 5 ) != 0 )
++      if ( _bdf_strncmp( line, "CHARS", 5 ) != 0 )
+       {
+         FT_ERROR(( "_bdf_parse_glyphs: " ERRMSG1, lineno, "CHARS" ));
+         error = FT_THROW( Missing_Chars_Field );
+@@ -1541,8 +1553,16 @@
+     }
+ 
+     /* Check for the ENDFONT field. */
+-    if ( ft_strncmp( line, "ENDFONT", 7 ) == 0 )
++    if ( _bdf_strncmp( line, "ENDFONT", 7 ) == 0 )
+     {
++      if ( p->flags & _BDF_GLYPH_BITS )
++      {
++        /* Missing ENDCHAR field. */
++        FT_ERROR(( "_bdf_parse_glyphs: " ERRMSG1, lineno, "ENDCHAR" ));
++        error = FT_THROW( Corrupted_Font_Glyphs );
++        goto Exit;
++      }
++
+       /* Sort the glyphs by encoding. */
+       ft_qsort( (char *)font->glyphs,
+                 font->glyphs_used,
+@@ -1555,7 +1575,7 @@
+     }
+ 
+     /* Check for the ENDCHAR field. */
+-    if ( ft_strncmp( line, "ENDCHAR", 7 ) == 0 )
++    if ( _bdf_strncmp( line, "ENDCHAR", 7 ) == 0 )
+     {
+       p->glyph_enc = 0;
+       p->flags    &= ~_BDF_GLYPH_BITS;
+@@ -1571,7 +1591,7 @@
+       goto Exit;
+ 
+     /* Check for the STARTCHAR field. */
+-    if ( ft_strncmp( line, "STARTCHAR", 9 ) == 0 )
++    if ( _bdf_strncmp( line, "STARTCHAR", 9 ) == 0 )
+     {
+       /* Set the character name in the parse info first until the */
+       /* encoding can be checked for an unencoded character.      */
+@@ -1605,7 +1625,7 @@
+     }
+ 
+     /* Check for the ENCODING field. */
+-    if ( ft_strncmp( line, "ENCODING", 8 ) == 0 )
++    if ( _bdf_strncmp( line, "ENCODING", 8 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_GLYPH ) )
+       {
+@@ -1791,7 +1811,7 @@
+     }
+ 
+     /* Expect the SWIDTH (scalable width) field next. */
+-    if ( ft_strncmp( line, "SWIDTH", 6 ) == 0 )
++    if ( _bdf_strncmp( line, "SWIDTH", 6 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_ENCODING ) )
+         goto Missing_Encoding;
+@@ -1807,7 +1827,7 @@
+     }
+ 
+     /* Expect the DWIDTH (scalable width) field next. */
+-    if ( ft_strncmp( line, "DWIDTH", 6 ) == 0 )
++    if ( _bdf_strncmp( line, "DWIDTH", 6 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_ENCODING ) )
+         goto Missing_Encoding;
+@@ -1835,7 +1855,7 @@
+     }
+ 
+     /* Expect the BBX field next. */
+-    if ( ft_strncmp( line, "BBX", 3 ) == 0 )
++    if ( _bdf_strncmp( line, "BBX", 3 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_ENCODING ) )
+         goto Missing_Encoding;
+@@ -1903,7 +1923,7 @@
+     }
+ 
+     /* And finally, gather up the bitmap. */
+-    if ( ft_strncmp( line, "BITMAP", 6 ) == 0 )
++    if ( _bdf_strncmp( line, "BITMAP", 6 ) == 0 )
+     {
+       unsigned long  bitmap_size;
+ 
+@@ -1978,7 +1998,7 @@
+     p    = (_bdf_parse_t *)    client_data;
+ 
+     /* Check for the end of the properties. */
+-    if ( ft_strncmp( line, "ENDPROPERTIES", 13 ) == 0 )
++    if ( _bdf_strncmp( line, "ENDPROPERTIES", 13 ) == 0 )
+     {
+       /* If the FONT_ASCENT or FONT_DESCENT properties have not been      */
+       /* encountered yet, then make sure they are added as properties and */
+@@ -2019,12 +2039,12 @@
+     }
+ 
+     /* Ignore the _XFREE86_GLYPH_RANGES properties. */
+-    if ( ft_strncmp( line, "_XFREE86_GLYPH_RANGES", 21 ) == 0 )
++    if ( _bdf_strncmp( line, "_XFREE86_GLYPH_RANGES", 21 ) == 0 )
+       goto Exit;
+ 
+     /* Handle COMMENT fields and properties in a special way to preserve */
+     /* the spacing.                                                      */
+-    if ( ft_strncmp( line, "COMMENT", 7 ) == 0 )
++    if ( _bdf_strncmp( line, "COMMENT", 7 ) == 0 )
+     {
+       name = value = line;
+       value += 7;
+@@ -2088,7 +2108,7 @@
+ 
+     /* Check for a comment.  This is done to handle those fonts that have */
+     /* comments before the STARTFONT line for some reason.                */
+-    if ( ft_strncmp( line, "COMMENT", 7 ) == 0 )
++    if ( _bdf_strncmp( line, "COMMENT", 7 ) == 0 )
+     {
+       if ( p->opts->keep_comments != 0 && p->font != 0 )
+       {
+@@ -2114,7 +2134,7 @@
+     {
+       memory = p->memory;
+ 
+-      if ( ft_strncmp( line, "STARTFONT", 9 ) != 0 )
++      if ( _bdf_strncmp( line, "STARTFONT", 9 ) != 0 )
+       {
+         /* we don't emit an error message since this code gets */
+         /* explicitly caught one level higher                  */
+@@ -2162,7 +2182,7 @@
+     }
+ 
+     /* Check for the start of the properties. */
+-    if ( ft_strncmp( line, "STARTPROPERTIES", 15 ) == 0 )
++    if ( _bdf_strncmp( line, "STARTPROPERTIES", 15 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_FONT_BBX ) )
+       {
+@@ -2191,7 +2211,7 @@
+     }
+ 
+     /* Check for the FONTBOUNDINGBOX field. */
+-    if ( ft_strncmp( line, "FONTBOUNDINGBOX", 15 ) == 0 )
++    if ( _bdf_strncmp( line, "FONTBOUNDINGBOX", 15 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_SIZE ) )
+       {
+@@ -2222,7 +2242,7 @@
+     }
+ 
+     /* The next thing to check for is the FONT field. */
+-    if ( ft_strncmp( line, "FONT", 4 ) == 0 )
++    if ( _bdf_strncmp( line, "FONT", 4 ) == 0 )
+     {
+       error = _bdf_list_split( &p->list, (char *)" +", line, linelen );
+       if ( error )
+@@ -2257,7 +2277,7 @@
+     }
+ 
+     /* Check for the SIZE field. */
+-    if ( ft_strncmp( line, "SIZE", 4 ) == 0 )
++    if ( _bdf_strncmp( line, "SIZE", 4 ) == 0 )
+     {
+       if ( !( p->flags & _BDF_FONT_NAME ) )
+       {
+@@ -2311,7 +2331,7 @@
+     }
+ 
+     /* Check for the CHARS field -- font properties are optional */
+-    if ( ft_strncmp( line, "CHARS", 5 ) == 0 )
++    if ( _bdf_strncmp( line, "CHARS", 5 ) == 0 )
+     {
+       char  nbuf[128];
+ 
+Index: lib/freetype/src/cache/ftcsbits.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/cache/ftcsbits.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 ftcsbits.c
+--- lib/freetype/src/cache/ftcsbits.c	7 Jun 2013 17:21:09 -0000	1.6
++++ lib/freetype/src/cache/ftcsbits.c	11 Mar 2015 19:14:04 -0000
+@@ -142,12 +142,12 @@
+         goto BadGlyph;
+       }
+ 
+-      /* Check that our values fit into 8-bit containers!       */
++      /* Check whether our values fit into 8-bit containers!    */
+       /* If this is not the case, our bitmap is too large       */
+       /* and we will leave it as `missing' with sbit.buffer = 0 */
+ 
+-#define CHECK_CHAR( d )  ( temp = (FT_Char)d, temp == d )
+-#define CHECK_BYTE( d )  ( temp = (FT_Byte)d, temp == d )
++#define CHECK_CHAR( d )  ( temp = (FT_Char)d, (FT_Int) temp == (FT_Int) d )
++#define CHECK_BYTE( d )  ( temp = (FT_Byte)d, (FT_UInt)temp == (FT_UInt)d )
+ 
+       /* horizontal advance in pixels */
+       xadvance = ( slot->advance.x + 32 ) >> 6;
+Index: lib/freetype/src/cff/cf2ft.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/cff/cf2ft.c,v
+retrieving revision 1.4
+diff -u -p -r1.4 cf2ft.c
+--- lib/freetype/src/cff/cf2ft.c	14 Mar 2014 08:18:01 -0000	1.4
++++ lib/freetype/src/cff/cf2ft.c	11 Mar 2015 19:14:05 -0000
+@@ -142,6 +142,8 @@
+   cf2_builder_lineTo( CF2_OutlineCallbacks      callbacks,
+                       const CF2_CallbackParams  params )
+   {
++    FT_Error  error;
++
+     /* downcast the object pointer */
+     CF2_Outline   outline = (CF2_Outline)callbacks;
+     CFF_Builder*  builder;
+@@ -156,15 +158,27 @@
+     {
+       /* record the move before the line; also check points and set */
+       /* `path_begun'                                               */
+-      cff_builder_start_point( builder,
+-                               params->pt0.x,
+-                               params->pt0.y );
++      error = cff_builder_start_point( builder,
++                                       params->pt0.x,
++                                       params->pt0.y );
++      if ( error )
++      {
++        if ( !*callbacks->error )
++          *callbacks->error =  error;
++        return;
++      }
+     }
+ 
+     /* `cff_builder_add_point1' includes a check_points call for one point */
+-    cff_builder_add_point1( builder,
+-                            params->pt1.x,
+-                            params->pt1.y );
++    error = cff_builder_add_point1( builder,
++                                    params->pt1.x,
++                                    params->pt1.y );
++    if ( error )
++    {
++      if ( !*callbacks->error )
++        *callbacks->error =  error;
++      return;
++    }
+   }
+ 
+ 
+@@ -172,6 +186,8 @@
+   cf2_builder_cubeTo( CF2_OutlineCallbacks      callbacks,
+                       const CF2_CallbackParams  params )
+   {
++    FT_Error  error;
++
+     /* downcast the object pointer */
+     CF2_Outline   outline = (CF2_Outline)callbacks;
+     CFF_Builder*  builder;
+@@ -186,13 +202,25 @@
+     {
+       /* record the move before the line; also check points and set */
+       /* `path_begun'                                               */
+-      cff_builder_start_point( builder,
+-                               params->pt0.x,
+-                               params->pt0.y );
++      error = cff_builder_start_point( builder,
++                                       params->pt0.x,
++                                       params->pt0.y );
++      if ( error )
++      {
++        if ( !*callbacks->error )
++          *callbacks->error =  error;
++        return;
++      }
+     }
+ 
+     /* prepare room for 3 points: 2 off-curve, 1 on-curve */
+-    cff_check_points( builder, 3 );
++    error = cff_check_points( builder, 3 );
++    if ( error )
++    {
++      if ( !*callbacks->error )
++        *callbacks->error =  error;
++      return;
++    }
+ 
+     cff_builder_add_point( builder,
+                            params->pt1.x,
+Index: lib/freetype/src/cff/cf2hints.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/cff/cf2hints.c,v
+retrieving revision 1.4
+diff -u -p -r1.4 cf2hints.c
+--- lib/freetype/src/cff/cf2hints.c	14 Mar 2014 08:18:01 -0000	1.4
++++ lib/freetype/src/cff/cf2hints.c	11 Mar 2015 19:14:05 -0000
+@@ -304,9 +304,6 @@
+   cf2_hintmap_map( CF2_HintMap  hintmap,
+                    CF2_Fixed    csCoord )
+   {
+-    FT_ASSERT( hintmap->isValid );  /* must call Build before Map */
+-    FT_ASSERT( hintmap->lastIndex < CF2_MAX_HINT_EDGES );
+-
+     if ( hintmap->count == 0 || ! hintmap->hinted )
+     {
+       /* there are no hints; use uniform scale and zero offset */
+@@ -317,6 +314,7 @@
+       /* start linear search from last hit */
+       CF2_UInt  i = hintmap->lastIndex;
+ 
++      FT_ASSERT( hintmap->lastIndex < CF2_MAX_HINT_EDGES );
+ 
+       /* search up */
+       while ( i < hintmap->count - 1                  &&
+@@ -794,9 +792,12 @@
+     maskPtr      = cf2_hintmask_getMaskPtr( &tempHintMask );
+ 
+     /* use the hStem hints only, which are first in the mask */
+-    /* TODO: compare this to cffhintmaskGetBitCount */
+     bitCount = cf2_arrstack_size( hStemHintArray );
+ 
++    /* Defense-in-depth.  Should never return here. */
++    if ( bitCount > hintMask->bitCount )
++        return;
++
+     /* synthetic embox hints get highest priority */
+     if ( font->blues.doEmBoxHints )
+     {
+@@ -1691,7 +1692,8 @@
+ 
+     if ( glyphpath->elemIsQueued )
+     {
+-      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) );
++      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) ||
++                 glyphpath->hintMap.count == 0              );
+ 
+       cf2_glyphpath_pushPrevElem( glyphpath,
+                                   &glyphpath->hintMap,
+@@ -1777,7 +1779,8 @@
+ 
+     if ( glyphpath->elemIsQueued )
+     {
+-      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) );
++      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) ||
++                 glyphpath->hintMap.count == 0              );
+ 
+       cf2_glyphpath_pushPrevElem( glyphpath,
+                                   &glyphpath->hintMap,
+Index: lib/freetype/src/cff/cf2intrp.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/cff/cf2intrp.c,v
+retrieving revision 1.2
+diff -u -p -r1.2 cf2intrp.c
+--- lib/freetype/src/cff/cf2intrp.c	10 Oct 2013 19:49:53 -0000	1.2
++++ lib/freetype/src/cff/cf2intrp.c	11 Mar 2015 19:14:05 -0000
+@@ -593,8 +593,11 @@
+ 
+         /* never add hints after the mask is computed */
+         if ( cf2_hintmask_isValid( &hintMask ) )
++        {
+           FT_TRACE4(( "cf2_interpT2CharString:"
+                       " invalid horizontal hint mask\n" ));
++          break;
++        }
+ 
+         cf2_doStems( font,
+                      opStack,
+@@ -614,8 +617,11 @@
+ 
+         /* never add hints after the mask is computed */
+         if ( cf2_hintmask_isValid( &hintMask ) )
++        {
+           FT_TRACE4(( "cf2_interpT2CharString:"
+                       " invalid vertical hint mask\n" ));
++          break;
++        }
+ 
+         cf2_doStems( font,
+                      opStack,
+@@ -1141,15 +1147,16 @@
+         /* `cf2_hintmask_read' (which also traces the mask bytes) */
+         FT_TRACE4(( op1 == cf2_cmdCNTRMASK ? " cntrmask" : " hintmask" ));
+ 
+-        /* if there are arguments on the stack, there this is an */
+-        /* implied cf2_cmdVSTEMHM                                */
+-        if ( cf2_stack_count( opStack ) != 0 )
++        /* never add hints after the mask is computed */
++        if ( cf2_stack_count( opStack ) > 1    &&
++             cf2_hintmask_isValid( &hintMask ) )
+         {
+-          /* never add hints after the mask is computed */
+-          if ( cf2_hintmask_isValid( &hintMask ) )
+-            FT_TRACE4(( "cf2_interpT2CharString: invalid hint mask\n" ));
++          FT_TRACE4(( "cf2_interpT2CharString: invalid hint mask\n" ));
++          break;
+         }
+ 
++        /* if there are arguments on the stack, there this is an */
++        /* implied cf2_cmdVSTEMHM                                */
+         cf2_doStems( font,
+                      opStack,
+                      &vStemHintArray,
+Index: lib/freetype/src/pcf/pcfread.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/pcf/pcfread.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 pcfread.c
+--- lib/freetype/src/pcf/pcfread.c	14 Mar 2014 08:18:01 -0000	1.11
++++ lib/freetype/src/pcf/pcfread.c	11 Mar 2015 19:14:07 -0000
+@@ -78,7 +78,7 @@ THE SOFTWARE.
+     FT_FRAME_START( 16  ),
+       FT_FRAME_ULONG_LE( type ),
+       FT_FRAME_ULONG_LE( format ),
+-      FT_FRAME_ULONG_LE( size ),
++      FT_FRAME_ULONG_LE( size ),   /* rounded up to a multiple of 4 */
+       FT_FRAME_ULONG_LE( offset ),
+     FT_FRAME_END
+   };
+@@ -95,9 +95,11 @@ THE SOFTWARE.
+     FT_Memory  memory = FT_FACE( face )->memory;
+     FT_UInt    n;
+ 
++    FT_ULong   size;
+ 
+-    if ( FT_STREAM_SEEK ( 0 )                          ||
+-         FT_STREAM_READ_FIELDS ( pcf_toc_header, toc ) )
++
++    if ( FT_STREAM_SEEK( 0 )                          ||
++         FT_STREAM_READ_FIELDS( pcf_toc_header, toc ) )
+       return FT_THROW( Cannot_Open_Resource );
+ 
+     if ( toc->version != PCF_FILE_VERSION                 ||
+@@ -151,6 +153,52 @@ THE SOFTWARE.
+         break;
+     }
+ 
++    /*
++     *  We now check whether the `size' and `offset' values are reasonable:
++     *  `offset' + `size' must not exceed the stream size.
++     *
++     *  Note, however, that X11's `pcfWriteFont' routine (used by the
++     *  `bdftopcf' program to create PDF font files) has two special
++     *  features.
++     *
++     *  - It always assigns the accelerator table a size of 100 bytes in the
++     *    TOC, regardless of its real size, which can vary between 34 and 72
++     *    bytes.
++     *
++     *  - Due to the way the routine is designed, it ships out the last font
++     *    table with its real size, ignoring the TOC's size value.  Since
++     *    the TOC size values are always rounded up to a multiple of 4, the
++     *    difference can be up to three bytes for all tables except the
++     *    accelerator table, for which the difference can be as large as 66
++     *    bytes.
++     *
++     */
++
++    tables = face->toc.tables;
++    size   = stream->size;
++
++    for ( n = 0; n < toc->count - 1; n++ )
++    {
++      /* we need two checks to avoid overflow */
++      if ( ( tables->size   > size                ) ||
++           ( tables->offset > size - tables->size ) )
++      {
++        error = FT_THROW( Invalid_Table );
++        goto Exit;
++      }
++      tables++;
++    }
++
++    /* only check `tables->offset' for last table element ... */
++    if ( ( tables->offset > size ) )
++    {
++      error = FT_THROW( Invalid_Table );
++      goto Exit;
++    }
++    /* ... and adjust `tables->size' to the real value if necessary */
++    if ( tables->size > size - tables->offset )
++      tables->size = size - tables->offset;
++
+ #ifdef FT_DEBUG_LEVEL_TRACE
+ 
+     {
+@@ -631,24 +679,40 @@ THE SOFTWARE.
+       return FT_THROW( Out_Of_Memory );
+ 
+     metrics = face->metrics;
+-    for ( i = 0; i < nmetrics; i++ )
++    for ( i = 0; i < nmetrics; i++, metrics++ )
+     {
+-      error = pcf_get_metric( stream, format, metrics + i );
++      error = pcf_get_metric( stream, format, metrics );
+ 
+-      metrics[i].bits = 0;
++      metrics->bits = 0;
+ 
+       FT_TRACE5(( "  idx %d: width=%d, "
+                   "lsb=%d, rsb=%d, ascent=%d, descent=%d, swidth=%d\n",
+                   i,
+-                  ( metrics + i )->characterWidth,
+-                  ( metrics + i )->leftSideBearing,
+-                  ( metrics + i )->rightSideBearing,
+-                  ( metrics + i )->ascent,
+-                  ( metrics + i )->descent,
+-                  ( metrics + i )->attributes ));
++                  metrics->characterWidth,
++                  metrics->leftSideBearing,
++                  metrics->rightSideBearing,
++                  metrics->ascent,
++                  metrics->descent,
++                  metrics->attributes ));
+ 
+       if ( error )
+         break;
++
++      /* sanity checks -- those values are used in `PCF_Glyph_Load' to     */
++      /* compute a glyph's bitmap dimensions, thus setting them to zero in */
++      /* case of an error disables this particular glyph only              */
++      if ( metrics->rightSideBearing < metrics->leftSideBearing ||
++           metrics->ascent + metrics->descent < 0               )
++      {
++        metrics->characterWidth   = 0;
++        metrics->leftSideBearing  = 0;
++        metrics->rightSideBearing = 0;
++        metrics->ascent           = 0;
++        metrics->descent          = 0;
++
++        FT_TRACE0(( "pcf_get_metrics:"
++                    " invalid metrics for glyph %d\n", i ));
++      }
+     }
+ 
+     if ( error )
+@@ -699,8 +763,8 @@ THE SOFTWARE.
+ 
+     FT_TRACE4(( "  number of bitmaps: %d\n", nbitmaps ));
+ 
+-    /* XXX: PCF_Face->nmetrics is singed FT_Long, see pcf.h */
+-    if ( face->nmetrics < 0 || nbitmaps != ( FT_ULong )face->nmetrics )
++    /* XXX: PCF_Face->nmetrics is signed FT_Long, see pcf.h */
++    if ( face->nmetrics < 0 || nbitmaps != (FT_ULong)face->nmetrics )
+       return FT_THROW( Invalid_File_Format );
+ 
+     if ( FT_NEW_ARRAY( offsets, nbitmaps ) )
+@@ -811,6 +875,15 @@ THE SOFTWARE.
+ 
+     if ( !PCF_FORMAT_MATCH( format, PCF_DEFAULT_FORMAT ) )
+       return FT_THROW( Invalid_File_Format );
++
++    /* sanity checks */
++    if ( firstCol < 0       ||
++         firstCol > lastCol ||
++         lastCol  > 0xFF    ||
++         firstRow < 0       ||
++         firstRow > lastRow ||
++         lastRow  > 0xFF    )
++      return FT_THROW( Invalid_Table );
+ 
+     FT_TRACE4(( "pdf_get_encodings:\n" ));
+ 
+Index: lib/freetype/src/raster/ftraster.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/raster/ftraster.c,v
+retrieving revision 1.16
+diff -u -p -r1.16 ftraster.c
+--- lib/freetype/src/raster/ftraster.c	14 Mar 2014 08:18:01 -0000	1.16
++++ lib/freetype/src/raster/ftraster.c	11 Mar 2015 19:14:11 -0000
+@@ -2550,7 +2550,7 @@
+ 
+         e1 = TRUNC( e1 );
+ 
+-        if ( e1 >= 0 && e1 < ras.target.rows )
++        if ( e1 >= 0 && (ULong)e1 < ras.target.rows )
+         {
+           PByte  p;
+ 
+@@ -2644,7 +2644,7 @@
+         /* bounding box instead                                           */
+         if ( pxl < 0 )
+           pxl = e1;
+-        else if ( TRUNC( pxl ) >= ras.target.rows )
++        else if ( (ULong)( TRUNC( pxl ) ) >= ras.target.rows )
+           pxl = e2;
+ 
+         /* check that the other pixel isn't set */
+@@ -2659,9 +2659,9 @@
+         if ( ras.target.pitch > 0 )
+           bits += ( ras.target.rows - 1 ) * ras.target.pitch;
+ 
+-        if ( e1 >= 0              &&
+-             e1 < ras.target.rows &&
+-             *bits & f1           )
++        if ( e1 >= 0                     &&
++             (ULong)e1 < ras.target.rows &&
++             *bits & f1                  )
+           return;
+       }
+       else
+@@ -2673,7 +2673,7 @@
+ 
+     e1 = TRUNC( pxl );
+ 
+-    if ( e1 >= 0 && e1 < ras.target.rows )
++    if ( e1 >= 0 && (ULong)e1 < ras.target.rows )
+     {
+       bits -= e1 * ras.target.pitch;
+       if ( ras.target.pitch > 0 )
+Index: lib/freetype/src/sfnt/pngshim.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/pngshim.c,v
+retrieving revision 1.2
+diff -u -p -r1.2 pngshim.c
+--- lib/freetype/src/sfnt/pngshim.c	12 Jan 2014 15:08:28 -0000	1.2
++++ lib/freetype/src/sfnt/pngshim.c	11 Mar 2015 19:14:11 -0000
+@@ -205,11 +205,11 @@
+       goto Exit;
+     }
+ 
+-    if ( !populate_map_and_metrics                   &&
+-         ( x_offset + metrics->width  > map->width ||
+-           y_offset + metrics->height > map->rows  ||
+-           pix_bits != 32                          ||
+-           map->pixel_mode != FT_PIXEL_MODE_BGRA   ) )
++    if ( !populate_map_and_metrics                            &&
++         ( (FT_UInt)x_offset + metrics->width  > map->width ||
++           (FT_UInt)y_offset + metrics->height > map->rows  ||
++           pix_bits != 32                                   ||
++           map->pixel_mode != FT_PIXEL_MODE_BGRA            ) )
+     {
+       error = FT_THROW( Invalid_Argument );
+       goto Exit;
+@@ -268,6 +268,13 @@
+       map->pixel_mode = FT_PIXEL_MODE_BGRA;
+       map->pitch      = map->width * 4;
+       map->num_grays  = 256;
++
++      /* reject too large bitmaps similarly to the rasterizer */
++      if ( map->rows > 0x7FFF || map->width > 0x7FFF )
++      {
++        error = FT_THROW( Array_Too_Large );
++        goto DestroyExit;
++      }
+ 
+       size = map->rows * map->pitch;
+ 
+Index: lib/freetype/src/sfnt/sfobjs.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/sfobjs.c,v
+retrieving revision 1.15
+diff -u -p -r1.15 sfobjs.c
+--- lib/freetype/src/sfnt/sfobjs.c	12 Jan 2014 15:08:28 -0000	1.15
++++ lib/freetype/src/sfnt/sfobjs.c	11 Mar 2015 19:14:11 -0000
+@@ -574,8 +574,10 @@
+ 
+ 
+       if ( table->Offset != woff_offset                         ||
+-           table->Offset + table->CompLength > woff.length      ||
+-           sfnt_offset + table->OrigLength > woff.totalSfntSize ||
++           table->CompLength > woff.length                      ||
++           table->Offset > woff.length - table->CompLength      ||
++           table->OrigLength > woff.totalSfntSize               ||
++           sfnt_offset > woff.totalSfntSize - table->OrigLength ||
+            table->CompLength > table->OrigLength                )
+       {
+         error = FT_THROW( Invalid_Table );
+Index: lib/freetype/src/sfnt/ttcmap.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/ttcmap.c,v
+retrieving revision 1.13
+diff -u -p -r1.13 ttcmap.c
+--- lib/freetype/src/sfnt/ttcmap.c	14 Mar 2014 08:18:01 -0000	1.13
++++ lib/freetype/src/sfnt/ttcmap.c	11 Mar 2015 19:14:11 -0000
+@@ -845,9 +845,6 @@
+     p      = table + 2;           /* skip format */
+     length = TT_NEXT_USHORT( p );
+ 
+-    if ( length < 16 )
+-      FT_INVALID_TOO_SHORT;
+-
+     /* in certain fonts, the `length' field is invalid and goes */
+     /* out of bound.  We try to correct this here...            */
+     if ( table + length > valid->limit )
+@@ -858,6 +855,9 @@
+       length = (FT_UInt)( valid->limit - table );
+     }
+ 
++    if ( length < 16 )
++      FT_INVALID_TOO_SHORT;
++
+     p        = table + 6;
+     num_segs = TT_NEXT_USHORT( p );   /* read segCountX2 */
+ 
+@@ -1669,7 +1669,8 @@
+     p          = is32  + 8192;          /* skip `is32' array */
+     num_groups = TT_NEXT_ULONG( p );
+ 
+-    if ( p + num_groups * 12 > valid->limit )
++    /* p + num_groups * 12 > valid->limit ? */
++    if ( num_groups > (FT_UInt32)( valid->limit - p ) / 12 )
+       FT_INVALID_TOO_SHORT;
+ 
+     /* check groups, they must be in increasing order */
+@@ -1694,7 +1695,12 @@
+ 
+         if ( valid->level >= FT_VALIDATE_TIGHT )
+         {
+-          if ( start_id + end - start >= TT_VALID_GLYPH_COUNT( valid ) )
++          FT_UInt32  d = end - start;
++
++
++          /* start_id + end - start >= TT_VALID_GLYPH_COUNT( valid ) ? */
++          if ( d > TT_VALID_GLYPH_COUNT( valid )             ||
++               start_id >= TT_VALID_GLYPH_COUNT( valid ) - d )
+             FT_INVALID_GLYPH_ID;
+ 
+           count = (FT_UInt32)( end - start + 1 );
+@@ -1892,7 +1898,9 @@
+     count  = TT_NEXT_ULONG( p );
+ 
+     if ( length > (FT_ULong)( valid->limit - table ) ||
+-         length < 20 + count * 2                     )
++         /* length < 20 + count * 2 ? */
++         length < 20                                 ||
++         ( length - 20 ) / 2 < count                 )
+       FT_INVALID_TOO_SHORT;
+ 
+     /* check glyph indices */
+@@ -2079,7 +2087,9 @@
+     num_groups = TT_NEXT_ULONG( p );
+ 
+     if ( length > (FT_ULong)( valid->limit - table ) ||
+-         length < 16 + 12 * num_groups               )
++         /* length < 16 + 12 * num_groups ? */
++         length < 16                                 ||
++         ( length - 16 ) / 12 < num_groups           )
+       FT_INVALID_TOO_SHORT;
+ 
+     /* check groups, they must be in increasing order */
+@@ -2101,7 +2111,12 @@
+ 
+         if ( valid->level >= FT_VALIDATE_TIGHT )
+         {
+-          if ( start_id + end - start >= TT_VALID_GLYPH_COUNT( valid ) )
++          FT_UInt32  d = end - start;
++
++
++          /* start_id + end - start >= TT_VALID_GLYPH_COUNT( valid ) ? */
++          if ( d > TT_VALID_GLYPH_COUNT( valid )             ||
++               start_id >= TT_VALID_GLYPH_COUNT( valid ) - d )
+             FT_INVALID_GLYPH_ID;
+         }
+ 
+@@ -2401,7 +2416,9 @@
+     num_groups = TT_NEXT_ULONG( p );
+ 
+     if ( length > (FT_ULong)( valid->limit - table ) ||
+-         length < 16 + 12 * num_groups               )
++         /* length < 16 + 12 * num_groups ? */
++         length < 16                                 ||
++         ( length - 16 ) / 12 < num_groups           )
+       FT_INVALID_TOO_SHORT;
+ 
+     /* check groups, they must be in increasing order */
+@@ -2787,7 +2804,9 @@
+     num_selectors = TT_NEXT_ULONG( p );
+ 
+     if ( length > (FT_ULong)( valid->limit - table ) ||
+-         length < 10 + 11 * num_selectors            )
++         /* length < 10 + 11 * num_selectors ? */
++         length < 10                                 ||
++         ( length - 10 ) / 11 < num_selectors        )
+       FT_INVALID_TOO_SHORT;
+ 
+     /* check selectors, they must be in increasing order */
+@@ -2823,7 +2842,8 @@
+           FT_ULong  lastBase  = 0;
+ 
+ 
+-          if ( defp + numRanges * 4 > valid->limit )
++          /* defp + numRanges * 4 > valid->limit ? */
++          if ( numRanges > (FT_ULong)( valid->limit - defp ) / 4 )
+             FT_INVALID_TOO_SHORT;
+ 
+           for ( i = 0; i < numRanges; ++i )
+@@ -2850,7 +2870,8 @@
+           FT_ULong  i, lastUni  = 0;
+ 
+ 
+-          if ( numMappings * 4 > (FT_ULong)( valid->limit - ndp ) )
++          /* numMappings * 4 > (FT_ULong)( valid->limit - ndp ) ? */
++          if ( numMappings > ( (FT_ULong)( valid->limit - ndp ) ) / 4 )
+             FT_INVALID_TOO_SHORT;
+ 
+           for ( i = 0; i < numMappings; ++i )
+Index: lib/freetype/src/sfnt/ttkern.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/ttkern.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 ttkern.c
+--- lib/freetype/src/sfnt/ttkern.c	12 Jan 2014 15:08:28 -0000	1.6
++++ lib/freetype/src/sfnt/ttkern.c	11 Mar 2015 19:14:11 -0000
+@@ -99,7 +99,7 @@
+       length   = FT_NEXT_USHORT( p );
+       coverage = FT_NEXT_USHORT( p );
+ 
+-      if ( length <= 6 )
++      if ( length <= 6 + 8 )
+         break;
+ 
+       p_next += length;
+Index: lib/freetype/src/sfnt/ttload.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/ttload.c,v
+retrieving revision 1.13
+diff -u -p -r1.13 ttload.c
+--- lib/freetype/src/sfnt/ttload.c	12 Jan 2014 15:08:28 -0000	1.13
++++ lib/freetype/src/sfnt/ttload.c	11 Mar 2015 19:14:12 -0000
+@@ -207,7 +207,10 @@
+       }
+ 
+       /* we ignore invalid tables */
+-      if ( table.Offset + table.Length > stream->size )
++
++      /* table.Offset + table.Length > stream->size ? */
++      if ( table.Length > stream->size                ||
++           table.Offset > stream->size - table.Length )
+       {
+         FT_TRACE2(( "check_table_dir: table entry %d invalid\n", nn ));
+         continue;
+@@ -395,7 +398,10 @@
+       entry->Length   = FT_GET_ULONG();
+ 
+       /* ignore invalid tables */
+-      if ( entry->Offset + entry->Length > stream->size )
++
++      /* entry->Offset + entry->Length > stream->size ? */
++      if ( entry->Length > stream->size                 ||
++           entry->Offset > stream->size - entry->Length )
+         continue;
+       else
+       {
+Index: lib/freetype/src/sfnt/ttsbit.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/sfnt/ttsbit.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 ttsbit.c
+--- lib/freetype/src/sfnt/ttsbit.c	14 Mar 2014 08:18:02 -0000	1.11
++++ lib/freetype/src/sfnt/ttsbit.c	11 Mar 2015 19:14:12 -0000
+@@ -380,9 +380,11 @@
+       p                          += 34;
+       decoder->bit_depth          = *p;
+ 
+-      if ( decoder->strike_index_array > face->sbit_table_size             ||
+-           decoder->strike_index_array + 8 * decoder->strike_index_count >
+-             face->sbit_table_size                                         )
++      /* decoder->strike_index_array +                               */
++      /*   8 * decoder->strike_index_count > face->sbit_table_size ? */
++      if ( decoder->strike_index_array > face->sbit_table_size           ||
++           decoder->strike_index_count >
++             ( face->sbit_table_size - decoder->strike_index_array ) / 8 )
+         error = FT_THROW( Invalid_File_Format );
+     }
+ 
+@@ -1147,7 +1149,8 @@
+         num_glyphs = FT_NEXT_ULONG( p );
+ 
+         /* overflow check for p + ( num_glyphs + 1 ) * 4 */
+-        if ( num_glyphs > (FT_ULong)( ( ( p_limit - p ) >> 2 ) - 1 ) )
++        if ( p + 4 > p_limit                                         ||
++             num_glyphs > (FT_ULong)( ( ( p_limit - p ) >> 2 ) - 1 ) )
+           goto NoBitmap;
+ 
+         for ( mm = 0; mm < num_glyphs; mm++ )
+Index: lib/freetype/src/truetype/ttpload.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/truetype/ttpload.c,v
+retrieving revision 1.8
+diff -u -p -r1.8 ttpload.c
+--- lib/freetype/src/truetype/ttpload.c	7 Jun 2013 17:21:11 -0000	1.8
++++ lib/freetype/src/truetype/ttpload.c	11 Mar 2015 19:14:14 -0000
+@@ -508,9 +508,9 @@
+     record_size = FT_NEXT_ULONG( p );
+ 
+     /* The maximum number of bytes in an hdmx device record is the */
+-    /* maximum number of glyphs + 2; this is 0xFFFF + 2; this is   */
+-    /* the reason why `record_size' is a long (which we read as    */
+-    /* unsigned long for convenience).  In practice, two bytes     */
++    /* maximum number of glyphs + 2; this is 0xFFFF + 2, thus      */
++    /* explaining why `record_size' is a long (which we read as    */
++    /* unsigned long for convenience).  In practice, two bytes are */
+     /* sufficient to hold the size value.                          */
+     /*                                                             */
+     /* There are at least two fonts, HANNOM-A and HANNOM-B version */
+@@ -522,8 +522,10 @@
+       record_size &= 0xFFFFU;
+ 
+     /* The limit for `num_records' is a heuristic value. */
+-
+-    if ( version != 0 || num_records > 255 || record_size > 0x10001L )
++    if ( version != 0           ||
++         num_records > 255      ||
++         record_size > 0x10001L ||
++         record_size < 4        )
+     {
+       error = FT_THROW( Invalid_File_Format );
+       goto Fail;
+Index: lib/freetype/src/type1/t1load.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/type1/t1load.c,v
+retrieving revision 1.17
+diff -u -p -r1.17 t1load.c
+--- lib/freetype/src/type1/t1load.c	14 Mar 2014 08:18:02 -0000	1.17
++++ lib/freetype/src/type1/t1load.c	11 Mar 2015 19:14:14 -0000
+@@ -1596,6 +1596,11 @@
+       }
+ 
+       T1_Skip_PS_Token( parser );
++      if ( parser->root.cursor >= limit )
++      {
++        error = FT_THROW( Invalid_File_Format );
++        goto Fail;
++      }
+       if ( parser->root.error )
+         return;
+ 
+@@ -1604,7 +1609,7 @@
+         FT_PtrDist  len;
+ 
+ 
+-        if ( cur + 1 >= limit )
++        if ( cur + 2 >= limit )
+         {
+           error = FT_THROW( Invalid_File_Format );
+           goto Fail;
+Index: lib/freetype/src/type42/t42objs.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/type42/t42objs.c,v
+retrieving revision 1.9
+diff -u -p -r1.9 t42objs.c
+--- lib/freetype/src/type42/t42objs.c	14 Mar 2014 08:18:02 -0000	1.9
++++ lib/freetype/src/type42/t42objs.c	11 Mar 2015 19:14:14 -0000
+@@ -47,6 +47,12 @@
+     if ( FT_ALLOC( face->ttf_data, 12 ) )
+       goto Exit;
+ 
++    /* while parsing the font we always update `face->ttf_size' so that */
++    /* even in case of buggy data (which might lead to premature end of */
++    /* scanning without causing an error) the call to `FT_Open_Face' in */
++    /* `T42_Face_Init' passes the correct size                          */
++    face->ttf_size = 12;
++
+     error = t42_parser_init( parser,
+                              face->root.stream,
+                              memory,
+@@ -286,7 +292,9 @@
+       FT_Open_Args  args;
+ 
+ 
+-      args.flags       = FT_OPEN_MEMORY;
++      args.flags       = FT_OPEN_MEMORY | FT_OPEN_DRIVER;
++      args.driver      = FT_Get_Module( FT_FACE_LIBRARY( face ),
++                                        "truetype" );
+       args.memory_base = face->ttf_data;
+       args.memory_size = face->ttf_size;
+ 
+Index: lib/freetype/src/type42/t42parse.c
+===================================================================
+RCS file: /cvs/xenocara/lib/freetype/src/type42/t42parse.c,v
+retrieving revision 1.10
+diff -u -p -r1.10 t42parse.c
+--- lib/freetype/src/type42/t42parse.c	14 Mar 2014 08:18:02 -0000	1.10
++++ lib/freetype/src/type42/t42parse.c	11 Mar 2015 19:14:14 -0000
+@@ -524,7 +524,7 @@
+     FT_Byte*    limit  = parser->root.limit;
+     FT_Error    error;
+     FT_Int      num_tables = 0;
+-    FT_ULong    count, ttf_size = 0;
++    FT_ULong    count;
+ 
+     FT_Long     n, string_size, old_string_size, real_size;
+     FT_Byte*    string_buf = NULL;
+@@ -617,7 +617,7 @@
+ 
+         if ( limit - parser->root.cursor < string_size )
+         {
+-          FT_ERROR(( "t42_parse_sfnts: too many binary data\n" ));
++          FT_ERROR(( "t42_parse_sfnts: too much binary data\n" ));
+           error = FT_THROW( Invalid_File_Format );
+           goto Fail;
+         }
+@@ -657,18 +657,18 @@
+           }
+           else
+           {
+-            num_tables = 16 * face->ttf_data[4] + face->ttf_data[5];
+-            status     = BEFORE_TABLE_DIR;
+-            ttf_size   = 12 + 16 * num_tables;
++            num_tables     = 16 * face->ttf_data[4] + face->ttf_data[5];
++            status         = BEFORE_TABLE_DIR;
++            face->ttf_size = 12 + 16 * num_tables;
+ 
+-            if ( FT_REALLOC( face->ttf_data, 12, ttf_size ) )
++            if ( FT_REALLOC( face->ttf_data, 12, face->ttf_size ) )
+               goto Fail;
+           }
+           /* fall through */
+ 
+         case BEFORE_TABLE_DIR:
+           /* the offset table is read; read the table directory */
+-          if ( count < ttf_size )
++          if ( count < face->ttf_size )
+           {
+             face->ttf_data[count++] = string_buf[n];
+             continue;
+@@ -687,24 +687,23 @@
+               len = FT_PEEK_ULONG( p );
+ 
+               /* Pad to a 4-byte boundary length */
+-              ttf_size += ( len + 3 ) & ~3;
++              face->ttf_size += ( len + 3 ) & ~3;
+             }
+ 
+-            status         = OTHER_TABLES;
+-            face->ttf_size = ttf_size;
++            status = OTHER_TABLES;
+ 
+             /* there are no more than 256 tables, so no size check here */
+             if ( FT_REALLOC( face->ttf_data, 12 + 16 * num_tables,
+-                             ttf_size + 1 ) )
++                             face->ttf_size + 1 ) )
+               goto Fail;
+           }
+           /* fall through */
+ 
+         case OTHER_TABLES:
+           /* all other tables are just copied */
+-          if ( count >= ttf_size )
++          if ( count >= face->ttf_size )
+           {
+-            FT_ERROR(( "t42_parse_sfnts: too many binary data\n" ));
++            FT_ERROR(( "t42_parse_sfnts: too much binary data\n" ));
+             error = FT_THROW( Invalid_File_Format );
+             goto Fail;
+           }
+@@ -850,6 +849,12 @@
+         break;
+ 
+       T1_Skip_PS_Token( parser );
++      if ( parser->root.cursor >= limit )
++      {
++        FT_ERROR(( "t42_parse_charstrings: out of bounds\n" ));
++        error = FT_THROW( Invalid_File_Format );
++        goto Fail;
++      }
+       if ( parser->root.error )
+         return;
+ 
+@@ -858,7 +863,7 @@
+         FT_PtrDist  len;
+ 
+ 
+-        if ( cur + 1 >= limit )
++        if ( cur + 2 >= limit )
+         {
+           FT_ERROR(( "t42_parse_charstrings: out of bounds\n" ));
+           error = FT_THROW( Invalid_File_Format );
+

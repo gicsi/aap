@@ -1,0 +1,28 @@
+Description of problem:
+
+trying to install @cinnamon-desktop results in dependency errors.
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. dnf install @cinnamon-desktop
+
+
+Actual results:
+package imsettings-cinnamon-1.6.8-3.fc22.x86_64 requires cinnamon, but none of the providers can be installed.
+
+(and similar output)
+
+Expected results:
+cinnamon be installable.
+
+Additional info:
+of note: for Debian distros enabling 3D acceleration with radeon drivers causes cinnamon to crash.Before 3d acceleration gets installed, cinnamon runs fine.The default Debian version of open sourced radeon driver does not provide 3d acceleration.
+Try posting some useful output! because this is totally meaningless!!!!
+
+
+package imsettings-cinnamon-1.6.8-3.fc22.x86_64 requires cinnamon, but none of the providers can be installed.

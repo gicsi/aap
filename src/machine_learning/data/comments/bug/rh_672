@@ -1,0 +1,28 @@
+Created attachment 1041492
+login window with troubling gnome3
+
+Description of problem:
+I cant remove gnome3 or its login no matter what.Ive tried to respin and the kde+mate spin that I have still has gnome3.I did not use anything to install GNOME3 with.Having lightdm installed to bypass gnome3 and gdm doesnt work either.I have lightdm installed and I get dropped to a login prompt instead of x login window. I get massive 'OH NO. Something went wrong' dialogs when trying to get lightdm loaded for MATE/KDE sessions.The 'OH-NO dialog' is from GNOME3.
+
+Version-Release number of selected component (if applicable):
+22, possibly 21 also
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. install or build from livecd.
+1. boot livecd(option is still there)
+1. update with fedup from fc21.
+
+Actual results:
+"OH NO. Something went wrong."
+
+Expected results:
+typical login with lightdm. There should be no GDM/GNOME3 login option as related packages were removed or never installed to begin with.MATE has its own packages and libs and doesnt touch the GNOME3 ones.
+
+Additional info:
+(screenshot attached from live image)
+Spin creation problems aren't a bug, getting a custom live iso working can be a complicated process and the best thing to do is start with an existing spin kickstart and modify it.
+
+Try asking on the livecd mailing list (https://admin.fedoraproject.org/mailman/listinfo/livecd) and have a copy of the kickstart you are using available someplace that people can look at.

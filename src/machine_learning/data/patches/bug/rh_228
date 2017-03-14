@@ -1,0 +1,38 @@
+From 29a453429e61267ac1614e9c53f5b3e33cbfb988 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 3 Jul 2015 08:38:39 +0000
+Subject: [PATCH] Update to 0.4.5 (#1238992)
+
+---
+ nodejs-fs-ext.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/nodejs-fs-ext.spec b/nodejs-fs-ext.spec
+index 414b8cb..c83bf76 100644
+--- a/nodejs-fs-ext.spec
++++ b/nodejs-fs-ext.spec
+@@ -2,8 +2,8 @@
+ %global module_name fs-ext
+ 
+ Name:           nodejs-%{module_name}
+-Version:        0.4.3
+-Release:        2%{?dist}
++Version:        0.4.5
++Release:        1%{?dist}
+ Summary:        Extensions to core 'fs' module for Node.js
+ 
+ License:        MIT
+@@ -55,6 +55,9 @@ node tests/test-fs-seek.js
+ %{nodejs_sitelib}/%{module_name}
+ 
+ %changelog
++* Fri Jul 03 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.4.5-1
++- Update to 0.4.5 (#1238992)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.4.3-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

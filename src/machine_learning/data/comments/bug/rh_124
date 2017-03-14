@@ -1,0 +1,21 @@
+Your package ptpd failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10140635
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047724
+build.log
+Created attachment 1047725
+root.log
+Created attachment 1047726
+state.log
+Taking. 
+
+This is a simple bug in the spec-file: "make" is called with bogus arguments.
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10298086
+Hi Ralf,
+
+Thanks for resolving that.
+
+Regards,
+Jon

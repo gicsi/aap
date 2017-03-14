@@ -1,0 +1,13 @@
+Your package aespipe failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10076941
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046413
+build.log
+Created attachment 1046414
+root.log
+Created attachment 1046415
+state.log
+Taking.
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10311304

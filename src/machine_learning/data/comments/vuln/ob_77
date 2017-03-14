@@ -1,0 +1,3 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=glob&amp;sektion=3">ftpd(8)</a> has a potential DoS related to <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=glob&amp;sektion=3">glob(3)</a>. This patch introduces a GLOB_LIMIT, eliminating the DoS. You must have <a href="#glob">025_glob.patch</a> installed before installing this patch.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/026_globlimit.patch">
+A source code patch exists which remedies this problem.</a>

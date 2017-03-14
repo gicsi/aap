@@ -1,0 +1,5 @@
+A format string vulnerability exists in talkd(8).  It is not clear
+yet what the impact is.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/026_talkd.patch">
+A source code patch exists which remedies this problem.</a>

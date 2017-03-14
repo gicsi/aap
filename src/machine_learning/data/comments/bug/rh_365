@@ -1,0 +1,48 @@
+Version-Release number of selected component:
+dnf-0.6.4-5.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+cmdline:        /usr/bin/python -OO /bin/dnf -y --nogpgcheck install http://goodies.ozon-os.com/repo/21/noarch/ozon-repos-21-5.fc21.noarch.rpm
+dso_list:       dnf-plugins-extras-local-0.0.4-1.fc21.noarch
+executable:     /bin/dnf
+kernel:         4.0.5-200.fc21.x86_64
+runlevel:       N 5
+type:           Python
+uid:            0
+
+Truncated backtrace:
+package.py:108:repo:KeyError: u'@commandline'
+
+Traceback (most recent call last):
+  File "/bin/dnf", line 36, in <module>
+    main.user_main(sys.argv[1:], exit_code=True)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 185, in user_main
+    errcode = main(args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 84, in main
+    return _main(base, args)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 141, in _main
+    ret = resolving(cli, base)
+  File "/usr/lib/python2.7/site-packages/dnf/cli/main.py", line 170, in resolving
+    base.plugins.run_transaction()
+  File "/usr/lib/python2.7/site-packages/dnf/plugin.py", line 82, in fn
+    dnf.util.mapall(operator.methodcaller(method), self.plugins)
+  File "/usr/lib/python2.7/site-packages/dnf/util.py", line 157, in mapall
+    return list(map(fn, *seq))
+  File "/usr/lib/python2.7/site-packages/dnf-plugins/local.py", line 123, in transaction
+    if pkg.repo.pkgdir == repodir:
+  File "/usr/lib/python2.7/site-packages/dnf/package.py", line 108, in repo
+    return self.base.repos[self.reponame]
+KeyError: u'@commandline'
+
+Local variables in innermost frame:
+self: <hawkey.Package object id 70489, ozon-repos-21-5.fc21.noarch, @commandline>
+
+Potential duplicate: bug 1226766
+Created attachment 1044459
+File: backtrace
+Created attachment 1044460
+File: environ
+This is a duplicate of the bug 1226766.
+
+*** This bug has been marked as a duplicate of bug 1226766 ***

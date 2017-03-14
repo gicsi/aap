@@ -1,0 +1,8 @@
+Fix
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&sektion=8">httpd(8)</a>'s
+mod_proxy module which is broken on 64-bit architectures. Due to the bug this
+will result in child processes crashing when utilizing proxy rules during an
+HTTP session.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/004_httpd.patch">
+A source code patch exists which remedies this problem.</a>

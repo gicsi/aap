@@ -1,0 +1,26 @@
+Description of problem:
+I whould like to Install ClamAV and Configure Daily Scanning on CentOS and follows this tutorial: 
+
+https://www.centosblog.com/how-to-install-clamav-and-configure-daily-scanning-on-centos/
+
+but yum can´ t find clamd
+
+
+How reproducible:every time
+
+
+Steps to Reproduce:
+1.get terminal as Root
+2.run yum install clamav clamd
+3.you see  that clamd is not found in epel
+
+
+Additional info:
+May I make you aware that the linked instructions are for CentOS 5 and 6,
+while you are reporting for 7? However the ClamAV packages are anyway for
+EPEL 7 available - but named differently. A command that works across all
+EPEL-enabled systems is:
+
+  yum install /usr/sbin/clamd /usr/bin/clamscan
+
+Nevertheless the different naming of packages is not a bug, thus closing.

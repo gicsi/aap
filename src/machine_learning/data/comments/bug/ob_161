@@ -1,0 +1,3 @@
+A malicious client can cause a division by zero.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/014_xorg.patch">
+A source code patch exists which remedies this problem.</a>

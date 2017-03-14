@@ -1,0 +1,27 @@
+Created attachment 1044480
+fog.log
+
+Description of problem: We can connect to OpenStack 6 with CloudForms 3.2 GA, when testing OpenStack credentials in Cloudforms all is fine. But refresh relation ship always fails and show in last refresh field: "undefined method error"
+This is a PoC, we completed wmware part but not OpenStack part. On top of this HP guys did manage to connect to our OpenStack instance and manage it.
+
+
+Version-Release number of selected component (if applicable):
+
+How reproducible: Every time.
+
+Steps to Reproduce:
+1. add new provider
+2. Refresh relationships and powerstate
+
+Actual results: not data are collected
+
+
+Expected results: Data are collected
+
+
+Additional info: Openstack is configured in SSL. fog.log is attached. Beginning of the log is regular, and then increased log has been set.
+Issue is fixed now, I needed to add Admin user in other tenant with “admin privileges”, so two comments:
+
+- At first when I saw “Socket Connection Error” in the log, this bring me to think this was network, port, firewall related, I will have never thought this is done on purpose, we should really capture this error properly and write down in the log something like “Non SSL connection failed, we are trying SSL now”
+- Also, when I am using admin, and if admin is not part of any tenant outside admin tenant, we should at least show the admin tenant and not fails because I don’t have access to other listed tenant.
+Closed based on Loic's feedback.

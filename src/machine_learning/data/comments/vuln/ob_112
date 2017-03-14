@@ -1,0 +1,6 @@
+An insufficient boundary check in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=select&amp;sektion=2">select(2)</a>
+system call allows an attacker to overwrite kernel memory and execute arbitrary
+code in kernel context.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/031_scarg.patch">
+A source code patch exists which remedies this problem.</a>

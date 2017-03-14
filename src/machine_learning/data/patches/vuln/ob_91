@@ -1,0 +1,49 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 026_fdalloc2.patch
+
+And then rebuild your kernel.
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.48.2.2
+diff -u -r1.48.2.2 kern_exec.c
+--- sys/kern/kern_exec.c	20 Feb 2002 08:52:33 -0000	1.48.2.2
++++ sys/kern/kern_exec.c	8 May 2002 20:20:38 -0000
+@@ -552,9 +552,6 @@
+ 			 * allocated.  We do not want userland to accidentally
+ 			 * allocate descriptors in this range which has implied
+ 			 * meaning to libc.
+-			 *
+-			 * XXX - Shouldn't the exec fail if we can't allocate
+-			 *       resources here?
+ 			 */
+ 			if (fp == NULL) {
+ 				short flags = FREAD | (i == 0 ? 0 : FWRITE);
+@@ -562,7 +559,7 @@
+ 				int indx;
+ 
+ 				if ((error = falloc(p, &fp, &indx)) != 0)
+-					break;
++					goto exec_abort;
+ #ifdef DIAGNOSTIC
+ 				if (indx != i)
+ 					panic("sys_execve: falloc indx != i");
+@@ -570,13 +567,13 @@
+ 				if ((error = cdevvp(getnulldev(), &vp)) != 0) {
+ 					ffree(fp);
+ 					fdremove(p->p_fd, indx);
+-					break;
++					goto exec_abort;
+ 				}
+ 				if ((error = VOP_OPEN(vp, flags, p->p_ucred, p)) != 0) {
+ 					ffree(fp);
+ 					fdremove(p->p_fd, indx);
+ 					vrele(vp);
+-					break;
++					goto exec_abort;
+ 				}
+ 				if (flags & FWRITE)
+ 					vp->v_writecount++;
+

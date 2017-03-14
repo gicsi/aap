@@ -1,0 +1,88 @@
+Created attachment 1050205
+ovirt-hosted-engine-setup-20150709090616-sp2x3e.log
+
+Description of problem:
+Failed to setup networks during deploy Hosted Engine.
+
+RuntimeError: Failed to setup networks {'rhevm': {'nic': 'eth0', 'bootproto': 'dhcp', 'blockingdhcp': True}}. Error code: "16" message: "Unexpected exception"
+
+Version-Release number of selected component (if applicable):
+ovirt-node-3.2.3-11.el6.noarch
+ovirt-node-plugin-hosted-engine-0.2.0-16.0.el6ev.noarch
+ovirt-hosted-engine-setup-1.2.5.1-1.el6ev.noarch
+ovirt-hosted-engine-ha-1.2.6-2.el6ev.noarch
+rhev-hypervisor6-6.7-20150707.0.el6ev
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Install RHEV-H and enabled Network.
+2. File the ISO/OVA URL with correct path
+3. Click <Setup Hosted Engine>
+4. Finish the configuration in console.
+
+Actual results:
+Failed to deploy HE, it will auto jump to TUI from console.
+Check log file, an error occurs during setup Hosted Engine.
+
+Expected results:
+Deploy HE can succeed without error.
+
+Additional info:
+Add keyword "regression"; "Testblocker" due to no such issue on rhev-hypervisor6-6.7-20150609.0, and this bug blocker our all HE testing.
+(In reply to shaochen from comment #1)
+> Add keyword "regression"; "Testblocker" due to no such issue on
+> rhev-hypervisor6-6.7-20150609.0, and this bug blocker our all HE testing.
+
+version info on rhev-hypervisor6-6.7-20150609.0
+ovirt-node-3.2.3-3.el6.noarch
+ovirt-hosted-engine-ha-1.2.6-2.el6ev.noarch
+ovirt-node-plugin-hosted-engine-0.2.0-15.0.el6ev.noarch
+ovirt-hosted-engine-setup-1.2.2-3.el6ev.noarch
+ovirt-host-deploy-1.3.0-2.el6ev.noarch
+Moving to vdsm, looks like a duplicate of bug #1235591.
+
+*** This bug has been marked as a duplicate of bug 1235591 ***
+Created attachment 1050233
+HE.tar.gz
+
+Upload /var/log/*.*
+Ying, does this bug go away when you start he-setup again?
+Created attachment 1050234
+sosreport.tar.gz
+
+Upload sosreport
+As far as I can tell this can't be even reproduced with some reliability.
+vdsm infra team tried to investigate on that and couldn't find the issue.
+On hosted engine side, the tool just receive underlying errors from vdsm.
+If you manage to reproduce the issue in a reliable way we can try to get rid of it.
+
+BTW since it was verified as a known issue and not as a resolved issue I don't see this as a regression.
+(In reply to Fabian Deutsch from comment #7)
+> Ying, does this bug go away when you start he-setup again?
+
+Fabian, Yes, test he-setup again, still this issue.
+(In reply to Fabian Deutsch from comment #7)
+> Ying, does this bug go away when you start he-setup again?
+
+No, still existing.
+
+NOTE:
+I run hosted-engine --deploy on console still got failed.
+Comment on attachment 1050234
+sosreport.tar.gz
+
+This log is unrelated to the issue reported:
+
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/site-packages/otopi/context.py", line 142, in _executeMethod
+  File "/usr/share/ovirt-hosted-engine-setup/plugins/ovirt-hosted-engine-setup/storage/storage.py", line 937, in _late_customization
+  File "/usr/share/ovirt-hosted-engine-setup/plugins/ovirt-hosted-engine-setup/storage/storage.py", line 330, in _getExistingDomain
+  File "/usr/share/ovirt-hosted-engine-setup/plugins/ovirt-hosted-engine-setup/storage/storage.py", line 502, in _storageServerConnection
+RuntimeError: Connection to storage server failed
+
+
+
+Here there's a connection error to the storage.
+Ying, according to comment 12 this can be an issue with the used storage. What kind of storage are you using and could there be networking problems?

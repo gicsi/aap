@@ -1,0 +1,6 @@
+Wrong calculation of NAT-D payloads may cause interoperability problems between
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&sektion=8">isakmpd(8)</a>
+and other ISAKMP/IKE implementations.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/005_isakmpd.patch">
+A source code patch exists which remedies this problem.</a>

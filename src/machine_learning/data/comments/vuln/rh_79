@@ -1,0 +1,29 @@
++++ This bug was initially created as a clone of Bug #1236477 +++
+
++++ This bug was initially created as a clone of Bug #1236476 +++
+
+Description of problem:
+
+This and similar queries fail: 
+
+http://<server>/business-central/rest/query/runtime/task?potentialOwner=USER
+
+This is due to a problem in the query backend. 
+
+How reproducible:
+
+Always
+
+Steps to Reproduce:
+1. Do the above or a similar query that uses the "potentialOwner" parameter
+
+Actual results:
+
+An exception is thrown (see attached). 
+
+Expected results:
+
+A result is returned. 
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1236476 ***

@@ -1,0 +1,28 @@
+Description of problem:
+I noticed this when fiddling around with keepass as I use a newer version that still needs the same depends as the packaged version.I install, then usually remove it to keep dependencies.This works on 21 with yum but with 22 dnf wants to remove everything including the dependencies, which is not what I want. Does dnf do this with EVERY package?
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.install keepass
+2.try to remove it (which normally removes only keepass)
+
+
+Actual results:
+wants to remove everything involved with keepass
+
+Expected results:
+should just remove the package specified, not the depends also.
+
+Additional info:
+2.29 I believe is the most recent build, has been for some time, yet repo still points to 2.27.
+
+keepass.info
+Hi Richard,
+
+this is intentional result of http://dnf.readthedocs.org/en/latest/cli_vs_yum.html#clean-requirements-on-remove-on-by-default . If you want to switch back to yum behaviour, add "clean_requirements_on_remove=false" into your dnf.conf.
+Or if you want to keep just these packages and allow removal of the rest, you may explicitly install these packages. And/or to keep the same version, the "versionlock" plugin from dnf-plugins-extras should help, I believe. Or personally, I'd wonder about creating my own package with the same requirements as KeePass. And last but not least, I believe that the portable version of KeePass should be able to co-exist with the packaged version.

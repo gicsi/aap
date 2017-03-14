@@ -1,0 +1,35 @@
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+gfortran/gcc 4.8.3
+
+How reproducible:
+compile code, error happens
+
+Steps to Reproduce:
+1. compile these two files (needs module file from 1. file for second file to compile)
+https://raw.githubusercontent.com/szaghi/FLAP/master/src/IR_Precision.F90
+https://raw.githubusercontent.com/szaghi/FLAP/master/src/Data_Type_Command_Line_Interface.F90
+2. internal compiler error occurs
+
+Actual results:
+internal compiler error
+
+Expected results:
+successful compilation
+This got fixed with r208386 aka PR51976.  As this revision is adding a new feature and this ICE is error-recovery, we're not going to backport such a patch.  DTS-3 contains GCC 4.9 and there the issue is fixed.
+Sounds great. Noob question: what is DTS? 
+
+Is there more generally an official way of installing newer gcc versionas, e.g. in /opt/gcc/5.1 (or similar)?
+(In reply to Paul Anton Letnes from comment #4)
+> Sounds great. Noob question: what is DTS? 
+> 
+> Is there more generally an official way of installing newer gcc versionas,
+> e.g. in /opt/gcc/5.1 (or similar)?
+
+DTS (Developer Toolset) is exactly that.  You can visit https://access.redhat.com/documentation/en-US/Red_Hat_Developer_Toolset/ for more information.
+I might have selected the wrong bug category - I'm currently using CentOS. I suppose the DTS do not exist for CentOS, so I'm screwed, right?
+There's no reason why DTS wouldn't work on CentOS and DTS is freely available to Red Hat customers.
+
+Based on c#3, this isn't going to be a fix we can/should backport, so I'm closing.

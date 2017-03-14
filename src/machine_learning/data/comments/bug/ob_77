@@ -1,0 +1,10 @@
+The
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=packages&amp;sektion=7&amp;format=html">packages(7)</a>
+subsystem incorrectly accepts some package dependencies as okay (see
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=packages-specs&amp;sektion=7&amp;format=html">packages-specs(7)</a>
+for details).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/011_pkg.patch">
+A source code patch exists which remedies this problem.</a>
+by forcing <code>/usr/sbin/pkg</code> to be more careful in checking
+version numbers.

@@ -1,0 +1,21 @@
+Description of problem:
+Running "dnf clean all" as a non-root user and without sudo indicates to the user that it "Cleaned up Everything" when, in reality, it did not. This may be confusing to a novice user. Running dnf without the proper permissions should tell the user to use sudo instead or display an error.
+
+Version-Release number of selected component (if applicable):
+dnf-1.0.0-1.fc22.noarch
+
+How reproducible:
+Very
+
+Steps to Reproduce:
+1. Run "dnf clean all" as a normal user without sudo
+2. Run "dnf update" and notice that it does not redownload the metadata
+
+Actual results:
+"dnf clean all" said it was "Cleaning up Everything" but it really did not
+
+Expected results:
+"dnf clean all" should have displayed an error or instructed the user to run "sudo dnf clean all"
+Hi,
+
+the output message is correct since DNF uses a separate cache for every user. You can find explanation of this behaviour at https://dnf.readthedocs.org/en/latest/user_faq.html#shouldn-t-dnf-exit-soon-from-certain-commands-if-it-is-not-run-under-root .

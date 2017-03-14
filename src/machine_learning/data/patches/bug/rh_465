@@ -1,0 +1,38 @@
+From 694ce96921a8c5f63bc251ecb34e3b43af275672 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 15:45:34 +0000
+Subject: [PATCH] Update to 1.2.4 (#1235740)
+
+---
+ python-moksha-wsgi.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-moksha-wsgi.spec b/python-moksha-wsgi.spec
+index e3ac0b9..4a38082 100644
+--- a/python-moksha-wsgi.spec
++++ b/python-moksha-wsgi.spec
+@@ -1,8 +1,8 @@
+ %global modname moksha.wsgi
+ 
+ Name:           python-moksha-wsgi
+-Version:        1.2.2
+-Release:        3%{?dist}
++Version:        1.2.4
++Release:        1%{?dist}
+ Summary:        WSGI components for Moksha
+ 
+ Group:          Development/Libraries
+@@ -74,6 +74,9 @@ CFLAGS="%{optflags}" %{__python} setup.py build
+ %{python_sitelib}/%{modname}-%{version}*
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.2.4-1
++- Update to 1.2.4 (#1235740)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.2-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

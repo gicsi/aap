@@ -1,0 +1,15 @@
+Some older BIOSes are unable to boot CD1 (ie. the commercial release sold
+by the project, not the CD images available on the net).
+A workaround using CD2 (amd64 architecture) is as follows.
+(An amd64 machine is <i>NOT</i> required for this to work.)<br>
+<br>
+
+<ol>
+<li>Insert CD2 and tell your computer to boot it;<br>
+<li>When the <tt>boot></tt> prompt appears, stop the automatic boot
+by pressing the space bar;<br>
+<li>Remove CD2 and insert CD1;<br>
+<li>Erase the character you typed to stop the boot, type<br>
+<tt><b>boot /4.2/i386/bsd.rd</b></tt><br>
+then press <i>Enter</i>.
+</ol>

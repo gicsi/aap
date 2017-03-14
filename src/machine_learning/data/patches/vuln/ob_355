@@ -1,0 +1,38 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N934pTioJ2iLNiNPkO7oWbSptmBgAwU7cFTb+E8QPTRyYo02PCCJS0RFJcb4TObp6JZ+fCMoCs5KSXEhjmVzVgmwk=
+
+OpenBSD 5.5 errata 7, June 6, 2014: Sendmail was not properly closing file
+descriptions before executing programs. This could enable local users to
+interfere with an open SMTP connection.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 007_sendmail.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+And then rebuild and install sendmail:
+	cd gnu/usr.sbin/sendmail
+	make obj
+	make depend
+	make
+	make install
+
+Index: gnu/usr.sbin/sendmail/sendmail/conf.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/conf.c,v
+retrieving revision 1.37
+diff -u -p -r1.37 conf.c
+--- gnu/usr.sbin/sendmail/sendmail/conf.c	7 Feb 2014 21:25:00 -0000	1.37
++++ gnu/usr.sbin/sendmail/sendmail/conf.c	5 Jun 2014 10:15:53 -0000
+@@ -5309,8 +5309,8 @@ closefd_walk(lowest, fd)
+ */
+ 
+ void
+-sm_close_on_exec(highest, lowest)
+-	int highest, lowest;
++sm_close_on_exec(lowest, highest)
++	int lowest, highest;
+ {
+ #if HASFDWALK
+ 	(void) fdwalk(closefd_walk, &lowest);
+

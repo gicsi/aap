@@ -1,0 +1,19 @@
+Description of problem:
+It is currently not possible to include Message section in the AuthoringPerspectiveNoContext. This is controlled by following class [1] and the "workaround" would require full rebuild of the workbench.
+
+Version-Release number of selected component (if applicable):
+6.1.x
+
+Steps to Reproduce:
+1. Open browser window, navigate to business central
+2. open up AuthoringPerspectiveNoContext (standalone=true&perspective=AuthoringPerspectiveNoContext&no_context_navigation=true&explorer_mode=business_tree&header=ComplementNavArea&no_search&#projectScreen)
+3. Create an invalid drools rule for instance
+
+Actual results:
+Message section is not showing up on bottom right section of the Perspective.
+
+Expected results:
+Message section is showing up on bottom right section of the Perspective.
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1236100 ***

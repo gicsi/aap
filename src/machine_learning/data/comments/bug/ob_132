@@ -1,0 +1,6 @@
+BIND contains a bug which results in BIND trying to contact nameservers via IPv6, even in
+cases where IPv6 connectivity is non-existent. This results in unnecessary timeouts and
+thus slow DNS queries.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/021_bind.patch">
+A source code patch exists which remedies this problem.</a>

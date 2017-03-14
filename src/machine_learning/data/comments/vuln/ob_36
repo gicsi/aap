@@ -1,0 +1,4 @@
+Packets that should have been handled by IPsec may be transmitted
+as cleartext. PF_KEY SA expirations may leak kernel resources.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/009_ipsec_in_use.patch">
+A source code patch exists which remedies this problem.</a>

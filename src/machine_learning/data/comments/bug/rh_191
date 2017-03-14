@@ -1,0 +1,71 @@
+Description of problem:
+SELinux is preventing ruby from 'write' accesses on the file /home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid.
+
+*****  Plugin restorecon (94.8 confidence) suggests   ************************
+
+If необходимо исправить метку.
+Стандартная метка для /home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid: user_home_t.
+Then можно выполнить restorecon.
+Do
+# /sbin/restorecon -v /home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid
+
+*****  Plugin catchall_labels (5.21 confidence) suggests   *******************
+
+If you want to allow ruby to have write access on the server.pid file
+Then необходимо изменить метку на /home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid
+Do
+# semanage fcontext -a -t FILE_TYPE '/home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid'
+где FILE_TYPE может принимать значения: afs_cache_t, cgroup_t, docker_config_t, docker_home_t, docker_lock_t, docker_log_t, docker_share_t, docker_tmp_t, docker_tmpfs_t, docker_var_lib_t, docker_var_run_t, initrc_tmp_t, puppet_tmp_t, svirt_sandbox_file_t, sysfs_t, systemd_passwd_var_run_t, unlabeled_t, user_cron_spool_t.
+Затем выполните: 
+restorecon -v '/home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid'
+
+
+*****  Plugin catchall (1.44 confidence) suggests   **************************
+
+If вы считаете, что ruby следует разрешить доступ write к server.pid file по умолчанию.
+Then рекомендуется создать отчет об ошибке.
+Чтобы разрешить доступ, можно создать локальный модуль политики.
+Do
+чтобы разрешить доступ, выполните:
+# grep ruby /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:docker_t:s0
+Target Context                system_u:object_r:default_t:s0
+Target Objects                /home/plantsys-
+                              git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid [
+                              file ]
+Source                        ruby
+Source Path                   ruby
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-07-05 02:28:28 MSK
+Last Seen                     2015-07-05 02:28:28 MSK
+Local ID                      6ce58c6d-3154-4a1a-9d3a-d09f8d8ef631
+
+Raw Audit Messages
+type=AVC msg=audit(1436052508.316:3139): avc:  denied  { write } for  pid=10533 comm="ruby" path="/home/plantsys-git/MAPPED_FS/redmine-3.0.3/tmp/pids/server.pid" dev="sdc1" ino=6167948 scontext=system_u:system_r:docker_t:s0 tcontext=system_u:object_r:default_t:s0 tclass=file permissive=1
+
+
+Hash: ruby,docker_t,default_t,file,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1239241 ***

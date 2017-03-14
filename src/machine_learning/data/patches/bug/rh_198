@@ -1,0 +1,36 @@
+diff --git a/owncloud.spec b/owncloud.spec
+index 031705c..4037e62 100644
+--- a/owncloud.spec
++++ b/owncloud.spec
+@@ -1,6 +1,6 @@
+ Name:           owncloud
+ Version:        8.0.4
+-Release:        2%{?dist}
++Release:        3%{?dist}
+ Summary:        Private file sync and share server
+ 
+ License:        AGPLv3+ and MIT and BSD and CC-BY and CC-BY-SA and GPLv3 and Public Domain and (MPLv1.1 or GPLv2+ or LGPLv2+) and (MIT or GPL+) and (MIT or GPLv2) and ASL 2.0 and LGPLv3
+@@ -108,10 +108,10 @@ Requires:       php-composer(doctrine/dbal) >= 2.5.0
+ Requires:       php-composer(doctrine/dbal) < 2.6
+ # "symfony/console": "~2.5"
+ Requires:       php-composer(symfony/console) >= 2.5.0
+-Requires:       php-composer(symfony/console) < 2.6
++Requires:       php-composer(symfony/console) < 3.0
+ # "symfony/routing": "~2.5"
+ Requires:       php-composer(symfony/routing) >= 2.5.0
+-Requires:       php-composer(symfony/routing) < 2.6
++Requires:       php-composer(symfony/routing) < 3.0
+ 
+ # NB: this will also pull in php-compose(guzzle/guzzle), which is in OC's
+ # 3rdparty directory. OC sort of has a direct dependency on it but in fact
+@@ -465,6 +465,9 @@ fi
+ 
+ 
+ %changelog
++* Sat Jul 04 2015 Shawn Iwinski <shawn.iwinski@gmail.com> - 8.0.4-3
++- Fix Symfony max version (2.6 changed to 3.0)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 8.0.4-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+

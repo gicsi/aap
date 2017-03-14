@@ -1,0 +1,44 @@
+Created attachment 1042763
+log
+
+Description of problem:
+-------------------------------
+tried to update the packages using " openstack overcloud update stack --plan overcloud overcloud" command and got :
+ERROR: openstack ERROR: Parameter 'Cinder-Storage-1::Flavor' is invalid: Error validating value u'': The Flavor ID () could not be found.
+
+
+Version-Release number of selected component (if applicable):
+------------------------------------------------------
+$ rpm -qa | grep rhos
+rhos-release-0.62-1.noarch
+[stack@instack ~]$ rpm -qa | grep osc
+python-rdomanager-oscplugin-0.0.8-6.el7ost.noarch
+
+
+How reproducible:
+--------------------------
+
+
+
+Steps to Reproduce:
+1.have undercloud and overcloud deployed
+2. updated rhos-release
+sudo rpm -ivh http://rhos-release.virt.bos.redhat.com/repos/rhos-release/rhos-release-latest.noarch.rpm
+3. enable puddle (as mburns mentioned in the email for latest puddle)
+sudo rhos-release -p 2015-06-23.14 -d 7-director
+sudo rhos-release 7
+
+
+Actual results:
+--------------------------
+ERROR: openstack ERROR: Parameter 'Cinder-Storage-1::Flavor' is invalid: Error validating value u'': The Flavor ID () could not be found.
+
+Expected results:
+-------------
+Packages were successfully updated
+
+
+Additional info:
+-----------------
+the output of --debug is in log file attached
+*** This bug has been marked as a duplicate of bug 1233485 ***

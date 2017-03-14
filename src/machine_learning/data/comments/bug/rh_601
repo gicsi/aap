@@ -1,0 +1,54 @@
+Description of problem:
+
+Starting a Fedora 22 64-bit (AArch64) guest on a Fedora 22 AMD Seattle 64-bit host fails when using KVM.  
+
+  -cpu host -machine virt,accel=kvm
+
+The same image starts and runs successfully when using TCG.
+
+  -M virt -cpu cortex-a57 -machine accel=tcg
+
+
+Version-Release number of selected component (if applicable):
+
+kernel-4.0.4-301.fc22.aarch64
+
+
+How reproducible:
+
+consistently
+
+
+Steps to Reproduce:
+1.  On a Fedora 22 AMD Seattle host, attempt to start QEMU using an F22 AArch64 image with KVM, i.e.,:
+
+qemu-system-aarch64 \
+    -nodefconfig \
+    -nodefaults \
+    -display none \
+    -m 2048 \
+    -cpu host -machine virt,accel=kvm \
+    -drive if=pflash,format=raw,file=/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw,readonly=on \
+    -drive if=pflash,format=raw,file=fedora-22-aarch64-nvram \
+    -device virtio-scsi-device,id=scsi \
+    -drive file=fedora-22.img,format=raw,if=none,id=hd0 -device scsi-hd,drive=hd0 \
+    -netdev user,id=usernet -device virtio-net-device,netdev=usernet \
+    -serial stdio
+
+
+Actual results:
+
+Fails to boot (see attached log).
+
+
+Expected results:
+
+Boots without error.
+
+
+Additional info:
+Created attachment 1041947
+boot log for failed boot using KVM
+This bug vanished. Updating the kernel made it go away, so I wanted to see which exact commit(s). There wasn't anything obvious, so at some point I decided to confirm the bug was still hitting 100% with 4.0.4-301.fc22.aarch64, but it no longer ever hits. Since the bug was hitting in UEFI I tried a fresh varstore, but still can't get it to reproduce.
+
+So, I don't know what it was, or where it went, but I'm going to close this bug now. We can reopen when/if it reproduces.

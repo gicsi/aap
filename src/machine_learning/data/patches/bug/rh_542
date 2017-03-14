@@ -1,0 +1,93 @@
+From 07e606e670b8629f229d7130b49a7a604eea9da8 Mon Sep 17 00:00:00 2001
+From: Mark Wielaard <mjw@redhat.com>
+Date: Tue, 23 Jun 2015 16:42:55 +0200
+Subject: [PATCH] Add yama ptrace sysctl file.
+
+---
+ 10-yama-ptrace.conf | 31 +++++++++++++++++++++++++++++++
+ systemd.spec        |  9 +++++++++
+ 2 files changed, 40 insertions(+)
+ create mode 100644 10-yama-ptrace.conf
+
+diff --git a/10-yama-ptrace.conf b/10-yama-ptrace.conf
+new file mode 100644
+index 0000000..8aec4a8
+--- /dev/null
++++ b/10-yama-ptrace.conf
+@@ -0,0 +1,31 @@
++# The ptrace system call is used for interprocess services, communication
++# and introspection (like synchronisation, signaling, debugging, tracing
++# and profiling) of processes.
++#
++# Usage of ptrace is restricted by normal user permissions. Normal
++# unprivileged processes cannot interact through ptrace with processes
++# that they cannot send signals to or processes that are running set-uid
++# or set-gid.
++#
++# yama ptrace scope can be used to reduce these permissions even more.
++# This should normally not be done because it will break various programs
++# relying on the default ptrace security restrictions. But can be used
++# if you don't have any other way to separate processes in their own
++# domains. A different way to restrict ptrace is to set the selinux
++# deny_ptrace boolean. Both mechanisms will break some programs relying
++# on the ptrace system call and might force users to elevate their
++# priviliges to root to do their work.
++#
++# For more information see Documentation/security/Yama.txt in the kernel
++# sources. Which also describes the defaults when CONFIG_SECURITY_YAMA
++# is enabled in a kernel build (currently 1 for ptrace_scope).
++#
++# This runtime kernel parameter can be set to the following options:
++# (Note that setting this to anything except zero will break programs!)
++#
++# 0 - Normal ptrace security permissions.
++# 1 - Restricted ptrace. Only child processes plus normal permissions.
++# 2 - Admin-only attach. Only executables with CAP_SYS_PTRACE.
++# 3 - No attach. No process may call ptrace at all. Irrevocable.
++#
++kernel.yama.ptrace_scope = 0
+diff --git a/systemd.spec b/systemd.spec
+index ccbb71f..39e7683 100644
+--- a/systemd.spec
++++ b/systemd.spec
+@@ -38,6 +38,9 @@ Source6:        sysctl.conf.README
+ Source7:        systemd-journal-remote.xml
+ Source8:        systemd-journal-gatewayd.xml
+ 
++# Fix for when kernel enables yama. rhbz 1209492.
++Source9:	10-yama-ptrace.conf
++
+ # Patch series is available from http://cgit.freedesktop.org/systemd/systemd-stable/log/?h=v219-stable
+ # GIT_DIR=~/src/systemd/.git git format-patch-ab -M -N --no-signature v219..v219-stable
+ # i=1; for p in 0*patch;do printf "Patch%04d:      %s\n" $i $p; ((i++));done
+@@ -509,6 +512,8 @@ install -Dm0644 %{SOURCE5} %{buildroot}/etc/
+ install -Dm0644 %{SOURCE6} %{buildroot}/etc/sysctl.conf
+ ln -s ../sysctl.conf %{buildroot}/etc/sysctl.d/99-sysctl.conf
+ 
++install -Dm0644 %{SOURCE9} %{buildroot}/%{_sysctldir}/10-yama-ptrace.conf
++
+ # We create all wants links manually at installation time to make sure
+ # they are not owned and hence overriden by rpm after the user deleted
+ # them.
+@@ -887,6 +892,7 @@ getent passwd systemd-journal-upload >/dev/null 2>&1 || useradd -r -l -g systemd
+ %{_prefix}/lib/tmpfiles.d/tmp.conf
+ %{_prefix}/lib/tmpfiles.d/var.conf
+ %{_prefix}/lib/tmpfiles.d/etc.conf
++%{_prefix}/lib/sysctl.d/10-yama-ptrace.conf
+ %{_prefix}/lib/sysctl.d/50-default.conf
+ %{_prefix}/lib/sysctl.d/50-coredump.conf
+ %{_prefix}/lib/sysusers.d/basic.conf
+@@ -1032,6 +1038,9 @@ getent passwd systemd-journal-upload >/dev/null 2>&1 || useradd -r -l -g systemd
+ /usr/lib/firewalld/services/*
+ 
+ %changelog
++* Tue Jun 23 2015 Mark Wielaard <mjw@redhat.com>
++- Add yama ptrace sysctl file.
++
+ * Tue Jun 09 2015 Harald Hoyer <harald@redhat.com> 219-18
+ - add support for network disk encryption
+ Resolves: rhbz#1229672
+-- 
+2.4.3
+
+

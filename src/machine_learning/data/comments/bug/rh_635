@@ -1,0 +1,61 @@
+Version-Release number of selected component:
+xfce4-terminal-0.6.3-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/bin/xfce4-terminal
+crash_function: _IceTransClose
+executable:     /usr/bin/xfce4-terminal
+kernel:         3.19.5-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1210
+var_log_messages: [System Logs]:\n-- Logs begin at Wed 2014-06-25 05:42:26 BST, end at Mon 2015-06-22 13:25:56 BST. --
+
+Truncated backtrace:
+Thread no. 1 (7 frames)
+ #0 _IceTransClose at /lib64/libICE.so.6
+ #1 _IceFreeConnection at /lib64/libICE.so.6
+ #2 IceCloseConnection at /lib64/libICE.so.6
+ #3 SmcCloseConnection at /lib64/libSM.so.6
+ #4 xfce_sm_client_disconnect at /lib64/libxfce4ui-1.so.0
+ #5 xfce_sm_client_finalize at /lib64/libxfce4ui-1.so.0
+ #7 terminal_app_finalize
+Created attachment 1041810
+File: backtrace
+Created attachment 1041811
+File: cgroup
+Created attachment 1041812
+File: core_backtrace
+Created attachment 1041813
+File: dso_list
+Created attachment 1041814
+File: environ
+Created attachment 1041815
+File: exploitable
+Created attachment 1041816
+File: limits
+Created attachment 1041817
+File: maps
+Created attachment 1041818
+File: open_fds
+Created attachment 1041819
+File: proc_pid_status
+This was after a logout/login?
+
+Or what were you doing when it happened?
+
+Can you duplicate the crash?
+It was not immediately after a logout or login; I had a terminal or two open in the background and I think I just closed one from the XFCE taskbar -> right-click -> Close. I've obviously done that a lot before and after this without problems; I can't reproduce the crash.
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

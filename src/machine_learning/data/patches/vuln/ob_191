@@ -1,0 +1,49 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 029_httpd4.patch
+
+And then rebuild and install httpd and its modules:
+        cd usr.sbin/httpd
+        make -f Makefile.bsd-wrapper obj
+        make -f Makefile.bsd-wrapper cleandir
+        make -f Makefile.bsd-wrapper depend
+        make -f Makefile.bsd-wrapper
+        make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+        apachectl stop
+before running "make install", and
+        apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/modules/standard/mod_rewrite.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_rewrite.c,v
+retrieving revision 1.19.2.1
+retrieving revision 1.19.2.2
+diff -u -p -r1.19.2.1 -r1.19.2.2
+--- usr.sbin/httpd/src/modules/standard/mod_rewrite.c	31 Oct 2003 00:20:31 -0000	1.19.2.1
++++ usr.sbin/httpd/src/modules/standard/mod_rewrite.c	9 Sep 2004 01:10:58 -0000	1.19.2.2
+@@ -3080,16 +3080,17 @@ static char *lookup_map_dbmfile(request_
+     datum dbmval;
+     char *value = NULL;
+     char buf[MAX_STRING_LEN];
++    size_t len;
+ 
+     dbmkey.dptr  = key;
+     dbmkey.dsize = strlen(key);
+     if ((dbmfp = dbm_open(file, O_RDONLY, 0666)) != NULL) {
+         dbmval = dbm_fetch(dbmfp, dbmkey);
+         if (dbmval.dptr != NULL) {
+-            memcpy(buf, dbmval.dptr, 
+-                   dbmval.dsize < sizeof(buf)-1 ? 
+-                   dbmval.dsize : sizeof(buf)-1  );
+-            buf[dbmval.dsize] = '\0';
++            len = dbmval.dsize < sizeof(buf)-1 ? 
++                  dbmval.dsize : sizeof(buf)-1;
++            memcpy(buf, dbmval.dptr, len);
++            buf[len] = '\0';
+             value = ap_pstrdup(r->pool, buf);
+         }
+         dbm_close(dbmfp);
+

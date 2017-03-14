@@ -1,0 +1,3 @@
+Description of problem:
+given the number of connections to the database depends on the number of running processes AND the number of running processes depends on the number of cores, we should as a consequence adapt max_connections (and probably haproxy limit as well) to number of cores
+*** This bug has been marked as a duplicate of bug 1240824 ***

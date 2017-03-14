@@ -1,0 +1,67 @@
++++ This bug was initially created as a clone of Bug #1233258 +++
+
+Description of problem:
+
+When a fop starts a subfop as part of its own execution, it's possible that this subfop finishes before the manager has completed the processing of the current state. In this case ec_resume() is called and a new instance of the same state machine is executed by another thread.
+
+This could cause multiple problems.
+
+Version-Release number of selected component (if applicable): mainline
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+--- Additional comment from Anand Avati on 2015-06-18 10:52:24 EDT ---
+
+REVIEW: http://review.gluster.org/11317 (cluster/ec: Avoid parallel executions of the same state machine) posted (#1) for review on master by Xavier Hernandez (xhernandez@datalab.es)
+
+--- Additional comment from Anand Avati on 2015-06-18 12:17:32 EDT ---
+
+REVIEW: http://review.gluster.org/11317 (cluster/ec: Avoid parallel executions of the same state machine) posted (#2) for review on master by Xavier Hernandez (xhernandez@datalab.es)
+
+--- Additional comment from Anand Avati on 2015-06-18 23:39:07 EDT ---
+
+REVIEW: http://review.gluster.org/11317 (cluster/ec: Avoid parallel executions of the same state machine) posted (#3) for review on master by Pranith Kumar Karampuri (pkarampu@redhat.com)
+REVIEW: http://review.gluster.org/11319 (cluster/ec: Avoid parallel executions of the same state machine) posted (#1) for review on release-3.7 by Pranith Kumar Karampuri (pkarampu@redhat.com)
+COMMIT: http://review.gluster.org/11319 committed in release-3.7 by Pranith Kumar Karampuri (pkarampu@redhat.com) 
+------
+commit c4d4d2247b3aeb96e37a05aeb0f73cec54360094
+Author: Xavier Hernandez <xhernandez@datalab.es>
+Date:   Thu Jun 18 16:44:55 2015 +0200
+
+    cluster/ec: Avoid parallel executions of the same state machine
+    
+            Backport of http://review.gluster.org/11317
+    
+    In very rare circumstances it was possible that a subfop started
+    by another fop could finish fast enough to cause that two or more
+    instances of the same state machine be executing at the same time.
+    
+    Change-Id: I319924a18bd3f88115e751a66f8f4560435e0e0e
+    BUG: 1233484
+    Signed-off-by: Xavier Hernandez <xhernandez@datalab.es>
+    Reviewed-on: http://review.gluster.org/11319
+    Tested-by: Gluster Build System <jenkins@build.gluster.com>
+    Tested-by: Pranith Kumar Karampuri <pkarampu@redhat.com>
+    Reviewed-by: Pranith Kumar Karampuri <pkarampu@redhat.com>
+This bug is getting closed because a release has been made available that should address the reported issue. In case the problem is still not fixed with glusterfs-3.7.2, please reopen this bug report.
+
+glusterfs-3.7.2 has been announced on the Gluster Packaging mailinglist [1], packages for several distributions should become available in the near future. Keep an eye on the Gluster Users mailinglist [2] and the update infrastructure for your distribution.
+
+[1] http://www.gluster.org/pipermail/packaging/2015-June/000006.html
+[2] http://thread.gmane.org/gmane.comp.file-systems.gluster.user
+*** Bug 1233282 has been marked as a duplicate of this bug. ***

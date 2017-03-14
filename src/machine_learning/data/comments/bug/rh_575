@@ -1,0 +1,10 @@
+We have meet this problem in following certs:
+https://hardware.redhat.com/show.cgi?id=1233910
+https://hardware.redhat.com/show.cgi?id=1227582
+
+In both cert, vendor want to created RHEL7 supplement cert, but actually RHEL6 created.
+The RHEL version of supplemental cert is RHEL6, but it shows RHEL7 in its hardware spec entry.
+
+Hardware spec entry :https://hardware.redhat.com/show.cgi?id=1096421
+Supplemental cert: https://hardware.redhat.com/show.cgi?id=1234719
+I fixed it and it will include in 5.5-21 release.

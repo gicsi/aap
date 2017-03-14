@@ -1,0 +1,8 @@
+Spec URL: https://filabrazilska.fedorapeople.org/erlang-mustache.spec
+SRPM URL: https://filabrazilska.fedorapeople.org/erlang-mustache-0.1.1-1.fc23.src.rpm
+Description:
+Hi!
+
+I have asked the upstream maintainer to tag a new release of the library and he has done so. Please review the attached spec and srpm files that package the new release.
+
+Fedora Account System Username: filabrazilska

@@ -1,0 +1,18 @@
+Spec URL: https://ppisar.fedorapeople.org/perl-Encode-ISO2022/perl-Encode-ISO2022.spec
+SRPM URL: https://ppisar.fedorapeople.org/perl-Encode-ISO2022/perl-Encode-ISO2022-0.04-1.fc23.src.rpm
+Description:
+This module provides a character encoding scheme (CES) switching a set of
+multiple coded character sets (CCS).
+
+Fedora Account System Username: ppisar
+No issues discovered during the review.  Approving.
+New Package SCM Request
+=======================
+Package Name: perl-Encode-ISO2022
+Short Description: ISO/IEC 2022 character encoding scheme
+Upstream URL: http://search.cpan.org/dist/Encode-ISO2022/
+Owners: ppisar jplesnik psabata
+Branches: 
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

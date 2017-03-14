@@ -1,0 +1,48 @@
+Additional info:
+reporter:       libreport-2.6.0
+NMI watchdog: BUG: soft lockup - CPU#1 stuck for 22s! [gdbus:13860]
+Modules linked in: usblp vhost_net vhost macvtap macvlan xt_CHECKSUM bnep bluetooth tun rfkill nf_conntrack_netbios_ns nf_conntrack_broadcast ipt_MASQUERADE nf_nat_masquerade_ipv4 fuse ip6t_rpfilter ip6t_REJECT nf_reject_ipv6 xt_conntrack gspca_spca561 gspca_main videodev media ebtable_nat ebtable_broute bridge stp llc ebtable_filter ebtables ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 ip6table_mangle ip6table_security ip6table_raw ip6table_filter ip6_tables iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 nf_nat nf_conntrack iptable_mangle iptable_security iptable_raw it87 hwmon_vid intel_rapl iosf_mbi snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_codec_generic x86_pkg_temp_thermal snd_hda_intel kvm_intel kvm iTCO_wdt iTCO_vendor_support mxm_wmi snd_hda_controller
+ vfat snd_hda_codec fat crct10dif_pclmul crc32_pclmul snd_hwdep crc32c_intel snd_seq snd_seq_device ghash_clmulni_intel lpc_ich i2c_i801 mfd_core snd_pcm joydev mei_me mei shpchp tpm_infineon snd_timer tpm_tis snd soundcore wmi tpm nfsd auth_rpcgss nfs_acl lockd grace sunrpc binfmt_misc uas usb_storage i915 i2c_algo_bit drm_kms_helper e1000e drm serio_raw ptp pps_core video i2c_dev [last unloaded: coretemp]
+CPU: 1 PID: 13860 Comm: gdbus Not tainted 4.0.7-300.fc22.x86_64 #1
+Hardware name: Gigabyte Technology Co., Ltd. Z87X-D3H/Z87X-D3H-CF, BIOS F9 08/25/2014
+task: ffff8803e339c590 ti: ffff8803d9444000 task.ti: ffff8803d9444000
+RIP: 0010:[<ffffffff81789b32>]  [<ffffffff81789b32>] _raw_spin_lock+0x12/0x50
+RSP: 0018:ffff8803d9447b88  EFLAGS: 00000286
+RAX: 00000000f30af30a RBX: 0000000000000000 RCX: 0000000180270017
+RDX: ffff8803c32cdd10 RSI: ffff8804097d2400 RDI: ffff8803c32cdd20
+RBP: ffff8803d9447b88 R08: 00000000c32cdd01 R09: 0000000180270017
+R10: ffff8803c32cdd00 R11: 000000000041f600 R12: 0000000180270017
+R13: ffff8803d9447b38 R14: ffffffff81262212 R15: ffff8803d9447b38
+FS:  00007f5b2ba88700(0000) GS:ffff88041f280000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff1f97de000 CR3: 0000000001c0b000 CR4: 00000000001407e0
+Stack:
+ ffff8803d9447bb8 ffffffff812602cb ffff8803c32cdd00 ffff8803c32cdd00
+ ffff8804097d2400 00000000ffffffff ffff8803d9447c08 ffffffff8126096e
+ ffff8803d9447be8 ffff8804097d2470 0000000100000000 ffff8804097d2400
+Call Trace:
+ [<ffffffff812602cb>] fsnotify_destroy_mark_locked+0x2b/0x140
+ [<ffffffff8126096e>] fsnotify_clear_marks_by_group_flags+0x7e/0xb0
+ [<ffffffff812609b3>] fsnotify_clear_marks_by_group+0x13/0x20
+ [<ffffffff8125fad6>] fsnotify_destroy_group+0x16/0x50
+ [<ffffffff812619a6>] inotify_release+0x26/0x60
+ [<ffffffff8121f12f>] __fput+0xdf/0x1f0
+ [<ffffffff8121f28e>] ____fput+0xe/0x10
+ [<ffffffff810b9ad4>] task_work_run+0xc4/0xe0
+ [<ffffffff8109efcb>] do_exit+0x3bb/0xb40
+ [<ffffffff81232f20>] ? poll_select_copy_remaining+0x150/0x150
+ [<ffffffff8109f7e7>] do_group_exit+0x47/0xb0
+ [<ffffffff810ab68c>] get_signal+0x27c/0x610
+ [<ffffffff81013547>] do_signal+0x37/0x760
+ [<ffffffff810c93a0>] ? wake_up_state+0x20/0x20
+ [<ffffffff81140d16>] ? __audit_syscall_exit+0x1f6/0x290
+ [<ffffffff81013cef>] do_notify_resume+0x7f/0xa0
+ [<ffffffff8178a163>] int_signal+0x12/0x17
+Code: 00 f3 90 83 e8 01 74 eb 0f b7 17 66 39 ca 75 f1 5d c3 0f 1f 80 00 00 00 00 0f 1f 44 00 00 55 48 89 e5 b8 00 00 01 00 f0 0f c1 07 <89> c2 c1 ea 10 66 39 c2 75 04 5d c3 66 90 89 d1 b8 00 80 00 00 
+
+Potential duplicate: bug 1132152
+Created attachment 1049002
+File: dmesg
+This is probably fallout from the other bug.
+
+*** This bug has been marked as a duplicate of bug 1240459 ***

@@ -1,0 +1,47 @@
+Created attachment 1043959
+Screenshot with time work arbt
+
+Description of problem:
+if crush gconf editor, start report_uReport and never finish (7-8 hours).
+If i try send report about gvfs, it pass some steps and also stopped.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. in arbt push send report.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Thank you for the bug report!
+
+What version of abrt, libreport and gnome-abrt do you have?
+
+Run '$ rpm -q abrt libreport gnome-abrt' to get the versions.
+Could you also connect to the "abrt-bodhi" process with "strace" and provide the output here?
+
+Run '$ strace -o abrt-bodhi.log -p $ABRT_BODHI_PID' (In your case the abrt-bodhi process PID was 26018, so the strace command would be as follows: '$ strace -o abrt-bodhi.log -p 26018').
+
+After connecting to the bodhi process wait a minute and after that detach the strace by pressing "Ctrl+C". The required output is in abrt-bodhi.log.
+System is been update, and new version abrt installed.
+abrt-2.3.0-7.fc21.x86_64
+libreport-2.3.0-8.fc21.x86_64
+gnome-abrt-1.0.0-3.fc21.x86_64
+
+In new version abrt i have not error.
+
+I reproduce crash in gconf-edior and abrt work fine, without endless loop.
+I can`t repeat error with gvfs, beсouse all error in abrt is clean
+Closing as CURRENTRELEASE per comment #3.
+
+Thank you! Please feel free to reopen if needed.

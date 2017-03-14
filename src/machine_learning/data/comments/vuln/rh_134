@@ -1,0 +1,27 @@
+[rhel-osp-director][Unified CLI] The openstack-deploy command do not allow to run tempest for a post deployment validation (as the Instack command).
+
+environment:
+------------
+python-rdomanager-oscplugin-0.0.8-1.el7ost.noarch
+python-tuskarclient-0.1.17-3.el7ost.noarch
+openstack-tuskar-0.4.18-2.el7ost.noarch
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tuskar-ui-0.3.0-2.el7ost.noarch
+openstack-heat-templates-0-0.6.20150605git.el7ost.noarch
+openstack-heat-api-2015.1.0-3.el7ost.noarch
+heat-cfntools-1.2.8-2.el7.noarch
+openstack-heat-common-2015.1.0-3.el7ost.noarch
+python-heatclient-0.6.0-1.el7ost.noarch
+openstack-heat-api-cloudwatch-2015.1.0-3.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-9.el7ost.noarch
+
+
+Description: 
+------------
+Using the Instack-deploy-overcloud allows to run tempest for post deployment validation  : "instack-deploy-overcloud --tuskar --tempest"  
+
+While using the unified-cli command to deployment doesn't support tempest run : 
+openstack overcloud deploy --plan-uuid "[uuid]"
+
+In case unified-cli consider to be the main flow for deployment -> lack of ability to run tempest for post deployment validation is regression.
+Close :  covered by openstack overcloud validate

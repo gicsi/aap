@@ -1,0 +1,51 @@
+Description of problem:
+
+Currently virt-v2v cannot convert RHEL 7 guests, unless you
+manually install libguestfs-xfs (XFS support for libguestfs).
+
+virt-v2v should just Require libguestfs-xfs, which avoids
+this problem.
+
+Version-Release number of selected component (if applicable):
+
+libguestfs-1.28.1-1.44.el7
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. Install virt-v2v and ensure libguestfs-xfs is NOT installed.
+2. Try a virt-v2v conversion of a RHEL 7 guest (which uses XFS
+as its default filesystem).
+
+Actual results:
+
+Will fail because it cannot inspect the RHEL 7 guest.
+
+Works if you install libguestfs-xfs and retry the conversion.
+I've just realized that this bug description is completely wrong.
+virt-v2v works fine, even without libguestfs-xfs installed.
+
+$ rpm -q libguestfs-xfs
+package libguestfs-xfs is not installed
+$ virt-v2v -i disk rhel-7.1.img -o null
+[   0.0] Opening the source -i disk rhel-7.1.img
+[   0.1] Creating an overlay to protect the source from being modified
+[   0.4] Opening the overlay
+[  18.5] Initializing the target -o null
+[  18.5] Inspecting the overlay
+[  22.9] Checking for sufficient free disk space in the guest
+[  22.9] Estimating space required on target for each disk
+[  22.9] Converting Red Hat Enterprise Linux Server release 7.1 (Maipo) to run on KVM
+virt-v2v: warning: /files/boot/grub2/device.map/hd0 references unknown 
+device "vda".  You may have to fix this entry manually after conversion.
+virt-v2v: This guest has virtio drivers installed.
+[  54.4] Mapping filesystem data to avoid copying unused and blank areas
+[  54.8] Closing the overlay
+[  55.0] Copying disk 1/1 to /var/tmp/null.tnslN8/sda (raw)
+    (100.00/100%)
+[  72.5] Creating output metadata
+[  72.5] Finishing off
+
+The dependency from virt-v2v -> libguestfs-xfs is not needed.

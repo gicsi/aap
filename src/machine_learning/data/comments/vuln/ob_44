@@ -1,0 +1,7 @@
+A buffer overflow in the RSAREF code included in the
+USA version of the libssl package (called <strong>sslUSA</strong>, is
+possibly exploitable in isakmpd if SSL/RSA features
+are enabled or used.<br>
+<a href="http://www.openssh.com">OpenSSH</a> and httpd (with -DSSL) are not
+vulnerable.<br>
+<strong>NOTE: International users using the ssl26 package are not affected.</strong>

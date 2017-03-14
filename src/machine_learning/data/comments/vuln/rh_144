@@ -1,0 +1,129 @@
+Description of problem:
+
+lircd starts, lircmd works and is configured properly
+enabled lircmd via systemd - systemctl enable lircmd.service
+lircd starts at boot
+lircmd fails at boot
+starting with systemctl start lircmd.service fails - no error but lircmd not running
+starting from command prompt with lircmd -u - works fine
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Using driver usbx and /dev/ttyUSB0
+2. Configure lircd and lircmd
+3. Attempt to use lircmd with systemd fails
+
+Actual results:
+
+Failure
+
+Expected results:
+
+Works
+
+Additional info:
+
+Using oddball of IR device. Uses ftdi_sio kernel driver and usbx lirc driver
+Had problems in past with lircd that were SELINUX related but I have tried with SELINUX in permissive. No avc's in audit log
+
+Again it works fine launched from command prompt. Does not work at all from systemd. Opened bug under systemd which was autoclosed as not a systemd problem.
+
+Bug 1231503
+Hm... odd, as they say.
+
+We need better understand what the problem is. What does "journalctl -b 0 /usr/sbin/lircmd" say?
+when started from cli lots of 
+
+Jun 23 20:00:06 localhost.localdomain lircd-0.9.2a[31363]: "lircmd.c":395: Bad file descriptor
+Jun 23 20:00:06 localhost.localdomain lircd-0.9.2a[31363]: "lircmd.c":395: Bad file descriptor
+Jun 23 20:00:06 localhost.localdomain lircd-0.9.2a[31363]: "lircmd.c":395: Bad file descriptor
+Jun 23 20:00:06 localhost.localdomain lircd-0.9.2a[31363]: "lircmd.c":395: Bad file descriptor
+Jun 23 20:00:06 localhost.localdomain lircd-0.9.2a[31363]: "lircmd.c":395: Bad file descriptor
+
+after trying to start with systemd
+
+No additional ouput
+There should be more in the logs... What about the "systemctl status -l lircmd.service" output after starting lircmd.service?
+Looking at the lircmd code I filed https://sourceforge.net/p/lirc/tickets/104.
+after starting with service disabled
+
+● lircmd.service - LIRC Infrared Mouse Event Signal Decoder
+   Loaded: loaded (/usr/lib/systemd/system/lircmd.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)
+
+Jun 26 23:51:46 localhost.localdomain systemd[1]: Started LIRC Infrared Mouse Event Signal Decoder.
+
+after starting with service enabled
+
+
+● lircmd.service - LIRC Infrared Mouse Event Signal Decoder
+   Loaded: loaded (/usr/lib/systemd/system/lircmd.service; enabled; vendor preset: disabled)
+   Active: inactive (dead) since Fri 2015-06-26 23:52:29 CDT; 2s ago
+  Process: 21817 ExecStart=/usr/sbin/lircmd -u (code=exited, status=0/SUCCESS)
+ Main PID: 21817 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/lircmd.service
+
+Jun 26 23:52:29 localhost.localdomain systemd[1]: Started LIRC Infrared Mouse Event Signal Decoder.
+You have modified the lircmd.service file, right? Either by editing /lib/systemd/system/lircmd.service (bad way) or adding a /etc/systemd/system/lircmd.service file (the good way)?
+
+The problem seems to be that lircmd misses the --nodaemon argument. This is present in the original lircmd.service file, but seems absent in the options used by systemd here. It's needed, because lircmd runs as a "Type=simple" kind of service which is not supposed to fork. However, without --nodaemon lircmd forks a child and exits. 
+
+Not really sure what systemd does with the child process in this situation. But overall, this seems like a systemd configuration error (?)
+
+If you cannot get things running using this input, please post the lircmd.service file used.
+I edited sudo vim /etc/systemd/system/multi-user.target.wants/lircmd.service 
+when the service was enabled. But only because the service was not working. I had removed the nodaemon trying to get it running. I changed back and --nodaemon is the only option passed to lircmd. This works from the command line with sudo lircmd --nodaemon, but the service still doesn't work through systemd.
+
+These are the contents of my current lircmd.service file
+
+[Unit]
+Description=LIRC Infrared Mouse Event Signal Decoder
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/lircmd --nodaemon
+
+[Install]
+WantedBy=multi-user.target
+
+The output of sudo systemctl status -l lircmd.service after systemctl start lircmd.service
+
+
+● lircmd.service - LIRC Infrared Mouse Event Signal Decoder
+   Loaded: loaded (/usr/lib/systemd/system/lircmd.service; enabled; vendor preset: disabled)
+   Active: inactive (dead) since Sat 2015-06-27 07:56:04 CDT; 1min 1s ago
+  Process: 27758 ExecStart=/usr/sbin/lircmd --nodaemon (code=exited, status=0/SUCCESS)
+ Main PID: 27758 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/lircmd.service
+
+Jun 27 07:56:04 localhost.localdomain systemd[1]: Started LIRC Infrared Mouse Event Signal Decoder.
+Spotted another change I made trying to make it work. I recreated the service file from a fresh lirc install on another system. Contents:
+
+[Unit]
+Description=LIRC Infrared Mouse Event Signal Decoder
+Wants=lircd.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/lircmd  --nodaemon
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+issue persists
+found it. It's a bug in the option parsing code around line 783 in lircmd.cpp. It sets the "lircd:nodaemon" insread of "lircmd:nodaemon" and so on. Most likely a copy-paste error. Stay tuned, a patch is under way (although it can take some time).
+Fixed upstream in https://sourceforge.net/p/lirc/git/ci/5e494bf49825177c.
+
+Can you rebuild lirc using the instructions in CONTRIBUTE.md? I'm about to have summer holidays, not sure if I can land new rpms before that.
+hm... I have managed to make a provisionary upstream release 0.9.3pre1. There are test rpms available at https://copr.fedoraproject.org/coprs/leamas/lirc-0.9.3preview. Using these, your problem should be fixed.
+
+If problem persists, please report upstream at https://sourceforge.net/projects/lirc/

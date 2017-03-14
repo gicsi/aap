@@ -1,0 +1,22 @@
+Description of problem:
+
+tDOM require expat. While building, it uses expat.h and nametab.h headers. Both were bundled along with full expat library, what is wrong. expat.h is shipped by expat-devel but nametab.h - not.
+
+How reproducible:
+Try to build tDOM without bundled expat library.
+
+Actual results:
+In file included from ./generic/xmlsimple.c:69:0:
+./generic/dom.h:249:30: fatal error:nametab.h: No such file or directory
+compilation terminated.
+
+Expected results:
+Building complete.
+nametab.h is not part of the expat public API, it's an internal interface.
+
+$ head -1 expat-2.1.0/lib/nametab.h 
+static const unsigned namingBitmap[] = {
+...
+^ note, static.
+Yes, static.
+S.o tDOM have to use bundled one.

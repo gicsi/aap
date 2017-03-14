@@ -1,0 +1,63 @@
+This is an automatically created tracking bug!  It was created to ensure
+that one or more security vulnerabilities are fixed in affected versions
+of Fedora.
+
+For comments that are specific to the vulnerability please use bugs filed
+against the "Security Response" product referenced in the "Blocks" field.
+
+For more information see:
+http://fedoraproject.org/wiki/Security/TrackingBugs
+
+When submitting as an update, use the fedpkg template provided in the next
+comment(s).  This will include the bug IDs of this tracking bug as well as
+the relevant top-level CVE bugs.
+
+Please also mention the CVE IDs being fixed in the RPM changelog and the
+fedpkg commit message.
+
+NOTE: this issue affects multiple supported versions of Fedora. While only
+one tracking bug has been filed, please correct all affected versions at
+the same time.  If you need to fix the versions independent of each other,
+you may clone this bug as appropriate.
+
+Reproducers, if any, will remain confidential and never be made public, unless done so by the security team.
+
+[bug automatically created by: add-tracking-bugs]
+Use the following template to for the 'fedpkg update' request to submit an
+update for this issue as it contains the top-level parent bug(s) as well as
+this tracking bug.  This will ensure that all associated bugs get updated
+when new packages are pushed to stable.
+
+=====
+
+# bugfix, security, enhancement, newpackage (required)
+type=security
+
+# testing, stable
+request=testing
+
+# Bug numbers: 1234,9876
+bugs=1233615,1236946
+
+# Description of your update
+notes=Security fix for CVE-2015-4700
+
+# Enable request automation based on the stable/unstable karma thresholds
+autokarma=True
+stable_karma=3
+unstable_karma=-3
+
+# Automatically close bugs when this marked as stable
+close_bugs=True
+
+# Suggest that users restart after update
+suggest_reboot=False
+
+======
+
+Additionally, you may opt to use the bodhi update submission link instead:
+
+https://admin.fedoraproject.org/updates/new/?type_=security&bugs=1233615,1236946
+This was fixed with upstream commit 3f7352bf21f8fd7ba3e2fcef9488756f188e12be.  That was contained in the 4.1-rc6 release.  It was backported to the 4.0.6 stable kernel release with commit cba191a815fcc2634022fb8e0a7410c16adf9ced.
+
+Both F21 and F22 already have 4.0.6 released as stable update.  Rawhide is on the 4.2 merge window.  This bug is already fixed in all active Fedora branches.

@@ -1,0 +1,12 @@
+Your package libopkele failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10106289
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047256
+build.log
+Created attachment 1047257
+root.log
+Created attachment 1047258
+state.log
+Fixed in https://koji.fedoraproject.org/koji/taskinfo?taskID=10293130

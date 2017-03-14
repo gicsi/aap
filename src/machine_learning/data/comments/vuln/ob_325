@@ -1,0 +1,7 @@
+The SSL/TLS protocol is subject to man-in-the-middle attacks related to
+renegotiation (see CVE-2009-3555, draft-ietf-tls-renegotiation-00).
+OpenSSL permitted this protocol feature by default and had no way to
+disable it.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.6/common/004_openssl.patch">
+A source code patch exists which remedies this problem.</a>

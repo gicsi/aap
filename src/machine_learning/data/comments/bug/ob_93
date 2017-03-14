@@ -1,0 +1,6 @@
+A small bug in the installation script causes the <tt>/etc/hosts</tt> file to
+be incorrectly formed.<br>
+The resulting file contains a line which reads like:<p>
+<tt>
+&nbsp;&nbsp;&nbsp;#.#.#.# hostname. hostname
+</tt>

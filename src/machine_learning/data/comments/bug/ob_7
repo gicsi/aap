@@ -1,0 +1,7 @@
+The pcvt(4) console driver has a bug that can cause some keyboard
+controllers to lock up when a key is pressed that toggles the status
+of a keyboard LED (scroll lock, caps lock, etc).  The problem is
+generally intermittent and the keyboard can be "unlocked" by unplugging
+and plugging it back in.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/i386/pcvt.patch">
+A source code patch exists which remedies this problem.</a>

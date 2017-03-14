@@ -1,0 +1,6 @@
+An IPv6 MTU handling problem exists that could be used by an attacker
+to cause a denial of service attack against hosts with reachable IPv6
+TCP ports.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/011_ip6.patch">
+A source code patch exists which remedies this problem.</a>

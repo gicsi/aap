@@ -1,0 +1,316 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 008_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+        make obj
+        make depend
+        make includes
+        make
+        make install
+        cd ../../sbin
+        make obj
+        make depend
+        make
+        make install
+
+Index: lib/libssl/src/ssl/t1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/t1_lib.c,v
+retrieving revision 1.5
+diff -p -u -r1.5 t1_lib.c
+--- lib/libssl/src/ssl/t1_lib.c	5 Jan 2009 21:36:39 -0000	1.5
++++ lib/libssl/src/ssl/t1_lib.c	16 Nov 2010 18:28:20 -0000
+@@ -369,14 +369,23 @@ int ssl_parse_clienthello_tlsext(SSL *s,
+ 				switch (servname_type)
+ 					{
+ 				case TLSEXT_NAMETYPE_host_name:
+-					if (s->session->tlsext_hostname == NULL)
++					if (!s->hit)
+ 						{
+-						if (len > TLSEXT_MAXLEN_host_name || 
+-							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
++						if(s->session->tlsext_hostname)
++							{
++							*al = SSL_AD_DECODE_ERROR;
++							return 0;
++							}
++						if (len > TLSEXT_MAXLEN_host_name)
+ 							{
+ 							*al = TLS1_AD_UNRECOGNIZED_NAME;
+ 							return 0;
+ 							}
++						if ((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL)
++							{
++							*al = TLS1_AD_INTERNAL_ERROR;
++							return 0;
++							}
+ 						memcpy(s->session->tlsext_hostname, sdata, len);
+ 						s->session->tlsext_hostname[len]='\0';
+ 						if (strlen(s->session->tlsext_hostname) != len) {
+@@ -389,7 +398,8 @@ int ssl_parse_clienthello_tlsext(SSL *s,
+ 
+ 						}
+ 					else 
+-						s->servername_done = strlen(s->session->tlsext_hostname) == len 
++						s->servername_done = s->session->tlsext_hostname
++							&& strlen(s->session->tlsext_hostname) == len 
+ 							&& strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
+ 					
+ 					break;
+
+Apply by doing:
+	/usr/src
+	patch -p0 < 007_scsi.patch
+
+Then build and install a new kernel.
+
+Index: sys/scsi/scsi_base.c
+===================================================================
+RCS file: /cvs/src/sys/scsi/scsi_base.c,v
+retrieving revision 1.166
+retrieving revision 1.166.2.1
+diff -u -r1.166 -r1.166.2.1
+--- sys/scsi/scsi_base.c	15 Jan 2010 06:27:12 -0000	1.166
++++ sys/scsi/scsi_base.c	24 Aug 2010 09:10:14 -0000	1.166.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: scsi_base.c,v 1.166 2010/01/15 06:27:12 krw Exp $	*/
++/*	$OpenBSD: scsi_base.c,v 1.166.2.1 2010/08/24 09:10:14 stephan Exp $	*/
+ /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
+ 
+ /*
+@@ -723,6 +723,7 @@
+ 	xs->error = XS_NOERROR;
+ 	xs->resid = xs->datalen;
+ 	xs->status = 0;
++	CLR(xs->flags, ITSDONE);
+ 
+ #ifdef SCSIDEBUG
+ 	if (xs->sc_link->flags & SDEV_DB1) {
+Index: sys/dev/ic/gdt_common.c
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/gdt_common.c,v
+retrieving revision 1.47
+retrieving revision 1.47.2.1
+diff -u -r1.47 -r1.47.2.1
+--- sys/dev/ic/gdt_common.c	9 Jan 2010 23:15:06 -0000	1.47
++++ sys/dev/ic/gdt_common.c	19 Aug 2010 10:48:53 -0000	1.47.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: gdt_common.c,v 1.47 2010/01/09 23:15:06 krw Exp $	*/
++/*	$OpenBSD: gdt_common.c,v 1.47.2.1 2010/08/19 10:48:53 stephan Exp $	*/
+ 
+ /*
+  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
+@@ -593,6 +593,7 @@
+ 	bus_dmamap_t xfer;
+ 	int error, retval = SUCCESSFULLY_QUEUED;
+ 	int s;
++	int polled;
+ 
+ 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
+ 
+@@ -621,6 +622,7 @@
+ 		ccb = NULL;
+ 		link = xs->sc_link;
+ 		target = link->target;
++		polled = ISSET(xs->flags, SCSI_POLL);
+  
+ 		if (!gdt_polling && !(xs->flags & SCSI_POLL) &&
+ 		    sc->sc_test_busy(sc)) {
+@@ -759,7 +761,6 @@
+ 					    ccb->gc_cmd_index);
+ 					return (NO_CCB);
+ 				}
+-				scsi_done(xs);
+ 			}
+ 		}
+ 
+@@ -767,7 +768,7 @@
+ 		/*
+ 		 * Don't process the queue if we are polling.
+ 		 */
+-		if (xs->flags & SCSI_POLL) {
++		if (polled) {
+ 			retval = COMPLETE;
+ 			break;
+ 		}
+@@ -1093,7 +1094,7 @@
+ 	struct gdt_intr_ctx ctx;
+ 	int chain = 1;
+ 	int sync_val = 0;
+-	struct scsi_xfer *xs;
++	struct scsi_xfer *xs = NULL;
+ 	int prev_cmd;
+ 	struct gdt_ccb *ccb;
+ 
+@@ -1165,6 +1166,10 @@
+  finish:
+ 
+ 	switch (sync_val) {
++	case 0:
++		if (xs && gdt_from_wait)
++			scsi_done(xs);
++		break;
+ 	case 1:
+ 		scsi_done(xs);
+ 		break;
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 006_scsi.patch
+
+Then build and install a new kernel.
+
+Index: sys/scsi/cd.c
+===================================================================
+RCS file: /cvs/src/sys/scsi/cd.c,v
+retrieving revision 1.164
+retrieving revision 1.164.2.1
+diff -u -r1.164 -r1.164.2.1
+--- sys/scsi/cd.c	28 Feb 2010 21:17:00 -0000	1.164
++++ sys/scsi/cd.c	6 Jul 2010 08:48:50 -0000	1.164.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: cd.c,v 1.164 2010/02/28 21:17:00 krw Exp $	*/
++/*	$OpenBSD: cd.c,v 1.164.2.1 2010/07/06 08:48:50 stephan Exp $	*/
+ /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
+ 
+ /*
+@@ -683,6 +683,7 @@
+ {
+ 	struct cd_softc *sc = xs->sc_link->device_softc;
+ 	struct buf *bp = xs->cookie;
++	int error;
+ 
+ 	splassert(IPL_BIO);
+          
+@@ -704,7 +705,13 @@
+ 
+ 	case XS_SENSE:
+ 	case XS_SHORTSENSE:
+-		if (scsi_interpret_sense(xs) != ERESTART)
++		error = scsi_interpret_sense(xs);
++		if (error == 0) {
++			bp->b_error = 0;
++			bp->b_resid = xs->resid;
++			break;
++		}
++		if (error != ERESTART)
+ 			xs->retries = 0;
+ 		goto retry;
+ 
+Index: sys/scsi/sd.c
+===================================================================
+RCS file: /cvs/src/sys/scsi/sd.c,v
+retrieving revision 1.182
+retrieving revision 1.182.2.1
+diff -u -r1.182 -r1.182.2.1
+--- sys/scsi/sd.c	15 Jan 2010 05:50:31 -0000	1.182
++++ sys/scsi/sd.c	6 Jul 2010 08:48:50 -0000	1.182.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: sd.c,v 1.182 2010/01/15 05:50:31 krw Exp $	*/
++/*	$OpenBSD: sd.c,v 1.182.2.1 2010/07/06 08:48:50 stephan Exp $	*/
+ /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
+ 
+ /*-
+@@ -755,6 +755,7 @@
+ {
+ 	struct sd_softc *sc = xs->sc_link->device_softc;
+ 	struct buf *bp = xs->cookie;
++	int error;
+ 
+ 	splassert(IPL_BIO);
+ 
+@@ -776,7 +777,13 @@
+ 
+ 	case XS_SENSE:
+ 	case XS_SHORTSENSE:
+-		if (scsi_interpret_sense(xs) != ERESTART)
++		error = scsi_interpret_sense(xs);
++		if (error == 0) {
++			bp->b_error = 0;
++			bp->b_resid = xs->resid;
++			break;
++		}
++		if (error != ERESTART)
+ 			xs->retries = 0;
+ 		goto retry;
+ 
+Index: sys/scsi/st.c
+===================================================================
+RCS file: /cvs/src/sys/scsi/st.c,v
+retrieving revision 1.93
+retrieving revision 1.93.2.1
+diff -u -r1.93 -r1.93.2.1
+--- sys/scsi/st.c	15 Jan 2010 05:50:31 -0000	1.93
++++ sys/scsi/st.c	6 Jul 2010 08:48:50 -0000	1.93.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: st.c,v 1.93 2010/01/15 05:50:31 krw Exp $	*/
++/*	$OpenBSD: st.c,v 1.93.2.1 2010/07/06 08:48:50 stephan Exp $	*/
+ /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
+ 
+ /*
+@@ -1088,6 +1088,7 @@
+ {
+ 	struct st_softc *st = xs->sc_link->device_softc;
+ 	struct buf *bp = xs->cookie;
++	int error;
+ 
+ 	splassert(IPL_BIO);
+ 
+@@ -1107,7 +1108,13 @@
+ 
+ 	case XS_SENSE:
+ 	case XS_SHORTSENSE:
+-		if (scsi_interpret_sense(xs) != ERESTART)
++		error = scsi_interpret_sense(xs);
++		if (error == 0) {
++			bp->b_error = 0;
++			bp->b_resid = xs->resid;
++			break;
++		}
++		if (error != ERESTART)
+ 			xs->retries = 0;
+ 		goto retry;
+ 
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 005_pfsync.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/if_pfsync.c
+===================================================================
+RCS file: /cvs/src/sys/net/if_pfsync.c,v
+retrieving revision 1.143.2.1
+retrieving revision 1.143.2.2
+diff -u -r1.143.2.1 -r1.143.2.2
+--- sys/net/if_pfsync.c	24 Mar 2010 20:52:09 -0000	1.143.2.1
++++ sys/net/if_pfsync.c	14 May 2010 09:02:41 -0000	1.143.2.2
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: if_pfsync.c,v 1.143.2.1 2010/03/24 20:52:09 pyr Exp $	*/
++/*	$OpenBSD: if_pfsync.c,v 1.143.2.2 2010/05/14 09:02:41 stephan Exp $	*/
+ 
+ /*
+  * Copyright (c) 2002 Michael Shalayeff
+@@ -1473,6 +1473,7 @@
+ {
+ 	struct pfsync_upd_c *up = buf;
+ 
++	bzero(up, sizeof(*up));
+ 	up->id = st->id;
+ 	pf_state_peer_hton(&st->src, &up->src);
+ 	pf_state_peer_hton(&st->dst, &up->dst);
+@@ -1484,8 +1485,6 @@
+ 	else
+ 		up->expire = htonl(up->expire - time_second);
+ 	up->timeout = st->timeout;
+-
+-	bzero(up->_pad, sizeof(up->_pad)); /* XXX */
+ }
+ 
+ void
+

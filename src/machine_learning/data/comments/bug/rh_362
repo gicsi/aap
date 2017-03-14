@@ -1,0 +1,22 @@
+I'm trying to duplicate the way I did package management across my network in the "yum days".  Basically, I have a set of custom groups defined in a local repository.  Machines have groups installed according to their function.  (There are at least a few folks around who depend on this kind of thing working.)
+
+With yum, you can add a package to one of the groups and the next "yum update" (which gets run nightly by yum-cron) will pick up the new packages on all of the machines that have that group installed.
+
+According to the documentation, dnf doesn't work this way; it only picks up new packages when you specifically call groupupdate.  This means you have to loop through all of the installed groups, and dnf-automatic doesn't have any functionality to do that, so I'm stuck.
+
+I suppose can just abandon dnf-automatic and drop in a cron job that parses the list of installed groups and loops over them running dnf groupupdate.  That seems pretty unfortunate, though.
+
+I'm happy to try my hand at writing a plugin or hacking the source to make this behavior configurable, but I wouldn't know where to start.
+Just found out that "dnf group update" doesn't actually do the same thing as "dnf groupupdate".  And re-testing some things, I found that "dnf group update \*" is really, really verbose (and adding -q makes it completely silent, which isn't all that desirable either) but it actually does pull in any new packages from any of my installed groups.
+
+If only I could make dnf-automatic do the same thing.  Guess I need to dig into the source a bit.
+Hi, dnf-automatic is used for regular package updates only. I am closing this RFE as you're the only one with this specific use case and it needs a big design change. Let's wait till others would like to see group install functionality in dnf-automatic and then reconsider. What you can do on your own is:
+
+* run your cron job with `dnf group update` (without star symbol) it has the same verbosity as `dnf install/update/...`
+
+* add into /etc/dnf/dnf.conf file `exclude="<installed_pkgs - packages_from_all_groups>"` and use and-automatic
+
+I would prefer the first solution.
+Wow, I even wrote that I'm not the only person with this specific use case.  I'll get someone else to chime in.
+Jan, I beg to differ with your assessment that "you're the only one with this specific use case". Those of us that maintain a corporate Fedora infrastructure found yum groups to be the simplest method of managing local package groups for the enterprise. Loosing this capability with dnf is causing many of us to come up with workarounds just like Jason did with a cron job hack.
+I've used the yum groups feature mentioned here extensively at my site (@unl.edu) too.  I'd very much prefer some solution to 'just work' as before, without turning too many extra knobs.

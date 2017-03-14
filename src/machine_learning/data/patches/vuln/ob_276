@@ -1,0 +1,33 @@
+Apply by doing:
+	cd /usr/src/XF4
+	patch -p0 < 002_xorg.patch
+
+And then rebuild and install X:
+	make build
+
+Index: xc/programs/Xserver/render/mitri.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/render/mitri.c,v
+retrieving revision 1.3
+diff -u -r1.3 mitri.c
+--- xc/programs/Xserver/render/mitri.c	8 Jan 2006 21:18:25 -0000	1.3
++++ xc/programs/Xserver/render/mitri.c	2 May 2006 19:09:28 -0000
+@@ -145,7 +145,7 @@
+     if (npoint < 3)
+ 	return;
+     ntri = npoint - 2;
+-    tris = ALLOCATE_LOCAL (ntri & sizeof (xTriangle));
++    tris = ALLOCATE_LOCAL (ntri * sizeof (xTriangle));
+     if (!tris)
+ 	return;
+     for (tri = tris; npoint >= 3; npoint--, points++, tri++)
+@@ -177,7 +177,7 @@
+     if (npoint < 3)
+ 	return;
+     ntri = npoint - 2;
+-    tris = ALLOCATE_LOCAL (ntri & sizeof (xTriangle));
++    tris = ALLOCATE_LOCAL (ntri * sizeof (xTriangle));
+     if (!tris)
+ 	return;
+     first = points++;
+

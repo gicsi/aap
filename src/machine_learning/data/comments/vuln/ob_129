@@ -1,0 +1,8 @@
+A security issue exists in the lpd daemon that may allow an attacker
+to create arbitrary new files in the root directory.  Only machines
+with line printer access (ie: listed in either /etc/hosts.lpd or
+/etc/hosts.equiv) may be used to mount an attack and the attacker
+must have root access on the machine.  OpenBSD does not start lpd
+in the default installation.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/008_lpd.patch">
+A source code patch exists which remedies this problem.</a>

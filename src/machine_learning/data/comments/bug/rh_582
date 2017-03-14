@@ -1,0 +1,22 @@
+Version-Release number of selected component:
+cinnamon-2.6.7-3.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+cmdline:        /usr/bin/python2 /usr/lib/cinnamon-slideshow/cinnamon-slideshow.py
+executable:     /usr/lib/cinnamon-slideshow/cinnamon-slideshow.py
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 3
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+#1 ensure_file_is_image in /usr/lib/cinnamon-slideshow/cinnamon-slideshow.py:134
+#2 on_next_file_complete in /usr/lib/cinnamon-slideshow/cinnamon-slideshow.py:124
+
+Potential duplicate: bug 1228963
+Created attachment 1042037
+File: backtrace
+Created attachment 1042038
+File: environ
+*** This bug has been marked as a duplicate of bug 1228963 ***

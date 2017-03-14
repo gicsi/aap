@@ -1,0 +1,5 @@
+Memory corruption happens during
+ICMP reflection handling.  ICMP reflection is disabled by default.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/001_icmp.patch.sig">
+A source code patch exists which remedies this problem.</a>

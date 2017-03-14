@@ -1,0 +1,32 @@
+Description of problem:
+we are using an insecure password hash on the kickstart files, which allow for spinning/ISO building.In some other kickstarts Ive seen this duplicated also.
+
+Version-Release number of selected component (if applicable):
+21/22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.look at the kickstart files for livecd-creator from specified package
+
+Actual results:
+using insecure md5 for hashing
+
+Expected results:
+use sha256 instead
+
+Additional info:
+patch line containing 'auth --useshadow --enablemd5' to read:
+
+auth --useshadow --passalgo=sha512 
+
+--as documented on RedHat website for use of livecd-creator kickstart 'auth'. This could create SEVERE SECURITY problems if installed in this manner.For some reason we are using sha512 when installed but not on the live 'CD'.
+
+check with:
+authconfig --test | grep hashing (as any user).
+Fixed in spin-kickstarts git: 9f254062c3c78d8480b04b340c1497c08126c0ca
+
+Note that this really doesn't affect the live or cloud images we make, as they don't have passwords at all, but I could see someone basing their spin on one of our kickstarts and getting md5, so it's good to change. 
+
+We can't really change 21/22 as those reflect how the releases were made, but 23 and beyond should be changed.

@@ -1,0 +1,5 @@
+The procfs and fdescfs filesystems had an overrun in their handling
+of uio_offset in their readdir() routines. (These filesystems are not
+enabled by default).
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/011_miscfs.patch">
+A source code patch exists which remedies this problem.</a>

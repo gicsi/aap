@@ -1,0 +1,11 @@
+Your package rubygem-linode failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10150779
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048090
+build.log
+Created attachment 1048091
+root.log
+Created attachment 1048092
+state.log

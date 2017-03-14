@@ -1,0 +1,27 @@
+Description of problem:
+
+dnf update
+Error: Failed to synchronize cache for repo 'updates-source' from 'https://mirrors.fedoraproject.org/metalink?repo=updates-released-source-f22&arch=x86_64': Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried
+
+Version-Release number of selected component (if applicable):
+dnf-1.0.0-1.fc22.noarch
+
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.dnf update
+2.
+3.
+
+Actual results:
+NO UPDATE
+
+Expected results:
+Successful update
+
+Additional info:
+
+This just started happening a few days ago. I have disabled "source" in the 3 fedora repos listed in /etc/yum.repo.d
+*** This bug has been marked as a duplicate of bug 1219283 ***

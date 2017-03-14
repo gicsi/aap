@@ -1,0 +1,7 @@
+Due to incorrect error handling in zlib an attacker could potentially cause a Denial
+of Service attack.
+<a href="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0797">CAN-2004-0797</a>
+.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/017_libz.patch">
+A source code patch exists which remedies this problem.</a>

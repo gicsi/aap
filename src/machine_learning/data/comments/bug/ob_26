@@ -1,0 +1,5 @@
+This patch corrects various OpenBSD/i386 2.5 problems with Y2K. The 2.6
+release (released at 1 Dec 1999) has this problem solved. This patch is
+just a workaround.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/i386/014_y2k.patch">
+A source code patch exists which remedies this problem.</a>

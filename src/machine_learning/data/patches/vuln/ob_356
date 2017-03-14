@@ -1,0 +1,207 @@
+untrusted comment: signature from openbsd 5.5 base secret key
+RWRGy8gxk9N939QYTQR4ilQz+ggyJYBEh6xvD6rJcSISM/QUbENAddngkyz+IjPEgoOTHunuFB0BDIYMvHVfBlUx5xCjibXJ8Ao=
+
+OpenBSD 5.5 errata 8, June 5, 2014:
+
+This patch contains fixes for the following issues:
+
+CVE-2014-0195 - Buffer overflow with crafted DTLS fragments
+CVE-2014-0221 - DTLS infinite recursion flaw with "Hello Request"s
+CVE-2014-0224 - SSL/TLS MITM vulnerability (Early ChangeCipherSpec Attack)
+CVE-2014-3470 - Anonymous ECDH denial of service (null session certs)
+
+Other issues in https://www.openssl.org/news/secadv_20140605.txt
+
+CVE-2010-5298 - SSL_MODE_RELEASE_BUFFERS session injection or denial of service
+This issue was fixed in 004_openssl.patch.sig and subsequently in OpenSSL.
+
+CVE-2014-0198 - SSL_MODE_RELEASE_BUFFERS NULL pointer dereference
+This issue was fixed in 005_openssl.patch.sig and subsequently in OpenSSL.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-55-base.pub -x 008_openssl.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install libssl
+
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+Then restart services which depend on SSL.
+
+Index: lib/libssl/src/ssl/d1_both.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_both.c,v
+retrieving revision 1.2.4.1
+retrieving revision 1.2.4.3
+diff -u -p -r1.2.4.1 -r1.2.4.3
+--- lib/libssl/src/ssl/d1_both.c	8 Apr 2014 00:55:39 -0000	1.2.4.1
++++ lib/libssl/src/ssl/d1_both.c	5 Jun 2014 20:16:56 -0000	1.2.4.3
+@@ -626,8 +626,14 @@ dtls1_reassemble_fragment(SSL *s, struct
+ 		frag->msg_header.frag_len = frag->msg_header.msg_len;
+ 		frag->msg_header.frag_off = 0;
+ 		}
+-	else
++	else {
+ 		frag = (hm_fragment*) item->data;
++		if (frag->msg_header.msg_len != msg_hdr->msg_len) {
++			item = NULL;
++			frag = NULL;
++			goto err;
++		}
++	}
+ 
+ 	/* If message is already reassembled, this must be a
+ 	 * retransmit and can be dropped.
+@@ -784,6 +790,7 @@ dtls1_get_message_fragment(SSL *s, int s
+ 	int i,al;
+ 	struct hm_header_st msg_hdr;
+ 
++again:
+ 	/* see if we have the required fragment already */
+ 	if ((frag_len = dtls1_retrieve_buffered_fragment(s,max,ok)) || *ok)
+ 		{
+@@ -842,8 +849,7 @@ dtls1_get_message_fragment(SSL *s, int s
+ 					s->msg_callback_arg);
+ 			
+ 			s->init_num = 0;
+-			return dtls1_get_message_fragment(s, st1, stn,
+-				max, ok);
++			goto again;
+ 			}
+ 		else /* Incorrectly formated Hello request */
+ 			{
+Index: lib/libssl/src/ssl/s3_clnt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_clnt.c,v
+retrieving revision 1.26
+retrieving revision 1.26.8.2
+diff -u -p -r1.26 -r1.26.8.2
+--- lib/libssl/src/ssl/s3_clnt.c	13 Oct 2012 21:25:14 -0000	1.26
++++ lib/libssl/src/ssl/s3_clnt.c	5 Jun 2014 20:09:30 -0000	1.26.8.2
+@@ -559,7 +559,7 @@ int ssl3_connect(SSL *s)
+ 
+ 		case SSL3_ST_CR_FINISHED_A:
+ 		case SSL3_ST_CR_FINISHED_B:
+-
++			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 			ret=ssl3_get_finished(s,SSL3_ST_CR_FINISHED_A,
+ 				SSL3_ST_CR_FINISHED_B);
+ 			if (ret <= 0) goto end;
+@@ -917,6 +917,7 @@ int ssl3_get_server_hello(SSL *s)
+ 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+ 		goto f_err;
+ 		}
++	    s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 	    s->hit=1;
+ 	    }
+ 	else	/* a miss or crap from the other end */
+@@ -2508,6 +2509,14 @@ int ssl3_send_client_key_exchange(SSL *s
+ 			EC_KEY *tkey;
+ 			int ecdh_clnt_cert = 0;
+ 			int field_size = 0;
++
++			if (s->session->sess_cert == NULL) {
++				ssl3_send_alert(s, SSL3_AL_FATAL,
++				    SSL_AD_UNEXPECTED_MESSAGE);
++				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
++				    SSL_R_UNEXPECTED_MESSAGE);
++				goto err;
++			}
+ 
+ 			/* Did we send out the client's
+ 			 * ECDH share for use in premaster
+Index: lib/libssl/src/ssl/s3_pkt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_pkt.c,v
+retrieving revision 1.20.4.2
+retrieving revision 1.20.4.3
+diff -u -p -r1.20.4.2 -r1.20.4.3
+--- lib/libssl/src/ssl/s3_pkt.c	1 May 2014 14:16:35 -0000	1.20.4.2
++++ lib/libssl/src/ssl/s3_pkt.c	5 Jun 2014 17:05:16 -0000	1.20.4.3
+@@ -1300,6 +1300,14 @@ start:
+ 			goto f_err;
+ 			}
+ 
++		/* Check that we should be receiving a Change Cipher Spec. */
++		if (!(s->s3->flags & SSL3_FLAGS_CCS_OK)) {
++			al = SSL_AD_UNEXPECTED_MESSAGE;
++			SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_CCS_RECEIVED_EARLY);
++			goto f_err;
++		}
++		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
++
+ 		rr->length=0;
+ 
+ 		if (s->msg_callback)
+@@ -1434,7 +1442,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
+ 
+ 	if (s->s3->tmp.key_block == NULL)
+ 		{
+-		if (s->session == NULL) 
++		if (s->session == NULL || s->session->master_key_length == 0) 
+ 			{
+ 			/* might happen if dtls1_read_bytes() calls this */
+ 			SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC,SSL_R_CCS_RECEIVED_EARLY);
+Index: lib/libssl/src/ssl/s3_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_srvr.c,v
+retrieving revision 1.29
+retrieving revision 1.29.8.1
+diff -u -p -r1.29 -r1.29.8.1
+--- lib/libssl/src/ssl/s3_srvr.c	13 Oct 2012 21:25:14 -0000	1.29
++++ lib/libssl/src/ssl/s3_srvr.c	5 Jun 2014 17:05:16 -0000	1.29.8.1
+@@ -670,6 +670,7 @@ int ssl3_accept(SSL *s)
+ 
+ 		case SSL3_ST_SR_CERT_VRFY_A:
+ 		case SSL3_ST_SR_CERT_VRFY_B:
++			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 
+ 			/* we should decide if we expected this one */
+ 			ret=ssl3_get_cert_verify(s);
+@@ -698,6 +699,7 @@ int ssl3_accept(SSL *s)
+ 
+ 		case SSL3_ST_SR_FINISHED_A:
+ 		case SSL3_ST_SR_FINISHED_B:
++			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 			ret=ssl3_get_finished(s,SSL3_ST_SR_FINISHED_A,
+ 				SSL3_ST_SR_FINISHED_B);
+ 			if (ret <= 0) goto end;
+@@ -767,9 +769,10 @@ int ssl3_accept(SSL *s)
+ #if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+ 				s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
+ #else
+-				if (s->s3->next_proto_neg_seen)
++				if (s->s3->next_proto_neg_seen) {
++					s->s3->flags |= SSL3_FLAGS_CCS_OK;
+ 					s->s3->tmp.next_state=SSL3_ST_SR_NEXT_PROTO_A;
+-				else
++				} else
+ 					s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
+ #endif
+ 				}
+Index: lib/libssl/src/ssl/ssl_locl.h
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/ssl_locl.h,v
+retrieving revision 1.20
+retrieving revision 1.20.4.1
+diff -u -p -r1.20 -r1.20.4.1
+--- lib/libssl/src/ssl/ssl_locl.h	27 Feb 2014 21:04:57 -0000	1.20
++++ lib/libssl/src/ssl/ssl_locl.h	5 Jun 2014 17:05:16 -0000	1.20.4.1
+@@ -165,6 +165,12 @@
+ #include <openssl/ssl.h>
+ #include <openssl/symhacks.h>
+ 
++/*
++ * Macro defined here rather than in ssl.h for -stable, avoiding
++ * the need to update installed headers before building.
++ */
++#define SSL3_FLAGS_CCS_OK	0x0080
++
+ #ifdef OPENSSL_BUILD_SHLIBSSL
+ # undef OPENSSL_EXTERN
+ # define OPENSSL_EXTERN OPENSSL_EXPORT
+

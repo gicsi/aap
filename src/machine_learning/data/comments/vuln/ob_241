@@ -1,0 +1,8 @@
+Fix for an integer overflow in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=systrace&amp;sektion=4">systrace(4)</a>'s
+STRIOCREPLACE support, found by
+Chris Evans. This could be exploited for DoS, limited kmem reads or local
+privilege escalation.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.8/common/019_systrace.patch">
+A source code patch exists which remedies this problem.</a>

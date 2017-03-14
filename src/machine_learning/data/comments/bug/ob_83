@@ -1,0 +1,4 @@
+The 2.9 CD cover states that XFree86 3.3.6-current is included.  This is only half-true.
+In fact, the XFree86 included for all architectures is 4.0.3.  On the i386, the
+3.3.6 Xservers have also been included, because 4.0.3 still has weak support for
+some devices which 3.3.6 supported better.

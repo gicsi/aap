@@ -1,0 +1,454 @@
+Created attachment 1042383
+Add yama ptrace sysctl file
+
+The kernel hackers feel this is best solved in the systemd package since that package ships all default sysctl files. See:
+https://lists.fedoraproject.org/pipermail/kernel/2015-June/005897.html
+
+Patch to do so for systemd f22 package attached. This would solve a high priority bug as mentioned in the f22 release notes.
+
++++ This bug was initially created as a clone of Bug #1209492 +++
+
+Since updating to F22 I don't seem to be able to attach strace or gdb to my own processes:
+
+[dwoodhou@i7 ~]$ strace -p `pidof firefox`
+strace: attach: ptrace(PTRACE_ATTACH, ...): Operation not permitted
+
+This occurs even with SELinux in permissive mode.
+
+--- Additional comment from David Woodhouse on 2015-04-07 09:35:14 EDT ---
+
+A temporary workaround is 'echo 0 > /proc/sys/kernel/yama/ptrace_scope'
+
+--- Additional comment from Stephen Smalley on 2015-04-07 12:45:14 EDT ---
+
+This is how Yama is supposed to work.  This is already the default in Ubuntu and ChromeOS.  Developers can tweak /proc/sys/kernel/yama/ptrace_scope to weaken the ptrace restrictions as desired.  Documentation/security/Yama.txt describes Yama and ptrace_scope further.
+
+--- Additional comment from Stephen Smalley on 2015-04-07 12:47:53 EDT ---
+
+Output of the same command on Ubuntu is a bit more helpful:
+$ strace -p `pidof firefox`
+strace: attach: ptrace(PTRACE_ATTACH, ...): Operation not permitted
+Could not attach to process.  If your uid matches the uid of the target
+process, check the setting of /proc/sys/kernel/yama/ptrace_scope, or try
+again as the root user.  For more details, see /etc/sysctl.d/10-ptrace.conf
+
+--- Additional comment from David Woodhouse on 2015-04-07 17:52:09 EDT ---
+
+(In reply to Stephen Smalley from comment #3)
+> Output of the same command on Ubuntu is a bit more helpful:
+> $ strace -p `pidof firefox`
+> strace: attach: ptrace(PTRACE_ATTACH, ...): Operation not permitted
+> Could not attach to process.  If your uid matches the uid of the target
+> process, check the setting of /proc/sys/kernel/yama/ptrace_scope, or try
+> again as the root user.  For more details, see /etc/sysctl.d/10-ptrace.conf
+
+That would be a *slightly* less obnoxious way to break a long-standing kernel ABI, certainly.
+
+Is there really no way we can make this work for the "normal" case of strace/gdb being invoked directly from a local terminal/xterm/emacs, without also allowing the problematic cases?
+
+--- Additional comment from Paul Moore on 2015-04-07 20:16:08 EDT ---
+
+(In reply to David Woodhouse from comment #4)
+> That would be a *slightly* less obnoxious way to break a long-standing
+> kernel ABI, certainly.
+
+If we patched the strace error message would you consider this resolved?
+
+> Is there really no way we can make this work for the "normal" case of
+> strace/gdb being invoked directly from a local terminal/xterm/emacs, without
+> also allowing the problematic cases?
+
+How do you distinguish between a valid use case and a problem use case?
+
+--- Additional comment from David Woodhouse on 2015-04-08 05:40:11 EDT ---
+
+(In reply to Paul Moore from comment #5)
+> (In reply to David Woodhouse from comment #4)
+> > That would be a *slightly* less obnoxious way to break a long-standing
+> > kernel ABI, certainly.
+> 
+> If we patched the strace error message would you consider this resolved?
+
+Perhaps. The error message should also be in gdb and other ptrace users too, of course. And it's a bit of a cop-out to say "if your uid matches the uid of the target process" when that can be verified in code. Likewise to say "check the setting of /proc/sys/kernel/yama/ptrace_scope" when that's world-readable too.
+
+But if that's fixed, and if this is addressing a genuine attack vector that's actually used in practice, and if we've exhausted the discussion below, then I suppose so.
+ 
+> > Is there really no way we can make this work for the "normal" case of
+> > strace/gdb being invoked directly from a local terminal/xterm/emacs, without
+> > also allowing the problematic cases?
+> 
+> How do you distinguish between a valid use case and a problem use case?
+
+To be conservative, let's start by saying that the valid use cases we *really* want to enable easily are running strace or gdb directly from an interactive terminal. Although ideally stuff would also work automatically in emacs, eclipse, etc..
+
+You could perhaps keep the kernel side simple by giving ptrace access to a specified *group* as well as the root user. Then we can have setgid wrappers for strace/gdb which do the appropriate filtering — dropping the additional group unless the criteria are met.
+
+Now we've reduced the problem to some privileged code in userspace deciding if it can meet our criteria.... whatever they are :)
+
+FWIW we already have the usermode helper which does something similar, and might be useful for inspiration.
+
+A first cut might be to say that access should be permitted if we are the process group leader on a real tty. Although an attacker could make a new pty and abuse that, so maybe we need a way to determine that a given pty is 'genuine', allowing a (non-ptraced) gnome-terminal, xterm or other terminal program to mark it as such.
+
+It's starting to look a little complex, but perhaps not insurmountable. And usermode does already do a bunch of similar stuff and could be extended.
+
+Is it worth continuing...?
+
+--- Additional comment from Paul Moore on 2015-04-09 06:46:12 EDT ---
+
+(In reply to David Woodhouse from comment #6)
+> (In reply to Paul Moore from comment #5)
+> > (In reply to David Woodhouse from comment #4)
+> > > That would be a *slightly* less obnoxious way to break a long-standing
+> > > kernel ABI, certainly.
+> > 
+> > If we patched the strace error message would you consider this resolved?
+> 
+> Perhaps. The error message should also be in gdb and other ptrace users too,
+> of course. And it's a bit of a cop-out to say "if your uid matches the uid
+> of the target process" when that can be verified in code. Likewise to say
+> "check the setting of /proc/sys/kernel/yama/ptrace_scope" when that's
+> world-readable too.
+> 
+> But if that's fixed, and if this is addressing a genuine attack vector
+> that's actually used in practice, and if we've exhausted the discussion
+> below, then I suppose so.
+
+Okay, let's punt on this part of the discussion for the moment.
+
+--- Additional comment from Paul Moore on 2015-04-09 07:03:18 EDT ---
+
+(In reply to David Woodhouse from comment #6) 
+> > How do you distinguish between a valid use case and a problem use case?
+> 
+> To be conservative, let's start by saying that the valid use cases we
+> *really* want to enable easily are running strace or gdb directly from an
+> interactive terminal. Although ideally stuff would also work automatically
+> in emacs, eclipse, etc..
+> 
+> You could perhaps keep the kernel side simple by giving ptrace access to a
+> specified *group* as well as the root user. Then we can have setgid wrappers
+> for strace/gdb which do the appropriate filtering — dropping the additional
+> group unless the criteria are met.
+
+I've lost track, don't we have working file capabilities in Fedora now?  Why not just grant CAP_SYS_PTRACE to these applications?
+
+--- Additional comment from David Woodhouse on 2015-04-09 09:16:02 EDT ---
+
+Yeah, we could use CAP_SYS_PTRACE instead of a group. It doesn't matter really.
+
+The important thing is that we don't want an attacker to just circumvent the ptrace protecton by spawning gdb and having gdb do its dirty work for it.
+
+You want the elevated permissions *only* when the debug tool in question is being spawned directly from an appropriate context.
+
+--- Additional comment from Stephen Smalley on 2015-04-09 12:10:19 EDT ---
+
+Yama already permits the ptrace if the tracee is a descendant of the tracer, which is the normal situation when you start a program via gdb or strace.  It just doesn't allow you to attach to unrelated processes.  Also there is a way for programs to explicitly opt into tracing by another process, used by crash handlers.
+
+The first thing to fix IMHO is just to provide an easy way to configure ptrace_scope in a manner preserved across reboots, and update any userspace programs like strace to point the user to that facility, as apparently has already been done in Ubuntu.  And make sure the change in default behavior is captured prominently in the release notes.  That will cover most users just fine; developers will just set it once the first time they run into it and everyone else will just be fine as is.
+
+I wouldn't start chasing more complex ways of inferring whether it is ok to open up holes in the restrictions until after that, and only if there is sufficient demand.  Any such technique is potentially at risk of being abused by malicious code just as easily as by the user.
+
+--- Additional comment from David Woodhouse on 2015-04-09 12:38:32 EDT ---
+
+(In reply to Stephen Smalley from comment #10)
+> The first thing to fix IMHO is just to provide an easy way to configure
+> ptrace_scope in a manner preserved across reboots,
+
+I assume this should work:
+
+echo kernel.yama.ptrace_scope=0 > /etc/sysctl.d/98-yama.conf
+
+--- Additional comment from Stephen Smalley on 2015-04-09 12:43:32 EDT ---
+
+Here is the /etc/sysctl.d/10-ptrace.conf that ships in Ubuntu.  Then programs like strace can just refer users to it...
+
+--- Additional comment from Stephen Smalley on 2015-04-09 12:56:55 EDT ---
+
+
+
+--- Additional comment from Stephen Smalley on 2015-04-09 12:57:53 EDT ---
+
+
+
+--- Additional comment from Paul Moore on 2015-04-13 05:29:45 EDT ---
+
+Thanks guys, I'm away right now but I'll deal with sorting out the patches when I return.
+
+--- Additional comment from Mark Wielaard on 2015-05-08 11:22:08 EDT ---
+
+elfutils libdwfl based tools also rely on ptrace working normally. Given that libdwfl is a shared library that just provides functionality to get process state like threads and backtraces it cannot just add CAP_SYS_PTRACE. Could we make sure that the yama.ptrace_scope=0 by default so tools don't randomly break? For example eu-stack -p `pidof firefox` should just keep working without the user having to become root or change settings that only root can change.
+
+--- Additional comment from Frank Ch. Eigler on 2015-05-11 11:48:40 EDT ---
+
+This is likely to hit developers.
+
+--- Additional comment from Jan Pokorný on 2015-06-18 15:14:03 EDT ---
+
+Reptyr also affected.
+
+--- Additional comment from Mark Wielaard on 2015-06-23 02:05:55 EDT ---
+
+Posted a fix: https://lists.fedoraproject.org/pipermail/kernel/2015-June/005894.html
+So I'm going to argue against this patch. I posit the problem is likely to mainly hit developers, not users. (and no, I don't want to hate on developers, but I do expect them to have more competence to get out of a problem)
+
+gdb -p, strace -p, eu-stack -p, *ptrace_program -p, all exibit problems.  But gdb /bin/bash, strace /bin/bash, all work fine.
+
+yama prevents firefox from ptracing gnome-keyring and stealing all my secrets. But it allows ptrace on ancestors. Programs like chrome use ptrace on ancestors to enforce a security policy. Yama, as it exists today, lets chrome, and kde, and all sorts of other things that ptrace on children to function.
+
+The people who are using utilities which are poking around in random arbitrary applications are the same set of users who are capable of doing
+
+echo "kernel.yama.ptrace_scrope = 0" > /etc/sysctl.d/50-myfile.conf
+
+While someone who installed the gnome-live image is not going to be the person capable of doing the reverse.
+
+Comments 12, 13, 14 in the original bug report included patches to gdb and ptrace to make it easy/obvious to developers who run into problems. It might be wise to do similar things in other applications which hit this problem.
+
+While true, yama creates heartache for some, there have actually been reasonably few complaints, and those that have complained are exactly the set of people competent enough to reduce their own system security. We should not reduce system security for all when the set of users without enough knowledge to turn it on are exactly the set of users who won't be hurt by this security protection!
+Yeah, I don't think it's systemd's role to override kernel security mechanism in this manner. Instead, we can include another example in documentation. sysctl.d(5) already includes some examples like that.
+https://bugzilla.redhat.com/attachment.cgi?id=1012747 contains the sysctl file included with ubunutu....
+On second thought, adding this to the man page does not seem to work. The availability of the setting depends on kernel config, so it is not suitable for upstream sources, and I don't want to patch it in in Fedora. It can go in /usr/share/doc instead:
+
+== /usr/share/doc/systemd/20-yama-ptrace.conf ==
+# The ptrace system call is used for interprocess services,
+# communication and introspection (like synchronisation, signaling,
+# debugging, tracing and profiling) of processes.
+#
+# Usage of ptrace is restricted by normal user permissions. Normal
+# unprivileged processes cannot use ptrace on processes that they
+# cannot send signals to or processes that are running set-uid or
+# set-gid. Nevertheless, processes running under the same uid will
+# usually be able to ptrace one another.
+#
+# Fedora enables the Yama security mechanism which restricts ptrace
+# even further. Sysctl setting kernel.yama.ptrace_scope can have one
+# of the following values:
+#
+# 0 - Normal ptrace security permissions.
+# 1 - Restricted ptrace. Only child processes plus normal permissions.
+# 2 - Admin-only attach. Only executables with CAP_SYS_PTRACE.
+# 3 - No attach. No process may call ptrace at all. Irrevocable.
+#
+# For more information see Documentation/security/Yama.txt in the
+# kernel sources.
+#
+# The default is 1., which allows tracing of child processes, but
+# forbids tracing of arbitrary processes. This allows programs like
+# gdb or strace to work when the most common way of having the
+# debugger start the debuggee is used:
+#    gdb /path/to/program ...
+# Attaching to already running programs is NOT allowed:
+#    gdb -p ...
+# This default setting is suitable for the common case, because it
+# reduces the risk that one hacked process can be used to attack other
+# processes. (For example, a hacked firefox process in a user session
+# will not be able to ptrace the keyring process and extract passwords
+# stored only in memory.)
+#
+# Developers might want to disable those protections to be able to
+# attach debuggers to existing processes. Use
+#   sysctl kernel.yama.ptrace_scope=0
+# for change the setting temporarily, or copy this file to
+# /etc/sysctl.d/20-yama-ptrace.conf to set it for future boots.
+
+kernel.yama.ptrace_scope = 0
+===================================================================
+
+I changed the wording a bit.
+Why not install said file straight under /etc/sysctl.d, with a =1 default (to reinforce/duplicate the kernel's) ?
+I know we want 'distro' supplied stuff in /usr. But in this case I'm with Frank. I'd like to see this in /etc. The point it to make it discoverable. We already have this documented deep down in the kernel. Yet another impossible locate file in /usr/doc isn't doing to really help much. We know this has bitten a number of people. So I'd like to get the solution right out in front of people.
+
+Although I disagree with Frank on setting it to 1. I suggest the file you drop in /etc have the actual kernel.yama.ptrace_scope line commented out.  Show it = 1 to reinforce our kernel default but comment the line out, so the file does absolutely nothing....
+Te rewording is fairly OK, but it does imply that ptrace is only for tracing, and only used by "developers". The goal, IMHO, is to not make an artificial distinction between users and developers and make sure the system isn't broken by default. So maybe reword as:
+
+# The kernel default is 1 when yama restrictions are enabled.
+# This only allows one directional ptrace communication from a parent process
+# and its child processes. But restricts any other interprocess communication.
+# For programs that directly launch other programs, like when using
+# gdb /path/to/program or strace /path/to/program this works. But other
+# invocations like libraries or processes that users run to introspect already
+# running processes on the system won't work. So to not break any other
+# normal use case the default restrictions, when ptrace_scope = 0, should be used.
+
+I think we should follow the Fedora packaging guidelines and use %{_sysctldir}, which is /usr/lib/sysctl.d/. /etc/sysctl.d is for administrators that want to override the defaults on their systems.
+
+I also disagree with the setting to 1, that would still keep the system broken by default. So whether we drop it in /usr/lib/sysctl.d or /etc/sysctl.d it should have 0.
+BTW. There might be an alternative way to solve this. I don't really like it, because it still leaves the system broken by default. But might be agreeable to others. We might instead of fixing the default yama setting make each package which has code that relies on the normal ptrace syscall security restrictions carry their own sysctl file (in %{_sysctrldir} so it can be overridden). That way when a user has a library or program installed that relies on ptrace working normally will have a working system without mysteriously failing programs (assuming they use packaged software, not build from source themselves).
+(In reply to Mark Wielaard from comment #8)
+
+> [...] make each package which has code that relies on the normal ptrace syscall
+> security restrictions carry their own sysctl file (in %{_sysctrldir} so it
+> can be overridden). That way when a user has a library or program installed
+> that relies on ptrace working normally will have a working system [...]
+
+Interesting idea - have an override file included with each of strace, gdb, etc.?
+(In reply to Frank Ch. Eigler from comment #9)
+> (In reply to Mark Wielaard from comment #8)
+> 
+> > [...] make each package which has code that relies on the normal ptrace syscall
+> > security restrictions carry their own sysctl file (in %{_sysctrldir} so it
+> > can be overridden). That way when a user has a library or program installed
+> > that relies on ptrace working normally will have a working system [...]
+> 
+> Interesting idea - have an override file included with each of strace, gdb,
+> etc.?
+
+Clearly very much not ideal. Ideally we fix this in the kernel package or systemd so the default security model just works again. This is why the extra yama restriction is broken and the wrong way around (if your threat model involves a process using bad/dangerous ptrace operations you should confine that process or sandbox it so it cannot use those ptrace operations you are afraid of, not cripple all of user space by default). If we cannot fix that we'll have to audit every package out there that assumes user space ptrace isn't broken. Since in the end we just want to fix the "user has package Reptyr installed and expects it to actually work instead of getting cryptic error message and having to elevate their privileges to root (assuming they can figure out why that and what is needed to get their system working again)". Which I believe can only be correctly done, if we don't fix this properly, by having those packages that need a working ptrace explicitly assert that by installing their own sysctl config file. But lets please just fix this properly instead.
+(In reply to Frank Ch. Eigler from comment #5)
+> Why not install said file straight under /etc/sysctl.d
+This is just one of potentially many many settings that could be overwritten. We want to keep /etc as empty as possible. 
+A %doc file is OK, but we don't want anything more "official" than that.
+
+Files in %{_pkgdocdir}, %{sysctldir}, or /etc/sysctl.d/ are all about as discoverable. Proposed changes to gdb/strace/etc to print a hint will be *much* more obvious and helpful.
+
+> with a =1 default
+The default might change. Systemd shouldn't override (or freeze) kernel defaults.
+
+(In reply to Mark Wielaard from comment #8)
+> because it still leaves the system broken by default.
+I think this is a wrong way to look at it. Current kernel default is suitable for a big majority of users. It's too bad that we cannot have both groups satisfied by default, but we always opt for security first, convenience second.
+
+> We might instead of fixing the default yama setting
+> make each package which has code that relies on the normal ptrace syscall
+> security restrictions carry their own sysctl file (in %{_sysctrldir} so it
+> can be overridden).
+Please no. This would mean that e.g. installing gdb would make the system less secure. Packages can be pulled in by dependencies, and just installing a package should not have any effect on the system.
+
+(In reply to Mark Wielaard from comment #7)
+> Te rewording is fairly OK, but it does imply that ptrace is only for
+> tracing, and only used by "developers".
+This text isn't supposed to explain all capabilities of ptrace in detail. I think it's enough to give a rough overview (avoiding outright falsehoods of course). And I think that if you are using a debugger or strace, you can be considered a developer.
+> Files in %{_pkgdocdir}, %{sysctldir}, or /etc/sysctl.d/ are all about as
+> discoverable.
+
+IME /etc is much more so than the others.
+
+
+> > because it still leaves the system broken by default.
+
+> I think this is a wrong way to look at it. Current kernel default is
+> suitable for a big majority of users. [...]
+
+Maybe so.  Perhaps it needs to be a spin-specific default: Workstation to enable; Server & Cloud to disable?
+
+ 
+> [...] And I think that if you are using a debugger or strace, you can be
+> considered a developer.
+
+(strace is a relatively elementary tool that non-developers are instructed to run, in order to help others diagnose a problem.)
+(In reply to Zbigniew Jędrzejewski-Szmek from comment #11)
+> Systemd shouldn't override (or freeze) kernel defaults.
+
+I do have a patch for the kernel to fix this bug, but the kernel packager maintainer explicitly asked for the systemd package to do this since you carry all other sysctl files that are installed for the kernel. If you don't like to install the sysctl file then I am happy to go back to the kernel maintainers and fix the bug directly in that package. I don't really mind if it is in /usr/lib/sysctl.d or under /etc/sysctl.d (my preference as seen in the patch is the first).
+
+> (In reply to Mark Wielaard from comment #8)
+> > because it still leaves the system broken by default.
+> I think this is a wrong way to look at it. Current kernel default is
+> suitable for a big majority of users. It's too bad that we cannot have both
+> groups satisfied by default, but we always opt for security first,
+> convenience second.
+
+And obviously I also think you are looking at this bug the wrong way :)
+This isn't really about security, it is just an extra restriction that makes some stuff impossible and breaks user space. And we shouldn't break user space or cause packages to be installed in a way to breaks them by default. That said I do think an admin should have to option to add extra user space breaking restrictions if they want to. I don't want to take away that. In some cases that might be appropriate and make certain kinds of exploits harder. Which is a good thing. But it isn't really a security thing because it doesn't really prevent any exploits.
+
+The thread model assumes that an attacker can cause a process that runs in the same user session (security context) as something like gnome-keyring to execute arbitrary code. The process can then just directly query gnome-keyring for any credentials or authentication keys it needs. It doesn't need ptrace for that. The correct security setting to prevent such an issue is to make sure that the processes don't run in the same user context in the first place. Then they cannot communicate directly whether or not they are using ptrace to do it.
+
+> > We might instead of fixing the default yama setting
+> > make each package which has code that relies on the normal ptrace syscall
+> > security restrictions carry their own sysctl file (in %{_sysctrldir} so it
+> > can be overridden).
+> Please no. This would mean that e.g. installing gdb would make the system
+> less secure. Packages can be pulled in by dependencies, and just installing
+> a package should not have any effect on the system.
+
+Clearly this isn't the preferred solution. If we can agree to fix the bug by installing the sysctl file with systemd (or the kernel), then no package needs to install their own. But this is just a result of the bug. Yama is not designed to correctly handle the separation of user or confined domains. So whether or not we make the user do this by hand (if they can discover how to fix their programs in the first place) or make sure packages are not broken when installed automatically has the same "system wide" effect. The goal is just to fix the bug that users have broken programs installed so they don't need to "unbreak" them using some magic incantation.
+
+> (In reply to Mark Wielaard from comment #7)
+> > Te rewording is fairly OK, but it does imply that ptrace is only for
+> > tracing, and only used by "developers".
+> This text isn't supposed to explain all capabilities of ptrace in detail. I
+> think it's enough to give a rough overview (avoiding outright falsehoods of
+> course).
+
+Fair enough. As long as it is clear that ptrace is not just used for debuggers or "developers" and that setting ptrace_scope to anything but 0 will break your system.
+I think /etc/sysctl.d is much much more discoverable than /usr/lib or /usr/doc. But that's not hugely important.
+
+The kernel guys did not agree that the default should be changed. You didn't say so, but your message implies as much. They merely stated they would not be changing this in the kernel and sysctl files do not belong there.
+
+I must say I agree with Zbigniew Jędrzejewski-Szmek. We need to make it easy and discoverable how to turn this off. But security first. There is almost always some sort of tradeoff with security and while this has bitten people, the answer is to make it discoverable, not to punish those who wouldn't know how to turn it on. If people can't figure out how to turn off something that is troubling, arguing that the solution is for a much larger group of people to find this knob and turn it on themselves seems counter intuitive.
+
+strace is a tool only for developers, but you are right, it is simple enough that non-developers run it. That's why patches have been developed for gdb and strace so they help users understand what is going on. That is what you should be arguing for. Making people's systems secure by default and easy to discover/lower the manage their own security properties should be our top priority. You should be driving usability patches rather than fighting system security improvements.
+
+An example sysctl file which does not change the kernel default does that. (although like I said, I think /etc is significantly more likely for someone to find)
+(In reply to Eric Paris from comment #14)
+> The kernel guys did not agree that the default should be changed. You didn't
+> say so, but your message implies as much.
+
+They were fine with shipping the sysctl file as posted with ptrace_scope = 0, they just wished it installed with the systemd package together with the rest of the sysctl files for the kernel to keep them all together. If the systemd maintainers really don't wish to ship it I am happy to go back and apply the fix to the kernel package instead.
+
+> I must say I agree with Zbigniew Jędrzejewski-Szmek. We need to make it easy
+> and discoverable how to turn this off. But security first. There is almost
+> always some sort of tradeoff with security and while this has bitten people,
+> the answer is to make it discoverable, not to punish those who wouldn't know
+> how to turn it on. If people can't figure out how to turn off something that
+> is troubling, arguing that the solution is for a much larger group of people
+> to find this knob and turn it on themselves seems counter intuitive.
+
+Security first is a nice statement, but as was said before this really isn't about security. It is a hardening setting gone wrong. It doesn't really prevent exploits, just makes some ways a bit more work (although it is debatable whether someone would try to use ptrace if there are more direct ways to get at some information). And it breaks ordinary programs in cryptic ways. Even the gnome-keyring developers said "An example of security theater is giving the illusion that somehow one application running in a security context (such as your user session) can keep information from another application running in the same security context." A security first approach would separate processes in different domains or sandbox untrusted processes.
+
+That said, it could still be useful for admins that do want to turn it on, as long as it is clear that will break their systems in some way. That is why we make it an option to turn on and not just disable it. You got choice.
+
+You seem to want to make some distinction between normal users and specially privileged developers. Or imply only special developer programs use ptrace. But that is really not true. You keep pointing at command line programs like strace and ignore other examples of libraries and gui programs people have reported broken. A user is a developer and a developer is a user. We shouldn't restrict or break normal user space programs everybody uses and we shouldn't make people run programs with elevated privileges just to "develop" (now that is a security issue, having to run a process as root is really not recommended).
+
+> strace is a tool only for developers, but you are right, it is simple enough
+> that non-developers run it. That's why patches have been developed for gdb
+> and strace so they help users understand what is going on. That is what you
+> should be arguing for. Making people's systems secure by default and easy to
+> discover/lower the manage their own security properties should be our top
+> priority. You should be driving usability patches rather than fighting
+> system security improvements.
+
+I am all for usability improvements. But as far as I know these patches haven't even been submitted upstream and I haven't seen any for the programs I maintain, neither in fedora, nor upstream. I don't believe blurting out some text to the console (which users might not see if they don't use the libraries or tools from the command line) is really a usability improvement. We should make sure to not install broken packages by default instead of giving cryptic hints that people should unbreak their systems first before usage. Also I don't believe we can easily find all the packages impacted, so we don't even yet know how many should be patched.
+(In reply to Mark Wielaard from comment #15)
+> (In reply to Eric Paris from comment #14)
+> > The kernel guys did not agree that the default should be changed. You didn't
+> > say so, but your message implies as much.
+> 
+> They were fine with shipping the sysctl file as posted with ptrace_scope =
+> 0, they just wished it installed with the systemd package together with the
+> rest of the sysctl files for the kernel to keep them all together. If the
+> systemd maintainers really don't wish to ship it I am happy to go back and
+> apply the fix to the kernel package instead.
+
+That's overstating it a bit.  From a kernel team perspective, we don't care at all one way or another what you set it to.  We just don't want to ship sysctl files in the kernel package because they don't belong there.
+
+So, the net effect is that if you cannot agree on shipping the file in systemd with the rest of the sysctl files (whatever the setting is), then it likely will not be shipped at all.
+(In reply to Josh Boyer from comment #16)
+> That's overstating it a bit.  From a kernel team perspective, we don't care
+> at all one way or another what you set it to.  We just don't want to ship
+> sysctl files in the kernel package because they don't belong there.
+> 
+> So, the net effect is that if you cannot agree on shipping the file in
+> systemd with the rest of the sysctl files (whatever the setting is), then it
+> likely will not be shipped at all.
+
+OK, fair enough. Personally I think the kernel really should ship its the default sysctl files. But since the systemd package currently does, lets ship it with the systemd package then together with the other kernel sysctl files. So we don't end up having to fix up all the individual packages.
+(In reply to Josh Boyer from comment #16)
+> [...]  From a kernel team perspective, we don't care at all
+> one way or another what you set it [the sysctl value] to. [...]
+
+If so (if the effective resulting value is all the same to you),
+why not set it back to 0 in the kernel, and let userspace activate
+the yama-ptrace protections only if desired?
+(In reply to Frank Ch. Eigler from comment #18)
+> (In reply to Josh Boyer from comment #16)
+> > [...]  From a kernel team perspective, we don't care at all
+> > one way or another what you set it [the sysctl value] to. [...]
+> 
+> If so (if the effective resulting value is all the same to you),
+> why not set it back to 0 in the kernel, and let userspace activate
+> the yama-ptrace protections only if desired?
+
+Because it would require us carrying a patch forever.  The Kconfig option enables YAMA and it defaults to 1.  To have YAMA enabled in the kernel so that users could turn on ptrace protections, but default to 0 requires patching the kernel just to do that which is pointless when it's runtime tunable.  I'm not going to do that.
+I now pushed the change proposed in #c4 with some small wording changes based on feedback.
+
+I think the situation is pretty clear. I totally agree that the kernel should not override upstream defaults, and neither should systemd override kernel defaults. I'm keeping the file in %_pkgdocdir because I don't want this to look in any way official: after all systemd should not be in the business of documenting sysctl options provided by the kernel. The expectations of accuracy and up-to-datedness are lower for files in %doc.

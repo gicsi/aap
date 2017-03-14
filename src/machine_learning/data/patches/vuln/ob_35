@@ -1,0 +1,17 @@
+Apply by doing:
+	cd /usr/src/sys/kern
+	patch -p0 < 010_profil.patch
+
+And then rebuild your kernel.
+
+--- kern_exec.c.orig	Mon Aug  9 11:50:57 1999
++++ kern_exec.c	Mon Aug  9 11:51:11 1999
+@@ -434,6 +434,7 @@
+ 	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
+ 		goto exec_abort;
+ 
++	stopprofclock(p);	/* stop profiling */
+ 	fdcloseexec(p);		/* handle close on exec */
+ 	execsigs(p);		/* reset catched signals */
+ 
+

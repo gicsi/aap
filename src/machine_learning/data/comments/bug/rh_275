@@ -1,0 +1,20 @@
+Latest upstream release: 0.16.0
+Current version/release in rawhide: 0.15.1-2.fc23
+URL: https://github.com/google/cadvisor
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+spectool was unable to grab new sources
+
+old source: cadvisor-ec588de.tar.gz
+old sha256: c25bfdd36a5ac4be9cc0233700a5f3f2344b375c187eb64a497fda9866640a18
+
+new source: ./cadvisor-ec588de.tar.gz
+new sha256: c25bfdd36a5ac4be9cc0233700a5f3f2344b375c187eb64a497fda9866640a18
+jchaloup's cadvisor-0.16.0-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=666425
+http://pkgs.fedoraproject.org/cgit/cadvisor.git/patch/?id=0b5f20ac309e6ff02c42e54c1d689c2f75e59416

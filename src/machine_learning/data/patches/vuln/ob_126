@@ -1,0 +1,30 @@
+Apply by doing:
+	cd /usr/src/usr.bin/ssh
+	patch -p0 < 014_openssh.patch
+
+Rebuild and install ssh:
+	make cleandir
+	make obj
+	make depend
+	make && make install
+
+Restart sshd:
+	kill -HUP `cat /var/run/sshd.pid`
+
+Index: channels.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/channels.c,v
+retrieving revision 1.140
+diff -u -r1.140 channels.c
+--- channels.c	10 Oct 2001 22:18:47 -0000	1.140
++++ channels.c	8 Mar 2002 19:38:41 -0000
+@@ -145,7 +145,7 @@
+ {
+ 	Channel *c;
+ 
+-	if (id < 0 || id > channels_alloc) {
++	if (id < 0 || id >= channels_alloc) {
+ 		log("channel_lookup: %d: bad id", id);
+ 		return NULL;
+ 	}
+

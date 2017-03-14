@@ -1,0 +1,57 @@
+Description of problem:
+
+gnome-shell segfaults all the time.
+
+ernel: gnome-shell[27937]: segfault at 18 ip 00007f2815e375fe sp 00007ffd2e57087
+ystemd-coredump[27941]: Process 27937 (gnome-shell) of user 42 dumped core.
+                        
+                        Stack trace of thread 27937:
+                        #0  0x00007f2815e375fe _cogl_winsys_egl_display_destroy 
+                        #1  0x00007f2815e3a73b _cogl_winsys_display_destroy (lib
+                        #2  0x00007f2815e3a7e9 _cogl_winsys_display_setup (libco
+                        #3  0x00007f2815df5a6f cogl_display_setup (libcogl.so.20
+                        #4  0x00007f2815df4fc9 cogl_renderer_check_onscreen_temp
+                        #5  0x00007f2816716e6b clutter_backend_real_create_conte
+                        #6  0x00007f281672f633 _clutter_feature_init (libclutter
+                        #7  0x00007f2816741dd9 clutter_init_real (libclutter-1.0
+                        #8  0x00007f2816741fe0 post_parse_hook (libclutter-1.0.s
+                        #9  0x00007f28138083b7 g_option_context_parse (libglib-2
+                        #10 0x00007f2816742d88 clutter_init (libclutter-1.0.so.0
+                        #11 0x00007f28173b54df meta_clutter_init (libmutter.so.0
+                        #12 0x00007f28173e6032 meta_init (libmutter.so.0)
+                        #13 0x000055bb7a1063ca main (gnome-shell)
+                        #14 0x00007f2811c159a0 __libc_start_main (libc.so.6)
+                        #15 0x000055bb7a1067d9 _start (gnome-shell)
+                        
+                        Stack trace of thread 27939:
+                        #0  0x00007f2811cf0d7d poll (libc.so.6)
+                        #1  0x00007f28137fcf4c g_main_context_iterate.isra.29 (l
+                        #2  0x00007f28137fd05c g_main_context_iteration (libglib
+                        #3  0x00007f28137fd099 glib_worker_main (libglib-2.0.so.
+                        #4  0x00007f28138244e5 g_thread_proxy (libglib-2.0.so.0)
+                        #5  0x00007f2811fc760a start_thread (libpthread.so.0)
+                        #6  0x00007f2811cfc6bd __clone (libc.so.6)
+                        
+                        Stack trace of thread 27940:
+                        #0  0x00007f2811cf0d7d poll (libc.so.6)
+                        #1  0x00007f28137fcf4c g_main_context_iterate.isra.29 (l
+                        #2  0x00007f28137fd2d2 g_main_loop_run (libglib-2.0.so.0
+                        #3  0x00007f2814cab2e6 gdbus_shared_thread_func (libgio-
+                        #4  0x00007f28138244e5 g_thread_proxy (libglib-2.0.so.0)
+                        #5  0x00007f2811fc760a start_thread (libpthread.so.0)
+                        #6  0x00007f2811cfc6bd __clone (libc.so.6)
+
+
+Version-Release number of selected component (if applicable):
+
+Broken with kernel 4.2.0-0.rc0.git1.1.fc23.x86_64
+Fixed by reverting host back to 4.1.0-1.fc23
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. Boot into current Rawhide kernel.
+This is possibly fixed in 4.2.0-0.rc0.git2.1.fc23.
+Yup seems fixed in 4.2.0-0.rc0.git2.1.fc23.

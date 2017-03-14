@@ -1,0 +1,32 @@
+Created attachment 1042993
+screenshot+sosreport+var_logs
+
+Description of problem:
+After we bond the NIC ports successful from RHEVM portal, reboot the RHEVH. During the boot up process, there are some bond errors showed on the screen.
+
+Version-Release number of selected component (if applicable):
+rhevh-7.1-20150512.1.el7ev.iso
+ovirt-node-3.2.2-3.el7.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1) PXE install RHEVH7.1-20150512, reboot the system.
+2) Configure the enp3sf0 with dhcp mode on RHEVH TUI.
+3) Register RHEVH7.1 to RHEVM3.5.3-1.3.el6ev successful, select "Setup Host Networks" on RHEVM portal, the put enp3sf0(bridge:rhevm) and enp3s0f1 into bond0(mode5) on RHEVM, reboot RHEVH.
+4) Put enp4s0f0 and enp4s0f1 into bond1(mode5) on RHEVM portal, reboot RHEVH.
+
+
+Actual results:
+RHEVH7.1 show the following boot errors on the screen during the boot process:
+[   76.192186] bonding: bond1: Error: cannot release enp4s0f0.
+[   76.633689] bonding: bond1: Error: cannot release enp4s0f1.
+Finally, after the system up the bond and the rhevm can up successful.
+
+Expected results:
+Should not show any error during the boot process.
+
+Additional info:
+You can find the error messages and some details in the dmesg and messages log.
+*** This bug has been marked as a duplicate of bug 1225972 ***

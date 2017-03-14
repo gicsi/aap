@@ -1,0 +1,12 @@
+Your package perl-POE-API-Peek failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10130619
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047655
+build.log
+Created attachment 1047656
+root.log
+Created attachment 1047657
+state.log
+*** This bug has been marked as a duplicate of bug 1231252 ***

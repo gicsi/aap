@@ -1,0 +1,5 @@
+IPv6 type 0 route headers can be used to mount a DoS attack against
+hosts and networks.  This is a design flaw in IPv6 and not a bug in
+OpenBSD.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/012_route6.patch">
+A source code patch exists which remedies this problem.</a>

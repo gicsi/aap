@@ -1,0 +1,122 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_bgpd.patch
+
+And then rebuild and install bgpd:
+	cd usr.sbin/bgpd
+	make depend
+	make
+	make install
+
+Index: usr.sbin/bgpd/rde_attr.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/rde_attr.c,v
+retrieving revision 1.76
+diff -u -p -r1.76 rde_attr.c
+--- usr.sbin/bgpd/rde_attr.c	8 May 2008 09:51:46 -0000	1.76
++++ usr.sbin/bgpd/rde_attr.c	18 Feb 2009 20:02:41 -0000
+@@ -832,6 +832,8 @@ aspath_prepend(struct aspath *asp, u_int
+ 		size = 0;
+ 	}
+ 
++	if (quantum > 255)
++		fatalx("aspath_prepend: preposterous prepend");
+ 	if (quantum == 0) {
+ 		/* no change needed but return a copy */
+ 		p = malloc(asp->len);
+@@ -843,7 +845,10 @@ aspath_prepend(struct aspath *asp, u_int
+ 	} else if (type == AS_SET || size + quantum > 255) {
+ 		/* need to attach a new AS_SEQUENCE */
+ 		l = 2 + quantum * sizeof(u_int32_t) + asp->len;
+-		overflow = type == AS_SET ? quantum : (size + quantum) & 0xff;
++		if (type == AS_SET)
++			overflow = quantum;
++		else
++			overflow = size + quantum - 255;
+ 	} else
+ 		l = quantum * sizeof(u_int32_t) + asp->len;
+ 
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_bgpd.patch
+
+And then rebuild and install bgpd:
+	cd usr.sbin/bgpd
+	make depend
+	make
+	make install
+
+Index: usr.sbin/bgpd/rde.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bgpd/rde.c,v
+retrieving revision 1.232
+diff -u -p -r1.232 rde.c
+--- usr.sbin/bgpd/rde.c	15 Jun 2008 10:03:46 -0000	1.232
++++ usr.sbin/bgpd/rde.c	30 Jan 2009 14:33:59 -0000
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: rde.c,v 1.232 2008/06/15 10:03:46 claudio Exp $ */
++/*	$OpenBSD: rde.c,v 1.234 2008/12/28 15:19:21 claudio Exp $ */
+ 
+ /*
+  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+@@ -797,8 +797,10 @@ rde_update_dispatch(struct imsg *imsg)
+ 		/*
+ 		 * if either ATTR_NEW_AGGREGATOR or ATTR_NEW_ASPATH is present
+ 		 * try to fixup the attributes.
++		 * XXX do not fixup if F_ATTR_LOOP is set.
+ 		 */
+-		if (asp->flags & F_ATTR_AS4BYTE_NEW)
++		if (asp->flags & F_ATTR_AS4BYTE_NEW &&
++		    !(asp->flags & F_ATTR_LOOP))
+ 			rde_as4byte_fixup(peer, asp);
+ 
+ 		/* enforce remote AS if requested */
+@@ -1168,14 +1170,14 @@ bad_len:
+ 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
+ bad_flags:
+ 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS,
+-			    op, attr_len);
++			    op, len);
+ 			return (-1);
+ 		}
+ 
+ 		UPD_READ(&a->origin, p, plen, 1);
+ 		if (a->origin > ORIGIN_INCOMPLETE) {
+ 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
+-			    op, attr_len);
++			    op, len);
+ 			return (-1);
+ 		}
+ 		if (a->flags & F_ATTR_ORIGIN)
+@@ -1222,7 +1224,7 @@ bad_flags:
+ 		tmp32 = ntohl(nexthop.v4.s_addr);
+ 		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32)) {
+ 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+-			    op, attr_len);
++			    op, len);
+ 			return (-1);
+ 		}
+ 		a->nexthop = nexthop_get(&nexthop);
+@@ -1347,10 +1349,16 @@ bad_flags:
+ 		    ATTR_PARTIAL))
+ 			goto bad_flags;
+ 		if (aspath_verify(p, attr_len, 1) != 0) {
+-			/* XXX draft does not specify how to handle errors */
+-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+-			    NULL, 0);
+-			return (-1);
++			/*
++			 * XXX RFC does not specify how to handle errors.
++			 * XXX Instead of dropping the session because of a
++			 * XXX bad path just mark the full update as not
++			 * XXX loop-free the update is no longer eligible and
++			 * XXX will not be considered for routing or
++			 * XXX redistribution. Something better is needed.
++			 */
++			a->flags |= F_ATTR_LOOP;
++			goto optattr;
+ 		}
+ 		a->flags |= F_ATTR_AS4BYTE_NEW;
+ 		goto optattr;
+

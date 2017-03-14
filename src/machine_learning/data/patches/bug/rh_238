@@ -1,0 +1,38 @@
+From 9ea8b8aa3bca07689ff59e8b1e102d12d0520c8c Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 3 Jul 2015 01:51:15 +0000
+Subject: [PATCH] Update to 1.10.5 (#1238901)
+
+---
+ python-wrapt.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-wrapt.spec b/python-wrapt.spec
+index a53121f..eeb7965 100644
+--- a/python-wrapt.spec
++++ b/python-wrapt.spec
+@@ -9,8 +9,8 @@
+ %{!?_licensedir: %global license %%doc}
+ 
+ Name:           python-%{sname}
+-Version:        1.10.4
+-Release:        7%{?dist}
++Version:        1.10.5
++Release:        1%{?dist}
+ Summary:        A Python module for decorators, wrappers and monkey patching
+ 
+ License:        BSD
+@@ -102,6 +102,9 @@ popd
+ %endif
+ 
+ %changelog
++* Fri Jul 03 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.10.5-1
++- Update to 1.10.5 (#1238901)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.10.4-7
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

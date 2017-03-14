@@ -1,0 +1,5 @@
+Two remotely triggerable memory leaks in OpenSSL can lead to a denial of
+service in server applications.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/012_openssl.patch.sig">
+A source code patch exists which remedies this problem.</a>

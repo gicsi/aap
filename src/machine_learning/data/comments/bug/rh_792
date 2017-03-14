@@ -1,0 +1,74 @@
+This bug tracks the release of another OSTree
+An updated version of Red Hat Enterprise Linux Atomic Host is available as an OSTree. The following changes are included in this version.  Each change is represented by an RPM name and an Errata number. You can find the details of each change by searching for the errata number at http://access.redhat.com/.
+
+New Tree Version: 7.1.3 (hash: 37b20103022e51fb714295cf48dac651861bbaaa421c5c936750d77730385e9e)
+Changes since Tree Version Unknown (hash: 203dd666d35e1866e753f62503189c98788c38f83fe04dc04fed9e100010c552)
+
+Upgraded:
+
+TBD
+
+The following RPM upgrades are included as part of the RHEL Atomic Host Program and represent the latest release of the software:
+
+atomic-0-0.40.gitf863afd.el7.x86_64
+bind-libs-32:9.9.4-18.el7.x86_64
+bind-libs-lite-32:9.9.4-18.el7.x86_64
+bind-license-32:9.9.4-18.el7.noarch
+bind-utils-32:9.9.4-18.el7.x86_64
+device-mapper-7:1.02.93-3.el7_1.1.x86_64
+device-mapper-event-7:1.02.93-3.el7_1.1.x86_64
+device-mapper-event-libs-7:1.02.93-3.el7_1.1.x86_64
+device-mapper-libs-7:1.02.93-3.el7_1.1.x86_64
+docker-1.6.2-14.el7.x86_64
+docker-python-1.0.0-53.el7.x86_64
+docker-selinux-1.6.2-14.el7.x86_64
+dracut-033-241.el7_1.3.x86_64
+dracut-network-033-241.el7_1.3.x86_64
+etcd-2.0.11-2.el7.x86_64
+freetype-2.4.11-9.el7.x86_64
+gnutls-3.3.8-12.el7_1.1.x86_64
+hawkey-0.5.6-3.atomic.0.el7.x86_64
+iputils-20121221-6.el7_1.1.x86_64
+kernel-3.10.0-229.7.2.el7.x86_64
+kubernetes-0.17.1-4.el7.x86_64
+libgudev1-208-20.el7_1.5.x86_64
+libsolv-0.6.4-45.atomic.0.el7.x86_64
+libxml2-2.9.1-5.el7_0.1.x86_64
+libxml2-python-2.9.1-5.el7_0.1.x86_64
+lvm2-7:2.02.115-3.el7_1.1.x86_64
+lvm2-libs-7:2.02.115-3.el7_1.1.x86_64
+mdadm-3.3.2-2.el7_1.1.x86_64
+ostree-2015.6-4.atomic.el7.x86_64
+ostree-grub2-2015.6-4.atomic.el7.x86_64
+python-2.7.5-18.el7_1.1.x86_64
+python-libs-2.7.5-18.el7_1.1.x86_64
+python-websocket-client-0.14.1-97.el7.noarch
+rpm-ostree-client-2015.5-4.atomic.el7.x86_64
+selinux-policy-3.13.1-23.el7_1.8.noarch
+selinux-policy-targeted-3.13.1-23.el7_1.8.noarch
+systemd-208-20.el7_1.5.x86_64
+systemd-libs-208-20.el7_1.5.x86_64
+systemd-sysv-208-20.el7_1.5.x86_64
+trousers-0.3.11.2-4.el7_1.x86_64
+tzdata-2015a-1.el7.noarch
+
+The following RPMs are newly added in this OSTree:
+cockpit-bridge-0.58-2.el7.x86_64
+cockpit-shell-0.58-2.el7.noarch
+kubernetes-master-0.17.1-4.el7.x86_64
+kubernetes-node-0.17.1-4.el7.x86_64
+libhif-0.2.0-5.atomic.0.el7.x86_64
+librepo-1.7.14-3.atomic.0.el7.x86_64
+
+The following RPMs were removed in this Tree and may not be included in future OSTrees:
+docker-storage-setup-0.0.4-2.el7.noarch
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHSA-2015-1137.html

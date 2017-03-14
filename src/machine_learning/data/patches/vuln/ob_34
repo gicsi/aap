@@ -1,0 +1,51 @@
+Apply by doing:
+	cd /usr/src/sys/miscfs
+	patch -p0 < 011_miscfs.patch
+
+And then rebuild your kernel.
+
+Index: fdesc/fdesc_vnops.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/fdesc/fdesc_vnops.c,v
+retrieving revision 1.13
+retrieving revision 1.15
+diff -u -r1.13 -r1.15
+--- fdesc/fdesc_vnops.c	1999/04/28 09:28:15	1.13
++++ fdesc/fdesc_vnops.c	1999/08/13 07:05:46	1.15
+@@ -718,11 +718,11 @@
+ 
+ 	if (uio->uio_resid < UIO_MX)
+ 		return (EINVAL);
+-	if (uio->uio_offset < 0)
+-		return (EINVAL);
+ 
+ 	error = 0;
+ 	i = uio->uio_offset;
++	if (i < 0)
++		return (EINVAL);
+ 	bzero((caddr_t)&d, UIO_MX);
+ 	d.d_reclen = UIO_MX;
+ 
+Index: procfs/procfs_vnops.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_vnops.c,v
+retrieving revision 1.12
+retrieving revision 1.14
+diff -u -r1.12 -r1.14
+--- procfs/procfs_vnops.c	1998/08/06 19:34:46	1.12
++++ procfs/procfs_vnops.c	1999/08/13 07:05:46	1.14
+@@ -825,11 +825,11 @@
+ 
+ 	if (uio->uio_resid < UIO_MX)
+ 		return (EINVAL);
+-	if (uio->uio_offset < 0)
+-		return (EINVAL);
+ 
+ 	error = 0;
+ 	i = uio->uio_offset;
++	if (i < 0)
++		return (EINVAL);
+ 	bzero((caddr_t)&d, UIO_MX);
+ 	d.d_reclen = UIO_MX;
+ 
+

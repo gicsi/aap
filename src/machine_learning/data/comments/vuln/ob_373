@@ -1,0 +1,14 @@
+Fix several crash causing defects from OpenSSL.<br>
+These include:<br>
+CVE-2015-0209 - Use After Free following d2i_ECPrivatekey error<br>
+CVE-2015-0286 - Segmentation fault in ASN1_TYPE_cmp<br>
+CVE-2015-0287 - ASN.1 structure reuse memory corruption<br>
+CVE-2015-0288 - X509_to_X509_REQ NULL pointer deref<br>
+CVE-2015-0289 - PKCS7 NULL pointer dereferences<br>
+<br>
+Several other issues did not apply or were already fixed.<br>
+For more information, see the
+<a href="https://www.openssl.org/news/secadv_20150319.txt">OpenSSL advisory</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.6/common/020_openssl.patch.sig">
+A source code patch exists which remedies this problem.</a>

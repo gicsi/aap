@@ -1,0 +1,7 @@
+Fortran doesn't work right.  The file /usr/include/g2c.h is missing in the
+release.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/008_fortran.patch">
+A source code patch exists which remedies this problem.</a>
+The patch fixes the source tree and describes how to properly add
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/g2c.h">
+the include file</a> to your system.

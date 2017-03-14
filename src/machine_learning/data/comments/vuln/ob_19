@@ -1,0 +1,7 @@
+A possible new security problem exists if you rely on securelevels and
+immutable or append-only files or character devices.  The fix does not
+permit mmap'ing of immutable or append-only files which are otherwise
+writable, as the VM system will bypass the meaning of the file flags
+when writes happen to the file.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/immutable.patch">
+A source code patch exists which remedies this problem.</a>

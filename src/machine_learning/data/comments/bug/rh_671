@@ -1,0 +1,40 @@
+Version-Release number of selected component:
+pdfshuffler-0.6.0-5.fc21
+
+Additional info:
+reporter:       libreport-2.5.1
+cmdline:        /usr/bin/python2 /usr/bin/pdfshuffler
+executable:     /usr/bin/pdfshuffler
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+pdfshuffler.py:1037:__init__:GError: PDF document is damaged
+
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/pdfshuffler/pdfshuffler.py", line 602, in on_action_add_doc_activate
+    self.add_pdf_pages(filename)
+  File "/usr/lib/python2.7/site-packages/pdfshuffler/pdfshuffler.py", line 418, in add_pdf_pages
+    pdfdoc = PDF_Doc(filename, self.nfile, self.tmp_dir)
+  File "/usr/lib/python2.7/site-packages/pdfshuffler/pdfshuffler.py", line 1037, in __init__
+    self.document = poppler.document_new_from_file (file_prefix + self.copyname, None)
+GError: PDF document is damaged
+
+Local variables in innermost frame:
+nfile: 0
+tmp_dir: '/tmp/tmpYZ7bTNpdfshuffler'
+f: <__main__.GLocalFile at 0x7f47e71fc3c0: file:///home/andrea/Assemblaggio%20pdf/A.pdf>
+self: <pdfshuffler.pdfshuffler.PDF_Doc instance at 0x7f47e7242a70>
+file_prefix: 'file://'
+filename: '/home/andrea/Assemblaggio pdf/A.pdf'
+expected_mime_type: 'application/pdf'
+mime_type: 'application/pdf'
+
+Potential duplicate: bug 1053203
+Created attachment 1041496
+File: backtrace
+Created attachment 1041497
+File: environ
+*** This bug has been marked as a duplicate of bug 769270 ***

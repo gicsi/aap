@@ -1,0 +1,8 @@
+Under some circumstances the zlib compression library can free dynamically
+allocated memory twice.  This is not a security issue on OpenBSD since the BSD
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=free&amp;sektion=3">free(3)</a>
+function detects this.
+There is also a kernel zlib component that may be used by pppd and IPsec.
+The feasibility of attacking the kernel this way is currently unknown.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/022_zlib.patch">
+A source code patch exists which remedies this problem.</a>

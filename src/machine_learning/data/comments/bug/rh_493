@@ -1,0 +1,20 @@
+Description of problem:
+anaconda zips to 100% of installed packages then hangs like forever, not installing anything.This happens on all installs but those using other repos for installation files do not complete the install.They just seem to hang here at 100%.Eventually the Fedorda install (from the website) will complete after minor delay.All spins are affected, whether running 21 or 22. This does not seem to be a problem under emulation with qemu AKA gnome-boxes.
+
+Version-Release number of selected component (if applicable):
+21/22
+
+How reproducible:
+always, on install
+
+Steps to Reproduce:
+1.install fedora or a spin of fedora(with lots more packages)
+
+
+Actual results:
+install hangs
+
+Expected results:
+install should work its way to 100% gradually then finish installing.
+Please post the logs from /tmp as individual, text/plain attachments.
+Seems to be squished in recent builds and spins.

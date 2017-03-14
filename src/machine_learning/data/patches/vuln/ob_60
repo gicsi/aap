@@ -1,0 +1,55 @@
+Apply by doing:
+	cd "the directory containing your X11 source dir"
+	patch -p0 < 023_xlock.patch
+
+To recompile and install xlock:
+
+	cd X11/xc/programs/xlockmore
+	xmkmf
+	make Makefiles
+	make && make install
+
+Index: X11/xc/programs/xlockmore/xlock/xlock.c
+===================================================================
+RCS file: /cvs/X11/xc/programs/xlockmore/xlock/xlock.c,v
+retrieving revision 1.5
+diff -u -r1.5 xlock.c
+--- X11/xc/programs/xlockmore/xlock/xlock.c	2000/04/15 09:46:00	1.5
++++ X11/xc/programs/xlockmore/xlock/xlock.c	2000/08/16 13:46:14
+@@ -296,13 +296,13 @@
+ 
+ 	/* Put on the PROGCLASS.background/foreground resources. */
+ 	s = (char *) malloc(50);
+-	(void) strcpy(s, progclass);
+-	(void) strcat(s, ".background: black");
++	(void) strlcpy(s, progclass, 50);
++	(void) strlcat(s, ".background: black", 50);
+ 	defaults[i++] = s;
+ 
+ 	s = (char *) malloc(50);
+-	(void) strcpy(s, progclass);
+-	(void) strcat(s, ".foreground: white");
++	(void) strlcpy(s, progclass, 50);
++	(void) strlcat(s, ".foreground: white", 50);
+ 	defaults[i++] = s;
+ 
+ 	/* Copy the lines out of the `app_defaults' var and into this array. */
+@@ -944,7 +944,7 @@
+ #if defined( HAVE_SYSLOG_H ) && defined( USE_SYSLOG )
+ 	extern Display *dsp;
+ 
+-	syslog(SYSLOG_WARNING, buf);
++	syslog(SYSLOG_WARNING, "%s", buf);
+ 	if (!nolock) {
+ 		if (strstr(buf, "unable to open display") == NULL)
+ 			syslogStop(XDisplayString(dsp));
+@@ -953,7 +953,7 @@
+ 		closelog();
+ 	}
+ #else
+-	(void) fprintf(stderr, buf);
++	(void) fprintf(stderr, "%s", buf);
+ #endif
+ 	exit(1);
+ }
+

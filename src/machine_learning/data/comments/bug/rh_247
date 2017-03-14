@@ -1,0 +1,34 @@
+Created attachment 1045636
+screenshot, all new windows always look like this
+
+Description of problem: After checking "show hidden files" this setting is sticky and can't be reverted. When I uncheck "show hidden files" it works for the current window only, when I close that window and click on Files again, the new window shows hidden files again.
+
+
+Version-Release number of selected component (if applicable):
+nautilus-3.16.2-1.fc22.x86_64
+
+How reproducible:
+Aways
+
+
+Steps to Reproduce:
+1. Activities > Files
+2. Click the 2nd icon in the upper right corner, and check Show Hidden Files.
+3. Close the files window.
+4. Click Activities > Files. It comes up with hidden files shown. This is expected.
+5. Click the 2nd icon in the upper right corner, uncheck "Show Hidden Files". Hidden files are now not shown. This is also expected.
+6. Close the window.
+7. Activities > Files
+
+Actual results:
+
+This window shows hidden files, and "Show Hidden Files" is checked even though I've previously unchecked it. 
+
+So new windows now always have hidden files shown and I have no way in the GUI to make hidden files no longer shown.
+
+Expected results:
+
+Once I uncheck "Show Hidden Files" this should stick for future newly opened windows.
+
+Additional info:
+User error! Updated the upstream bug.

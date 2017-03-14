@@ -1,0 +1,14 @@
+It was reported that it may be possible to make Wireshark crash by injecting a malformed GSM DTAP packet onto the wire or by convincing someone to read a malformed packet trace file.
+Upstream bug: https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=11201
+Upstream fix: https://code.wireshark.org/review/gitweb?p=wireshark.git;a=commit;h=d93be95fc0e7011e8b4ade9171e7e66146063296
+
+External References:
+
+https://www.wireshark.org/security/wnpa-sec-2015-20.html
+
+Statement:
+
+This issue did not affect the versions of wireshark as shipped with Red Hat Enterprise Linux 5, 6, and 7.
+Created wireshark tracking bugs for this issue:
+
+Affects: fedora-all [bug 1234417]

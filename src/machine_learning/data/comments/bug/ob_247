@@ -1,0 +1,7 @@
+A crash can happen on
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pflow&manpath=OpenBSD+5.4&sektion=4">pflow(4)</a>
+interface destruction.
+
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.4/common/001_pflow.patch">
+A source code patch exists which remedies this problem.</a>

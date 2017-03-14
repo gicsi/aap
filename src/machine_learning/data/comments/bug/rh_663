@@ -1,0 +1,33 @@
+Description of problem:
+I went to yumex to make sure I could add in some apps to my new spin's kickstart file. Lo and behold, they werent there.I installed them, Im running them, but they simply refuse to show up in the package manager no manner what search parameters I use.They should at least show as installed from fc21.These apps are important.
+
+KeePass(v2) (which pulls in mono dependencies for running the version available on the website, which is more up to date.)
+
+ecryptfs + ecryptfs-tools (home folder encryption) 
+[USING it right now with encrypted 'Private']
+
+kryptkeeper (I believe thats how its spelled, its a KDE app for encrypting other folders)
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+There arent any 'steps'. The apps were installed and cannot be found for installation anymore.They have to download to be put into the kickstart file so they go on the live cd.
+
+Actual results:
+(Where did it go george?)
+
+Expected results:
+The apps should be here.
+add clam* to this list as well. I cant find 'clamav' anything in yumex. 
+YET(clamav is installed):
+
+rpm -q clam*
+package clam* is not installed
+
+[me@livingroom ~]$ rpm -q clamav
+clamav-0.98.7-1.fc22.x86_64
+bug needs closing.not a bug anymore. respin seems to have fixed the problem.

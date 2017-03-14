@@ -1,0 +1,5 @@
+The mac68k install utils were mistakenly left off the CD and out of
+the FTP install directories.  These tools have now been added to the
+FTP install directories.  See
+<a href="http://ftp.openbsd.org/pub/OpenBSD/2.5/mac68k/utils">
+http://ftp.openbsd.org/pub/OpenBSD/2.5/mac68k/utils</a>

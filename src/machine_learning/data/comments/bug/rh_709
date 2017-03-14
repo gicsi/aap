@@ -1,0 +1,56 @@
+Description of problem:
+SELinux is preventing /usr/sbin/mysqld from 'read' accesses on the lnk_file /var/log/mysqld.log.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If aby mysqld powinno mieć domyślnie read dostęp do mysqld.log lnk_file.
+Then proszę to zgłosić jako błąd.
+Można utworzyć lokalny moduł polityki, aby umożliwić ten dostęp.
+Do
+można tymczasowo zezwolić na ten dostęp wykonując polecenia:
+# grep mysqld /var/log/audit/audit.log | audit2allow -M mojapolityka
+# semodule -i mojapolityka.pp
+
+Additional Information:
+Source Context                system_u:system_r:mysqld_t:s0
+Target Context                system_u:object_r:var_log_t:s0
+Target Objects                /var/log/mysqld.log [ lnk_file ]
+Source                        mysqld
+Source Path                   /usr/sbin/mysqld
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           mysql-community-server-5.6.25-1.fc21.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-105.13.fc21.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-202.fc21.x86_64 #1 SMP Wed
+                              May 27 22:28:42 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-06-20 10:38:40 CEST
+Last Seen                     2015-06-20 10:38:40 CEST
+Local ID                      db84fb1b-f6f7-4496-a87b-9d93806ed145
+
+Raw Audit Messages
+type=AVC msg=audit(1434789520.296:565): avc:  denied  { read } for  pid=11767 comm="mysqld" name="mysqld.log" dev="dm-1" ino=1441934 scontext=system_u:system_r:mysqld_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=lnk_file permissive=0
+
+
+type=SYSCALL msg=audit(1434789520.296:565): arch=x86_64 syscall=open success=no exit=EACCES a0=1346b80 a1=441 a2=1b6 a3=811 items=0 ppid=11616 pid=11767 auid=4294967295 uid=27 gid=27 euid=27 suid=27 fsuid=27 egid=27 sgid=27 fsgid=27 tty=(none) ses=4294967295 comm=mysqld exe=/usr/sbin/mysqld subj=system_u:system_r:mysqld_t:s0 key=(null)
+
+Hash: mysqld,mysqld_t,var_log_t,lnk_file,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-105.13.fc21.noarch
+
+Additional info:
+reporter:       libreport-2.3.0
+hashmarkername: setroubleshoot
+kernel:         4.0.4-202.fc21.x86_64
+type:           libreport
+Hi, 
+
+Please use: 
+# restorecon /var/log/mysqld.log
+to fix your issue.

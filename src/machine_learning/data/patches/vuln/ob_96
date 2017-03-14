@@ -1,0 +1,113 @@
+A race condition between the ptrace(2) and execve(2) system calls allowed
+an attacker to modify the memory contents of suid/sgid processes which
+could lead to compromise of the super-user account.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 020_ptrace.patch
+And then rebuild your kernel.
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.48.2.1
+diff -u -r1.48.2.1 kern_exec.c
+--- sys/kern/kern_exec.c	2001/06/16 02:30:46	1.48.2.1
++++ sys/kern/kern_exec.c	2002/02/20 08:46:05
+@@ -256,6 +256,12 @@
+ 	int saved_sugid;
+ 
+ 	/*
++	 * Cheap solution to complicated problems.
++	 * Mark this process as "leave me alone, I'm execing".
++	 */
++	p->p_flag |= P_INEXEC;
++
++	/*
+ 	 * figure out the maximum size of an exec header, if necessary.
+ 	 * XXX should be able to keep LKM code from modifying exec switch
+ 	 * when we're still using it, but...
+@@ -635,6 +641,7 @@
+ 	if (KTRPOINT(p, KTR_EMUL))
+ 		ktremul(p, p->p_emul->e_name);
+ #endif
++	p->p_flag &= ~P_INEXEC;
+ 	return (0);
+ 
+ bad:
+@@ -657,7 +664,7 @@
+ 
+ freehdr:
+ 	free(pack.ep_hdr, M_EXEC);
+-	p->p_flag = (p->p_flag & ~(P_SUGID|P_SUGIDEXEC)) | saved_sugid;
++	p->p_flag = (p->p_flag & ~(P_SUGID|P_SUGIDEXEC|P_INEXEC)) | saved_sugid;
+ 	return (error);
+ 
+ exec_abort:
+@@ -690,6 +697,7 @@
+ 	exit1(p, -1);
+ 
+ 	/* NOTREACHED */
++	p->p_flag &= ~P_INEXEC;
+ 	return (0);
+ }
+ 
+Index: sys/kern/sys_process.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sys_process.c,v
+retrieving revision 1.10
+diff -u -r1.10 sys_process.c
+--- sys/kern/sys_process.c	2001/04/09 07:14:18	1.10
++++ sys/kern/sys_process.c	2002/02/20 08:46:05
+@@ -109,6 +109,9 @@
+ 			return (ESRCH);
+ 	}
+ 
++	if ((t->p_flag & P_INEXEC) != 0)
++		return (EAGAIN);
++
+ 	/* Make sure we can operate on it. */
+ 	switch (SCARG(uap, req)) {
+ 	case  PT_TRACE_ME:
+Index: sys/miscfs/procfs/procfs_mem.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_mem.c,v
+retrieving revision 1.10
+diff -u -r1.10 procfs_mem.c
+--- sys/miscfs/procfs/procfs_mem.c	2000/08/15 02:44:12	1.10
++++ sys/miscfs/procfs/procfs_mem.c	2002/02/20 08:46:05
+@@ -281,6 +281,8 @@
+  *	    of the entire system, and the system was not
+  *	    compiled with permanently insecure mode turned
+  *	    on.
++ *
++ *	(3) It's currently execing.
+  */
+ int
+ procfs_checkioperm(p, t)
+@@ -295,6 +297,9 @@
+ 
+ 	if ((t->p_pid == 1) && (securelevel > -1))
+ 		return (EPERM);
++
++	if (t->p_flag & P_INEXEC)
++		return (EAGAIN);
+ 
+ 	return (0);
+ }
+Index: sys/sys/proc.h
+===================================================================
+RCS file: /cvs/src/sys/sys/proc.h,v
+retrieving revision 1.40
+diff -u -r1.40 proc.h
+--- sys/sys/proc.h	2001/04/02 21:43:12	1.40
++++ sys/sys/proc.h	2002/02/20 08:46:06
+@@ -247,6 +247,7 @@
+ 
+ #define	P_NOCLDWAIT	0x080000	/* Let pid 1 wait for my children */
+ #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
++#define P_INEXEC	0x200000	/* Process is doing an exec right now */
+ 
+ /* Macro to compute the exit signal to be delivered. */
+ #define P_EXITSIG(p) \
+

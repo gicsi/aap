@@ -1,0 +1,56 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 012_xdr.patch
+
+And then rebuild and install libc:
+	cd lib/libc
+	make obj cleandir depend
+	make && make install
+
+Note that programs that are linked statically will not pick up the
+change unless they are rebuilt.  This includes the contents of /bin
+and /sbin.
+
+This is the second version of this errata.
+
+Index: lib/libc/rpc/xdr_array.c
+===================================================================
+RCS file: /cvs/src/lib/libc/rpc/xdr_array.c,v
+retrieving revision 1.4
+retrieving revision 1.4.2.2
+diff -u -r1.4 -r1.4.2.2
+--- lib/libc/rpc/xdr_array.c	15 Sep 2001 13:51:01 -0000	1.4
++++ lib/libc/rpc/xdr_array.c	30 Jul 2002 07:30:28 -0000	1.4.2.2
+@@ -45,6 +45,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <limits.h>
+ #include <rpc/types.h>
+ #include <rpc/xdr.h>
+ 
+@@ -71,11 +72,12 @@
+ 	u_int nodesize;
+ 
+ 	/* like strings, arrays are really counted arrays */
+-	if (! xdr_u_int(xdrs, sizep)) {
++	if (!xdr_u_int(xdrs, sizep)) {
+ 		return (FALSE);
+ 	}
+ 	c = *sizep;
+-	if ((c > maxsize) && (xdrs->x_op != XDR_FREE)) {
++	if ((c > maxsize || c > UINT_MAX/elsize) &&
++	    (xdrs->x_op != XDR_FREE)) {
+ 		return (FALSE);
+ 	}
+ 	nodesize = c * elsize;
+@@ -143,7 +145,7 @@
+ 
+ 	elptr = basep;
+ 	for (i = 0; i < nelem; i++) {
+-		if (! (*xdr_elem)(xdrs, elptr)) {
++		if (!(*xdr_elem)(xdrs, elptr)) {
+ 			return(FALSE);
+ 		}
+ 		elptr += elemsize;
+

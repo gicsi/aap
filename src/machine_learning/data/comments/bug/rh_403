@@ -1,0 +1,33 @@
+Created attachment 1043991
+bugreport
+
+Fedora 22
+Cinnamon 2.6.7
+no login/display manager
+kernel-4.0.5-300.fc22.x86_64
+
+
+I tried hibernating from the menu, but it didn't work, saw on RedHat documentation that my swap should be 2 times the amount of RAM if allowing hibernation, so I extended my swap to 8gb and then did "dracut -f", it didn't worked, not even pm-hibernate on command line.
+
+After pm-hibernate I see the lock screen, then the screen turns off and after less than 2 seconds it turns on again, them seems to hibernate properly, shows Fedora's logo and turns the laptop off, after turn it on again, it boots like nothing happened, just like it does every time I turn off my laptop normally without hibernate.
+
+(sometimes, after the lockscreen, it seems to be stuck on fedora's logo, but it seems to be related to https://bugzilla.redhat.com/show_bug.cgi?id=1213216)
+
+I don't have any problem with suspending, it works great.
+
+I'll attach pm-utils-bugreport if it can helps.
+pm-utils are deprecated, suspend/hibernation is now initiated by systemd, e.g. to hibernate from the command line use the following:
+# systemctl hibernate
+
+If initiated from the menu, systemd is also used as the backend.
+
+IIRC swap space twice the RAM is safe very pessimistic setting. It should work in most cases with less swap space.
+
+Otherwise it looks good. From your description it seems the hibernation image is successfully written, but not used during the next boot. IIRC there was an dracut bug not correctly auto detecting hibernation images. In such case you could try to specify the resume partition manually in the kernel boot cmdline:
+
+resume=/dev/sda3
+
+Add the above to command starting linux16 in your grub.cfg if your swap partition is /dev/sda3. If it resolves your problem, this bug should be reassigned to dracut.
+Yes it resolved my problem, thank you.
+Reassigning to dracut.
+*** This bug has been marked as a duplicate of bug 1224151 ***

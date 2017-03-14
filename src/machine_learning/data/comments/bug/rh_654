@@ -1,0 +1,46 @@
+Version-Release number of selected component:
+cinnamon-2.6.7-3.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+cmdline:        python2 /usr/bin/cinnamon-subprocess-wrapper 1 /usr/bin/sensors
+dso_list:       dbus-python-1.2.0-7.fc22.x86_64
+executable:     /usr/bin/cinnamon-subprocess-wrapper
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+connection.py:651:call_blocking:DBusException: org.freedesktop.DBus.Error.UnknownMethod: No existe la interfaz «org.Cinnamon» en el objeto en la ruta /org/Cinnamon
+
+Traceback (most recent call last):
+  File "/usr/bin/cinnamon-subprocess-wrapper", line 14, in <module>
+    PushSubprocessResult(process_id, result)
+  File "/usr/lib64/python2.7/site-packages/dbus/proxies.py", line 70, in __call__
+    return self._proxy_method(*args, **keywords)
+  File "/usr/lib64/python2.7/site-packages/dbus/proxies.py", line 145, in __call__
+    **keywords)
+  File "/usr/lib64/python2.7/site-packages/dbus/connection.py", line 651, in call_blocking
+    message, timeout)
+DBusException: org.freedesktop.DBus.Error.UnknownMethod: No existe la interfaz «org.Cinnamon» en el objeto en la ruta /org/Cinnamon
+
+Local variables in innermost frame:
+byte_arrays: False
+self: <dbus._dbus.SessionBus (session) at 0x7f3e1b9c42f0>
+args: (1, 'acpitz-virtual-0\nAdapter: Virtual device\ntemp1:        +52.0\xc2\xb0C  (crit = +104.0\xc2\xb0C)\ntemp2:        +52.0\xc2\xb0C  (crit = +104.0\xc2\xb0C)\ntemp3:        +27.8\xc2\xb0C  \n\ncoretemp-isa-0000\nAdapter: ISA adapter\nPhysical id 0:  +51.0\xc2\xb0C  (high = +87.0\xc2\xb0C, crit = +105.0\xc2\xb0C)\nCore 0:         +51.0\xc2\xb0C  (high = +87.0\xc2\xb0C, crit = +105.0\xc2\xb0C)\nCore 1:         +49.0\xc2\xb0C  (high = +87.0\xc2\xb0C, crit = +105.0\xc2\xb0C)\n\n')
+object_path: '/org/Cinnamon'
+signature: None
+bus_name: dbus.UTF8String(':1.171')
+get_args_opts: {'byte_arrays': False, 'utf8_strings': False}
+timeout: -1.0
+kwargs: {}
+dbus_interface: 'org.Cinnamon'
+message: <dbus.lowlevel.MethodCallMessage path: /org/Cinnamon, iface: org.Cinnamon, member: PushSubprocessResult dest: :1.171>
+method: 'PushSubprocessResult'
+Created attachment 1041650
+File: backtrace
+Created attachment 1041651
+File: environ
+As cinnamon doesn't have a sensors applet I'm closing this report.
+If you want to stop the error remove the unsupported thirdparty sensors applet.

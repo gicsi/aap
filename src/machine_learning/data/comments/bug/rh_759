@@ -1,0 +1,50 @@
+Version-Release number of selected component:
+gvfs-mtp-1.18.4-1.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/libexec/gvfsd-mtp --spawner :1.3 /org/gtk/gvfs/exec_spaw/0
+crash_function: do_enumerate
+executable:     /usr/libexec/gvfsd-mtp
+kernel:         3.18.6-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            500
+
+Truncated backtrace:
+Thread no. 1 (3 frames)
+ #5 do_enumerate at gvfsbackendmtp.c:1130
+ #6 g_vfs_job_run at gvfsjob.c:197
+ #8 g_thread_proxy at gthread.c:798
+Created attachment 1040722
+File: backtrace
+Created attachment 1040723
+File: cgroup
+Created attachment 1040724
+File: core_backtrace
+Created attachment 1040725
+File: dso_list
+Created attachment 1040726
+File: environ
+Created attachment 1040727
+File: limits
+Created attachment 1040728
+File: maps
+Created attachment 1040729
+File: open_fds
+Created attachment 1040730
+File: proc_pid_status
+Created attachment 1040731
+File: var_log_messages
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

@@ -1,0 +1,5 @@
+Three cases of potential access to freed memory have been found in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pf&amp;sektion=4">pf(4)</a>.
+At least one of them could be used to panic pf with active scrub rules remotely.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/019_pfnorm.patch">
+A source code patch exists which remedies this problem.</a>

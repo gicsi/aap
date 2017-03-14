@@ -1,0 +1,64 @@
++++ This bug was initially created as a clone of Bug #1175220 +++
+
+Description of problem:
+Guest could be booted if we specify rhel7.1 new feature with -M RHEL6.x on rhel7.1 host. Consequences might have 
+1. From end user pov, boot successfully means we support it, however, we do not fully support new features under older machine type.
+
+2. https://bugzilla.redhat.com/show_bug.cgi?id=1175099 and Bug 1172643 - migration/pci-bridge: 7.1rhev->7.0 fails
+
+Version-Release number of selected component (if applicable):
+qemu-kvm-1.5.3-84.el7
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.Boot guest with pci bridge or ovmf with -M rhel6.x on rhel7.1 host
+2.
+3.
+
+Actual results:
+Guest could be booted successfully but migration fail 
+
+Expected results:
+Guest should not be booted if we specify the devices we do not plan to support with -M
+
+
+Additional info:
+
+--- Additional comment from Paolo Bonzini on 2014-12-19 09:00:13 EST ---
+
+PCI bridges were tech preview, so there's no problem in not supporting migration.  AHCI will probably be the same when we start supporting Q35 fully.
+
+For OVMF probably the bug should not be closed, but just deferred to 7.2.  Please clone bug 1175099 for qemu-kvm.
+
+In any case, QE is already opening bug when they find new stuff not working on old machine types.  Changing this to a tracker.
+
+----------------------------------
+Creating a clone of this BZ specifically for OVMF.
+Hai,
+
+I think there is a misunderstanding here, concerning Paolo's remark in bug 1175220 comment 1, also visible in comment 0 in this BZ:
+
+(In reply to Hai Huang from comment #0)
+> --- Additional comment from Paolo Bonzini on 2014-12-19 09:00:13 EST ---
+> 
+> PCI bridges were tech preview, so there's no problem in not supporting
+> migration.  AHCI will probably be the same when we start supporting Q35
+> fully.
+> 
+> For OVMF probably the bug should not be closed, but just deferred to 7.2. 
+> Please clone bug 1175099 for qemu-kvm.
+> 
+> In any case, QE is already opening bug when they find new stuff not working
+> on old machine types.  Changing this to a tracker.
+> 
+> ----------------------------------
+
+In the above Paolo meant that support for OVMF should be expressly denied by QEMU in *both* qemu-kvm and qemu-kvm-rhev, if a too old machine type is selected.
+
+This has been resolved already, in bug 1175099 for qemu-kvm-rhev, and in bug 1176283 for qemu-kvm.
+
+> Creating a clone of this BZ specifically for OVMF.
+
+For the OVMF component there is nothing to do. I'm closing this as NOTABUG. Please reopen if I misunderstood something. Thanks!

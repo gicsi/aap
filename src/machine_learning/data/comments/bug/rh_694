@@ -1,0 +1,33 @@
+Description of problem:
+obviously root can use sudo. Post install, however, unlike with fc21, we have a situation. Nobody is allowed to sudo anything.
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.install fc22(or any spun version of fc22)
+2.sudo <command>
+
+
+Actual results:
+"user is not is sudoers file.This will be reported."
+
+Expected results:
+sudo should work.
+
+Additional info:
+only happens post install with fc22. fedup does not cause this.
+cause is as follows(and I dont know how to fix this in the spinning script):
+
+Nobody is in 'wheel'.
+
+Only as root can you fix the problem by doing a:
+
+sudo usermod -a -G wheel <your-username> 
+
+(post install)
+Hello. My name is DUNCE. I will be your sysadmin today. :-)
+Seems I kept whizzing by the second check box.Should not the first user on the system be admin by default anyways? This makes no sense otherwise.Perhaps we should remove the checkbox and "make it so".

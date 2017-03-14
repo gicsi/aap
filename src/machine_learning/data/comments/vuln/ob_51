@@ -1,0 +1,4 @@
+Hostile servers can force OpenSSH clients to do agent or X11 forwarding.
+This problem is fixed as of OpenSSH 2.3.0.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/035_sshforwarding.patch">
+A source code patch exists which remedies this problem.</a>

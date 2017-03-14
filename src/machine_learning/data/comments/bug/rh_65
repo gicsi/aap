@@ -1,0 +1,11 @@
+http://pkgs.fedoraproject.org/cgit/proxool.git/tree/proxool.pom
+
+    <dependency>
+      <groupId>net.sf.cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version>2.1.3</version>
+    </dependency>
+
+proxool metatdata for xmvn resolution includes cglib however cglib is not listed as a Required package in the spec. One of these is incorrect.
+proxool use (bundle) cglib, see the patch
+Task info: http://koji.fedoraproject.org/koji/taskinfo?taskID=10307487

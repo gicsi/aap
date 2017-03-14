@@ -1,0 +1,35 @@
+Description of problem:
+
+Attempting to install Filezilla on F22 fails due to missing libx_gtk3u_core-3.0.so.0 library that doesn't seem to be provided by any package.
+
+
+Version:
+`dnf info filezilla` shows 3.11.0.2 by the error that I get indicates filezilla-3.10.3-1.fc22.x86_64.
+
+
+How reproducible:
+
+Always
+
+
+Steps to Reproduce:
+1. `sudo dnf install filezilla`
+
+Actual results:
+$ sudo dnf install filezilla
+Last metadata expiration check performed 0:04:09 ago on Wed Jun 24 09:57:36 2015.
+Error: package filezilla-3.10.3-1.fc22.x86_64 requires libwx_gtk3u_core-3.0.so.0()(64bit), but none of the providers can be installed
+
+
+Expected results:
+Actually install Filezilla
+
+
+Additional info:
+This is an upgrades f21 install. Before I got to this problem, filezilla was installed but unable to run due to missing `libwx_gtk3u_*` libraries. So I uninstalled it and now I'm here with this problem.
+
+I have both the mangelajo-kicad and the rpmfusion-* repos installed.
+
+I would think I'd need the wxGTK3 packages installed, but those don't seem to contain any libraries in them, or if so they don't install anything named `libwx_gtk3*`
+No I don't think so, I've several f22 installed system running filezilla just fine. This doesn't permit any doubt about any error with filezilla.
+Something else is broken on your system, please read again the upgrade procedure and try to clean-up things with yum/dnf and copr/3rd part repository.

@@ -1,0 +1,61 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhnjCiKIVWlH+WM3VbDnHSYJguR/OkaUq3sWEF+mwtfqv4Q1h/XWkRQJSx+jtyzo5ftvDF3H02IKxreqGe4jC8wI=
+
+OpenBSD 5.6 errata 23, Apr 30, 2015:
+
+Missing validity checks in the kernel ELF loader meant malformed binaries
+could trigger kernel panics or view kernel memory.
+
+Apply by doing:
+    cd /usr/src
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 023_elf.patch.sig -m - | \
+        patch -p0
+
+Then build and install a new kernel:
+
+    cd /usr/src/sys/arch/`machine`/conf
+    KK=`sysctl -n kern.osversion | cut -d# -f1`
+    config $KK
+    cd ../compile/$KK
+    make
+    make install
+
+Index: sys/kern/exec_elf.c
+===================================================================
+RCS file: /cvs/src/sys/kern/exec_elf.c,v
+retrieving revision 1.100
+diff -u -p -r1.100 exec_elf.c
+--- sys/kern/exec_elf.c	13 Jul 2014 23:59:58 -0000	1.100
++++ sys/kern/exec_elf.c	30 Apr 2015 18:24:38 -0000
+@@ -364,6 +364,8 @@ ELFNAME(load_file)(struct proc *p, char 
+ 
+ 	for (i = 0; i < eh.e_phnum; i++) {
+ 		if (ph[i].p_type == PT_LOAD) {
++			if (ph[i].p_filesz > ph[i].p_memsz)
++				goto bad1;
+ 			loadmap[idx].vaddr = trunc_page(ph[i].p_vaddr);
+ 			loadmap[idx].memsz = round_page (ph[i].p_vaddr +
+ 			    ph[i].p_memsz - loadmap[idx].vaddr);
+@@ -551,14 +553,20 @@ ELFNAME2(exec,makecmds)(struct proc *p, 
+ 
+ 	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
+ 		if (pp->p_type == PT_INTERP && !interp) {
+-			if (pp->p_filesz >= MAXPATHLEN)
++			if (pp->p_filesz < 2 || pp->p_filesz > MAXPATHLEN)
+ 				goto bad;
+ 			interp = pool_get(&namei_pool, PR_WAITOK);
+ 			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
+ 			    pp->p_offset, interp, pp->p_filesz)) != 0) {
+ 				goto bad;
+ 			}
++			if (interp[pp->p_filesz - 1] != '\0')
++				goto bad;
+ 		} else if (pp->p_type == PT_LOAD) {
++			if (pp->p_filesz > pp->p_memsz) {
++				error = EINVAL;
++				goto bad;
++			}
+ 			if (base_ph == NULL)
+ 				base_ph = pp;
+ 		}
+

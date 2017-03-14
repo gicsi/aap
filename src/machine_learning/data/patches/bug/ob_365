@@ -1,0 +1,39 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhm1oYJ+x78ztfl4WzBr6XPPplOi58yDQ6tZ3wz7MUlK3QFAcailHfrqzEer1et6rTYZ8Jj4ycJZzc6FRmEjBLgA=
+
+OpenBSD 5.6 errata 4, Oct 20, 2014:
+
+Executable headers with an unaligned address will trigger a kernel panic.
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 004_kernexec.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install a new kernel.
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.144
+diff -u -p -r1.144 kern_exec.c
+--- sys/kern/kern_exec.c	12 Jul 2014 18:43:32 -0000	1.144
++++ sys/kern/kern_exec.c	19 Oct 2014 16:56:48 -0000
+@@ -424,10 +424,12 @@ sys_execve(struct proc *p, void *v, regi
+ 
+ 	vm = pr->ps_vmspace;
+ 	/* Now map address space */
+-	vm->vm_taddr = (char *)pack.ep_taddr;
+-	vm->vm_tsize = atop(round_page(pack.ep_tsize));
+-	vm->vm_daddr = (char *)pack.ep_daddr;
+-	vm->vm_dsize = atop(round_page(pack.ep_dsize));
++	vm->vm_taddr = (char *)trunc_page(pack.ep_taddr);
++	vm->vm_tsize = atop(round_page(pack.ep_taddr + pack.ep_tsize) -
++	    trunc_page(pack.ep_taddr));
++	vm->vm_daddr = (char *)trunc_page(pack.ep_daddr);
++	vm->vm_dsize = atop(round_page(pack.ep_daddr + pack.ep_dsize) -
++	    trunc_page(pack.ep_daddr));
+ 	vm->vm_dused = 0;
+ 	vm->vm_ssize = atop(round_page(pack.ep_ssize));
+ 	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
+

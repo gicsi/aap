@@ -1,0 +1,19 @@
+Description of problem:
+rhsm_d and rhsmcertd fail to start with module import errors:
+
+Traceback (most recent call last):
+  File "src/daemons/rhsmcertd-worker.py", line 26, in <module>
+    from subscription_manager import ga
+ImportError: cannot import name ga
+
+
+Version-Release number of selected component (if applicable):
+subscription-manager-1.15.5-1
+
+How reproducible:
+always
+
+
+Steps to Reproduce:
+1. sudo /usr/libexec/rhsmcertd-worker
+*** This bug has been marked as a duplicate of bug 1241247 ***

@@ -1,0 +1,49 @@
+Description of problem:
+
+After installation of qt-creator you can't select language, other than English.
+qt-creator-data.noarch installed. qm files presented in /usr/share/qtcreator/translations/. But they are not presented in qtcreator options.
+
+Version-Release number of selected component (if applicable):
+qt-creator.x86_64      3.4.1-1.fc22
+qt-creator-data.noarch 3.4.1-1.fc22
+qt-creator-doc.noarch  3.4.1-1.fc22
+
+
+How reproducible:
+
+Steps to Reproduce:
+1. install qt-creator.x86_64
+2. start it, go to tools -> options -> environment
+3. try to select language, other than English
+
+Actual results:
+only English presented in language list
+
+Expected results:
+Be able to select languages from /usr/share/qtcreator/translations/
+
+Additional info:
+Hello,
+
+You also need to install qt5-translations, qt-creator is coded in such way that if the Qt5 translations are missing, then it won't list it's own translations since the result would be incomplete.
+
+I suppose to make this more obvious to users, I could create a new qt-creator-translations package which would carry a dependency on qt5-translations. Would that help?
+Hello.
+
+Yes, I think it's good solution.
+qt-creator-3.4.1-3.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/qt-creator-3.4.1-3.fc21
+qt-creator-3.4.1-3.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/qt-creator-3.4.1-3.fc22
+Package qt-creator-3.4.1-3.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing qt-creator-3.4.1-3.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10531/qt-creator-3.4.1-3.fc21
+then log in and leave karma (feedback).
+qt-creator-3.4.1-3.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+qt-creator-3.4.1-3.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

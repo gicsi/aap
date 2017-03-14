@@ -1,0 +1,137 @@
+From 6ecb4748590ea2fa597768ece4913ca3de484df7 Mon Sep 17 00:00:00 2001
+From: Matus Marhefka <mmarhefk@redhat.com>
+Date: Mon, 29 Jun 2015 16:22:55 +0200
+Subject: [PATCH] added blacklisting of test cases
+
+Added "--blacklist" option which provides a blacklist file
+to the rpmgrill in format:
+
+MacroExpansion
+MakeError
+...
+
+where each blacklisted test case is on a separate line.
+Found issues in test cases specified in blacklist file will
+not be reported by rpmgrill.
+---
+ bin/rpmgrill     |  8 +++++++-
+ lib/RPM/Grill.pm | 38 +++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 44 insertions(+), 2 deletions(-)
+
+diff --git a/bin/rpmgrill b/bin/rpmgrill
+index 30b8f67..d106c82 100755
+--- a/bin/rpmgrill
++++ b/bin/rpmgrill
+@@ -57,6 +57,7 @@ OPTIONS:
+ 
+   --list-plugins     list available plugins
+   --disable=[LIST]   disable one or more plugins, e.g.: --disable=virus,buildlog
++  --blacklist=[FILE] do not report fails in tests listed in blacklist file
+ 
+   -v, --verbose  show verbose progress indicators
+   -n, --dry-run  make no actual changes
+@@ -104,6 +105,7 @@ sub man {
+ our $debug   = 0;
+ our $force   = 0;
+ our $verbose = 0;
++our $blacklist = '';
+ our $NOT     = '';              # print "blahing the blah$NOT\n" if $debug
+ our $list_plugins;              # list plugins, and quit
+ our @disable_plugin;            # plugins to disable
+@@ -117,6 +119,7 @@ sub handle_opts {
+ 
+         'list-plugins' => \$list_plugins,
+         'disable=s'  => \@disable_plugin,
++	'blacklist=s' => \$blacklist,
+ 
+         help         => \&usage,
+         man          => \&man,
+@@ -174,6 +177,9 @@ sub main {
+     -d "$base_dir/src"
+         or die "$ME: Base directory $base_dir does not have a 'src' subdir\n";
+ 
++    # Load blacklisted test cases.
++    RPM::Grill::load_blacklist($blacklist);
++
+     # Find all plugins. Do this before cd'ing, in case we have relative
+     # paths in our @INC.
+     my @all_plugins = RPM::Grill->plugins();
+@@ -229,7 +235,7 @@ rpmgrill - static analysis of koji builds
+ 
+ =head1	SYNOPSIS
+ 
+-rpmgrill [--disable=LIST] [--verbose] BASEDIR
++rpmgrill [--disable=LIST] [--verbose] [--blacklist=FILE] BASEDIR
+ 
+ rpmgrill  B<--help>  |  B<--version> | B<--man>
+ 
+diff --git a/lib/RPM/Grill.pm b/lib/RPM/Grill.pm
+index 130c243..4aff2a4 100644
+--- a/lib/RPM/Grill.pm
++++ b/lib/RPM/Grill.pm
+@@ -30,6 +30,9 @@ use RPM::Grill::RPM;
+ ###############################################################################
+ # BEGIN user-configurable section
+ 
++# Associative array of blacklisted test cases.
++our %blacklisted_tests;
++
+ # When a plugin calls ->gripe, these are the fields it can set. A '*'
+ # next to the name means 'this is a required field'.
+ our @Gripe_Fields = qw(code* arch subpackage context diag* severity confidence);
+@@ -101,6 +104,31 @@ $Is_64bit{$_} = 0  for @Non_RPM_Arches;
+ # BEGIN data-gathering code
+ 
+ #
++# Loads blacklisted test cases from file passed as the first and only argument
++# into the %blacklisted_tests global associative array.
++sub load_blacklist {
++    my $blacklist = shift;
++
++    if ($blacklist eq '') {
++        return;
++    }
++
++    open my $fh, '<', $blacklist
++        or die "Unable to open $blacklist: $!";
++    my @tests = <$fh>;
++
++    # Create associative array with blacklisted tests
++    for my $el (@tests) {
++        chomp($el);
++	if (substr($el, 0, 1) ne '#') {
++            $blacklisted_tests{$el} = $el;
++        }
++    }
++
++    close $fh
++}
++
++#
+ # FIXME: what is $self going to be?
+ #
+ # Obviously it should have exactly one spec.  But for other packages
+@@ -940,10 +968,18 @@ sub gripe {
+         }
+     }
+ 
++    my $sig = gripe_signature(\%actual_gripe);
++
++    # Check if test case is not blacklisted, if it is, do not gripe about it.
++    $sig =~ /.*code:([a-zA-Z]+)\].*$/;
++    my $test_case = $1;
++    if (exists $blacklisted_tests{$test_case}) {
++        return;
++    }
++
+     # Usability: aggregate similar gripes. For instance, if we get two or
+     # more gripes that are identical except for the arch (i686,x86_64,...)
+     # we combine them into one.
+-    my $sig = gripe_signature(\%actual_gripe);
+     if (my $g = $self->{gripes_by_signature}{$module}{$sig}) {
+         my $found = 0;
+ 
+-- 
+1.9.3
+
+

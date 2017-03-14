@@ -1,0 +1,146 @@
+Apply by doing:  
+	cd /usr/src
+	patch -p0 < 007_ssl.patch
+
+And then rebuild and install OpenSSL:
+	rm -fr /usr/obj/lib/libssl
+	cd lib/libssl
+	make obj     
+	make depend
+	make
+	make install
+
+
+Index: lib/libssl/src/crypto/mem.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/mem.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 mem.c
+--- lib/libssl/src/crypto/mem.c	2002/09/14 11:18:02	1.6
++++ lib/libssl/src/crypto/mem.c	2003/02/22 04:58:05
+@@ -251,6 +251,8 @@ void *CRYPTO_malloc_locked(int num, cons
+ 	{
+ 	void *ret = NULL;
+ 
++	if (num < 0) return NULL;
++
+ 	allow_customize = 0;
+ 	if (malloc_debug_func != NULL)
+ 		{
+@@ -283,6 +285,8 @@ void *CRYPTO_malloc(int num, const char 
+ 	{
+ 	void *ret = NULL;
+ 
++	if (num < 0) return NULL;
++
+ 	allow_customize = 0;
+ 	if (malloc_debug_func != NULL)
+ 		{
+@@ -305,6 +309,8 @@ void *CRYPTO_realloc(void *str, int num,
+ 
+ 	if (str == NULL)
+ 		return CRYPTO_malloc(num, file, line);
++
++	if (num < 0) return NULL;
+ 
+ 	if (realloc_debug_func != NULL)
+ 		realloc_debug_func(str, NULL, num, file, line, 0);
+Index: lib/libssl/src/ssl/s3_pkt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_pkt.c,v
+retrieving revision 1.7
+diff -u -p -r1.7 s3_pkt.c
+--- lib/libssl/src/ssl/s3_pkt.c	2002/09/10 16:31:57	1.7
++++ lib/libssl/src/ssl/s3_pkt.c	2003/02/22 04:58:05
+@@ -238,6 +238,8 @@ static int ssl3_get_record(SSL *s)
+ 	unsigned int mac_size;
+ 	int clear=0;
+ 	size_t extra;
++	int decryption_failed_or_bad_record_mac = 0;
++	unsigned char *mac = NULL;
+ 
+ 	rr= &(s->s3->rrec);
+ 	sess=s->session;
+@@ -353,8 +355,11 @@ again:
+ 			/* SSLerr() and ssl3_send_alert() have been called */
+ 			goto err;
+ 
+-		/* otherwise enc_err == -1 */
+-		goto decryption_failed_or_bad_record_mac;
++		/* Otherwise enc_err == -1, which indicates bad padding
++		 * (rec->length has not been changed in this case).
++		 * To minimize information leaked via timing, we will perform
++		 * the MAC computation anyway. */
++		decryption_failed_or_bad_record_mac = 1;
+ 		}
+ 
+ #ifdef TLS_DEBUG
+@@ -380,28 +385,46 @@ printf("\n");
+ 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
+ 			goto f_err;
+ #else
+-			goto decryption_failed_or_bad_record_mac;
++			decryption_failed_or_bad_record_mac = 1;
+ #endif			
+ 			}
+ 		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
+-		if (rr->length < mac_size)
++		if (rr->length >= mac_size)
+ 			{
++			rr->length -= mac_size;
++			mac = &rr->data[rr->length];
++			}
++		else
++			{
++			/* record (minus padding) is too short to contain a MAC */
+ #if 0 /* OK only for stream ciphers */
+ 			al=SSL_AD_DECODE_ERROR;
+ 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
+ 			goto f_err;
+ #else
+-			goto decryption_failed_or_bad_record_mac;
++			decryption_failed_or_bad_record_mac = 1;
++			rr->length = 0;
+ #endif
+ 			}
+-		rr->length-=mac_size;
+ 		i=s->method->ssl3_enc->mac(s,md,0);
+-		if (memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
++		if (mac == NULL || memcmp(md, mac, mac_size) != 0)
+ 			{
+-			goto decryption_failed_or_bad_record_mac;
++			decryption_failed_or_bad_record_mac = 1;
+ 			}
+ 		}
+ 
++	if (decryption_failed_or_bad_record_mac)
++		{
++		/* A separate 'decryption_failed' alert was introduced with TLS 1.0,
++		 * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
++		 * failure is directly visible from the ciphertext anyway,
++		 * we should not reveal which kind of error occured -- this
++		 * might become visible to an attacker (e.g. via a logfile) */
++		al=SSL_AD_BAD_RECORD_MAC;
++		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
++		goto f_err;
++		}
++
+ 	/* r->length is now just compressed */
+ 	if (s->expand != NULL)
+ 		{
+@@ -443,14 +466,6 @@ printf("\n");
+ 
+ 	return(1);
+ 
+-decryption_failed_or_bad_record_mac:
+-	/* Separate 'decryption_failed' alert was introduced with TLS 1.0,
+-	 * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
+-	 * failure is directly visible from the ciphertext anyway,
+-	 * we should not reveal which kind of error occured -- this
+-	 * might become visible to an attacker (e.g. via logfile) */
+-	al=SSL_AD_BAD_RECORD_MAC;
+-	SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+ f_err:
+ 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
+ err:
+

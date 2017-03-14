@@ -1,0 +1,113 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 012_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+        make obj
+        make depend
+        make includes
+        make
+        make install
+        cd ../../sbin
+        make obj
+        make depend
+        make
+        make install
+
+Index: lib/libssl/src//crypto/bn/bn_div.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/bn/bn_div.c,v
+retrieving revision 1.10
+diff -p -u -p -u -r1.10 bn_div.c
+--- lib/libssl/src//crypto/bn/bn_div.c	5 Jan 2009 21:36:38 -0000	1.10
++++ lib/libssl/src//crypto/bn/bn_div.c	12 Mar 2010 12:39:10 -0000
+@@ -102,7 +102,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, cons
+ 	/* The next 2 are needed so we can do a dv->d[0]|=1 later
+ 	 * since BN_lshift1 will only work once there is a value :-) */
+ 	BN_zero(dv);
+-	bn_wexpand(dv,1);
++	if(bn_wexpand(dv,1) == NULL) goto end;
+ 	dv->top=1;
+ 
+ 	if (!BN_lshift(D,D,nm-nd)) goto end;
+Index: lib/libssl/src//crypto/bn/bn_gf2m.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/bn/bn_gf2m.c,v
+retrieving revision 1.2
+diff -p -u -p -u -r1.2 bn_gf2m.c
+--- lib/libssl/src//crypto/bn/bn_gf2m.c	5 Jan 2009 21:36:38 -0000	1.2
++++ lib/libssl/src//crypto/bn/bn_gf2m.c	12 Mar 2010 12:39:10 -0000
+@@ -294,7 +294,8 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM 
+ 	if (a->top < b->top) { at = b; bt = a; }
+ 	else { at = a; bt = b; }
+ 
+-	bn_wexpand(r, at->top);
++	if(bn_wexpand(r, at->top) == NULL)
++		return 0;
+ 
+ 	for (i = 0; i < bt->top; i++)
+ 		{
+Index: lib/libssl/src//crypto/ec/ec2_smpl.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/ec/ec2_smpl.c,v
+retrieving revision 1.1.1.1
+diff -p -u -p -u -r1.1.1.1 ec2_smpl.c
+--- lib/libssl/src//crypto/ec/ec2_smpl.c	6 Sep 2008 12:15:43 -0000	1.1.1.1
++++ lib/libssl/src//crypto/ec/ec2_smpl.c	12 Mar 2010 12:39:11 -0000
+@@ -174,8 +174,10 @@ int ec_GF2m_simple_group_copy(EC_GROUP *
+ 	dest->poly[2] = src->poly[2];
+ 	dest->poly[3] = src->poly[3];
+ 	dest->poly[4] = src->poly[4];
+-	bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
+-	bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
++	if(bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
++		return 0;
++	if(bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
++		return 0;
+ 	for (i = dest->a.top; i < dest->a.dmax; i++) dest->a.d[i] = 0;
+ 	for (i = dest->b.top; i < dest->b.dmax; i++) dest->b.d[i] = 0;
+ 	return 1;
+@@ -199,12 +201,12 @@ int ec_GF2m_simple_group_set_curve(EC_GR
+ 
+ 	/* group->a */
+ 	if (!BN_GF2m_mod_arr(&group->a, a, group->poly)) goto err;
+-	bn_wexpand(&group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2);
++	if(bn_wexpand(&group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
+ 	for (i = group->a.top; i < group->a.dmax; i++) group->a.d[i] = 0;
+ 	
+ 	/* group->b */
+ 	if (!BN_GF2m_mod_arr(&group->b, b, group->poly)) goto err;
+-	bn_wexpand(&group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2);
++	if(bn_wexpand(&group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
+ 	for (i = group->b.top; i < group->b.dmax; i++) group->b.d[i] = 0;
+ 		
+ 	ret = 1;
+Index: lib/libssl/src//engines/e_ubsec.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/engines/e_ubsec.c,v
+retrieving revision 1.1.1.1
+diff -p -u -p -u -r1.1.1.1 e_ubsec.c
+--- lib/libssl/src//engines/e_ubsec.c	6 Sep 2008 12:15:50 -0000	1.1.1.1
++++ lib/libssl/src//engines/e_ubsec.c	12 Mar 2010 12:39:12 -0000
+@@ -934,7 +934,7 @@ static int ubsec_dh_generate_key(DH *dh)
+                 priv_key = BN_new();
+                 if (priv_key == NULL) goto err;
+                 priv_key_len = BN_num_bits(dh->p);
+-                bn_wexpand(priv_key, dh->p->top);
++                if(bn_wexpand(priv_key, dh->p->top) == NULL) goto err;
+                 do
+                         if (!BN_rand_range(priv_key, dh->p)) goto err;
+                 while (BN_is_zero(priv_key));
+@@ -949,7 +949,7 @@ static int ubsec_dh_generate_key(DH *dh)
+                 {
+                 pub_key = BN_new();
+                 pub_key_len = BN_num_bits(dh->p);
+-                bn_wexpand(pub_key, dh->p->top);
++                if(bn_wexpand(pub_key, dh->p->top) == NULL) goto err;
+                 if(pub_key == NULL) goto err;
+                 }
+         else
+

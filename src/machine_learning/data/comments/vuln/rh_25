@@ -1,0 +1,31 @@
+Created attachment 1046217
+screenshot
+
+Description of problem:
+Nodes-->Maintenance tab. Clicking on one of the nodes to open its details triggers some pop-up window and doesn't open a node details. 
+
+Version-Release number of selected component (if applicable):
+$ rpm -qa | grep tuskar
+python-tuskarclient-0.1.18-3.el7ost.noarch
+openstack-tuskar-0.4.18-3.el7ost.noarch
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tuskar-ui-0.3.0-8.el7ost.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.register nodes
+2.click on one of the nodes in Maintenance tab to see its details
+
+
+Actual results:
+window pops up "External protocol request" and nothing happens
+
+Expected results:
+node details are shown
+
+Additional info:
+screenshot attached
+*** This bug has been marked as a duplicate of bug 1227013 ***

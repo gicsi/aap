@@ -1,0 +1,26 @@
+Description of problem:
+I can choose the + when setting the requires_doc_text flag, but, after saving the bug, I'm told by bugzilla that "Only members of the ecs group can change the requires_doc_text flag to '+'". The flag should *not* be available to me to choose.
+
+
+Version-Release number of selected component (if applicable):
+4.4.9032-3
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Be a non-ECS member and choose '+' in the requires_doc_text field.
+2. Save the bug.
+3. Observe the error message.
+
+
+Actual results:
+As a non-ECS member, I can choose the flag.
+
+
+Expected results:
+As a non-ECS member, I cannot choose the flag.
+To implement the ECS flag rules requires a lot of special logic that subverts the normal bugzilla flag rules.
+
+Having the + flag state visible when you normally couldn't set it is a side effect of this customization and can't be fixed.

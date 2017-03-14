@@ -1,0 +1,214 @@
+This patch fixes symlink and environment variable problems in su,
+login and telnetd.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 008_kerberos.patch
+
+And the rebuild su, login and telnetd
+	cd usr.bin/su
+	make obj
+	make depend
+	make
+	make install
+
+	cd ../login
+	make obj
+	make depend
+	make
+	make install
+
+	cd ../../libexec/telnetd
+	make obj
+	make depend
+	make
+	make install
+
+Index: libexec/telnetd/state.c
+===================================================================
+RCS file: /cvs/src/libexec/telnetd/state.c,v
+retrieving revision 1.10
+retrieving revision 1.11
+diff -u -w -r1.10 -r1.11
+--- libexec/telnetd/state.c	2000/09/15 07:13:47	1.10
++++ libexec/telnetd/state.c	2000/12/06 16:50:15	1.11
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: state.c,v 1.10 2000/09/15 07:13:47 deraadt Exp $	*/
++/*	$OpenBSD: state.c,v 1.11 2000/12/06 16:50:15 hin Exp $	*/
+ /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
+ 
+ /*
+@@ -39,7 +39,7 @@
+ static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
+ static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
+ #else
+-static char rcsid[] = "$OpenBSD: state.c,v 1.10 2000/09/15 07:13:47 deraadt Exp $";
++static char rcsid[] = "$OpenBSD: state.c,v 1.11 2000/12/06 16:50:15 hin Exp $";
+ #endif
+ #endif /* not lint */
+ 
+@@ -1086,7 +1086,7 @@
+ 	"_RLD_",
+ 	"SHLIB_PATH=",
+ 	"LIBPATH=",
+-	"KRB_CONF",
++	"KRB",
+ 	"ENV=",
+ 	"BASH_ENV=",
+ 	NULL,
+Index: usr.bin/login/klogin.c
+===================================================================
+RCS file: /cvs/src/usr.bin/login/klogin.c,v
+retrieving revision 1.10
+retrieving revision 1.11
+diff -u -w -r1.10 -r1.11
+--- usr.bin/login/klogin.c	2000/07/17 16:43:14	1.10
++++ usr.bin/login/klogin.c	2000/12/02 22:44:36	1.11
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $	*/
++/*	$OpenBSD: klogin.c,v 1.11 2000/12/02 22:44:36 hin Exp $	*/
+ /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
+ 
+ /*-
+@@ -38,7 +38,7 @@
+ #if 0
+ static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
+ #endif
+-static char rcsid[] = "$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $";
++static char rcsid[] = "$OpenBSD: klogin.c,v 1.11 2000/12/02 22:44:36 hin Exp $";
+ #endif /* not lint */
+ 
+ #ifdef KERBEROS
+@@ -80,7 +80,7 @@
+ 	struct passwd *pw;
+ 	char *instance, *localhost, *password;
+ {
+-	int kerror;
++	int kerror, fd;
+ 	AUTH_DAT authdata;
+ 	KTEXT_ST ticket;
+ 	struct hostent *hp;
+@@ -97,6 +97,15 @@
+ 	}
+ #endif
+ 
++	/* If no srvtab file exists, fail immediatly. This will make
++	 * login _much_ quicker on systems with sporadical contact with
++	 * the outside world.
++	 * We should really change the semantics for enabling kerberos.
++	 */
++	if((fd = open(KEYFILE, O_RDONLY, 0)) < 0)
++		return 1;
++	close(fd);
++
+ 	/*
+ 	 * Root logins don't use Kerberos (or at least shouldn't be
+ 	 * sending kerberos passwords around in cleartext), so don't
+@@ -119,8 +128,8 @@
+ 	 */
+ 
+ 	if (strcmp(instance, "root") != 0)
+-		snprintf(tkt_location, sizeof(tkt_location), "%s%d.%s",
+-			TKT_ROOT, pw->pw_uid, tty);
++		snprintf(tkt_location, sizeof(tkt_location), "%s%d",
++			TKT_ROOT, pw->pw_uid);
+ 	else
+ 		snprintf(tkt_location, sizeof(tkt_location), "%s_root_%d.%s",
+ 			TKT_ROOT, pw->pw_uid, tty);
+@@ -155,8 +164,19 @@
+ 		return (1);
+ 	}
+ 
+-	if (chown(TKT_FILE, pw->pw_uid, pw->pw_gid) < 0)
+-		syslog(LOG_ERR, "chown tkfile (%s): %m", TKT_FILE);
++	/*
++	 * Set the owner of the ticket file to root but bail if someone
++	 * has nefariously swapped a link in place of the file.
++	 */
++	fd = open(TKT_FILE, O_RDWR|O_NOFOLLOW, 0);
++	if (fd == -1) {
++		syslog(LOG_ERR, "unable to open ticket file: %m");
++		dest_tkt();
++		return (1);
++	}
++	if (fchown(fd, pw->pw_uid, pw->pw_gid) < 0)
++		syslog(LOG_ERR, "fchown tkfile (%s): %m", TKT_FILE);
++	close(fd);
+ 
+ 	(void)strlcpy(savehost, krb_get_phost(localhost), sizeof(savehost));
+ 
+Index: usr.bin/su/su.c
+===================================================================
+RCS file: /cvs/src/usr.bin/su/su.c,v
+retrieving revision 1.34
+retrieving revision 1.35
+diff -u -w -r1.34 -r1.35
+--- usr.bin/su/su.c	2000/09/15 07:13:50	1.34
++++ usr.bin/su/su.c	2000/12/02 22:44:49	1.35
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $	*/
++/*	$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $	*/
+ 
+ /*
+  * Copyright (c) 1988 The Regents of the University of California.
+@@ -41,7 +41,7 @@
+ 
+ #ifndef lint
+ /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
+-static char rcsid[] = "$OpenBSD: su.c,v 1.34 2000/09/15 07:13:50 deraadt Exp $";
++static char rcsid[] = "$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $";
+ #endif /* not lint */
+ 
+ #include <sys/param.h>
+@@ -59,6 +59,7 @@
+ #include <string.h>
+ #include <syslog.h>
+ #include <unistd.h>
++#include <fcntl.h>
+ 
+ #ifdef  SKEY
+ #include <skey.h>                                                       
+@@ -358,11 +359,16 @@
+ 	KTEXT_ST ticket;
+ 	AUTH_DAT authdata;
+ 	struct hostent *hp;
+-	int kerno;
++	int kerno, fd;
+ 	in_addr_t faddr;
+ 	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
+ 	char *ontty(), *krb_get_phost();
+ 
++	/* Don't bother with Kerberos if there is no srvtab file */
++	if ((fd = open(KEYFILE, O_RDONLY, 0)) < 0)
++		return (1);
++	close(fd);
++
+ 	if (koktologin(username, lrealm, user) && !uid) {
+ 		(void)fprintf(stderr, "kerberos su: not in %s's ACL.\n", user);
+ 		return (1);
+@@ -407,11 +413,22 @@
+ 		return (1);
+ 	}
+ 
+-	if (chown(krbtkfile, uid, -1) < 0) {
+-		warn("chown");
++	/*
++	 * Set the owner of the ticket file to root but bail if someone
++	 * has nefariously swapped a link in place of the file.
++	 */
++	fd = open(krbtkfile, O_RDWR|O_NOFOLLOW, 0);
++	if (fd == -1) {
++		warn("unable to open ticket file");
++		(void)unlink(krbtkfile);
++		return (1);
++	}
++	if (fchown(fd, uid, -1) < 0) {
++		warn("fchown");
+ 		(void)unlink(krbtkfile);
+ 		return (1);
+ 	}
++	close(fd);
+ 
+ 	(void)setpriority(PRIO_PROCESS, 0, -2);
+ 
+

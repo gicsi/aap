@@ -1,0 +1,8 @@
+A bug in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=tcp&sektion=4">tcp(4)</a>
+stack allows an invalid argument to be used in calculating the TCP
+retransmit timeout. By sending packets with specific values in the TCP
+timestamp option, an attacker can cause a system panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/010_rtt.patch">
+A source code patch exists which remedies this problem.</a>

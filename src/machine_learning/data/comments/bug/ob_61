@@ -1,0 +1,6 @@
+The
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ef&amp;sektion=4">ef(4)</a>
+driver will complain when adding an address with ifconfig
+(ifconfig: SIOCAIFADDR: Invalid argument).<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/002_ef.patch">
+A source code patch exists which remedies this problem.</a>

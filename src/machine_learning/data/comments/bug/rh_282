@@ -1,0 +1,33 @@
+1. Proposed title of this feature request  
+      
+      To compare the installed rpms between 2 systems
+
+2. Who is the customer behind the request?  
+    Account: 759202
+    TAM customer: no
+    SRM customer: no
+    Strategic: no
+      
+3. What is the nature and description of the request?  
+       To troubleshoot any issues and hence to compare the rpm (and configuration) state of 2 systems. Any deviations should be displayed side by side (like Github split view). This functionality was available in      Satellite 5.
+      
+4. Why does the customer need this? (List the business requirements here)  
+        To troubleshoot the issue 
+      
+5. Is there already an existing RFE upstream or in Red Hat Bugzilla?  
+      Yes
+     Upstream RFE: http://projects.theforeman.org/issues/10519
+      
+6. Does the customer have any specific timeline dependencies and which release would they like to target ? 
+      No , but should be in within a year.
+
+7. Is the sales team involved in this request and do they have any additional input?  
+      No
+
+8. Would the customer be able to assist in testing this functionality if implemented?  
+     Yes
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+looks like a duplicate of Bug 1238317 - [RFE] To compare the installed rpms between 2 systems
+
+*** This bug has been marked as a duplicate of bug 1238317 ***

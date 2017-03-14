@@ -1,0 +1,20 @@
+On the 2.7 CD media, the <b>amiga</b> distribution contains two pairs of archives
+files for installation, ie:
+<pre>
+-rw-r--r--  1 root  mirftp  20191465 Apr 29 14:27 base27.tar.gz
+-rw-r--r--  1 root  mirftp  20291753 May 13 19:33 base27.tgz
+-rw-r--r--  1 root  mirftp  13699507 Apr 29 14:26 comp27.tar.gz
+-rw-r--r--  1 root  mirftp  13748096 May 13 19:33 comp27.tgz
+-rw-r--r--  1 root  mirftp   1005376 Apr 29 14:26 etc27.tar.gz
+-rw-r--r--  1 root  mirftp   1010772 May 13 19:33 etc27.tgz
+-rw-r--r--  1 root  mirftp   2755567 Apr 29 14:26 game27.tar.gz
+-rw-r--r--  1 root  mirftp   2755624 May 13 19:33 game27.tgz
+-rw-r--r--  1 root  mirftp   5002872 Apr 29 14:26 man27.tar.gz
+-rw-r--r--  1 root  mirftp   5038896 May 13 19:33 man27.tgz
+-rw-r--r--  1 root  mirftp   1684356 Apr 29 14:26 misc27.tar.gz
+-rw-r--r--  1 root  mirftp   1684381 May 13 19:33 misc27.tgz
+</pre>
+The installation script will list ALL of these files.  For proper
+operation one should install the <b>*.tgz</b> versions, and deselect
+the <b>*.tar.gz</b> versions.<br>
+The FTP area sets do not suffer from this problem.

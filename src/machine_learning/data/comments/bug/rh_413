@@ -1,0 +1,15 @@
+Description of problem:
+Current version of sievelib is Python 3 compatibile.
+Package python3-sievelib is not generated.
+
+$ sudo pip3 install sievelib
+You are using pip version 6.0.8, however version 7.0.3 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+Collecting sievelib
+  Downloading sievelib-0.8.tar.gz
+Installing collected packages: sievelib
+  Running setup.py install for sievelib
+Successfully installed sievelib-0.8
+$ python3 -c 'import sievelib' && echo 'ok'
+ok
+Fixed in build http://koji.fedoraproject.org/koji/buildinfo?buildID=665695

@@ -1,0 +1,24 @@
+Document URL: 
+All documents
+
+Section Number and Name: 
+All appropriate sections with code segments
+
+Describe the issue:
+I see lot's of people trying to copy the code sections from the doc to want to paste it into a term session. This goes wrong quite often and especially on multi liners and especially from pdf's.
+
+Suggestions for improvement:
+As we are a company that has products that needs to do a lot on the command line, make all documentation in all formats available cut-n-paste friendly.
+
+Additional information:
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+Hi Fred
+
+thanks for the feedback about the doc. This particular topic has come up before and been discussed as recently as two weeks ago. We stick to the format we have for the very reason you come across; we want to make sure that people can copy/paste commands into their terminals and then update them as necessary to suit their environments. In some cases (e.g., firewall config) copy and paste should work just fine, but katello-installer and import or export commands will very likely change case by case.
+
+It's true that some of the command examples we provide should "just work" but many others use example arguments, user names, passwords, etc., that all need to be changed by the user before execution.
+
+If there are specific examples that you'd like to see updated, feel free to raise bugs for those.
+
+thanks a lot

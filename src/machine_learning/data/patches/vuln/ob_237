@@ -1,0 +1,43 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_libz.patch
+
+And then rebuild and install libz:
+	cd lib/libz
+	make obj
+	make depend
+	make && make install
+
+Index: lib/libz/inftrees.c
+===================================================================
+RCS file: /home/cvs/openbsd/src/lib/libz/inftrees.c,v
+retrieving revision 1.6
+diff -u -r1.6 inftrees.c
+--- lib/libz/inftrees.c	3 Dec 2004 03:06:36 -0000	1.6
++++ lib/libz/inftrees.c	6 Jul 2005 14:55:53 -0000
+@@ -135,7 +135,7 @@
+         left -= count[len];
+         if (left < 0) return -1;        /* over-subscribed */
+     }
+-    if (left > 0 && (type == CODES || (codes - count[0] != 1)))
++    if (left > 0 && (type == CODES || max != 1))
+         return -1;                      /* incomplete set */
+ 
+     /* generate offsets into symbol table for each length for sorting */
+Index: sys/lib/libz/inftrees.c
+===================================================================
+RCS file: /home/cvs/openbsd/src/sys/lib/libz/inftrees.c,v
+retrieving revision 1.12
+diff -u -r1.12 inftrees.c
+--- sys/lib/libz/inftrees.c	3 Dec 2004 03:07:09 -0000	1.12
++++ sys/lib/libz/inftrees.c	6 Jul 2005 14:55:53 -0000
+@@ -135,7 +135,7 @@
+         left -= count[len];
+         if (left < 0) return -1;        /* over-subscribed */
+     }
+-    if (left > 0 && (type == CODES || (codes - count[0] != 1)))
++    if (left > 0 && (type == CODES || max != 1))
+         return -1;                      /* incomplete set */
+ 
+     /* generate offsets into symbol table for each length for sorting */
+

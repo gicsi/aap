@@ -1,0 +1,50 @@
++++ This bug was initially created as a clone of Bug #1235613 +++
+
+Description of problem:
+**************************************
+CTDB nodes not coming to healthy state after starting ctdb service.
+SELinux is set to enforcing.
+
+type=AVC msg=audit(06/25/2015 02:45:46.844:2625) : avc:  denied  { write } for  pid=22921 comm=net name=ctdbd.socket dev=dm-0 ino=1443389 scontext=unconfined_u:system_r:samba_net_t:s0 tcontext=unconfined_u:object_r:var_run_t:s0 tclass=sock_file 
+
+If we check the context for socket file :
+srwx------. root root unconfined_u:object_r:var_run_t:s0 /var/run/ctdb/ctdbd.socket
+
+after running restorecon -R -v /var/run/ctdb/ctdbd.socket we are again getting the correct context..
+
+After analysis and debugging from development team it looks like the ctdb context has to be set on /usr/sbin/ctdbd_wrapper because this is creating the /var/run/ctdb directory and it will apply the context on the contents of this directory.
+When we tried to set the context for /usr/sbin/ctdbd_wrapper , remove /var/run/ctdb and then start ctdb service it works fine.
+
+so we need same attributes to be set for /usr/sbin/ctdbd_wrapper as it is done for /usr/sbin/ctdbd.
+
+Version-Release number of selected component (if applicable):
+rpm -qa | grep ctdb
+ctdb2.5-2.5.5-2.el6rhs.x86_64
+
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Install RHEL6.7 , latest gluster rpms, latest samba and ctdb rpms
+2. Do ctdb setup
+3. Start ctdb service 
+
+Actual results:
+CTDB fails to start smb service and remains in UNHEALTHY state.
+
+Expected results:
+CTDB should be able to start smb service and should come to HEALTHY state.
+
+
+Additional info:
+
+--- Additional comment from Red Hat Bugzilla Rules Engine on 2015-06-25 06:23:02 EDT ---
+
+This bug is automatically being proposed for Red Hat Gluster Storage 3.1.0 by setting the release flag 'rhgs‑3.1.0' to '?'. 
+
+If this bug should be proposed for a different release, please manually change the proposed release flag.
+
+--- Additional comment from surabhi on 2015-06-25 06:45:16 EDT ---
+It would be better when the /var/run/ctdb directory was part of ctdb RPM package. The directory would be labeled correctly during the package installation. The ctdbd.socket file in /var/run/ctdb directory would inherit its label from the directory, which is default behavior.
+This is not selinux-policy bug.

@@ -1,0 +1,167 @@
+NOTE: this is the second version of this patch.
+
+Apply by doing:
+	cd /usr/src/sys/arch/i386/stand/installboot
+	patch < installboot.patch
+
+make && make install
+
+Index: installboot.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/stand/installboot/installboot.c,v
+retrieving revision 1.32
+retrieving revision 1.33
+diff -u -r1.32 -r1.33
+--- installboot.c	1998/04/25 18:32:35	1.32
++++ installboot.c	1998/12/16 03:04:09	1.33
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: installboot.c,v 1.32 1998/04/25 18:32:35 millert Exp $	*/
++/*	$OpenBSD: installboot.c,v 1.33 1998/12/16 03:04:09 mickey Exp $	*/
+ /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
+ 
+ /*
+@@ -224,7 +224,7 @@
+ 		/* Find OpenBSD partition. */
+ 		for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART]; dp++) {
+ 			if (dp->dp_size && dp->dp_typ == DOSPTYP_OPENBSD) {
+-				startoff = dp->dp_start * dl.d_secsize;
++				startoff = (off_t)dp->dp_start * dl.d_secsize;
+ 				fprintf(stderr, "using MBR partition %d: "
+ 					"type %d (0x%02x) offset %d (0x%x)\n",
+ 					dp - mbr.dmbr_parts,
+
+Note: this is the third version of this patch.
+
+Apply by doing
+	cd /usr/src/sys/arch/sparc/dev
+	patch -p0 < hme.patch
+
+And then rebuild your kernel.
+
+Index: sbus.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/sbus.c,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- sbus.c	1998/11/11 00:26:00	1.6
++++ sbus.c	1998/12/14 17:51:35	1.7
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: sbus.c,v 1.6 1998/11/11 00:26:00 jason Exp $	*/
++/*	$OpenBSD: sbus.c,v 1.7 1998/12/14 17:51:35 deraadt Exp $	*/
+ /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
+ 
+ /*
+@@ -59,6 +59,7 @@
+ 
+ #include <sparc/dev/sbusreg.h>
+ #include <sparc/dev/sbusvar.h>
++#include <sparc/dev/dmareg.h>
+ 
+ int sbus_print __P((void *, const char *));
+ void sbusreset __P((int));
+@@ -151,6 +152,7 @@
+ 	 * Get the SBus burst transfer size if burst transfers are supported
+ 	 */
+ 	sc->sc_burst = getpropint(node, "burst-sizes", 0);
++	sc->sc_burst = sc->sc_burst & ~SBUS_BURST_64;
+ 
+ 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
+ 		oca.ca_ra.ra_bp = ra->ra_bp + 1;
+Index: hme.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/hme.c,v
+retrieving revision 1.13
+retrieving revision 1.14
+diff -u -r1.13 -r1.14
+--- hme.c	1998/11/11 00:26:00	1.13
++++ hme.c	1998/12/14 17:37:24	1.14
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: hme.c,v 1.13 1998/11/11 00:26:00 jason Exp $	*/
++/*	$OpenBSD: hme.c,v 1.14 1998/12/14 17:37:24 jason Exp $	*/
+ 
+ /*
+  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
+@@ -196,7 +196,12 @@
+ 	else if (sc->sc_rev != 0xa0)
+ 		sc->sc_flags = HME_FLAG_NOT_A0;
+ 
+-	sc->sc_burst = ((struct sbus_softc *)parent)->sc_burst;
++	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
++	if (sc->sc_burst == -1)
++		sc->sc_burst = ((struct sbus_softc *)parent)->sc_burst;
++
++        /* Clamp at parent's burst sizes */
++	sc->sc_burst &= ((struct sbus_softc *)parent)->sc_burst;
+ 
+ 	hme_meminit(sc);
+ 
+
+Note: this is the fourth version of this patch.
+
+Apply by doing
+	cd /usr/src/sys/arch/sparc/dev
+	patch -p0 < le.patch
+
+And then rebuild your kernel.
+
+Index: if_le.c
+===================================================================
+RCS file: /cvs/src/sys/arch/sparc/dev/if_le.c,v
+retrieving revision 1.13
+retrieving revision 1.15
+diff -u -r1.13 -r1.15
+--- if_le.c	1998/11/11 00:50:31	1.13
++++ if_le.c	1998/12/22 15:40:30	1.15
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: if_le.c,v 1.13 1998/11/11 00:50:31 jason Exp $	*/
++/*	$OpenBSD: if_le.c,v 1.15 1998/12/22 15:40:30 jason Exp $	*/
+ /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
+ 
+ /*-
+@@ -105,7 +105,7 @@
+ 	void	*arg;
+ {
+ 	register struct le_softc *lesc = arg;
+-static int dodrain=0;
++	static int dodrain=0;
+ 
+ 	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND) {
+ 		dodrain = 1;
+@@ -213,6 +213,9 @@
+ {
+ 	struct am7990_softc *sc = ifp->if_softc;
+ 	struct ifmedia *ifm = &sc->sc_ifmedia;
++#if defined(SUN4M)
++	struct le_softc *lesc = (struct le_softc *)sc;
++#endif
+ 
+ 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+ 		return (EINVAL);
+@@ -226,14 +229,14 @@
+ 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+ #if defined(SUN4M)
+ 	case IFM_10_T:
+-		if (CPU_ISSUN4M)
++		if (CPU_ISSUN4M && lesc->sc_dma)
+ 			lesetutp(sc);
+ 		else
+ 			return (EOPNOTSUPP);
+ 		break;
+ 
+ 	case IFM_AUTO:
+-		if (CPU_ISSUN4M)
++		if (CPU_ISSUN4M && lesc->sc_dma)
+ 			return (0);
+ 		else
+ 			return (EOPNOTSUPP);
+@@ -242,7 +245,7 @@
+ 
+ 	case IFM_10_5:
+ #if defined(SUN4M)
+-		if (CPU_ISSUN4M)
++		if (CPU_ISSUN4M && lesc->sc_dma)
+ 			lesetaui(sc);
+ #else
+ 		return (0);
+

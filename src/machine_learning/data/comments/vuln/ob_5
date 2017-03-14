@@ -1,0 +1,6 @@
+A vulnerability exists in ping(8); if the -R option is used to record
+routes, an attacker can spoof a reply packet that will overflow inside
+ping.  Preliminary investigation makes it look the worst attack
+possible is to make ping crash, but one never knows...
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/common/ping.patch">
+A patch is available which corrects this behaviour</a>.

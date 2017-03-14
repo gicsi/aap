@@ -1,0 +1,130 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_mpi.patch
+
+Then build and install a new kernel.
+
+Index: sys/dev/ic/mpi.c
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/mpi.c,v
+retrieving revision 1.134
+retrieving revision 1.134.2.1
+diff -u -p -r1.134 -r1.134.2.1
+--- sys/dev/ic/mpi.c	11 Jan 2010 03:51:57 -0000	1.134
++++ sys/dev/ic/mpi.c	4 Apr 2010 11:38:29 -0000	1.134.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: mpi.c,v 1.134 2010/01/11 03:51:57 dlg Exp $ */
++/*	$OpenBSD: mpi.c,v 1.134.2.1 2010/04/04 11:38:29 dlg Exp $ */
+ 
+ /*
+  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
+@@ -2725,7 +2725,7 @@ mpi_bio_get_pg0_raid(struct mpi_softc *s
+ 	/* replace current buffer with new one */
+ 	len = sizeof *rpg0 + sc->sc_vol_page->max_physdisks *
+ 	    sizeof(struct mpi_cfg_raid_vol_pg0_physdisk);
+-	rpg0 = malloc(len, M_TEMP, M_WAITOK | M_CANFAIL);
++	rpg0 = malloc(len, M_DEVBUF, M_WAITOK | M_CANFAIL);
+ 	if (rpg0 == NULL) {
+ 		printf("%s: can't get memory for RAID page 0, "
+ 		    "bio disabled\n", DEVNAME(sc));
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_kerberos.patch
+
+Rebuild and install the Kerberos 5 library:
+	cd lib/libkrb5
+	make obj
+	make depend
+	make
+	make install
+
+And then rebuild and install the Kerberos 5 KDC:
+	cd ../../kerberosV/libexec/kdc
+	make obj
+	make depend
+	make
+	make install
+
+
+Index: kerberosV/src/lib/krb5/crypto.c
+===================================================================
+RCS file: /cvs/src/kerberosV/src/lib/krb5/crypto.c,v
+retrieving revision 1.10
+diff -p -u -p -u -r1.10 crypto.c
+--- kerberosV/src/lib/krb5/crypto.c	6 Oct 2006 07:09:10 -0000	1.10
++++ kerberosV/src/lib/krb5/crypto.c	30 Mar 2010 17:17:43 -0000
+@@ -3451,6 +3451,12 @@ decrypt_internal_derived(krb5_context co
+ 	return KRB5_BAD_MSIZE;
+     }
+ 
++    if (len < checksum_sz + et->confoundersize) {
++	krb5_set_error_string(context, "Encrypted data shorter then "
++				  "checksum + confunder");
++	return KRB5_BAD_MSIZE;
++    }
++
+     p = malloc(len);
+     if(len != 0 && p == NULL) {
+ 	krb5_set_error_string(context, "malloc: out of memory");
+@@ -3525,6 +3531,13 @@ decrypt_internal(krb5_context context,
+     }
+ 
+     checksum_sz = CHECKSUMSIZE(et->checksum);
++
++    if (len < checksum_sz + et->confoundersize) {
++	krb5_set_error_string(context, "Encrypted data shorter then "
++				  "checksum + confunder");
++	return KRB5_BAD_MSIZE;
++    }
++
+     p = malloc(len);
+     if(len != 0 && p == NULL) {
+ 	krb5_set_error_string(context, "malloc: out of memory");
+@@ -3587,6 +3600,12 @@ decrypt_internal_special(krb5_context co
+ 
+     if ((len % et->padsize) != 0) {
+ 	krb5_clear_error_string(context);
++	return KRB5_BAD_MSIZE;
++    }
++
++    if (len < cksum_sz + et->confoundersize) {
++	krb5_set_error_string(context, "Encrypted data shorter then "
++				  "checksum + confunder");
+ 	return KRB5_BAD_MSIZE;
+     }
+ 
+
+Apply by doing:
+	/usr/src
+	patch -p0 < 010_sis.patch
+
+Then build and install a new kernel
+
+Index: sys/dev/pci/if_sis.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_sis.c,v
+retrieving revision 1.99
+retrieving revision 1.99.2.2
+diff -p -u -r1.99 -r1.99.2.2
+--- sys/dev/pci/if_sis.c	6 Aug 2010 05:24:16 -0000	1.99
++++ sys/dev/pci/if_sis.c	17 Feb 2011 00:53:48 -0000	1.99.2.2
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: if_sis.c,v 1.99 2010/08/06 05:24:16 deraadt Exp $ */
++/*	$OpenBSD: if_sis.c,v 1.99.2.2 2011/02/17 00:53:48 sthen Exp $ */
+ /*
+  * Copyright (c) 1997, 1998, 1999
+  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
+@@ -1268,6 +1268,11 @@ sis_newbuf(struct sis_softc *sc, struct 
+ 
+ 	c->sis_mbuf = m_new;
+ 	c->sis_ptr = htole32(c->map->dm_segs[0].ds_addr);
++
++	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
++	    ((caddr_t)c - sc->sc_listkva), sizeof(struct sis_desc),
++	    BUS_DMASYNC_PREWRITE);
++
+ 	c->sis_ctl = htole32(ETHER_MAX_DIX_LEN);
+ 
+ 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+

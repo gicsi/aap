@@ -1,0 +1,55 @@
+Seems one of gstreamer1's headers references a non-existent file, causing telepathy-qt FTBFS:
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10157590
+
+Using,
+gstreamer1-devel-1.5.1-1.fc23.i686
+
+I see recent commit mentioning gstconfig.h:
+
+commit 8eab018454608d6d8c10d3e9c77dc2176c80213e
+Author: Wim Taymans <wtaymans@redhat.com>
+Date:   Mon Jun 8 15:23:25 2015 +0200
+
+    Update to 1.5.1
+    
+    - add new bash-completion scripts
+    - gstconfig.h got moved
+    - fix version
+
+$ rpm -qlp gstreamer1-devel-1.5.1-1.fc23.i686.rpm | grep gstconfig
+/usr/lib/gstreamer-1.0/include/gst/gstconfig.h
+
+Looks like it got moved there.  I'll have to verify pkgconfig cflags correctness.
+$ cat /usr/lib/pkgconfig/gstreamer-1.0.pc 
+prefix=/usr
+exec_prefix=/usr
+libdir=/usr/lib
+includedir=/usr/include/gstreamer-1.0
+toolsdir=${exec_prefix}/bin
+pluginsdir=/usr/lib/gstreamer-1.0
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+girdir=${datadir}/gir-1.0
+completionsdir=/usr/share/bash-completion/completions
+helpersdir=/usr/share/bash-completion/helpers
+typelibdir=${libdir}/girepository-1.0
+
+Name: GStreamer
+Description: Streaming media framework
+Version: 1.5.1
+Requires: glib-2.0, gobject-2.0
+Requires.private: gmodule-no-export-2.0
+Libs: -L${libdir} -lgstreamer-1.0
+Cflags: -I${includedir} -I${libdir}/gstreamer-1.0/include
+
+
+and (on x86_64),
+
+pkg-config --cflags gstreamer-1.0
+-pthread -I/usr/include/gstreamer-1.0 -I/usr/lib64/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include 
+
+so this looks correct, cmake must not be picking these up properly somehow.
+http://pkgs.fedoraproject.org/cgit/telepathy-qt.git/commit/?id=fda19c0f0897342d550b9979c1da478f1b1262ea
+upstream bug filed,
+https://bugs.freedesktop.org/show_bug.cgi?id=91040

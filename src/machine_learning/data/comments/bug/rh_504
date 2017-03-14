@@ -1,0 +1,23 @@
+Description of problem:
+while running instack-virt-setup, if DIB_LOCAL_IMAGE is not set, on a rhel machine the script would try and download a rhel 7.0 image and fail with a 404.
+
+
+Version-Release number of selected component (if applicable):
+latest puddle (23-6-2015)
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. install the component
+2. do not set any image variable
+3. run instack-virt-setup
+
+Actual results:
+error 404 the image was not found
+
+
+Expected results:
+script should download a proper image.
+
+Additional info:

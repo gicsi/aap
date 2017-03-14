@@ -1,0 +1,131 @@
++++ This bug was initially created as a clone of Bug #1229401 +++
+
+Description of problem:
+I was trying to delete my overcloud (deployed on bare metals) by calling "heat stack-delete" and it failed. I tried to work around it by deleting the nodes one-by-one with "nova delete" and then repeated the stack deletion but it's always failing. I see this in the logs:
+
+2015-06-08 12:43:45.622 9824 INFO heat.engine.stack [-] Stack DELETE FAILED (overcloud): Resource DELETE failed: ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource DELETE failed: ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource DELETE failed: Error: Server ov-kvbwr4xesb-1-yvxiq76se33c-NovaCompute-alue7jtaemwz delete failed: (500) Error destroying the instance on node 046b94d8-4418-4287-993c-0ca5efd336f8. Provision state still 'error'.""
+2015-06-08 12:43:45.646 9824 DEBUG heat.engine.stack_lock [-] Engine 92145830-51dc-48f8-a3a1-2cc3d80b5a91 released lock on stack 86ce3f50-2bbf-4770-bbf6-413a91aae9c7 release /usr/lib/python2.7/site-packages/heat/engine/stack_lock.py:132
+2015-06-08 12:43:46.298 9825 DEBUG heat.engine.scheduler [-] Task DependencyTaskGroup((destroy) {StructuredConfig "NovaComputeConfig" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {}, TemplateResource "NodeUserData" [3416574e-401d-486f-a698-36407ce9eb4d] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {}, Server "NovaCompute" [c3b1dec6-a9b3-415d-83e2-126e93179ec7] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {TemplateResource "NodeUserData" [3416574e-401d-486f-a698-36407ce9eb4d] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]}, TemplateResource "NetworkConfig" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {}, StructuredDeployment "NovaComputeDeployment" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {Server "NovaCompute" [c3b1dec6-a9b3-415d-83e2-126e93179ec7] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f], StructuredConfig "NovaComputeConfig" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]}, StructuredDeployment "NetworkDeployment" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]: {TemplateResource "NetworkConfig" Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f], Server "NovaCompute" [c3b1dec6-a9b3-415d-83e2-126e93179ec7] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]}}) running step /usr/lib/python2.7/site-packages/heat/engine/scheduler.py:220
+2015-06-08 12:43:46.298 9825 DEBUG heat.engine.scheduler [-] Task destroy from None running step /usr/lib/python2.7/site-packages/heat/engine/scheduler.py:220
+2015-06-08 12:43:46.298 9825 DEBUG heat.engine.scheduler [-] Task delete_server from <heat.engine.clients.os.nova.NovaClientPlugin object at 0x41c04d0> running step /usr/lib/python2.7/site-packages/heat/engine/scheduler.py:220
+2015-06-08 12:43:46.565 9825 INFO heat.engine.resource [-] DELETE: Server "NovaCompute" [c3b1dec6-a9b3-415d-83e2-126e93179ec7] Stack "overcloud-Compute-xtkvbwr4xesb-1-yvxiq76se33c" [8acc616f-a112-465b-ae0b-6876a72e118f]
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource Traceback (most recent call last):
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/resource.py", line 500, in _action_recorder
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     yield
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/resource.py", line 930, in delete
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     yield self.action_handler_task(action, *action_args)
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/scheduler.py", line 313, in wrapper
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     step = next(subtask)
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/resource.py", line 544, in action_handler_task
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     while not check(handler_data):
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/resources/openstack/nova/server.py", line 1330, in check_delete_complete
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     if deleter is None or deleter.step():
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/scheduler.py", line 223, in step
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     next(self._runner)
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource   File "/usr/lib/python2.7/site-packages/heat/engine/clients/os/nova.py", line 332, in delete_server
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource     "message": message})
+2015-06-08 12:43:46.565 9825 TRACE heat.engine.resource Error: Server ov-kvbwr4xesb-1-yvxiq76se33c-NovaCompute-alue7jtaemwz delete failed: (500) Error destroying the instance on node 046b94d8-4418-4287-993c-0ca5efd336f8. Provision state still 'error'.
+
+
+There is also a node in error state, and if I try to take it out of maintenance and set its power state to off it just goes back to maintenance:
+
+[stack@puma01 ~]$ ironic node-list
++--------------------------------------+------+--------------------------------------+-------------+-----------------+-------------+
+| UUID                                 | Name | Instance UUID                        | Power State | Provision State | Maintenance |
++--------------------------------------+------+--------------------------------------+-------------+-----------------+-------------+
+| 666d82db-47c1-47cc-a7e1-d6c5180dfdbe | None | None                                 | power off   | available       | False       |
+| 16d5ed6b-b70a-4832-a5f0-29fae68ec000 | None | None                                 | power off   | available       | False       |
+| 42695e0a-94b6-4e94-979e-23e96eb119af | None | None                                 | power off   | available       | False       |
+| 046b94d8-4418-4287-993c-0ca5efd336f8 | None | c3b1dec6-a9b3-415d-83e2-126e93179ec7 | None        | error           | True        |
+| 6265d5c0-9e1b-4a13-a8aa-1c19cb263dda | None | None                                 | power off   | available       | False       |
+| 20d46057-163d-419d-9b55-967a80b47510 | None | None                                 | power off   | available       | False       |
+| 65d0ef9a-fb11-46d3-8e84-31f51b8bc5c5 | None | None                                 | power off   | available       | False       |
++--------------------------------------+------+--------------------------------------+-------------+-----------------+-------------+
+
+
+I tried "ironic node-delete" to delete and rediscover all nodes, but it failed to delete the error node. It was associated to an instance, and I couldn't delete it from nova either because it was in error state there also:
+
+nova list
++--------------------------------------+-------------------------------------------------------+--------+------------+-------------+----------+
+| ID                                   | Name                                                  | Status | Task State | Power State | Networks |
++--------------------------------------+-------------------------------------------------------+--------+------------+-------------+----------+
+| c3b1dec6-a9b3-415d-83e2-126e93179ec7 | ov-kvbwr4xesb-1-yvxiq76se33c-NovaCompute-alue7jtaemwz | ERROR  | -          | NOSTATE     |          |
++--------------------------------------+-------------------------------------------------------+--------+------------+-------------+----------+
+
+
+
+Version-Release number of selected component (if applicable):
+openstack-heat-api-2015.1.1-dev11.el7.centos.noarch
+openstack-heat-engine-2015.1.1-dev11.el7.centos.noarch
+
+
+How reproducible:
+randomly
+
+
+Steps to Reproduce:
+1. Deploy and delete the stack repeatedly until it happens
+
+--- Additional comment from Dmitry Tantsur on 2015-06-08 11:36:16 EDT ---
+
+Node going back to maintenance usually means there is some problem with your BMC, maybe it's unreliable. Ironic conductor logs might tell you more about it.
+
+--- Additional comment from Udi on 2015-06-08 11:48:44 EDT ---
+
+This is from ironic-conductor.log:
+
+Command: ipmitool -I lanplus -H 10.35.160.82 -L ADMINISTRATOR -U admin -R 12 -N 5 -f /tmp/tmpyphAoJ power status
+Exit code: -6
+Stdout: u''
+Stderr: u"ipmitool: lanplus.c:2191: ipmi_lanplus_send_payload: Assertion `session->v2_data.session_state == LANPLUS_STATE_OPEN_SESSION_RECEIEVED' failed.\n"
+2015-06-08 18:23:55.259 11007 WARNING ironic.drivers.modules.ipmitool [-] IPMI power status failed for node 046b94d8-4418-4287-993c-0ca5efd336f8 with error: Unexpected error while running command.
+Command: ipmitool -I lanplus -H 10.35.160.82 -L ADMINISTRATOR -U admin -R 12 -N 5 -f /tmp/tmpyphAoJ power status
+Exit code: -6
+Stdout: u''
+Stderr: u"ipmitool: lanplus.c:2191: ipmi_lanplus_send_payload: Assertion `session->v2_data.session_state == LANPLUS_STATE_OPEN_SESSION_RECEIEVED' failed.\n".
+2015-06-08 18:23:55.279 11007 ERROR ironic.conductor.manager [-] Error in tear_down of node 046b94d8-4418-4287-993c-0ca5efd336f8: IPMI call failed: power status.
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager Traceback (most recent call last):
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/conductor/manager.py", line 796, in _do_node_tear_down
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     task.driver.deploy.tear_down(task)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/conductor/task_manager.py", line 128, in wrapper
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     return f(*args, **kwargs)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/drivers/modules/pxe.py", line 428, in tear_down
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     manager_utils.node_power_action(task, states.POWER_OFF)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/conductor/task_manager.py", line 128, in wrapper
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     return f(*args, **kwargs)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/conductor/utils.py", line 75, in node_power_action
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     node.save()
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/oslo_utils/excutils.py", line 85, in __exit__
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     six.reraise(self.type_, self.value, self.tb)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/conductor/utils.py", line 68, in node_power_action
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     curr_state = task.driver.power.get_power_state(task)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/drivers/modules/ipmitool.py", line 675, in get_power_state
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     return _power_status(driver_info)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager   File "/usr/lib/python2.7/site-packages/ironic/drivers/modules/ipmitool.py", line 524, in _power_status
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager     raise exception.IPMIFailure(cmd=cmd)
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager IPMIFailure: IPMI call failed: power status.
+2015-06-08 18:23:55.279 11007 TRACE ironic.conductor.manager 
+2015-06-08 18:23:55.281 11007 DEBUG ironic.common.states [-] Exiting old state 'deleting' in response to event 'error' on_exit /usr/lib/python2.7/site-packages/ironic/common/states.py:177
+2015-06-08 18:23:55.281 11007 DEBUG ironic.common.states [-] Entering new state 'error' in response to event 'error' on_enter /usr/lib/python2.7/site-packages/ironic/common/states.py:183
+
+--- Additional comment from Dmitry Tantsur on 2015-06-08 11:53:23 EDT ---
+
+Judging by
+
+ ipmitool: lanplus.c:2191: ipmi_lanplus_send_payload: Assertion `session->v2_data.session_state == LANPLUS_STATE_OPEN_SESSION_RECEIEVED' failed.
+
+it's actually an ipmitool failure, not ours (or your BMC is broken from ipmitool's point of view).
+
+--- Additional comment from Udi on 2015-06-09 07:21:46 EDT ---
+
+True, there is a problem with one of the nodes. 
+
+However, this can also happen to a customer, and we can't allow a situation where a single failure somewhere prevents you from redeploying all the nodes. I couldn't delete the failed node from nova or ironic, and couldn't find a way around. I was forced to reprovision the machine after I was stuck with this problem for more than 2 days.
+
+--- Additional comment from Dmitry Tantsur on 2015-06-23 10:58:37 EDT ---
+
+I assume that https://review.openstack.org/#/c/192254/ might fix such situations, we can try backporting it, though I'm not sure how to reproduce the problem in question..
+
+--- Additional comment from Ofer Blaut on 2015-06-24 12:53:27 EDT ---
+It typically takes 3 or more calls to stack-delete to really clean it. The deletion fails 2 or more times, pretty consistently. So even if you do eventually manage to delete the stack, this should be considered a blocker bug.
+*** This bug has been marked as a duplicate of bug 1230163 ***

@@ -1,0 +1,43 @@
+This is version four of this patch.
+
+To apply:
+    cd /usr/src/sys
+    patch -p0 < nlink.patch
+
+Recompile your kernel.
+
+Index: ufs/ufs/ufs_vnops.c
+===================================================================
+RCS file: /cvs/src/sys/ufs/ufs/ufs_vnops.c,v
+--- ufs_vnops.c	1998/08/06 19:35:15	1.20
++++ ufs_vnops.c	1999/02/26 05:55:10	1.26
+@@ -926,6 +932,11 @@
+ 	/* fvp, tdvp, tvp now locked */
+ 	dp = VTOI(fdvp);
+ 	ip = VTOI(fvp);
++	if ((nlink_t)ip->i_ffs_nlink >= LINK_MAX) {
++		VOP_UNLOCK(fvp, 0, p);
++		error = EMLINK;
++		goto abortit;
++	}
+ 	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
+ 	    (dp->i_ffs_flags & APPEND)) {
+ 		VOP_UNLOCK(fvp, 0, p);
+Index: ufs/ext2fs/ext2fs_vnops.c
+===================================================================
+RCS file: /cvs/src/sys/ufs/ext2fs/ext2fs_vnops.c,v
+--- ext2fs_vnops.c	1998/08/06 19:35:04	1.8
++++ ext2fs_vnops.c	1999/02/26 16:35:33	1.10
+@@ -646,6 +650,11 @@
+ 		goto abortit;
+ 	dp = VTOI(fdvp);
+ 	ip = VTOI(fvp);
++	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
++		VOP_UNLOCK(fvp, 0, p);
++		error = EMLINK;
++		goto abortit;
++	}
+ 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
+ 		(dp->i_e2fs_flags & EXT2_APPEND)) {
+ 		VOP_UNLOCK(fvp, 0, p);
+

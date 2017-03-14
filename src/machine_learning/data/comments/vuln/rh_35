@@ -1,0 +1,4 @@
+This is not a bug.
+The behavior corresponds with the design. The temporary spacecmd session is created in
+/root/.spacecmd/localhost/session
+so it will be re-used by anyone logged in as a root user.

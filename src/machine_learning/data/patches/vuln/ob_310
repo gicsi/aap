@@ -1,0 +1,177 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 007_openssl.patch
+
+And then rebuild and install the library:
+        cd lib/libssl
+        make
+        make install
+
+Index: lib/libssl/src/apps/speed.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/apps/speed.c,v
+retrieving revision 1.15
+diff -u -p -r1.15 speed.c
+--- lib/libssl/src/apps/speed.c	27 Jun 2006 05:06:54 -0000	1.15
++++ lib/libssl/src/apps/speed.c	9 Jan 2009 06:54:21 -0000
+@@ -1486,7 +1486,7 @@ int MAIN(int argc, char **argv)
+ 				{
+ 				ret=RSA_verify(NID_md5_sha1, buf,36, buf2,
+ 					rsa_num, rsa_key[j]);
+-				if (ret == 0)
++				if (ret <= 0)
+ 					{
+ 					BIO_printf(bio_err,
+ 						"RSA verify failure\n");
+Index: lib/libssl/src/apps/spkac.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/apps/spkac.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 spkac.c
+--- lib/libssl/src/apps/spkac.c	12 May 2003 02:18:35 -0000	1.6
++++ lib/libssl/src/apps/spkac.c	9 Jan 2009 06:54:21 -0000
+@@ -284,7 +284,7 @@ bad:
+ 	pkey = NETSCAPE_SPKI_get_pubkey(spki);
+ 	if(verify) {
+ 		i = NETSCAPE_SPKI_verify(spki, pkey);
+-		if(i) BIO_printf(bio_err, "Signature OK\n");
++		if (i > 0) BIO_printf(bio_err, "Signature OK\n");
+ 		else {
+ 			BIO_printf(bio_err, "Signature Failure\n");
+ 			ERR_print_errors(bio_err);
+Index: lib/libssl/src/apps/verify.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/apps/verify.c,v
+retrieving revision 1.7
+diff -u -p -r1.7 verify.c
+--- lib/libssl/src/apps/verify.c	29 Apr 2005 05:39:16 -0000	1.7
++++ lib/libssl/src/apps/verify.c	9 Jan 2009 06:54:21 -0000
+@@ -275,7 +275,7 @@ static int check(X509_STORE *ctx, char *
+ 
+ 	ret=0;
+ end:
+-	if (i)
++	if (i > 0)
+ 		{
+ 		fprintf(stdout,"OK\n");
+ 		ret=1;
+@@ -366,4 +366,3 @@ static int MS_CALLBACK cb(int ok, X509_S
+ 		ERR_clear_error();
+ 	return(ok);
+ 	}
+-
+Index: lib/libssl/src/apps/x509.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/apps/x509.c,v
+retrieving revision 1.17
+diff -u -p -r1.17 x509.c
+--- lib/libssl/src/apps/x509.c	29 Apr 2005 05:39:16 -0000	1.17
++++ lib/libssl/src/apps/x509.c	9 Jan 2009 06:54:21 -0000
+@@ -1123,7 +1123,7 @@ static int x509_certify(X509_STORE *ctx,
+ 	/* NOTE: this certificate can/should be self signed, unless it was
+ 	 * a certificate request in which case it is not. */
+ 	X509_STORE_CTX_set_cert(&xsc,x);
+-	if (!reqfile && !X509_verify_cert(&xsc))
++	if (!reqfile && X509_verify_cert(&xsc) <= 0)
+ 		goto end;
+ 
+ 	if (!X509_check_private_key(xca,pkey))
+Index: lib/libssl/src/ssl/s2_clnt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s2_clnt.c,v
+retrieving revision 1.13
+diff -u -p -r1.13 s2_clnt.c
+--- lib/libssl/src/ssl/s2_clnt.c	4 Oct 2006 07:10:32 -0000	1.13
++++ lib/libssl/src/ssl/s2_clnt.c	9 Jan 2009 06:54:22 -0000
+@@ -1062,7 +1062,7 @@ int ssl2_set_certificate(SSL *s, int typ
+ 
+ 	i=ssl_verify_cert_chain(s,sk);
+ 		
+-	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i))
++	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0))
+ 		{
+ 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
+ 		goto err;
+Index: lib/libssl/src/ssl/s2_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s2_srvr.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 s2_srvr.c
+--- lib/libssl/src/ssl/s2_srvr.c	27 Jun 2006 05:07:03 -0000	1.11
++++ lib/libssl/src/ssl/s2_srvr.c	9 Jan 2009 06:54:22 -0000
+@@ -1070,7 +1070,7 @@ static int request_certificate(SSL *s)
+ 
+ 	i=ssl_verify_cert_chain(s,sk);
+ 
+-	if (i)	/* we like the packet, now check the chksum */
++	if (i > 0)	/* we like the packet, now check the chksum */
+ 		{
+ 		EVP_MD_CTX ctx;
+ 		EVP_PKEY *pkey=NULL;
+@@ -1099,7 +1099,7 @@ static int request_certificate(SSL *s)
+ 		EVP_PKEY_free(pkey);
+ 		EVP_MD_CTX_cleanup(&ctx);
+ 
+-		if (i) 
++		if (i > 0)
+ 			{
+ 			if (s->session->peer != NULL)
+ 				X509_free(s->session->peer);
+Index: lib/libssl/src/ssl/s3_clnt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_clnt.c,v
+retrieving revision 1.18
+diff -u -p -r1.18 s3_clnt.c
+--- lib/libssl/src/ssl/s3_clnt.c	27 Jun 2006 05:07:03 -0000	1.18
++++ lib/libssl/src/ssl/s3_clnt.c	9 Jan 2009 06:54:22 -0000
+@@ -833,7 +833,7 @@ static int ssl3_get_server_certificate(S
+ 		}
+ 
+ 	i=ssl_verify_cert_chain(s,sk);
+-	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i)
++	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)
+ #ifndef OPENSSL_NO_KRB5
+                 && (s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+                 != (SSL_aKRB5|SSL_kKRB5)
+@@ -1200,7 +1200,7 @@ static int ssl3_get_key_exchange(SSL *s)
+ 			EVP_VerifyUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
+ 			EVP_VerifyUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
+ 			EVP_VerifyUpdate(&md_ctx,param,param_len);
+-			if (!EVP_VerifyFinal(&md_ctx,p,(int)n,pkey))
++			if (EVP_VerifyFinal(&md_ctx,p,(int)n,pkey) <= 0)
+ 				{
+ 				/* bad signature */
+ 				al=SSL_AD_DECRYPT_ERROR;
+Index: lib/libssl/src/ssl/s3_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_srvr.c,v
+retrieving revision 1.20
+diff -u -p -r1.20 s3_srvr.c
+--- lib/libssl/src/ssl/s3_srvr.c	27 Jun 2006 05:07:03 -0000	1.20
++++ lib/libssl/src/ssl/s3_srvr.c	9 Jan 2009 06:54:22 -0000
+@@ -2009,7 +2009,7 @@ static int ssl3_get_client_certificate(S
+ 	else
+ 		{
+ 		i=ssl_verify_cert_chain(s,sk);
+-		if (!i)
++		if (i <= 0)
+ 			{
+ 			al=ssl_verify_alarm_type(s->verify_result);
+ 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_NO_CERTIFICATE_RETURNED);
+Index: lib/libssl/src/ssl/ssltest.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/ssltest.c,v
+retrieving revision 1.13
+diff -u -p -r1.13 ssltest.c
+--- lib/libssl/src/ssl/ssltest.c	27 Jun 2006 05:07:03 -0000	1.13
++++ lib/libssl/src/ssl/ssltest.c	9 Jan 2009 06:54:22 -0000
+@@ -1984,7 +1984,7 @@ static int MS_CALLBACK app_verify_callba
+ 
+ 	if (cb_arg->proxy_auth)
+ 		{
+-		if (ok)
++		if (ok > 0)
+ 			{
+ 			const char *cond_end = NULL;
+ 
+

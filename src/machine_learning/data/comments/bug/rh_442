@@ -1,0 +1,27 @@
+Created attachment 1043430
+run-crons-script-prefix.patch
+
+Description of problem:
+When scripts are executed from cron.* directories, the mailed output is mixed up. It is hard to say which output applies to each script.
+
+Version-Release number of selected component (if applicable):
+1.5.0
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Add some scripts to cron.* dirs which produce output.
+2. Wait until cronie executes these scripts.
+3. Check mail.
+
+Actual results:
+Concatenated output of all scripts.
+
+Expected results:
+Output from various scripts should distinguished.
+
+Additional info:
+I attach a simple patch solving the problem.
+Where are you getting the run_crons script from? It is not part of cronie or crontabs packages.
+Sorry, I haven't checked to which package run-crons belongs. It is not cronie, indeed...

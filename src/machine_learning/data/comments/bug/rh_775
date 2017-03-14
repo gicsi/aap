@@ -1,0 +1,23 @@
+Description of problem:
+Please consider adding an EPEL6 branch of python-pillow
+
+Version-Release number of selected component (if applicable): 	python-pillow-2.0.0-17.gitd1c6db8
+
+
+How reproducible:100%
+
+
+Steps to Reproduce:
+1.new package request
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+python-pillow-2.0.0-17.gitd1c6db8  is the RHEL7 version, an EPEL6 package at th exact same version would be wonderful
+There is already python-imaging in the core package set of EL6, python-pillow would conflict with that. So I fear this cannot be done, unless I'm missing something.

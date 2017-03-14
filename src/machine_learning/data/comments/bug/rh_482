@@ -1,0 +1,125 @@
+Description of problem:
+matej@mitmanek: ~$ rpm -q gedit
+gedit-3.14.3-1.el7.x86_64
+matej@mitmanek: ~$ rpm -ql gedit|grep lib64/.*/plugins
+/usr/lib64/gedit/plugins
+/usr/lib64/gedit/plugins/docinfo.plugin
+/usr/lib64/gedit/plugins/filebrowser.plugin
+/usr/lib64/gedit/plugins/libdocinfo.so
+/usr/lib64/gedit/plugins/libfilebrowser.so
+/usr/lib64/gedit/plugins/libmodelines.so
+/usr/lib64/gedit/plugins/libsort.so
+/usr/lib64/gedit/plugins/libspell.so
+/usr/lib64/gedit/plugins/libtime.so
+/usr/lib64/gedit/plugins/modelines.plugin
+/usr/lib64/gedit/plugins/sort.plugin
+/usr/lib64/gedit/plugins/spell.plugin
+/usr/lib64/gedit/plugins/time.plugin
+matej@mitmanek: ~$ rpm -ql gedit|grep lib64/.*/plugins|wc -l
+13
+matej@mitmanek: ~$ 
+
+But when I build the package locally (I guess the point is that gedit-3.14.3-1 was build when libpeas was still not present or something?) I get
+
+matej@mitmanek: gedit (rhel-7.2 %)$ rpm -qlp x86_64/gedit-3.14.3-1.el7.x86_64.rpm |grep lib64/.*/plugins|wc -l
+123
+matej@mitmanek: gedit (rhel-7.2 %)$ 
+
+(missing plugins include External Tools, Snippets, QuickOpen, which are quite useful).
+
+Unfortunately python plugins need some more patching:
+
+matej@mitmanek: scratch-build (rhel-7.2 %)$ gedit
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/devhelp.py", line 49, in do_activate
+    self._insert_menu()
+  File "/usr/lib64/gedit/plugins/devhelp.py", line 62, in _insert_menu
+    manager = self.window.get_ui_manager()
+AttributeError: 'Window' object has no attribute 'get_ui_manager'
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/externaltools/appactivatable.py", line 84, in do_activate
+    self._library.set_locations(os.path.join(self.plugin_info.get_data_dir(), 'tools'))
+  File "/usr/lib64/gedit/plugins/externaltools/library.py", line 67, in set_locations
+    self.tree = ToolDirectory(self, '')
+  File "/usr/lib64/gedit/plugins/externaltools/library.py", line 154, in __init__
+    self._load()
+  File "/usr/lib64/gedit/plugins/externaltools/library.py", line 174, in _load
+    self.tools.append(Tool(self, p))
+  File "/usr/lib64/gedit/plugins/externaltools/library.py", line 224, in __init__
+    self._load()
+  File "/usr/lib64/gedit/plugins/externaltools/library.py", line 249, in _load
+    fp = open(filename, 'r', 1, encoding='utf-8')
+TypeError: file() takes at most 3 arguments (4 given)
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/externaltools/windowactivatable.py", line 115, in do_activate
+    self.actions = ToolActions(self._library, self.window, self._output_buffer)
+  File "/usr/lib64/gedit/plugins/externaltools/windowactivatable.py", line 36, in __init__
+    self.update()
+  File "/usr/lib64/gedit/plugins/externaltools/windowactivatable.py", line 57, in update
+    self._insert_directory(self._library.tree)
+AttributeError: 'ToolLibrary' object has no attribute 'tree'
+/usr/lib64/python2.7/site-packages/gi/types.py:282: RuntimeWarning: Mixin class snippets.signals.Signals is an old style class, please update this to derive from "object".
+  RuntimeWarning)
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/snippets/windowactivatable.py", line 52, in do_activate
+    self.accel_group = Library().get_accel_group(None)
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 874, in get_accel_group
+    self.ensure(language)
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 908, in ensure
+    self.ensure_files()
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 926, in ensure_files
+    self.add_user_library)
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 850, in find_libraries
+    addcb(f)
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 830, in add_user_library
+    return self.add_library(library)
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 790, in add_library
+    library.ensure_language()
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 519, in ensure_language
+    for element in self.parse_xml(256):
+  File "/usr/lib64/gedit/plugins/snippets/library.py", line 456, in parse_xml
+    f = open(self.path, "r", encoding='utf-8')
+TypeError: 'encoding' is an invalid keyword argument for this function
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/snippets/windowactivatable.py", line 66, in do_deactivate
+    if self.accel_group:
+AttributeError: 'WindowActivatable' object has no attribute 'accel_group'
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/externaltools/windowactivatable.py", line 125, in do_deactivate
+    self.actions.deactivate()
+AttributeError: 'NoneType' object has no attribute 'deactivate'
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/devhelp.py", line 52, in do_deactivate
+    self._remove_menu()
+  File "/usr/lib64/gedit/plugins/devhelp.py", line 55, in _remove_menu
+    manager = self.window.get_ui_manager()
+AttributeError: 'Window' object has no attribute 'get_ui_manager'
+Traceback (most recent call last):
+  File "/usr/lib64/gedit/plugins/externaltools/appactivatable.py", line 139, in do_deactivate
+    self.menu.deactivate()
+AttributeError: 'NoneType' object has no attribute 'deactivate'
+matej@mitmanek: scratch-build (rhel-7.2 %)$ 
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Created attachment 1043033
+suggested patch
+Builds in BREW http://brewweb.devel.redhat.com/brew/taskinfo?taskID=9420573
+*** This bug has been marked as a duplicate of bug 1210553 ***

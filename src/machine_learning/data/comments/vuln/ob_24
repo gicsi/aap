@@ -1,0 +1,5 @@
+A race condition in IP ipq handling could permit a remote crash.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/ipqrace.patch">
+A source code patch exists which remedies this problem.</a>
+It must be installed after <a href="errata24.html#maxqueue">the maxqueue patch</a>.
+and <a href="errata24.html#tcpfix">the tcp decoding patch</a>.

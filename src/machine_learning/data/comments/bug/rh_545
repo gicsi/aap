@@ -1,0 +1,23 @@
+Description of problem:
+When you run command pkcon install mc --cache-age without parameter after --cachce-age you expect error message like: Failed to parse command line: Missing argument for --cache-age. This is working properly but return value of this command is 0 - should be 3 probably. This is same for some pkcon install mc --cache-age undefined_value.
+
+
+Version-Release number of selected component (if applicable):
+PackageKit-1.0.6-2.el7.x86_64
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.run command: pkcon install mc --cache-age
+2. echo $?
+3. check return value
+
+Actual results:
+is zero
+
+Expected results:
+should be 3 or other than 0 if undefined value is used. 
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1229321 ***

@@ -1,0 +1,18 @@
+Common Vulnerabilities and Exposures assigned an identifier CVE-2015-4374 to
+the following vulnerability:
+
+Name: CVE-2015-4374
+URL: http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-4374
+Assigned: 20150605
+Reference: https://www.drupal.org/node/2454063
+
+Cross-site scripting (XSS) vulnerability in the Webform module before
+6.x-3.23, 7.x-3.x before 7.x-3.23, and 7.x-4.x before 7.x-4.5 for
+Drupal allows remote authenticated users with certain permissions to
+inject arbitrary web script or HTML via a component name in the
+recipient (To) address of an email.
+Fedora/EPEL shipe webform-4.7 already.
+
+External References:
+
+https://www.drupal.org/node/2454063

@@ -1,0 +1,10 @@
+Description of problem:
+
+Document how to enable SSL for horizon during deployment using the director.
+
+This is a commonly requested task when using the RHEL OSP Installer with OSP 6 etc.
+The content requested in the bug is addressed via 1234859.
+
+Closing.
+
+*** This bug has been marked as a duplicate of bug 1234859 ***

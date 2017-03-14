@@ -1,0 +1,40 @@
+Created attachment 1041465
+Screenshot showing Mate applet indicating system is up to date along with Yum Extender DNF showing 99 updates at the same time.
+
+Description of problem:
+
+mate-applet-softupd not notifying of updates when there are any. 
+
+
+Version-Release number of selected component (if applicable):
+
+0.3.0-1.fc22
+
+
+How reproducible:
+
+See "Steps to Reproduce".
+
+Steps to Reproduce:
+1. Install applet.
+2. Wait for updates.
+3. Applet continues to display sunburst, mouseover shows system is up to date, when in reality, it is not.
+
+Actual results:
+
+Applet not notifying of updates.
+
+Expected results:
+
+Applet should have indicated updates.
+
+Additional info:
+
+Will attach screenshot showing applet indicating system up to date, with yumex-dnf window and icon indicating 99 updates.
+*** This bug has been marked as a duplicate of bug 1181432 ***
+Bug 1181432 - WONTFIX.
+
+Patrick,
+
+What is the point of even including it in the distro if it doesn't work and will not be fixed?
+Please read bug #1181432 comments: everything is explained (https://bugzilla.redhat.com/show_bug.cgi?id=1181432#c10).

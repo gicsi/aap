@@ -1,0 +1,119 @@
+Description of problem:
+I was digging around to find the SELinux enabling command for user Private folders and I came across this from an Ubuntu user.This probably affects Debian and Fedora teams as well.Will format this into 'bug format' for Debian, I have a few unposted bugs from my last install awaiting to be sent out.
+
+ecryptfs has a hashing problem.
+
+==========================================================================
+Ubuntu Security Notice USN-2524-1
+March 11, 2015
+
+ecryptfs-utils vulnerability
+==========================================================================
+
+A security issue affects these releases of Ubuntu and its derivatives:
+
+- Ubuntu 14.10
+- Ubuntu 14.04 LTS
+- Ubuntu 12.04 LTS
+- Ubuntu 10.04 LTS
+
+Summary:
+
+Sensitive information in encrypted home and Private directories could be
+exposed if an attacker gained access to your files.
+
+Software Description:
+- ecryptfs-utils: eCryptfs cryptographic filesystem utilities
+
+Details:
+
+Sylvain Pelissier discovered that eCryptfs did not generate a random salt when
+encrypting the mount passphrase with the login password. An attacker could use
+this issue to discover the login password used to protect the mount passphrase
+and gain unintended access to the encrypted files.
+
+Update instructions:
+
+The problem can be corrected by updating your system to the following
+package versions:
+
+Ubuntu 14.10:
+  ecryptfs-utils                  104-0ubuntu1.14.10.3
+  libecryptfs0                    104-0ubuntu1.14.10.3
+
+Ubuntu 14.04 LTS:
+  ecryptfs-utils                  104-0ubuntu1.14.04.3
+  libecryptfs0                    104-0ubuntu1.14.04.3
+
+Ubuntu 12.04 LTS:
+  ecryptfs-utils                  96-0ubuntu3.4
+  libecryptfs0                    96-0ubuntu3.4
+
+Ubuntu 10.04 LTS:
+  ecryptfs-utils                  83-0ubuntu3.2.10.04.6
+  libecryptfs0                    83-0ubuntu3.2.10.04.6
+
+After a standard system update you need to log out of all sessions and then log
+back in to make all the necessary changes.
+
+References:
+  http://www.ubuntu.com/usn/usn-2524-1
+  CVE-2014-9687
+
+Package Information:
+  https://launchpad.net/ubuntu/+source/ecryptfs-utils/104-0ubuntu1.14.10.3
+  https://launchpad.net/ubuntu/+source/ecryptfs-utils/104-0ubuntu1.14.04.3
+  https://launchpad.net/ubuntu/+source/ecryptfs-utils/96-0ubuntu3.4
+  https://launchpad.net/ubuntu/+source/ecryptfs-utils/83-0ubuntu3.2.10.04.6
+
+==============================
+
+Version-Release number of selected component (if applicable):
+20+, possibly RHEL7+ also
+
+How reproducible:
+according to this article, every attempt to encrypt mount passphrase
+
+Steps to Reproduce:
+To get the mount passphrase, you have to issue:
+ecryptfs-setup-private
+
+(ecryptfs-utils package needs to be installed)
+
+Actual results:
+see test results above
+
+Expected results:
+we should hash this better. we have fixed bugs like this before in the past.Im betting latest source package contains the fix for this.Need to include that in recent distros such as fc20+.
+
+Looks like the sources are here: http://ecryptfs.org/source.html
+Not an issue in RHEL7; we don't ship ecryptfs in RHEL7.
+
+=Eric
+ecryptfs-utils-106-2.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/ecryptfs-utils-106-2.fc22
+ecryptfs-utils-106-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/ecryptfs-utils-106-1.fc21
+ecryptfs-utils-106-1.fc20 has been submitted as an update for Fedora 20.
+https://admin.fedoraproject.org/updates/ecryptfs-utils-106-1.fc20
+Package ecryptfs-utils-106-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing ecryptfs-utils-106-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10581/ecryptfs-utils-106-1.fc21
+then log in and leave karma (feedback).
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

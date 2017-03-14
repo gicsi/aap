@@ -1,0 +1,5 @@
+Description of problem:
+
+The kernel build above is missing the perf rpm.  The perf rpm is found in kernel-4.2.0-0.rc0.git1.1.fc23.
+Huh, yep.  I see where the bug was introduced.  I'll fix it today.
+Fixed in the 4.2.0-0.rc0.git3.1 kernel.  Should be in rawhide tomorrow.

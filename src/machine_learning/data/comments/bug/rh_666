@@ -1,0 +1,27 @@
+Latest upstream release: 4.0a6
+Current version/release in rawhide: 4.0-0.7.a5.fc23
+URL: https://pypi.python.org/pypi/coverage
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+cmd:  spectool -g /var/tmp/thn-xhxzvA/python-coverage.spec
+return code:  22
+stdout:
+Getting http://pypi.python.org/packages/source/c/coverage/coverage-4.0a6a5.tar.gz to ./coverage-4.0a6a5.tar.gz
+
+stderr:
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (22) The requested URL returned error: 404 Not Found
+python-coverage-4.0-0.8.a6.fc23 in rawhide.

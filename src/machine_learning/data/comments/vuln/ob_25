@@ -1,0 +1,4 @@
+A race condition existed between accept(2) and select(2) which could
+permit an attacker to hang sockets from remote.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/accept.patch">
+A source code patch exists which remedies this problem.</a>

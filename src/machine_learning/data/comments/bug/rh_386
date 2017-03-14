@@ -1,0 +1,54 @@
+Version-Release number of selected component:
+evolution-data-server-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/evolution-calendar-factory-subprocess --factory caldav --bus-name org.gnome.evolution.dataserver.Subprocess.Backend.Calendarx2775x2 --own-path /org/gnome/evolution/dataserver/Subprocess/Backend/Calendar/2775/2
+crash_function: icalvalue_get_utcoffset
+executable:     /usr/libexec/evolution-calendar-factory-subprocess
+global_pid:     2912
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 icalvalue_get_utcoffset at /usr/src/debug/libical-1.0.1/x86_64-redhat-linux-gnu/src/libical/icalderivedvalue.c:787
+ #1 icalproperty_get_tzoffsetfrom at /usr/src/debug/libical-1.0.1/x86_64-redhat-linux-gnu/src/libical/icalderivedproperty.c:3216
+ #2 icaltimezone_expand_vtimezone at /usr/src/debug/libical-1.0.1/src/libical/icaltimezone.c:568
+ #3 icaltimezone_expand_changes at /usr/src/debug/libical-1.0.1/src/libical/icaltimezone.c:512
+ #4 icaltimezone_ensure_coverage at /usr/src/debug/libical-1.0.1/src/libical/icaltimezone.c:489
+ #5 icaltimezone_get_utc_offset at /usr/src/debug/libical-1.0.1/src/libical/icaltimezone.c:852
+ #6 icaltimezone_convert_time at /usr/src/debug/libical-1.0.1/src/libical/icaltimezone.c:807
+ #7 icaltime_as_timet_with_zone at /usr/src/debug/libical-1.0.1/src/libical/icaltime.c:323
+ #8 componenttime_to_utc_timet at e-cal-util.c:1503
+ #9 e_cal_util_get_component_occur_times at e-cal-util.c:1546
+Created attachment 1044310
+File: backtrace
+Created attachment 1044311
+File: cgroup
+Created attachment 1044312
+File: core_backtrace
+Created attachment 1044313
+File: dso_list
+Created attachment 1044314
+File: environ
+Created attachment 1044315
+File: limits
+Created attachment 1044316
+File: maps
+Created attachment 1044317
+File: mountinfo
+Created attachment 1044318
+File: namespaces
+Created attachment 1044319
+File: open_fds
+Created attachment 1044320
+File: proc_pid_status
+Thanks for a bug report. There had been reported a similar bug report already, thus I'm marking it as a duplicate.
+
+I'm not able to reproduce it myself, thus any hint/data would be appreciated.
+
+*** This bug has been marked as a duplicate of bug 1206313 ***

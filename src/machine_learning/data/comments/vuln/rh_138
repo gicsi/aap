@@ -1,0 +1,179 @@
+Description of problem:
+VDSM service is unable to start while using RHEV-H 7.1 (20150609.0.el7ev).
+I checked also with a non-official build: 7.1 (20150621.40.el7ev) and the service starts successfully.
+
+
+Version-Release number of selected component (if applicable):
+Red Hat Enterprise Virtualization Hypervisor release 7.1 (20150609.0.el7ev)
+ovirt-node-3.2.3-3.el7.noarch
+ovirt-node-branding-rhev-3.2.3-3.el7.noarch
+ovirt-node-plugin-hosted-engine-0.2.0-15.0.el7ev.noarch
+ovirt-node-plugin-vdsm-0.2.0-25.el7ev.noarch
+ovirt-host-deploy-1.3.0-2.el7ev.noarch
+ovirt-node-selinux-3.2.3-3.el7.noarch
+ovirt-host-deploy-offline-1.3.0-3.el7ev.x86_64
+ovirt-hosted-engine-setup-1.2.4-2.el7ev.noarch
+ovirt-node-plugin-cim-3.2.3-3.el7.noarch
+ovirt-node-plugin-snmp-3.2.3-3.el7.noarch
+ovirt-node-plugin-rhn-3.2.3-3.el7.noarch
+ovirt-hosted-engine-ha-1.2.6-2.el7ev.noarch
+vdsm-4.16.20-1.el7ev.x86_64
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1. Install RHEV-H 7.1 (20150609.0.el7ev)
+
+
+Actual results:
+VDSM service cannot be started:
+
+[root@localhost ~]# systemctl start vdsmd.service   
+^C
+[root@localhost ~]# journalctl -r
+-- Logs begin at Sun 2015-06-21 11:33:06 UTC, end at Mon 2015-06-22 12:48:45 UTC. --
+Jun 22 12:48:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:48:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:48:01 localhost.localdomain CROND[21551]: (root) CMD (python  /usr/share/rhn/virtualization/poller.pyc)
+Jun 22 12:48:01 localhost.localdomain systemd[1]: Started Session 1194 of user root.
+Jun 22 12:48:01 localhost.localdomain systemd[1]: Starting Session 1194 of user root.
+Jun 22 12:47:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:47:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:46:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:46:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:46:01 localhost.localdomain CROND[21535]: (root) CMD (python  /usr/share/rhn/virtualization/poller.pyc)
+Jun 22 12:46:01 localhost.localdomain systemd[1]: Started Session 1193 of user root.
+Jun 22 12:46:01 localhost.localdomain systemd[1]: Starting Session 1193 of user root.
+Jun 22 12:45:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:45:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:44:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:44:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:44:01 localhost.localdomain CROND[21487]: (root) CMD (python  /usr/share/rhn/virtualization/poller.pyc)
+Jun 22 12:44:01 localhost.localdomain systemd[1]: Started Session 1192 of user root.
+Jun 22 12:44:01 localhost.localdomain systemd[1]: Starting Session 1192 of user root.
+Jun 22 12:43:53 localhost.localdomain systemd[1]: Unit proc-sys-fs-binfmt_misc.mount entered failed state.
+Jun 22 12:43:53 localhost.localdomain systemd[1]: Failed to mount Arbitrary Executable File Formats File System.
+Jun 22 12:43:53 localhost.localdomain systemd[1]: proc-sys-fs-binfmt_misc.mount mount process exited, code=exited status=32
+Jun 22 12:43:53 localhost.localdomain mount[21480]: mount: unknown filesystem type 'binfmt_misc'
+Jun 22 12:43:53 localhost.localdomain systemd[1]: Mounting Arbitrary Executable File Formats File System...
+Jun 22 12:43:53 localhost.localdomain systemd[1]: Got automount request for /proc/sys/fs/binfmt_misc, triggered by 21479 (find)
+Jun 22 12:43:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:43:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:43:13 localhost.localdomain sudo[21475]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/chage -l admin
+Jun 22 12:43:13 localhost.localdomain sudo[21472]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/chage -l root
+Jun 22 12:43:12 localhost.localdomain sudo[21463]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/sbin/persist /etc/passwd /etc/shadow
+Jun 22 12:43:12 localhost.localdomain sshd[21446]: lastlog_openseek: Couldn't stat /var/log/lastlog: No such file or directory
+Jun 22 12:43:12 localhost.localdomain sshd[21446]: lastlog_openseek: Couldn't stat /var/log/lastlog: No such file or directory
+Jun 22 12:43:12 localhost.localdomain sshd[21441]: pam_lastlog(sshd:session): unable to open /var/log/lastlog: No such file or directory
+Jun 22 12:43:12 localhost.localdomain sshd[21441]: pam_unix(sshd:session): session opened for user root by (uid=0)
+Jun 22 12:43:12 localhost.localdomain systemd[1]: Started Session 1191 of user root.
+Jun 22 12:43:12 localhost.localdomain systemd-logind[1382]: New session 1191 of user root.
+Jun 22 12:43:12 localhost.localdomain systemd[1]: Starting Session 1191 of user root.
+Jun 22 12:43:12 localhost.localdomain systemd[1]: Created slice user-0.slice.
+Jun 22 12:43:12 localhost.localdomain sshd[21441]: Accepted password for root from 10.35.203.215 port 60266 ssh2
+Jun 22 12:43:09 localhost.localdomain sshd[21441]: error: Could not load host key: /etc/ssh/ssh_host_dsa_key
+Jun 22 12:42:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:42:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:42:01 localhost.localdomain CROND[21427]: (root) CMD (python  /usr/share/rhn/virtualization/poller.pyc)
+Jun 22 12:42:01 localhost.localdomain systemd[1]: Started Session 1190 of user root.
+Jun 22 12:42:01 localhost.localdomain systemd[1]: Starting Session 1190 of user root.
+Jun 22 12:42:01 localhost.localdomain systemd[1]: Created slice user-0.slice.
+Jun 22 12:41:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:41:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:40:45 localhost.localdomain python[2230]: Unable to recover, retry in 60 seconds.
+Jun 22 12:40:45 localhost.localdomain python[2230]: Error in communication with subscription manager, trying to recover:
+Jun 22 12:40:01 localhost.localdomain CROND[21396]: (root) CMDOUT (error: error creating output file /var/lib/logrotate.status.tmp: Read-only file system)
+
+
+
+Additional info: /var/log/ from the host
+When connecting to original host
+systemctl restart vdsmd - doesnt start vdsm
+even after rhevh reboot.
+
+Cant recreate locally.
+
+Please rebuild the host again with original rhevh (the one with the bug 20150609.0.el7ev)
+
+please use firstboot=1
+A lot of informations are lacking: Is this bug during installation of RHEV-H or while setting up hosted-engine? What installation method? At what point did the installation stop?
+(In reply to Anatoly Litovsky from comment #1)
+> When connecting to original host
+> systemctl restart vdsmd - doesnt start vdsm
+> even after rhevh reboot.
+> 
+> Cant recreate locally.
+> 
+> Please rebuild the host again with original rhevh (the one with the bug
+> 20150609.0.el7ev)
+> 
+> please use firstboot=1
+Installed RHEV-H again using firstboot=1 and the service still cannot be started
+
+(In reply to Fabian Deutsch from comment #2)
+> A lot of informations are lacking: Is this bug during installation of RHEV-H
+> or while setting up hosted-engine? What installation method? At what point
+> did the installation stop?
+Not related to hosted-engine specifically, the service cannot be started manually with systemctl.
+
+
+Jun 24 07:24:30 localhost.localdomain systemd-readahead[928]: Failed to open pack file: Read-only file system
+Jun 24 07:24:17 localhost.localdomain passwd[5429]: pam_unix(passwd:chauthtok): password changed for admin
+Jun 24 07:24:11 localhost.localdomain passwd[5425]: pam_unix(passwd:chauthtok): password changed for root
+Jun 24 07:24:04 localhost.localdomain sudo[5413]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/libexec/ovirt-functions unmount_config /etc/passwd /etc/shadow
+Jun 24 07:24:04 localhost.localdomain sudo[5410]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/chage -l admin
+Jun 24 07:24:04 localhost.localdomain sudo[5407]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/chage -l root
+Jun 24 07:24:03 localhost.localdomain sudo[5398]: root : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/sbin/persist /etc/passwd /etc/shadow
+Jun 24 07:24:03 localhost.localdomain sshd[5374]: pam_unix(sshd:chauthtok): password changed for root
+Jun 24 07:24:01 localhost.localdomain crond[5378]: (root) FAILED to authorize user with PAM (Authentication token is no longer valid; new one required)
+Jun 24 07:24:01 localhost.localdomain crond[5378]: (root) PAM ERROR (Authentication token is no longer valid; new one required)
+It is okay that vdsmd does not start after RHEV-H installation.
+The only important point is that vdsmd is running correct after registration or beeing added to a RHEV-M.
+
+Elad, does adding the host to RHEV-M work and can you launch a VM on the RHEV-H host after registration?
+
+If both of this works, then we can close this bug.
+Lowering the priority because we did not - yet - see this problem elsewhere.
+Test version:
+rhev-hypervisor7-7.1-20150609.0.el6ev
+ovirt-node-3.2.3-3.el7.noarch
+ovirt-node-plugin-hosted-engine-0.2.0-15.0.el7ev.noarch
+vdsm-4.16.20-1.el7ev.x86_64
+
+Test steps:
+1. TUI install RHEV-H7.1 build.
+2. Login the hypervisor and check vdsmd service.
+3. Configure network and check vdsmd service.
+4. Register to RHEVM and check vdsmd service again.
+
+Test result:
+1. After step 2, vdsmd status show as active.
+
+2. After step 3, vdsmd status show as inactive. 
+# systemctl status vdsmd
+vdsmd.service - Virtual Desktop Server Manager
+   Loaded: loaded (/usr/lib/systemd/system/vdsmd.service; enabled)
+   Active: inactive (dead) since Thu 2015-06-25 10:10:11 UTC; 1min 42s ago
+  Process: 16746 ExecStopPost=/usr/libexec/vdsm/vdsmd_init_common.sh --post-stop (code=exited, status=0/SUCCESS)
+  Process: 15961 ExecStart=/usr/share/vdsm/daemonAdapter -0 /dev/null -1 /dev/null -2 /dev/null /usr/share/vdsm/vdsm (code=exited, status=0/SUCCESS)
+  Process: 15842 ExecStartPre=/usr/libexec/vdsm/vdsmd_init_common.sh --pre-start (code=exited, status=0/SUCCESS)
+ Main PID: 15961 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/vdsmd.service
+
+3. After step4,  vdsmd status show as active.
+# systemctl status vdsmd
+vdsmd.service - Virtual Desktop Server Manager
+   Loaded: loaded (/usr/lib/systemd/system/vdsmd.service; enabled)
+   Active: active (running) since Thu 2015-06-25 10:15:06 UTC; 59s ago
+  Process: 17931 ExecStartPre=/usr/libexec/vdsm/vdsmd_init_common.sh --pre-start (code=exited, status=0/SUCCESS)
+ Main PID: 18047 (vdsm)
+   CGroup: /system.slice/vdsmd.service
+           └─18047 /usr/bin/python /usr/share/vdsm/vdsm
+Thanks for testing Elad, so it looks liek the original problem was related to an environmental issue.
+
+Closing this bug according to comment 8.
+Fabian, I encountered the following issue in the post rhevm installation phase during the HE deployment:
+
+https://bugzilla.redhat.com/show_bug.cgi?id=1236518

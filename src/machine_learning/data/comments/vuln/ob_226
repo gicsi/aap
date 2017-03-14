@@ -1,0 +1,10 @@
+Due to buffer overflows in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=telnet&sektion=1">telnet(1)</a>,
+a malicious server or man-in-the-middle attack could allow execution of
+arbitrary code with the privileges of the user invoking
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=telnet&sektion=1">telnet(1)</a>.
+Noone should use telnet anymore.  Please use
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ssh&sektion=1">ssh(1)</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/014_telnet.patch">
+A source code patch exists which remedies this problem.</a>

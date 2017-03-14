@@ -1,0 +1,9 @@
+Due to a bug in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=arc&amp;sektion=4">arc(4)</a>
+RAID driver the driver will not properly synchronize the cache to the logical volumes
+upon system shut down. The result being that the mounted file systems within the logical
+volumes will not be properly marked as being clean and fsck will be run for the subsequent
+boot up.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.0/common/004_arc.patch">
+A source code patch exists which remedies this problem.</a>

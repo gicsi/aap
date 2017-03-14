@@ -1,0 +1,412 @@
+From 1aadbe60036e6ca54f7990b2f335dd56ef050a9d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Mat=C4=9Bj=20Cepl?= <mcepl@cepl.eu>
+Date: Thu, 25 Jun 2015 12:04:13 +0200
+Subject: [PATCH] Update to 3.14.3
+
+- Resolves: #1174591
+---
+ gedit-disable-python3.patch | 309 ++++++++++++--------------------------------
+ gedit.spec                  |   1 +
+ 2 files changed, 87 insertions(+), 223 deletions(-)
+
+diff --git a/gedit-disable-python3.patch b/gedit-disable-python3.patch
+index 26f4928..c0a43f2 100644
+--- a/gedit-disable-python3.patch
++++ b/gedit-disable-python3.patch
+@@ -14,38 +14,9 @@ Subject: [PATCH] Switch from python3 to python2
+  plugins/snippets/snippets/shareddata.py               | 3 ++-
+  8 files changed, 9 insertions(+), 8 deletions(-)
+ 
+-diff --git a/configure.ac b/configure.ac
+-index cf3d734..3acee28 100644
+ --- a/configure.ac
+ +++ b/configure.ac
+-@@ -276,61 +276,61 @@ if test "x$enable_enchant" = "xyes" ; then
+- 				have_iso_codes=no
+- 			fi
+- 			AC_MSG_RESULT([$result])
+- 		fi
+- 
+- 		if test "x$have_iso_codes" = "xyes"; then
+- 			AC_DEFINE_UNQUOTED([ISO_CODES_PREFIX],["`$PKG_CONFIG --variable=prefix iso-codes`"],[ISO codes prefix])
+- 			AC_DEFINE([HAVE_ISO_CODES],[1],[Define if you have the iso-codes package])
+- 		else
+- 			AC_MSG_ERROR([iso-codes is required to build the spell plugin. Use --disable-spell to build without spell plugin.])
+- 		fi
+- 	else
+- 		enable_enchant=no
+- 		AC_MSG_ERROR([Enchant library not found or too old. Use --disable-spell to build without spell plugin.])
+- 	fi
+- fi
+- 
+- AM_CONDITIONAL(ENABLE_ENCHANT, test x"$enable_enchant" = "xyes")
+- 
+- AC_ARG_ENABLE([python],
+-               AS_HELP_STRING([--enable-python[=@<:@no/auto/yes@:>@]],[Build with python support]),
+-               [enable_python=$enableval],
+-               [enable_python="auto"])
+- 
+- if test "x$enable_python" = "xauto"; then
+- 	PKG_CHECK_EXISTS([pygobject-3.0 >= $PYGOBJECT_REQUIRED],
+- 	                 [enable_python=yes],[enable_python=no])
++@@ -303,7 +303,7 @@ if test "x$enable_python" = "xauto"; the
+  fi
+  
+  if test "x$enable_python" = "xyes"; then
+@@ -54,65 +25,9 @@ index cf3d734..3acee28 100644
+  	PKG_CHECK_MODULES(PYTHON, [pygobject-3.0 >= $PYGOBJECT_REQUIRED])
+  
+  	pyoverridesdir="\$(pyexecdir)/gi/overrides"
+- 	AC_SUBST(pyoverridesdir)
+- fi
+- 
+- AM_CONDITIONAL(ENABLE_PYTHON, test x"$enable_python" = "xyes")
+- 
+- dnl ================================================================
+- dnl Start of pkg-config checks
+- dnl ================================================================
+- 
+- # Dependencies
+- 
+- PKG_CHECK_MODULES(GEDIT, [
+- 	libxml-2.0 >= $LIBXML_REQUIRED
+- 	glib-2.0 >= $GLIB_REQUIRED
+- 	gio-2.0 >= $GLIB_REQUIRED
+- 	gmodule-2.0
+- 	gtk+-3.0 >= $GTK_REQUIRED
+- 	gtksourceview-3.0 >= $GTKSOURCEVIEW_REQUIRED
+- 	libpeas-1.0 >= $LIBPEAS_REQUIRED
+- 	libpeas-gtk-1.0 >= $LIBPEAS_REQUIRED
+- 	gsettings-desktop-schemas
+- ])
+- 
+- if test "$os_osx" = "no" &&
+-    test "$os_win32" = "no"; then
+- 	PKG_CHECK_MODULES(X11, [
+- 		x11
+-diff --git a/gedit/gedit-plugins-engine.c b/gedit/gedit-plugins-engine.c
+-index 725cb3b..678809b 100644
+ --- a/gedit/gedit-plugins-engine.c
+ +++ b/gedit/gedit-plugins-engine.c
+-@@ -28,61 +28,61 @@
+- #include <string.h>
+- 
+- #include <glib/gi18n.h>
+- #include <girepository.h>
+- 
+- #include "gedit-debug.h"
+- #include "gedit-app.h"
+- #include "gedit-dirs.h"
+- #include "gedit-settings.h"
+- #include "gedit-utils.h"
+- 
+- struct _GeditPluginsEnginePrivate
+- {
+- 	GSettings *plugin_settings;
+- };
+- 
+- G_DEFINE_TYPE_WITH_PRIVATE (GeditPluginsEngine, gedit_plugins_engine, PEAS_TYPE_ENGINE)
+- 
+- GeditPluginsEngine *default_engine = NULL;
+- 
+- static void
+- gedit_plugins_engine_init (GeditPluginsEngine *engine)
+- {
+- 	gchar *typelib_dir;
+- 	GError *error = NULL;
+- 
+- 	gedit_debug (DEBUG_PLUGINS);
++@@ -55,7 +55,7 @@ gedit_plugins_engine_init (GeditPluginsE
+  
+  	engine->priv = gedit_plugins_engine_get_instance_private (engine);
+  
+@@ -121,155 +36,53 @@ index 725cb3b..678809b 100644
+  
+  	engine->priv->plugin_settings = g_settings_new ("org.gnome.gedit.plugins");
+  
+- 	/* Require gedit's typelib. */
+- 	typelib_dir = g_build_filename (gedit_dirs_get_gedit_lib_dir (),
+- 	                                "girepository-1.0",
+- 	                                NULL);
+- 
+- 	if (!g_irepository_require_private (g_irepository_get_default (),
+- 	                                    typelib_dir, "Gedit", "3.0", 0, &error))
+- 	{
+- 		g_warning ("Could not load Gedit repository: %s", error->message);
+- 		g_error_free (error);
+- 		error = NULL;
+- 	}
+- 
+- 	g_free (typelib_dir);
+- 
+- 	/* This should be moved to libpeas */
+- 	if (!g_irepository_require (g_irepository_get_default (),
+- 	                            "Peas", "1.0", 0, &error))
+- 	{
+- 		g_warning ("Could not load Peas repository: %s", error->message);
+- 		g_error_free (error);
+- 		error = NULL;
+- 	}
+- 
+- 	if (!g_irepository_require (g_irepository_get_default (),
+- 	                            "PeasGtk", "1.0", 0, &error))
+- 	{
+-diff --git a/plugins/externaltools/data/send-to-fpaste.tool.in b/plugins/externaltools/data/send-to-fpaste.tool.in
+-index d255007..95c2d37 100755
+ --- a/plugins/externaltools/data/send-to-fpaste.tool.in
+ +++ b/plugins/externaltools/data/send-to-fpaste.tool.in
+-@@ -1,27 +1,27 @@
++@@ -1,4 +1,4 @@
+ -#!/usr/bin/env python3
+ +#!/usr/bin/env python
+  
+  import os, urllib, json, sys, urllib.request
+  from gi.repository import Gtk, Gdk
+- 
+- lang = os.getenv('GEDIT_CURRRENT_DOCUMENT_LANGUAGE')
+- if lang is None:
+-     lang = "text"
+- 
+- current_document_path = os.getenv('GEDIT_CURRENT_DOCUMENT_PATH')
+- selected_text = os.getenv('GEDIT_SELECTED_TEXT')
+- 
+- if selected_text is None:
+-     selected_text = sys.stdin.read()
+- 
+- url_params = urllib.parse.urlencode({'paste_data': selected_text, 'paste_lang': lang, 'mode':'json', 'api_submit':'true'})
+- openfpaste = urllib.request.urlopen("http://fpaste.org", bytes(url_params, 'utf-8')).read().decode("utf-8")
+- final_data = json.loads(openfpaste)
+- 
+- paste_url = "http://fpaste.org/" + final_data['result']['id']
+- 
+- print(paste_url + " has been copied to clipboard.")
+- 
+- disp = Gdk.Display.get_default()
+- clipper = Gtk.Clipboard.get_for_display(disp, Gdk.SELECTION_CLIPBOARD)
+- clipper.set_text(paste_url, len(paste_url))
+- clipper.store()
+-diff --git a/plugins/externaltools/externaltools.plugin.desktop.in b/plugins/externaltools/externaltools.plugin.desktop.in
+-index cc7a4da..c56e4e3 100644
+ --- a/plugins/externaltools/externaltools.plugin.desktop.in
+ +++ b/plugins/externaltools/externaltools.plugin.desktop.in
+-@@ -1,9 +1,9 @@
++@@ -1,5 +1,5 @@
+  [Plugin]
+ -Loader=python3
+ +Loader=python
+  Module=externaltools
+  IAge=3
+  _Name=External Tools
+- _Description=Execute external commands and shell scripts.
+- Authors=Steve Frécinaux <steve@istique.net>
+- Copyright=Copyright © 2005 Steve Frécinaux
+- Website=http://www.gedit.org
+-diff --git a/plugins/pythonconsole/pythonconsole.plugin.desktop.in b/plugins/pythonconsole/pythonconsole.plugin.desktop.in
+-index 21283e8..4309667 100644
+ --- a/plugins/pythonconsole/pythonconsole.plugin.desktop.in
+ +++ b/plugins/pythonconsole/pythonconsole.plugin.desktop.in
+-@@ -1,10 +1,10 @@
++@@ -1,5 +1,5 @@
+  [Plugin]
+ -Loader=python3
+ +Loader=python
+  Module=pythonconsole
+  IAge=3
+  _Name=Python Console
+- _Description=Interactive Python console standing in the bottom panel
+- Icon=gnome-mime-text-x-python
+- Authors=Steve Frécinaux <steve@istique.net>
+- Copyright=Copyright © 2006 Steve Frécinaux
+- Website=http://www.gedit.org
+-diff --git a/plugins/quickopen/quickopen.plugin.desktop.in b/plugins/quickopen/quickopen.plugin.desktop.in
+-index 68b6faa..17edecc 100644
+ --- a/plugins/quickopen/quickopen.plugin.desktop.in
+ +++ b/plugins/quickopen/quickopen.plugin.desktop.in
+-@@ -1,10 +1,10 @@
++@@ -1,5 +1,5 @@
+  [Plugin]
+ -Loader=python3
+ +Loader=python
+  Module=quickopen
+  IAge=3
+  _Name=Quick Open
+- _Description=Quickly open files
+- Icon=gtk-open
+- Authors=Jesse van den Kieboom  <jessevdk@gnome.org>
+- Copyright=Copyright © 2009 Jesse van den Kieboom
+- Website=http://www.gedit.org
+-diff --git a/plugins/snippets/snippets.plugin.desktop.in b/plugins/snippets/snippets.plugin.desktop.in
+-index 8551b6b..f41a626 100644
+ --- a/plugins/snippets/snippets.plugin.desktop.in
+ +++ b/plugins/snippets/snippets.plugin.desktop.in
+-@@ -1,9 +1,9 @@
++@@ -1,5 +1,5 @@
+  [Plugin]
+ -Loader=python3
+ +Loader=python
+  Module=snippets
+  IAge=3
+  _Name=Snippets
+- _Description=Insert often-used pieces of text in a fast way
+- Authors=Jesse van den Kieboom <jesse@icecrew.nl>
+- Copyright=Copyright © 2005 Jesse van den Kieboom
+- Website=http://www.gedit.org
+-diff --git a/plugins/snippets/snippets/shareddata.py b/plugins/snippets/snippets/shareddata.py
+-index be6fd14..64ffcc4 100644
+ --- a/plugins/snippets/snippets/shareddata.py
+ +++ b/plugins/snippets/snippets/shareddata.py
+-@@ -1,56 +1,57 @@
+- #    Gedit snippets plugin
+- #    Copyright (C) 2011  Jesse van den Kieboom <jessevdk@gnome.org>
+- #
+- #    This program is free software; you can redistribute it and/or modify
+- #    it under the terms of the GNU General Public License as published by
+- #    the Free Software Foundation; either version 2 of the License, or
+- #    (at your option) any later version.
+- #
+- #    This program is distributed in the hope that it will be useful,
+- #    but WITHOUT ANY WARRANTY; without even the implied warranty of
+- #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- #    GNU General Public License for more details.
+- #
+- #    You should have received a copy of the GNU General Public License
+- #    along with this program; if not, write to the Free Software
+- #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+- 
+- from .singleton import Singleton
+- import os
+- 
+- from gi.repository import Gtk
+- 
++@@ -23,7 +23,8 @@ from gi.repository import Gtk
+  # To register the GeditSnippetsManager type
+  from .manager import Manager
+  
+@@ -279,33 +92,83 @@ index be6fd14..64ffcc4 100644
+      def __init__(self):
+          self.dlg = None
+          self.dlg_default_size = None
+-         self.controller_registry = {}
+-         self.windows = {}
+- 
+-     def register_controller(self, view, controller):
+-         self.controller_registry[view] = controller
+-     
+-     def unregister_controller(self, view, controller):
+-         if self.controller_registry[view] == controller:
+-             del self.controller_registry[view]
+- 
+-     def register_window(self, window):
+-         self.windows[window.window] = window
+- 
+-     def unregister_window(self, window):
+-         if window.window in self.windows:
+-             del self.windows[window.window]
+- 
+-     def update_state(self, window):
+-         if window in self.windows:
+-             self.windows[window].do_update_state()
+- 
+-     def get_active_controller(self, window):
+-         view = window.get_active_view()
++--- a/plugins/snippets/snippets/library.py
+++++ b/plugins/snippets/snippets/library.py
++@@ -15,6 +15,7 @@
++ #    along with this program; if not, write to the Free Software
++ #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  
+-         if not view or not view in self.controller_registry:
+-             return None
+++import io
++ import os
++ import weakref
++ import sys
++@@ -453,7 +454,7 @@ class SnippetsSystemFile:
++         self.insnippet = False
++ 
++         try:
++-            f = open(self.path, "r", encoding='utf-8')
+++            f = io.open(self.path, "r", encoding='utf-8')
++         except IOError:
++             self.ok = False
++             return
++--- a/plugins/externaltools/tools/library.py
+++++ b/plugins/externaltools/tools/library.py
++@@ -16,6 +16,7 @@
++ #    along with this program; if not, write to the Free Software
++ #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  
+--- 
+-2.3.7
+-
+++import io
++ import os
++ import re
++ import locale
++@@ -246,7 +247,7 @@ class Tool(object):
++         if filename is None:
++             return
++ 
++-        fp = open(filename, 'r', 1, encoding='utf-8')
+++        fp = io.open(filename, 'r', 1, encoding='utf-8')
++         in_block = False
++         lang = locale.getlocale(locale.LC_MESSAGES)[0]
++ 
++@@ -395,7 +396,7 @@ class Tool(object):
++         if filename is None:
++             return True
++ 
++-        fp = open(filename, 'r', 1, encoding='utf-8')
+++        fp = io.open(filename, 'r', 1, encoding='utf-8')
++         for line in fp:
++             if line.strip() == '':
++                 continue
++@@ -411,7 +412,7 @@ class Tool(object):
++         if filename is None:
++             return ["#!/bin/sh\n"]
++ 
++-        fp = open(filename, 'r', 1, encoding='utf-8')
+++        fp = io.open(filename, 'r', 1, encoding='utf-8')
++         lines = list()
++ 
++         # before entering the data block
++@@ -445,7 +446,7 @@ class Tool(object):
++ 
++     def save_with_script(self, script):
++         filename = self.library.get_full_path(self.filename, 'w')
++-        fp = open(filename, 'w', 1, encoding='utf-8')
+++        fp = io.open(filename, 'w', 1, encoding='utf-8')
++ 
++         # Make sure to first print header (shebang, modeline), then
++         # properties, and then actual content
++@@ -471,11 +472,11 @@ class Tool(object):
++         for line in header:
++             fp.write(line + "\n")
++ 
++-        fp.write(self._dump_properties())
++-        fp.write("\n")
+++        fp.write(unicode(self._dump_properties(), 'utf8'))
+++        fp.write(u"\n")
++ 
++         for line in content:
++-            fp.write(line + "\n")
+++            fp.write(unicode(line + "\n", 'utf8'))
++ 
++         fp.close()
++         os.chmod(filename, 0o750)
+diff --git a/gedit.spec b/gedit.spec
+index 18b2378..541eede 100644
+--- a/gedit.spec
++++ b/gedit.spec
+@@ -87,6 +87,7 @@ Install gedit-devel if you want to write plugins for gedit.
+ 
+ %patch4 -p1 -b .disable-python
+ 
++aclocal
+ autoreconf -i -f
+ intltoolize -f
+ 
+-- 
+1.8.3.1
+
+

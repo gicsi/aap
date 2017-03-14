@@ -1,0 +1,38 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 006_cvs.patch
+
+And then rebuild and install cvs:
+	cd gnu/usr.bin/cvs
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: gnu/usr.bin/cvs/src/server.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/cvs/src/server.c,v
+retrieving revision 1.26
+diff -u -r1.26 server.c
+--- gnu/usr.bin/cvs/src/server.c	29 Sep 2001 00:00:39 -0000	1.26
++++ gnu/usr.bin/cvs/src/server.c	21 Jan 2003 03:31:02 -0000
+@@ -977,9 +977,6 @@
+ 	return;
+     }
+ 
+-    if (dir_name != NULL)
+-	free (dir_name);
+-
+     dir_len = strlen (dir);
+ 
+     /* Check for a trailing '/'.  This is not ISDIRSEP because \ in the
+@@ -994,6 +991,9 @@
+ 		     "E protocol error: invalid directory syntax in %s", dir);
+ 	return;
+     }
++
++    if (dir_name != NULL)
++	free (dir_name);
+ 
+     dir_name = malloc (strlen (server_temp_dir) + dir_len + 40);
+     if (dir_name == NULL)
+

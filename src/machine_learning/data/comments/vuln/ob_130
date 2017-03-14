@@ -1,0 +1,5 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pf&amp;sektion=4">pf(4)</a>
+was incapable of dealing with certain ipv6 icmp packets, resulting in a crash.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/006_pf.patch">
+A source code patch exists which remedies this problem.</a>

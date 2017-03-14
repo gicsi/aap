@@ -1,0 +1,31 @@
+Created attachment 1044380
+Randomly, on fresh forward, gray text.
+
+Description of problem:
+When launching a new message, replying, forwarding, etc., sometimes the font text is default black, and sometimes light gray.
+
+Version-Release number of selected component (if applicable):
+evolution-3.16.3-2.fc22.x86_64
+evolution-data-server-3.16.3-2.fc22.x86_64
+evolution-ews-3.16.3-1.fc22.x86_64
+evolution-data-server-debuginfo-3.12.11-2.fc21.x86_64
+
+How reproducible:
+Seemingly at random.
+
+Steps to Reproduce:
+1. Create new message/reply/forward.
+2.
+3.
+
+Actual results:
+Occasionally the color of the text is autoselected as light gray, sometimes default black.
+
+
+Expected results:
+Always black (or whatever the default is set to).
+
+Additional info:
+Thanks for a bug report. This had been filled recently, as bug #1229841, and will be fixed with the upcoming evolution 3.16.4, according to the associated upstream bug report.
+
+*** This bug has been marked as a duplicate of bug 1229841 ***

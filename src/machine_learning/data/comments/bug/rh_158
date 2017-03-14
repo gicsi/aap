@@ -1,0 +1,12 @@
+Your package ibus-input-pad failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10097337
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047034
+build.log
+Created attachment 1047035
+root.log
+Created attachment 1047036
+state.log
+Thank you for the report.

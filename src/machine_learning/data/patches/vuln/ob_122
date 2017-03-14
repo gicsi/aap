@@ -1,0 +1,31 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 020_sudo.patch
+
+And then rebuild and install sudo:
+	cd usr.bin/sudo
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper cleandir
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.bin/sudo/check.c
+===================================================================
+RCS file: /cvs/src/usr.bin/sudo/check.c,v
+retrieving revision 1.5.4.1
+diff -u -r1.5.4.1 check.c
+--- usr.bin/sudo/check.c	18 Jan 2002 16:14:44 -0000	1.5.4.1
++++ usr.bin/sudo/check.c	25 Apr 2002 15:50:09 -0000
+@@ -196,9 +196,9 @@
+ 
+     if (subst) {
+ 	new_prompt = (char *) emalloc(len + 1);
+-	for (p = old_prompt, np = new_prompt; *p; p++) {
++	for (p = old_prompt, np = new_prompt, lastchar = '\0'; *p; p++) {
+ 	    if (lastchar == '%' && (*p == 'h' || *p == 'u' || *p == '%')) {
+-		/* substiture user/host name */
++		/* substitute user/host name */
+ 		if (*p == 'h') {
+ 		    np--;
+ 		    strcpy(np, user_shost);
+

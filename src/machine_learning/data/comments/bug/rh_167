@@ -1,0 +1,12 @@
+Your package findutils failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10088802
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046821
+build.log
+Created attachment 1046822
+root.log
+Created attachment 1046823
+state.log
+fixed in findutils-4.5.14-7.fc23

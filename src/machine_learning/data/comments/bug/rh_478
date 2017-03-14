@@ -1,0 +1,109 @@
+Created attachment 1043034
+foreman-debug attached
+
+Description of problem:
+Product update fails with pulp error using hammer cli
+
+Version-Release number of selected component (if applicable):
+# rpm -qa | grep foreman
+foreman-gce-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+rubygem-hammer_cli_foreman_bootdisk-0.1.3-1.el7.noarch
+foreman-libvirt-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+foreman-postgresql-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+qe-foreman-rhel71.usersys.redhat.com-apache-1.0-1.noarch
+qe-foreman-rhel71.usersys.redhat.com-parent-cert-1.0-1.noarch
+foreman-vmware-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+foreman-debug-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+foreman-compute-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+ruby193-rubygem-foreman_hooks-0.3.7-3.el7.noarch
+foreman-release-scl-1-1.el7.x86_64
+rubygem-hammer_cli_foreman-0.2.0-1.201506011150git4195d74.el7.noarch
+rubygem-hammer_cli_foreman_docker-0.0.3-2.el7.noarch
+ruby193-rubygem-foreman_bootdisk-6.0.0-1.el7.noarch
+qe-foreman-rhel71.usersys.redhat.com-qpid-router-client-1.0-1.noarch
+qe-foreman-rhel71.usersys.redhat.com-foreman-client-1.0-1.noarch
+qe-foreman-rhel71.usersys.redhat.com-foreman-proxy-client-1.0-1.noarch
+qe-foreman-rhel71.usersys.redhat.com-qpid-client-cert-1.0-1.noarch
+foreman-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+ruby193-rubygem-foreman_docker-1.3.1-1.fm1_9.el7.noarch
+foreman-release-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+foreman-selinux-1.9.0-0.develop.201504231150git121d1aa.el7.noarch
+ruby193-rubygem-foreman_gutterball-0.0.1-1.201505192043git41ee743.git.0.93a02ae.el7.noarch
+qe-foreman-rhel71.usersys.redhat.com-qpid-router-server-1.0-1.noarch
+qe-foreman-rhel71.usersys.redhat.com-foreman-proxy-1.0-2.noarch
+qe-foreman-rhel71.usersys.redhat.com-qpid-broker-1.0-1.noarch
+ruby193-rubygem-foreman_discovery-3.0.0-1.el7.noarch
+foreman-ovirt-1.9.0-0.develop.201506241134gitbcccf1a.el7.noarch
+foreman-proxy-1.9.0-0.develop.201506181154git25c06dc.el7.noarch
+qe-foreman-rhel71.usersys.redhat.com-puppet-client-1.0-1.noarch
+ruby193-rubygem-foreman-tasks-0.6.13-2.el7.noarch
+rubygem-hammer_cli_foreman_tasks-0.0.6-1.el7.noarch
+
+
+How reproducible:
+everytime
+
+Steps to Reproduce:
+1.# LANG=en_US.UTF-8 hammer -v -u admin -p changeme --output=csv product update --id="2215" --description="zPON7YUq1gSQrcl"
+[ERROR 2015-06-25 06:00:56 Exception] There was an issue with the backend service pulp: Pulp message bus connection issue.
+Could not update the product:
+  There was an issue with the backend service pulp: Pulp message bus connection issue.
+[ERROR 2015-06-25 06:00:56 Exception] 
+
+RestClient::InternalServerError (500 Internal Server Error):
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/abstract_response.rb:48:in `return!'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/request.rb:234:in `process_result'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/request.rb:182:in `block in transmit'
+    /usr/share/ruby/net/http.rb:852:in `start'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/request.rb:176:in `transmit'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/request.rb:65:in `execute'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/request.rb:34:in `execute'
+    /usr/share/gems/gems/rest-client-1.6.7/lib/restclient/resource.rb:76:in `put'
+    /usr/share/gems/gems/apipie-bindings-0.0.13/lib/apipie_bindings/api.rb:280:in `call_client'
+    /usr/share/gems/gems/apipie-bindings-0.0.13/lib/apipie_bindings/api.rb:211:in `http_call'
+    /usr/share/gems/gems/apipie-bindings-0.0.13/lib/apipie_bindings/api.rb:161:in `call'
+    /usr/share/gems/gems/apipie-bindings-0.0.13/lib/apipie_bindings/resource.rb:14:in `call'
+    /usr/share/gems/gems/hammer_cli-0.2.0/lib/hammer_cli/apipie/command.rb:43:in `send_request'
+    /usr/share/gems/gems/hammer_cli_foreman-0.2.0/lib/hammer_cli_foreman/commands.rb:185:in `send_request'
+    /usr/share/gems/gems/hammer_cli-0.2.0/lib/hammer_cli/apipie/command.rb:34:in `execute'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/command.rb:68:in `run'
+    /usr/share/gems/gems/hammer_cli-0.2.0/lib/hammer_cli/abstract.rb:23:in `run'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/subcommand/execution.rb:11:in `execute'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/command.rb:68:in `run'
+    /usr/share/gems/gems/hammer_cli-0.2.0/lib/hammer_cli/abstract.rb:23:in `run'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/subcommand/execution.rb:11:in `execute'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/command.rb:68:in `run'
+    /usr/share/gems/gems/hammer_cli-0.2.0/lib/hammer_cli/abstract.rb:23:in `run'
+    /usr/share/gems/gems/clamp-1.0.0/lib/clamp/command.rb:133:in `run'
+    /usr/share/gems/gems/hammer_cli-0.2.0/bin/hammer:108:in `<top (required)>'
+    /usr/bin/hammer:23:in `load'
+    /usr/bin/hammer:23:in `<main>'
+
+2.
+3.
+
+Actual results:
+product updated fails with pulp error
+
+Expected results:
+product update is successful
+
+Additional info:
+foreman-debug attached
+This is an issue with the health of your Satellite, not a bug with hammer or the API. The error message:
+
+If this kind of high level error occurs when you see things like:
+
+"[ERROR 2015-06-24 21:45:28 Exception] 
+
+RestClient::InternalServerError (500 Internal Server Error):"
+
+please investigate the health of the Satellite first before continuing and filing more bugs.
+
+* Do a "hammer ping", check for errors.
+
+* Examine the About page, look for overall status 
+
+* check that all services are running with 'katello service status'
+
+*** This bug has been marked as a duplicate of bug 1235620 ***

@@ -1,0 +1,5 @@
+A use-after-free race condition in OpenSSL's read buffer may permit an attacker
+to inject data from one connection into another.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/004_openssl.patch.sig">
+A source code patch exists which remedies this problem.</a>

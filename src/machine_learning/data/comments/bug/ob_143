@@ -1,0 +1,6 @@
+Handle an edge condition in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=tcp&sektion=4">tcp(4)</a>
+timestamps.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/015_tcp.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,26 @@
+Description of problem:
+When listing configuration profile in grid view, quadicon name strings do not contain names of the configuration profiles but their respective href links.
+
+Version-Release number of selected component (if applicable):
+5.4.0.5
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Add foreman
+2. Go to a configuration provider (manager) and change the display view to
+   'grid' (default is 'list')
+
+Actual results:
+Quadicons with names such as "/provider_foreman/x_show/5"
+
+Expected results:
+Quadicons with names such as "centos-server-profile"
+
+Additional info:
+Note: the default list view displays names correctly, the issue is only present with grid view
+This has already been addressed in upstream.
+
+There is also a MR for 5.4.z which includes a fix for this issue - 
+http://gitlab.cloudforms.lab.eng.rdu2.redhat.com/cloudforms/cfme/merge_requests/118

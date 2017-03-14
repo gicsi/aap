@@ -1,0 +1,78 @@
+loading ./data/comments
+2 labels: ['bug', 'vuln']
+calculating word scores
+using bag of words from known set feature extraction
+1000 words meet min_score and/or max_feats
+1093 training feats, 562 testing feats
+training DecisionTree classifier
+best stump for   1093 toks uses common               err=0.2525
+best stump for    392 toks uses non                  err=0.3648
+best stump for     19 toks uses ('amp', 'sektion')   err=0.1053
+best stump for     15 toks uses nova                 err=0.0000
+best stump for    373 toks uses ('4', '4')           err=0.3512
+best stump for     14 toks uses allowing             err=0.0714
+best stump for     11 toks uses ('may', 'allow')     err=0.0000
+best stump for    359 toks uses executable           err=0.3454
+best stump for    356 toks uses rb                   err=0.3427
+best stump for    354 toks uses pass                 err=0.3390
+best stump for    352 toks uses pushed               err=0.3352
+best stump for    350 toks uses dhclient             err=0.3314
+best stump for    348 toks uses reading              err=0.3276
+best stump for    346 toks uses interface            err=0.3237
+best stump for      4 toks uses change               err=0.0000
+best stump for    342 toks uses ('fedoraproject', 'org') err=0.3187
+best stump for    340 toks uses fc21                 err=0.3176
+best stump for    339 toks uses allowed              err=0.3156
+best stump for    338 toks uses limits               err=0.3136
+best stump for      3 toks uses attacker             err=0.0000
+best stump for    335 toks uses ptrace               err=0.3104
+best stump for      3 toks uses kernel               err=0.0000
+best stump for    332 toks uses None                 err=0.3102
+best stump for    701 toks uses deploy               err=0.1655
+best stump for     26 toks uses n                    err=0.2308
+best stump for     24 toks uses 02                   err=0.1667
+best stump for     22 toks uses rpm                  err=0.0909
+best stump for     20 toks uses ensure               err=0.0500
+best stump for     19 toks uses None                 err=0.0526
+best stump for    675 toks uses glusterfs            err=0.1481
+best stump for     14 toks uses ('fedora', '22')     err=0.1429
+best stump for     13 toks uses ('18', '23')         err=0.0769
+best stump for     12 toks uses vdsm                 err=0.0000
+best stump for    661 toks uses validation           err=0.1392
+best stump for      7 toks uses i686                 err=0.0000
+best stump for    654 toks uses strong               err=0.1330
+best stump for    650 toks uses flash                err=0.1292
+best stump for      5 toks uses policy               err=0.0000
+best stump for    645 toks uses ('7', 'server')      err=0.1240
+best stump for    642 toks uses rc                   err=0.1199
+best stump for      5 toks uses guest                err=0.0000
+best stump for    637 toks uses jboss                err=0.1146
+best stump for     11 toks uses upstream             err=0.1818
+best stump for      9 toks uses first                err=0.1111
+best stump for    626 toks uses ('09', '42')         err=0.1070
+best stump for    624 toks uses ('sektion', '8')     err=0.1042
+best stump for    622 toks uses el6rhs               err=0.1013
+best stump for    620 toks uses ('12', '03')         err=0.0984
+best stump for    618 toks uses drools               err=0.0971
+best stump for    617 toks uses ('localhost', 'localdomain') err=0.0956
+best stump for    616 toks uses ('jun', '22')        err=0.0942
+best stump for    615 toks uses ('size', '0')        err=0.0927
+best stump for    614 toks uses ('172', '16')        err=0.0912
+best stump for    613 toks uses ('heat', 'engine')   err=0.0897
+best stump for    612 toks uses rb                   err=0.0882
+best stump for      3 toks uses ovirt                err=0.0000
+best stump for    609 toks uses openssl              err=0.0854
+best stump for    608 toks uses ('value', 'optimized') err=0.0839
+best stump for    607 toks uses tuskarclient         err=0.0824
+best stump for    606 toks uses bind99               err=0.0809
+best stump for    605 toks uses ex                   err=0.0793
+best stump for      3 toks uses bin                  err=0.0000
+best stump for    602 toks uses None                 err=0.0781
+accuracy: 0.731317
+bug precision: 0.867550
+bug recall: 0.702413
+bug f-measure: 0.776296
+vuln precision: 0.573077
+vuln recall: 0.788360
+vuln f-measure: 0.663697
+dumping DecisionTreeClassifier to ./comments_DecisionTree.pickle

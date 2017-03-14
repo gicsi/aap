@@ -1,0 +1,5 @@
+An incorrectly formatted ClientHello handshake message could cause
+OpenSSL to parse past the end of the message.  An attacker could use this flaw
+to trigger an invalid memory access, causing a crash of an application linked
+to OpenSSL.  As well, certain applications may expose the contents of parsed
+OCSP extensions, specifically the OCSP nonce extension.

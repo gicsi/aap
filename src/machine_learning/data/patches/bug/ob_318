@@ -1,0 +1,252 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 006_dhcpd.patch
+
+And then rebuild and install file:
+	cd usr.sbin/dhcpd
+	make
+	make install
+
+Index: usr.sbin/dhcpd/options.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/dhcpd/options.c,v
+retrieving revision 1.21
+retrieving revision 1.24
+diff -u -p -r1.21 -r1.24
+--- usr.sbin/dhcpd/options.c	16 Apr 2008 00:36:48 -0000	1.21
++++ usr.sbin/dhcpd/options.c	14 Nov 2008 02:00:08 -0000	1.24
+@@ -207,11 +207,11 @@ void
+ create_priority_list(unsigned char *priority_list, unsigned char *prl,
+     int prl_len)
+ {
+-	int stored_list[256];
++	unsigned char stored_list[256];
+ 	int i, priority_len = 0;
+ 
+-	bzero(stored_list, 256);
+-	bzero(priority_list, 256);
++	/* clear stored_list, priority_list should be cleared before */
++	bzero(&stored_list, sizeof(stored_list));
+ 
+ 	/* Some options we don't want on the priority list. */
+ 	stored_list[DHO_PAD] = 1;
+@@ -304,6 +304,7 @@ cons_options(struct packet *inpacket, st
+ 	 * list provided in the options. Lacking that use the list provided by
+ 	 * prl. If that is not available just use the default list.
+ 	 */
++	bzero(&priority_list, sizeof(priority_list));
+ 	if (inpacket && inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data)
+ 		create_priority_list(priority_list,
+ 		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data,
+@@ -380,19 +381,19 @@ store_options(unsigned char *buffer, int
+ 	int second_cutoff;
+ 	int bufix = 0;
+ 
++	overload &= 3; /* Only consider valid bits. */
++
+ 	cutoff = main_buffer_size;
+ 	second_cutoff = cutoff + ((overload & 1) ? DHCP_FILE_LEN : 0);
+ 	buflen = second_cutoff + ((overload & 2) ? DHCP_SNAME_LEN : 0);
+-	memset(buffer, DHO_PAD, buflen);
+ 
++	memset(buffer, DHO_PAD, buflen);
+ 	memcpy(buffer, DHCP_OPTIONS_COOKIE, 4);
+-	bufix = 4;
+ 
+-	if (overload) {
+-		buffer[bufix++] = DHO_DHCP_OPTION_OVERLOAD;
+-		buffer[bufix++] = 1;
+-		buffer[bufix++] = 0; /* Note: value is at index [6] */
+-	}
++	if (overload)
++		bufix = 7; /* Reserve space for DHO_DHCP_OPTION_OVERLOAD. */
++	else
++		bufix = 4;
+ 
+ 	/*
+ 	 * Store options in the order they appear in the priority list.
+@@ -459,14 +460,27 @@ zapfrags:
+ 		buffer[bufix++] = DHO_END;
+ 
+ 	/* Fill in overload option value based on space used for options. */
+-	if (overload && bufix > main_buffer_size) {
++	if (overload) {
+ 		overflow = bufix - main_buffer_size;
+-		if (overload & 1) {
+-			buffer[6] = 1;
+-			overflow -= DHCP_FILE_LEN;
++		if (overflow > 0) {
++			buffer[4] = DHO_DHCP_OPTION_OVERLOAD;
++			buffer[5] = 1;
++			if (overload & 1) {
++				buffer[6] |= 1;
++				overflow -= DHCP_FILE_LEN;
++			}
++			if ((overload & 2) && overflow > 0)
++				buffer[6] |= 2;
++		} else {
++			/*
++			 * Compact buffer to eliminate the unused
++			 * DHO_DHCP_OPTION_OVERLOAD option. Some clients
++			 * choke on DHO_PAD options there.
++			 */
++			memmove(&buffer[4], &buffer[7], buflen - 7);
++			bufix -= 3;
++			memset(&buffer[bufix], DHO_PAD, 3);
+ 		}
+-		if (overflow > 0)
+-			buffer[6] |= 2;
+ 	}
+ 
+ 	return (bufix);
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_pglistalloc.patch
+
+Then build and install a new kernel.
+
+Index: sys/uvm/uvm_pglist.c
+===================================================================
+RCS file: /cvs/src/sys/uvm/uvm_pglist.c,v
+retrieving revision 1.23
+retrieving revision 1.23.2.1
+diff -u -p -r1.23 -r1.23.2.1
+--- sys/uvm/uvm_pglist.c	27 Jun 2008 17:25:47 -0000	1.23
++++ sys/uvm/uvm_pglist.c	7 Nov 2008 19:24:19 -0000	1.23.2.1
+@@ -301,6 +301,12 @@ uvm_pglistalloc(size, low, high, alignme
+ 			}
+ 		}
+ 	}
++
++	/*
++	 * We could not allocate a contiguous range.  This is where
++	 * we should try harder if nsegs > 1...
++	 */
++	goto out;
+ 
+ #if PGFL_NQUEUES != 2
+ #error uvm_pglistalloc needs to be updated
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_httpd.patch
+
+And then rebuild and install httpd and its modules:
+	cd usr.sbin/httpd
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper cleandir
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+	apachectl stop
+before running "make install", and
+	apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/ap/ap_hook.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/ap/ap_hook.c,v
+retrieving revision 1.6
+retrieving revision 1.6.14.1
+diff -u -p -r1.6 -r1.6.14.1
+--- usr.sbin/httpd/src/ap/ap_hook.c	15 Jun 2005 00:00:09 -0000	1.6
++++ usr.sbin/httpd/src/ap/ap_hook.c	6 Nov 2008 10:06:50 -0000	1.6.14.1
+@@ -740,6 +740,16 @@ static int ap_hook_call_func(va_list ap,
+ 		*((int *)v_rc) = ((int(*)(void *, void *, void *, void *, int))(hf->hf_ptr))(v1, v2, v3, v4, v5);
+ 		rc = (*((int *)v_rc) != he->he_modeval.v_int);
+ 	}
++	else if (he->he_sig == AP_HOOK_SIG6(int, ptr, ptr, ptr, ptr, ptr)) {
++		/* Call: int func(ptr,ptr,ptr,ptr,ptr) */
++		void *v1 = va_arg(ap, va_type(ptr));
++		void *v2 = va_arg(ap, va_type(ptr));
++		void *v3 = va_arg(ap, va_type(ptr));
++		void *v4 = va_arg(ap, va_type(ptr));
++		void *v5 = va_arg(ap, va_type(ptr));
++		*((int *)v_rc) = ((int(*)(void *, void *, void *, void *, void *))(hf->hf_ptr))(v1, v2, v3, v4, v5);
++		rc = (*((int *)v_rc) != he->he_modeval.v_int);
++	}
+ 	else if (he->he_sig == AP_HOOK_SIG7(int, ptr, ptr, ptr, ptr, int, ptr)) {
+ 		/* Call: int func(ptr,ptr,ptr,ptr,int,ptr) */
+ 		void *v1 = va_arg(ap, va_type(ptr));
+Index: usr.sbin/httpd/src/modules/proxy/proxy_http.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/proxy/proxy_http.c,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- usr.sbin/httpd/src/modules/proxy/proxy_http.c	4 Jul 2008 14:39:37 -0000	1.19
++++ usr.sbin/httpd/src/modules/proxy/proxy_http.c	6 Nov 2008 10:06:50 -0000	1.19.2.1
+@@ -363,7 +363,7 @@ int ap_proxy_http_handler(request_rec *r
+     {
+ 	int rc = DECLINED;
+ 	ap_hook_use("ap::mod_proxy::http::handler::write_host_header", 
+-		    AP_HOOK_SIG6(ptr,ptr,ptr,ptr,ptr,ptr), 
++		    AP_HOOK_SIG6(int,ptr,ptr,ptr,ptr,ptr), 
+ 		    AP_HOOK_DECLINE(DECLINED),
+ 		    &rc, r, f, desthost, destportstr, destportstr);
+         if (rc == DECLINED) {
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_tcpinput.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.220
+retrieving revision 1.220.2.1
+diff -u -p -r1.220 -r1.220.2.1
+--- sys/netinet/tcp_input.c	3 Jul 2008 15:46:24 -0000	1.220
++++ sys/netinet/tcp_input.c	5 Nov 2008 23:18:14 -0000	1.220.2.1
+@@ -594,11 +594,11 @@ tcp_input(struct mbuf *m, ...)
+ 	/*
+ 	 * Locate pcb for segment.
+ 	 */
+-findpcb:
+ #if NPF > 0
+ 	if (m->m_pkthdr.pf.statekey)
+ 		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
+ #endif
++findpcb:
+ 	if (inp == NULL) {
+ 		switch (af) {
+ #ifdef INET6
+@@ -1309,6 +1309,7 @@ trimthenstep6:
+ 			    ((arc4random() & 0x7fffffff) | 0x8000);
+ 			reuse = &iss;
+ 			tp = tcp_close(tp);
++			inp = NULL;
+ 			goto findpcb;
+ 		}
+ 	}
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_vr.patch
+
+Then build and install a new kernel.
+
+Index: sys/dev/pci/if_vr.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/if_vr.c,v
+retrieving revision 1.75
+retrieving revision 1.75.2.1
+diff -u -p -r1.75 -r1.75.2.1
+--- sys/dev/pci/if_vr.c	24 Jul 2008 19:01:28 -0000	1.75
++++ sys/dev/pci/if_vr.c	2 Nov 2008 03:58:35 -0000	1.75.2.1
+@@ -808,7 +808,8 @@ vr_rxeof(struct vr_softc *sc)
+ 		{
+ 			m0 = m_devget(mtod(m, caddr_t) - ETHER_ALIGN,
+ 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+-			if (m0 == NULL || vr_alloc_mbuf(sc, cur_rx, m)) {
++			vr_alloc_mbuf(sc, cur_rx, m);
++			if (m0 == NULL) {
+ 				ifp->if_ierrors++;
+ 				continue;
+ 			}
+

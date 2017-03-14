@@ -1,0 +1,38 @@
+User-Agent:       Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0
+Build Identifier: 
+
+startkde sets the QT_PLUGIN_PATH environment variable. On my Fedora installation, it points to /usr/lib64/qt5/plugins. If you try to run another Qt application which is not a KDE application it forces KDE specific behaviour.
+
+More importantly, the system's libQt5Core.so already contains the same plugin path in its binary. Setting the env variable has no further benefit apart from making every other Qt build unusable (unless they magically happen to be the same version of Qt with the same configuration options).
+
+OpenSuSE removed the QT_PLUGIN_PATH from startkde quite a while ago:
+
+https://build.opensuse.org/package/view_file/KDE:Frameworks5/plasma5-workspace/0003-Remove-export-of-QT_PLUGIN_PATH.patch?expand=1
+
+This variable has historic reasons from Qt4 days when KDE wanted to inject their own plugins into the various KDE applications. Today, this is no longer necessary as all the KDE plugins are in /usr/lib64/qt5/plugins already which in turn is hardcoded in /usr/lib64/libQt5Core.so.5 already.
+
+Most applications in the upcoming Qt 5.5 RC binary release package crash because of it:
+https://bugreports.qt.io/browse/QTBUG-46714
+
+
+
+Reproducible: Always
+Thanks.
+
+We already strip out a lot of the silliness from upstream startkde, this is just one more piece :-/
+
+I'll take care of it.
+Please also report this upstream at bugs.kde.org, because it's there that this silliness comes from (but we ship our own startkde with all the nonsense ripped out anyway, so we would have to also do the change locally anyway).
+plasma-workspace-5.3.1-4.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/plasma-workspace-5.3.1-4.fc22
+Package plasma-workspace-5.3.1-5.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing plasma-workspace-5.3.1-5.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10382/plasma-workspace-5.3.1-4.fc22
+then log in and leave karma (feedback).
+plasma-workspace-5.3.1-5.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

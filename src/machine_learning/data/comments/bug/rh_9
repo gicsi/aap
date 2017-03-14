@@ -1,0 +1,37 @@
+Description of problem:
+Boot guest with memory device. I can not find this device via 'info qtree' on HMP, Added full 'info qtree' log to attachment.
+
+Version-Release number of selected component (if applicable):
+qemu-kvm-rhev-2.3.0-7.el7.x86_64
+3.10.0-290.el7.x86_64
+
+How reproducible:
+
+100%
+Steps to Reproduce:
+1./usr/libexec/qemu-kvm -M q35 -cpu Opteron_G2 -enable-kvm -smp 4,sockets=1,cores=4,threads=1 -name test -rtc base=utc,clock=host,driftfix=slew -k en-us -boot menu=on -vga qxl -spice disable-ticketing,port=5930 -monitor stdio -drive file=/home/rhel7.2.qcow2,if=none,id=drive-system-disk,media=disk,format=qcow2,werror=stop,rerror=stop -device virtio-blk-pci,drive=drive-system-disk,id=system-disk,bootindex=1 \
+
+-m 4096M,slots=2,maxmem=8G \
+-object memory-backend-ram,id=m0,size=2G -device pc-dimm,memdev=m0,slot=0,id=d1 -object memory-backend-ram,id=m1,size=1G -device pc-dimm,memdev=m1,slot=1,id=d2
+
+ -vnc :1 -netdev tap,id=hostnet0,vhost=on -device virtio-net-pci,netdev=hostnet0,id=net0,rombar=0,mac=78:1a:4a:d6:b8:99,addr=0x5
+
+2.(qemu) info qtree
+3.
+
+Actual results:
+Don't find memory device.
+
+Expected results:
+
+
+Additional info:
+Created attachment 1050106
+info qtree log
+pc-dimm is not supposed to be in output of 'info qtree' since it's not attached to any buses.
+
+to see pc-dimm devices and related backends you need to use:
+ info memory-devices
+or
+ infor memdev
+commands.

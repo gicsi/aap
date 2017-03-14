@@ -1,0 +1,27 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 001_pflow.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/if_pflow.c
+===================================================================
+RCS file: /vol/openbsd/cvs/src/sys/net/if_pflow.c,v
+retrieving revision 1.32
+diff -u -p -r1.32 if_pflow.c
+--- sys/net/if_pflow.c	5 Jul 2013 17:14:27 -0000	1.32
++++ sys/net/if_pflow.c	7 Nov 2013 16:48:45 -0000
+@@ -269,6 +269,12 @@ pflow_clone_destroy(struct ifnet *ifp)
+ 	int			 s;
+ 
+ 	s = splnet();
++	if (timeout_initialized(&sc->sc_tmo))
++		timeout_del(&sc->sc_tmo);
++	if (timeout_initialized(&sc->sc_tmo6))
++		timeout_del(&sc->sc_tmo6);
++	if (timeout_initialized(&sc->sc_tmo_tmpl))
++		timeout_del(&sc->sc_tmo_tmpl);
+ 	pflow_flush(sc);
+ 	if_detach(ifp);
+ 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
+

@@ -1,0 +1,9 @@
+If IPv6 autoconf is active on an interface and the autoconfprivacy extension is used,
+redundant addresses are added whenever an autoconfprivacy address expires.
+The autoconfprivacy extension is used by default and can be disabled with ifconfig(8)
+as a workaround:
+<pre>
+# ifconfig em0 -autoconfprivacy
+</pre>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.6/common/002_nd6.patch.sig">
+A source code patch exists which remedies this problem.</a>

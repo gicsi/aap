@@ -1,0 +1,54 @@
+Something is broken with perl-Encode-Locales's packaging:
+
+On Fc21:
+# fedup --network 22
+...
+WARNING: potential problems with upgrade
+  perl-Encode-Locale-1.05-1.fc21.noarch (no replacement) requires 4:perl-5.18.4-308.fc21.x86_64 (replaced by 4:perl-5.20.2-326.fc22.x86_64)
+...
+WARNING: problems were encountered during transaction test:
+  broken dependencies
+    perl-Encode-Locale-1.05-1.fc21.noarch requires perl-4:5.18.4-308.fc21.x86_64
+These packages may have problems after the upgrade.
+
+Seemingly an update with a greater NEVR than the version in f22 was pushed to f21.
+It's because people test F21 faster than F22:
+
+https://admin.fedoraproject.org/updates/FEDORA-2015-9754/perl-Encode-Locale-1.05-1.fc22
+https://bugzilla.redhat.com/show_bug.cgi?id=1229932
+
+It will we 14 days on Thursday and I will be allowed to request for pushing it into stable F22 repository.
+
+It's also because Bodhi does not order updates between Fedoras.
+
+As a work around, enable updates-testing repository.
+(In reply to Petr Pisar from comment #1)
+> It's because people test F21 faster than F22:
+
+That's one view on this issue.
+
+Another one is: 
+
+Fedora's release process is broken!
+
+There must not be any such broken update - ever! Rel-eng and maintainers must make sure such breakages do not happen!
+Yeah, I know the update process is suboptimal. Currently the only safe approach would be to push an update into updates-testing only after pushing update for higher Fedora into updates. That could (and usually would) mean up to 3 * 14 days delay for oldest supported Fedora.
+
+I think Bodhi should be enhanced. QA people say they will enforce the checks once the taskotron will be finished.
+(In reply to Petr Pisar from comment #3)
+> Yeah, I know the update process is suboptimal. Currently the only safe
+> approach would be to push an update into updates-testing only after pushing
+> update for higher Fedora into updates.
+Well, the crucial point in time is pushing packages from "updates-testing" to "updates". That's something which should not be too difficult for rel-eng to check for.
+
+> That could (and usually would) mean
+> up to 3 * 14 days delay for oldest supported Fedora.
+The 14 days is another issue - It's utterly harmful and a critical FESCO fault, which longs for consequences in FESCO.
+
+I guess, the perl-folks need to launch a systematic effort to mutually "+1" the perl-packages and render the 14 days delay ad absurdum, otherwise perl (and other packages with long dep chains) will stagnate until they rot and piss off users and packagers sufficiently to quit using Fedora.
+(In reply to Ralf Corsepius from comment #4)
+>
+> I guess, the perl-folks need to launch a systematic effort to mutually "+1"
+> the perl-packages and render the 14 days delay ad absurdum
+
+I'ld love to see this happen on a regular basis, for all the perl-related updates that are pending at that point.

@@ -1,0 +1,30 @@
+Apply by doing:
+	cd /usr/src/gnu/usr.bin/groff/nroff
+	patch -p0 < 006_nroff.patch
+
+And then reinstall nroff.
+
+Index: nroff.sh
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/groff/nroff/nroff.sh,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- nroff.sh	1996/09/14 19:01:54	1.1.1.1
++++ nroff.sh	1999/07/26 22:04:13	1.2
+@@ -24,7 +24,7 @@
+ 		echo "$prog: option $1 requires an argument" >&2
+ 		exit 1
+ 		;;
+-	-i|-[mrno]*)
++	-i|-S|-[mrno]*)
+ 		opts="$opts $1";
+ 		;;
+ 
+@@ -58,4 +58,4 @@
+ 
+ # This shell script is intended for use with man, so warnings are
+ # probably not wanted.  Also load nroff-style character definitions.
+-exec groff -Wall -mtty-char $T $opts ${1+"$@"}
++exec groff -S -Wall -mtty-char $T $opts ${1+"$@"}
+

@@ -1,0 +1,16 @@
+Document URL: 
+https://access.redhat.com/documentation/en-US/Red_Hat_Satellite/6.1/html/Installation_Guide/sect-Red_Hat_Satellite-Installation_Guide-Populating_Red_Hat_Satellite_with_Content-Disconnected_Satellite.html
+
+Section Number and Name: 
+4.2
+
+Describe the issue: 
+Section describes a setup with an intermediate synchronization host, which is deprecated.
+
+Suggestions for improvement:
+Describe the preferred method only, as documented in https://access.redhat.com/articles/1375133
+
+Additional information:
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+*** This bug has been marked as a duplicate of bug 1200617 ***

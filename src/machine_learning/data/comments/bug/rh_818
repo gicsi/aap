@@ -1,0 +1,95 @@
+Description:
+When configure with neither port nor tls-port specified for spice, guest should start up failed with suitable error
+
+Version-Release number of selected component (if applicable):
+libvirt-1.2.16-1.el7.x86_64
+qemu-kvm-rhev-2.3.0-1.el7.x86_64
+3.10.0-267.el7.x86_64
+
+
+How reproducible:
+100%
+
+Steps:
+1. define a guest with invalid graphical XML, like below
+
+# virsh dumpxml virt-tests-vm1
+...
+ <graphics type='spice' autoport='no'/>
+...
+
+or
+# virsh dumpxml virt-tests-vm1
+...
+ <graphics type='spice' tlsPort='-2' autoport='no'/>
+...
+
+2. start guest success, but graphical display port does not show up
+
+# virsh start virt-tests-vm1
+Domain virt-tests-vm1 started
+
+# virsh domdisplay virt-tests-vm1
+error: No graphical display found
+
+or
+# virsh domdisplay virt-tests-vm1
+spice://127.0.0.1?tls-port=-2
+
+
+3.  dumpxml gain after guest start up
+# virsh dumpxml virt-tests-vm1
+...
+<graphics type='spice' autoport='no' listen='127.0.0.1'>
+      <listen type='address' address='127.0.0.1'/>
+    </graphics>
+...
+
+
+or
+
+# virsh dumpxml virt-tests-vm1
+...
+<graphics type='spice' tlsPort='-2' autoport='no' listen='127.0.0.1'>
+      <listen type='address' address='127.0.0.1'/>
+    </graphics>
+...
+
+4. qemu CML "-spice port=0,addr=127.0.0.1"
+
+# ps aux |grep qemu
+qemu     17554 18.3  1.3 5904540 453504 ?      Sl   14:43   0:21 /usr/libexec/qemu-kvm -name virt-tests-vm1 -S -machine pc-i440fx-rhel7.2.0,accel=kvm,usb=off -cpu Westmere -m 1024 -realtime mlock=off -smp 2,sockets=2,cores=1,threads=1 -uuid a74efd70-b6f6-4f0a-b5b3-c4c4ba5b521e -no-user-config -nodefaults -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/virt-tests-vm1.monitor,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=utc,driftfix=slew -global kvm-pit.lost_tick_policy=discard -no-hpet -no-shutdown -global PIIX4_PM.disable_s3=1 -global PIIX4_PM.disable_s4=1 -boot strict=on -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x5.0x7 -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x5 -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x5.0x1 -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x5.0x2 -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x4 -drive file=/tmp/libvirt-functional-test-rhel7-graphics-framebuffe_ci-17/shared/data/images/jeos-19-64.qcow2,if=none,id=drive-virtio-disk0,format=qcow2 -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x6,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1 -netdev tap,fd=23,id=hostnet0,vhost=on,vhostfd=24 -device virtio-net-pci,netdev=hostnet0,id=net0,mac=52:54:00:2c:2d:2e,bus=pci.0,addr=0x3 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=serial0 -chardev socket,id=charchannel0,path=/var/lib/libvirt/qemu/channel/target/virt-tests-vm1.org.qemu.guest_agent.0,server,nowait -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=org.qemu.guest_agent.0 -device usb-tablet,id=input0 -spice port=0,addr=127.0.0.1,disable-ticketing,seamless-migration=on -device cirrus-vga,id=video0,bus=pci.0,addr=0x2 -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x7 -msg timestamp=on
+root     17690  0.0  0.0 112644   964 pts/1    R+   14:45   0:00 grep --color=auto qemu
+
+5. guest can not be connected with virt-viewer or remote-viewer anymore
+# virt-viewer virt-tests-vm1
+virt-viewer: symbol lookup error: /lib64/libspice-client-glib-2.0.so.8: undefined symbol: g_type_check_instance_is_fundamentally_a
+
+# remote-viewer spice://127.0.0.1?tls-port=-2
+remote-viewer: symbol lookup error: /lib64/libspice-client-glib-2.0.so.8: undefined symbol: g_type_check_instance_is_fundamentally_a
+
+
+6. for the same configuration and steps, guest start failed with acceptable error on qemu qemu-kvm-rhev-2.2.0-9.el7.x86_64
+# virsh start rh7
+error: Failed to start domain rh7
+error: internal error: process exited while connecting to monitor: 2015-06-17T06:42:55.538154Z qemu-kvm: neither port nor tls-port specified for spice
+
+
+Excepted results:
+
+Guest should start failed with neither port nor tls-port specified for spice
+
+
+Actual results:
+
+Guest start up success, but can not be connected correct
+This XML snippet validates for me
+ <graphics type='spice' autoport='no'/>
+Setting the TLS port to -2 has the same effect as omitting it or setting it to 0.
+
+
+The error message comes from QEMU and it has been removed in the 2.3.0 release:
+http://git.qemu.org/?p=qemu.git;a=commitdiff;h=cf7856ad
+
+The domain can be connected using the --attach option of virt-viewer. An error message hinting that has been added in virt-viewer 2.0:
+https://git.fedorahosted.org/cgit/virt-viewer.git/commit/?id=8addab25

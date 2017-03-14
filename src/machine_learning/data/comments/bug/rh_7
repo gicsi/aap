@@ -1,0 +1,49 @@
+Version-Release number of selected component:
+webkitgtk4-2.8.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/webkit2gtk-4.0/WebKitWebProcess 42
+crash_function: ~WebSoupRequestAsyncData
+executable:     /usr/libexec/webkit2gtk-4.0/WebKitWebProcess
+global_pid:     19409
+kernel:         4.0.6-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 ~WebSoupRequestAsyncData at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Shared/Network/CustomProtocols/soup/CustomProtocolManagerImpl.cpp:54
+ #1 operator() at /usr/include/c++/5.1.1/bits/unique_ptr.h:76
+ #2 ~unique_ptr at /usr/include/c++/5.1.1/bits/unique_ptr.h:236
+ #3 ~KeyValuePair at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTraits.h:180
+ #4 reinsert at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:926
+ #5 WTF::HashTable<unsigned long, WTF::KeyValuePair<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > >, WTF::KeyValuePairKeyExtractor<WTF::KeyValuePair<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > > >, WTF::IntHash<unsigned long>, WTF::HashMap<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> >, WTF::IntHash<unsigned long>, WTF::HashTraits<unsigned long>, WTF::HashTraits<std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > > >::KeyValuePairTraits, WTF::HashTraits<unsigned long> >::rehash at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:1126
+ #6 shrink at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:444
+ #7 WTF::HashTable<unsigned long, WTF::KeyValuePair<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > >, WTF::KeyValuePairKeyExtractor<WTF::KeyValuePair<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > > >, WTF::IntHash<unsigned long>, WTF::HashMap<unsigned long, std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> >, WTF::IntHash<unsigned long>, WTF::HashTraits<unsigned long>, WTF::HashTraits<std::unique_ptr<WebKit::WebSoupRequestAsyncData, std::default_delete<WebKit::WebSoupRequestAsyncData> > > >::KeyValuePairTraits, WTF::HashTraits<unsigned long> >::remove at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:1000
+ #8 removeAndInvalidateWithoutEntryConsistencyCheck at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:974
+ #9 removeWithoutEntryConsistencyCheck at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/HashTable.h:1020
+Created attachment 1050123
+File: backtrace
+Created attachment 1050124
+File: cgroup
+Created attachment 1050125
+File: core_backtrace
+Created attachment 1050126
+File: dso_list
+Created attachment 1050127
+File: environ
+Created attachment 1050128
+File: limits
+Created attachment 1050129
+File: maps
+Created attachment 1050130
+File: mountinfo
+Created attachment 1050131
+File: namespaces
+Created attachment 1050132
+File: open_fds
+Created attachment 1050133
+File: proc_pid_status

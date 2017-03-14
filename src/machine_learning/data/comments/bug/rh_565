@@ -1,0 +1,32 @@
+perl-Padre-0.90-16.fc23 fails to build in F23 because tests fail:
+
+t/14-warnings.t ............ ok
+Xlib:  extension "RANDR" missing on display ":99".
+DBD::SQLite::db do failed: Safety level may not be changed inside a transaction at (eval 183) line 37.
+# Looks like you planned 7 tests but ran 3.
+# Looks like your test exited with 255 just after 3.
+t/15-locale.t .............. 
+Dubious, test returned 255 (wstat 65280, 0xff00)
+Failed 4/7 subtests 
+
+This can be caused by upgrading perl-DBD-SQLite from 1.46-3.fc23 to 1.48-2.fc23.
+The error is triggered by DBD-SQLite's commit:
+
+commit 7a234eb71b955064ce498e95d6ecc50d1f0580a7
+Author: Kenichi Ishigaki <ishigaki@cpan.org>
+Date:   Mon Feb 16 17:41:42 2015 +0900
+
+    implemented a "do" shortcut for a special case (no attr, no bind params) (RT-35449)
+
+It also adds this code into lib/DBD/SQLite.pm:
+
++    # shortcut
++    if  (defined $statement && !defined $attr && !@bind_values) {
++        # _do() (i.e. sqlite3_exec()) runs semicolon-separate SQL
++        # statements, which is handy but insecure sometimes.
++        # Use this only when it's safe or explicitly allowed.
++        if (index($statement, ';') == -1 or $dbh->FETCH('sqlite_allow_multiple_statements')) {
++            return DBD::SQLite::db::_do($dbh, $statement);
++        }
++    }
+It's a bug in Padre::Locker. A fix proposed to upstream was applied.

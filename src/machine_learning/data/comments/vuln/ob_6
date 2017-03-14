@@ -1,0 +1,9 @@
+If the sysctl variable <strong>net.inet.ip.forwarding</strong> is
+enabled (value 1), but the variable <strong>net.inet.ip.sourceroute</strong>
+is disabled (value 0), the kernel will block source routed packets from
+going through, but will still accept source routing packets destined for
+itself.  Our fix changes the <strong>net.inet.ip.sourceroute</strong>
+variable semantics to mean that all source routed packets should
+be blocked completely.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/common/sourceroute.patch">
+A kernel patch is provided</a>.

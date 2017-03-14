@@ -1,0 +1,198 @@
+Description of problem:
+
+Consolekit is finally dead (RIP)
+
+ConsoleKit               orphan, group::gnome-sig, lennart,   0 weeks ago   
+                         mbarnes, mccann, rhughes, rstrode,                 
+
+
+Please drop the consolekit dependency or adopt it as your breaking imsettings which in turn gtk2
+
+
+
+
+	lxsession (maintained by: cwickert)
+		lxsession-0.4.6.1-8.fc22.i686 requires ConsoleKit = 0.4.5-9.fc22
+
+
+	imsettings (maintained by: tagoh, i18n-team)
+		imsettings-lxde-1.6.8-5.fc23.i686 requires /usr/bin/lxsession, im-chooser = 1.6.4-6.fc23, lxde-settings-daemon = 0.4.1-3, lxsession = 0.4.6.1-8.fc22
+		imsettings-xim-1.6.8-5.fc23.i686 requires im-chooser = 1.6.4-6.fc23, libgdk-x11-2.0.so.0
+		imsettings-cinnamon-1.6.8-5.fc23.i686 requires im-chooser = 1.6.4-6.fc23
+		imsettings-mate-1.6.8-5.fc23.i686 requires im-chooser = 1.6.4-6.fc23
+		imsettings-qt-1.6.8-5.fc23.i686 requires im-chooser = 1.6.4-6.fc23
+
+
+
+	gtk2 (maintained by: mclasen, alexl, caillon, caolanm, epienbro, group::gnome-sig, hadess, johnp, mbarnes, mkasik, rhughes, rstrode, ssp, xiphmont)
+		gtk2-immodules-2.24.28-1.fc23.i686 requires imsettings = 1.6.8-5.fc23
+
+which in turn breaks about 2000 other packages.
+
+
+Expect:
+
+I expect this issue to be fixed yesterday!!
+Hi tagoh,
+
+Can you remove imsettings-lxde sub-package from imsettings Please, as I doubt lxsession can survive without Consolekit which I retired earlier.
+
+Regards
+
+Leigh
+Look like lxsession-0.5.2 has systemd support if cwickert can be bothered to update it.
+
+
+[leigh@pc-main lxsession-0.5.2]$ grep systemd -r
+lxsession-logout/lxsession-logout-dbus-interface.h:/* Interface to systemd for suspend, hibernate, shutdown and reboot. */
+lxsession-logout/lxsession-logout-dbus-interface.h:extern gboolean dbus_systemd_CanPowerOff(void);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern gboolean dbus_systemd_CanReboot(void);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern gboolean dbus_systemd_CanSuspend(void);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern gboolean dbus_systemd_CanHibernate(void);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern void dbus_systemd_PowerOff(GError **);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern void dbus_systemd_Reboot(GError **);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern void dbus_systemd_Suspend(GError **);
+lxsession-logout/lxsession-logout-dbus-interface.h:extern void dbus_systemd_Hibernate(GError **);
+lxsession-logout/lxsession-logout-dbus-interface.c:static GDBusProxy *systemd_proxy = NULL;
+lxsession-logout/lxsession-logout-dbus-interface.c:systemd_query (const gchar *function, gboolean default_result, GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    if (!systemd_proxy)
+lxsession-logout/lxsession-logout-dbus-interface.c:        systemd_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+lxsession-logout/lxsession-logout-dbus-interface.c:        if (!systemd_proxy)
+lxsession-logout/lxsession-logout-dbus-interface.c:    result = g_dbus_proxy_call_sync (systemd_proxy,
+lxsession-logout/lxsession-logout-dbus-interface.c:systemd_call_function (const gchar *function, gboolean value, GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    if (!systemd_proxy)
+lxsession-logout/lxsession-logout-dbus-interface.c:        systemd_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+lxsession-logout/lxsession-logout-dbus-interface.c:        if (!systemd_proxy)
+lxsession-logout/lxsession-logout-dbus-interface.c:    result = g_dbus_proxy_call_sync (systemd_proxy,
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_CanPowerOff (void)
+lxsession-logout/lxsession-logout-dbus-interface.c:    return systemd_query ("CanPowerOff", FALSE, NULL);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_PowerOff (GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    systemd_call_function ("PowerOff", TRUE, error);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_CanReboot (void)
+lxsession-logout/lxsession-logout-dbus-interface.c:    return systemd_query ("CanReboot", FALSE, NULL);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_Reboot (GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    systemd_call_function ("Reboot", TRUE, error);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_CanSuspend (void)
+lxsession-logout/lxsession-logout-dbus-interface.c:    return systemd_query ("CanSuspend", FALSE, NULL);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_Suspend (GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    systemd_call_function ("Suspend", TRUE, error);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_CanHibernate (void)
+lxsession-logout/lxsession-logout-dbus-interface.c:    return systemd_query ("CanHibernate", FALSE, NULL);
+lxsession-logout/lxsession-logout-dbus-interface.c:dbus_systemd_Hibernate (GError **error)
+lxsession-logout/lxsession-logout-dbus-interface.c:    systemd_call_function ("Hibernate", TRUE, error);
+lxsession-logout/lxsession-logout.c:    int shutdown_systemd : 1;		/* Shutdown is available via systemd */
+lxsession-logout/lxsession-logout.c:    int reboot_systemd : 1;		/* Reboot is available via systemd */
+lxsession-logout/lxsession-logout.c:    int suspend_systemd : 1;		/* Suspend is available via systemd */
+lxsession-logout/lxsession-logout.c:    int hibernate_systemd : 1;		/* Hibernate is available via systemd */
+lxsession-logout/lxsession-logout.c:    else if (handler_context->shutdown_systemd)
+lxsession-logout/lxsession-logout.c:        dbus_systemd_PowerOff(&err);
+lxsession-logout/lxsession-logout.c:    else if (handler_context->reboot_systemd)
+lxsession-logout/lxsession-logout.c:        dbus_systemd_Reboot(&err);
+lxsession-logout/lxsession-logout.c:    else if (handler_context->suspend_systemd)
+lxsession-logout/lxsession-logout.c:        dbus_systemd_Suspend(&err);
+lxsession-logout/lxsession-logout.c:    else if (handler_context->hibernate_systemd)
+lxsession-logout/lxsession-logout.c:        dbus_systemd_Hibernate(&err);
+lxsession-logout/lxsession-logout.c:    /* Initialize capabilities of the systemd mechanism. */
+lxsession-logout/lxsession-logout.c:    if (dbus_systemd_CanPowerOff())
+lxsession-logout/lxsession-logout.c:        handler_context.shutdown_systemd = TRUE;
+lxsession-logout/lxsession-logout.c:    if (dbus_systemd_CanReboot())
+lxsession-logout/lxsession-logout.c:        handler_context.reboot_systemd = TRUE;
+lxsession-logout/lxsession-logout.c:    if (dbus_systemd_CanSuspend())
+lxsession-logout/lxsession-logout.c:        handler_context.suspend_systemd = TRUE;
+lxsession-logout/lxsession-logout.c:    if (dbus_systemd_CanHibernate())
+lxsession-logout/lxsession-logout.c:        handler_context.hibernate_systemd = TRUE;
+lxsession/process.vala:        TODO : replace by something smart and using upstart / systemd if available
+Created attachment 1041519
+spec file patch
+
+The attached patch bumps version to 0.5.2 and removes consolekit requirement and replaces it with systemd support.
+I have tested it and it suspends and shuts down fine using systemd.
+lxdm still requires consolekit-libs and also need updating.
+This lxsession package also replaces lxsession-edit and lxpolkit, both these packages need retiring from the fedora packagedb.
+(In reply to leigh scott from comment #1)
+> Hi tagoh,
+> 
+> Can you remove imsettings-lxde sub-package from imsettings Please, as I
+> doubt lxsession can survive without Consolekit which I retired earlier.
+> 
+> Regards
+> 
+> Leigh
+
+This wont be necessary if the package is bumped to lxsession-0.5.2
+(In reply to leigh scott from comment #4)
+> (In reply to leigh scott from comment #1)
+> > Hi tagoh,
+> > 
+> > Can you remove imsettings-lxde sub-package from imsettings Please, as I
+> > doubt lxsession can survive without Consolekit which I retired earlier.
+> > 
+> > Regards
+> > 
+> > Leigh
+> 
+> This wont be necessary if the package is bumped to lxsession-0.5.2
+
+That would be nice :)
+Pushed and built in rawhide. 
+
+Thanks for the patch!
+Created attachment 1041967
+Patch to Add only-show-in LXDE
+
+(In reply to Kevin Fenzi from comment #6)
+> Pushed and built in rawhide. 
+> 
+> Thanks for the patch!
+
+Sorry to trouble you again, I missed this from the lxpolkit package, lxpolkit only needs to start in lxde.
+(In reply to Akira TAGOH from comment #5)
+> (In reply to leigh scott from comment #4)
+> > (In reply to leigh scott from comment #1)
+> > > Hi tagoh,
+> > > 
+> > > Can you remove imsettings-lxde sub-package from imsettings Please, as I
+> > > doubt lxsession can survive without Consolekit which I retired earlier.
+> > > 
+> > > Regards
+> > > 
+> > > Leigh
+> > 
+> > This wont be necessary if the package is bumped to lxsession-0.5.2
+> 
+> That would be nice :)
+
+Hi,
+
+Installing imsettings-lxde with the new lxsession makes my PC do really strange things.
+Like two DE's running at the same time, remove imsettings-lxde and thing return to normal.
+Applied and built:
+
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10184074
+
+Should we file a new bug for the imsettings-lxde issues?
+(In reply to Kevin Fenzi from comment #9)
+> Applied and built:
+> 
+> https://koji.fedoraproject.org/koji/taskinfo?taskID=10184074
+> 
+> Should we file a new bug for the imsettings-lxde issues?
+
+Yes, having imsettings-lxde installed here interferes with cinnamon session (tested with lightdm-gtk).
+I get cinnamon and lxde running together in one session, remove imsettings-lxde and things return to normal.
+(In reply to Kevin Fenzi from comment #9)
+> Applied and built:
+> 
+> https://koji.fedoraproject.org/koji/taskinfo?taskID=10184074
+> 
+> Should we file a new bug for the imsettings-lxde issues?
+
+Yes, please. I guess similar issue to Bug#693809 happened again though, imsettings itself doesn't invoke any sessions for DE. that may be another issue perhaps or was being invoked indirectly. let me take a look.
+imsettings-lxde issue is
+https://sourceforge.net/p/lxde/bugs/760/
+(In reply to Mamoru TASAKA from comment #12)
+> imsettings-lxde issue is
+> https://sourceforge.net/p/lxde/bugs/760/
+
+I've already pushed lxsession-0.5.2-4.fc23 to restore
+lxsession -r behavior on 0.4.6.1

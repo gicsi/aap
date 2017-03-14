@@ -1,0 +1,46 @@
+Description of problem:
+No matter which options I use to zip my home folder in preparation for backup, zip is skipping all of the files in my home folder.I have used * and not used * to no avail.It complains with "file not matched" errors and refuses to add ANY files to the zipfile. UI apps like xarchiver are not affected, however take forever to respond because of the density of my home folder on disk.
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.attempt to zip a deep level folder in /home.
+
+
+Actual results:
+Files are not matched in ANY subfolders.
+
+Expected results:
+zip should find everything if given a foldername or * to add stuff to a zipfile.
+
+Additional info:
+I commonly use zip, then split, then burn the splits as a backup method.
+Hi Richard, I am not sure if I understand you. Probably you didn't use "-r" option, right?
+# zip -r home_backup.zip /home
+nope used it. And used -R. No such luck.Name still not matched for files in folder name given.Problem is exacerbated by the UI as of late. Even when /home is owned by user(temporarily) Im getting errors and access denied messages zipping my own home folder.Looks like Im off to the the Debian live cd for now to zip from the command line.Debian UI corrupts data on zip.
+Ok, now I see where is problem.
+
+when you try use command like:
+$ zip backup.zip -R "folder/*"
+
+it will compress only files directly in directory "folder". So for these files:
+./folder/sth/folder/file
+./folder/sth/book
+./folder/jezek
+
+these files will be matched with regexp:
+./folder/sth/folder/
+./folder/sth/folder/file
+./folder/
+./folder/jezek
+
+IOW, matching is processed against suffix always.
+
+Otherwise matching with pattern itself is like shell matching. So same behaviour for "sth/*" "sth/**/", etc.  May manpages aren't actual or this is really bug. I am not sure now, but similar topic I saw in upstream forum earlier, but last upstream development version of zip has same behaviour. Unfortunately, forum is 1+ days unavailable. So resolution about this behaviour will be done later.
+
+You can use find & grep for now to get list of all files which you need backup.
+Its a weird bug. I know what needs backup. All of /home. But you just can zip from there, even as root.You must traverse into the user home folder first.Then you must ensure files like z: pointer dont point to anywhere you dont want to backup. Wine was preventing me from making a backup.Remove .wine and it goes smoothly.Hope you kept your installs handy...

@@ -1,0 +1,51 @@
+Description of problem:
+In rhcert-default.xml the bugzilla and catalog url are pointing to stage instance instead of production.
+
+<catalog-url search-retries="3" search-timeout="10">https://partner-hwcert.redhat.com/xmlrpc.cgi</catalog-url>
+    <bugzilla-url>https://partner-bugzilla.redhat.com/show_bug.cgi</bugzilla-url>
+
+This is high priority and needs to be fixed urgently
+
+Version-Release number of selected component (if applicable):
+redhat-certification-1.0-20150622.el7.noarch
+
+How reproducible:
+Everytime
+
+Steps to Reproduce:
+1. Install redhat-certification
+2. Open rhcert-default.xml and check the catalog-url and bugzilla-url
+3. They are not pointing to production instance.
+
+Actual results:
+rhcert.xml pointing to partner bugzilla and CWE instance
+
+Expected results:
+rhcert.xml should be pointing to production
+Openstack partners are unable to submit logs, can we fix this and we need to update errata for the latest content.
+Cloud partners have hit this issue too:
+https://bugzilla.redhat.com/show_bug.cgi?id=1240599#c1
+what are the correct URIs?
+(In reply to Brian Brock from comment #3)
+> what are the correct URIs?
+
+<catalog-url search-retries="3"
+search-timeout="10">https://hardware.redhat.com/xmlrpc.cgi</catalog-url>
+<bugzilla-url>https://bugzilla.redhat.com/show_bug.cgi</bugzilla-url>
+https://code.engineering.redhat.com/gerrit/#/c/52510/
+bugfix verified in 20150707-1.0-20150707.el7.
+
+still needs rhel 6 builds, those packages are vulnerable.
+Verified.  /etc/rhcert-default.xml has correct hostnames
+
+also verified in 20150707.el6 (and earlier rhel 7)
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHBA-2015-1213.html

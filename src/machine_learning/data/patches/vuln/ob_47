@@ -1,0 +1,26 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 002_ifmedia.patch
+
+And then rebuild your kernel.
+
+Index: sys/net/if.c
+===================================================================
+RCS file: /cvs/src/sys/net/if.c,v
+retrieving revision 1.21
+diff -u -r1.21 if.c
+--- sys/net/if.c	1999/08/08 14:59:02	1.21
++++ sys/net/if.c	1999/11/11 01:22:15
+@@ -622,8 +622,11 @@
+ 
+ 	case SIOCADDMULTI:
+ 	case SIOCDELMULTI:
++	case SIOCSIFMEDIA:
+ 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+ 			return (error);
++		/* FALLTHROUGH */
++	case SIOCGIFMEDIA:
+ 		if (ifp->if_ioctl == 0)
+ 			return (EOPNOTSUPP);
+ 		return ((*ifp->if_ioctl)(ifp, cmd, data));
+

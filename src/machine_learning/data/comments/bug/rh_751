@@ -1,0 +1,32 @@
+Description of problem:
+When there are many instant app templates shown with different box sizes, they don't layout properly on Create page.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.In project, create many instant app templates with different description lengths to make box sizes different.
+2.Check the templates on Create page.
+3.
+
+Actual results:
+2.They are not layout properly on Create page. Refer to attachment.
+
+Expected results:
+2.Should layout orderly.
+
+Additional info:
+Created attachment 1040800
+layout.png
+See also
+
+https://github.com/openshift/origin/issues/3323
+https://github.com/openshift/origin/pull/3293
+Checked on devenv_fedora_1872, the templates are shown orderly in multiple lines on all browsers except that they are listed in a column on safari 8. Pls refer to the attachment safari.png.
+Created attachment 1043381
+safari.png
+https://github.com/openshift/origin/pull/3456
+Checked on devenv_fedora_1886, templates layout orderly on all browsers, the issue has been fixed, so move it to Verified.

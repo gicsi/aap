@@ -1,0 +1,11 @@
+Your package js-zlib failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10100005
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047169
+build.log
+Created attachment 1047170
+root.log
+Created attachment 1047171
+state.log

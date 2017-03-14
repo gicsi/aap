@@ -1,0 +1,28 @@
+Description of problem: Main menu was OK, but degenerated - 3 lower icons are now just "terminal" images.
+
+
+Version-Release number of selected component (if applicable): Fedora 22: cinnamon most current (dnf updated ALL yesterday = 6/29/2015) -
+  running vmlinuz-4.0.6-300.fc22.x86_64
+
+
+How reproducible: 100%
+
+
+Steps to Reproduce:
+1. use cinnamon - click on main menu (lower bottom corner)
+2. first 3 icons work right (text RIGHT), but appear now as terminals
+3.
+
+Actual results: icons for lower three main menu - left side are terminals - text with them is right (quit, logout, lockscreen from bottom)
+
+
+Expected results: Yesterday these had their own icons.
+
+
+Additional info: tried to screenshot, but could not keep menu up for menu-screenshot and my prior trick with a shell script failed miserably - gnome-screenshot is making a file with a prematuree EOF.
+Created attachment 1044673
+screenshot with menus hosed
+You have changed icon theme (to fedora icons) and it doesn't have the shutdown, logout and lockscreen icons.
+humble apologies. who knew? back to adwaita
+
+I was trying something for another bug - someone requested I change some themes (not that one) and I was trying things out.

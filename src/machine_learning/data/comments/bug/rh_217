@@ -1,0 +1,100 @@
+Description of problem:
+Should the filelists be always downloaded or not? I am asking, since current Fedora guidelines prohibits using file provided due to some optimization [1], which does not seems to be supported by DNF (yet?). This is the scenario I tried:
+
+$ sudo dnf --enablerepo=* clean all
+Cleaning repos: rpmfusion-nonfree-updates-testing updates-debuginfo
+              : rawhide-source vondruch-doublecmd rpmfusion-free-updates-testing
+              : updates-testing rpmfusion-nonfree-updates-testing-source
+              : rpmfusion-nonfree-debuginfo updates-testing-source
+              : rpmfusion-free-rawhide-debuginfo bluejeans
+              : rpmfusion-nonfree-rawhide-debuginfo
+              : rpmfusion-nonfree-updates-source rpmfusion-free-rawhide-source
+              : fedora rpmfusion-free-source beaker-client-testing
+              : rpmfusion-free-updates-testing-debuginfo
+              : rpmfusion-nonfree-updates-debuginfo updates-source
+              : rpmfusion-free-rawhide rpmfusion-free-updates adobe-linux-x86_64
+              : rpmfusion-nonfree-updates rpmfusion-free rhpkg rawhide-debuginfo
+              : rpmfusion-nonfree-source fedora-debuginfo
+              : rpmfusion-nonfree-rawhide rpmfusion-free-updates-source
+              : updates-testing-debuginfo rpmfusion-free-updates-testing-source
+              : rawhide fedora-source
+              : rpmfusion-nonfree-updates-testing-debuginfo
+              : rpmfusion-nonfree-rawhide-source rpmfusion-nonfree
+              : rpmfusion-free-debuginfo rpmfusion-free-updates-debuginfo brew
+              : beaker-client updates
+Cleaning up Everything
+
+$ find /var/cache/dnf/x86_64/22/ -name \*filelist\*
+
+$ sudo dnf update
+Failed to synchronize cache for repo 'vondruch-doublecmd' from 'http://copr-be.cloud.fedoraproject.org/results/vondruch/doublecmd/fedora-22-x86_64/': Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried, disabling.
+Blue Jeans Network, Inc. - x86_64 software and   28 kB/s |  18 kB     00:00   
+Fedora 22 - x86_64                              4.7 MB/s |  41 MB     00:08   
+RPM Fusion for Fedora 22 - Free - Updates       3.9 kB/s | 399  B     00:00   
+Adobe Systems Incorporated                      8.8 kB/s | 1.8 kB     00:00   
+RPM Fusion for Fedora 22 - Nonfree - Updates    4.2 kB/s | 399  B     00:00   
+RPM Fusion for Fedora 22 - Free                 2.1 MB/s | 549 kB     00:00   
+rhpkg for Fedora 22                              13 kB/s | 7.0 kB     00:00   
+RPM Fusion for Fedora 22 - Nonfree              995 kB/s | 150 kB     00:00   
+Brew Buildsystem for Fedora 22 - x86_64         9.8 kB/s | 5.0 kB     00:00   
+Beaker Client - Fedora22                         33 kB/s |  26 kB     00:00   
+Fedora 22 - x86_64 - Updates                    4.5 MB/s | 9.9 MB     00:02   
+Last metadata expiration check performed 0:00:03 ago on Fri Jul  3 14:02:43 2015.
+Dependencies resolved.
+Nothing to do.
+Complete!
+
+$ find /var/cache/dnf/x86_64/22/ -name \*filelist\*
+/var/cache/dnf/x86_64/22/bluejeans/repodata/f48d34ecc3ab5fe66c21fff01160a05926b1a61b079c3915bba224de25939baa-filelists.xml.gz
+/var/cache/dnf/x86_64/22/rpmfusion-free-updates/repodata/filelists.xml.gz
+/var/cache/dnf/x86_64/22/fedora/repodata/080ae53f869b62ca5a4bdc71c930936863c5d72d52eab7252a58f78930b84756-filelists.xml.gz
+/var/cache/dnf/x86_64/22/rpmfusion-free/repodata/267567f56105d47142b79b6deced2acd108f81c5ef3185b87ff0e22ca9d4d790-filelists.xml.gz
+/var/cache/dnf/x86_64/22/adobe-linux-x86_64/repodata/filelists.xml.gz
+/var/cache/dnf/x86_64/22/rpmfusion-nonfree-updates/repodata/filelists.xml.gz
+/var/cache/dnf/x86_64/22/updates/repodata/ecb2b5ea8fc2009a2848497a22b87270afe183330e2bc2fdbd91260690acf406-filelists.xml.gz
+/var/cache/dnf/x86_64/22/brew/repodata/d2fb3f7be0173b3c016e66c642e94fec870b5b237dbd4583833166dca87967a0-filelists.xml.gz
+/var/cache/dnf/x86_64/22/beaker-client/repodata/f8a45950aaed71759ac7dceafc93ef79918747704714182f0914bb0b5ab2d42e-filelists.xml.gz
+/var/cache/dnf/x86_64/22/rpmfusion-nonfree/repodata/963e53309ee3e0c349e54a5cf2219dce233c5876d7bd9819152ef213616ded8c-filelists.xml.gz
+/var/cache/dnf/x86_64/22/rhpkg/repodata/6668651d4395147b00320c88ea65824de6f6576371dddba0589da75c91fd8dd1-filelists.xml.gz
+
+
+
+This actually started in Fedora's packaging list [2] and I am wondering if DNF is doing something wrong or the guidelines are wrong.
+
+
+
+
+
+
+Version-Release number of selected component (if applicable):
+$ rpm -q dnf
+dnf-1.0.1-2.fc22.noarch
+
+
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+filelists are always downloaded.
+
+
+Expected results:
+filelists are downloaded only when needed.
+
+
+Additional info:
+
+
+[1] https://fedoraproject.org/wiki/Packaging:Guidelines#File_Dependencies
+[2] https://lists.fedoraproject.org/pipermail/packaging/2015-July/010794.html
+*** This bug has been marked as a duplicate of bug 968006 ***
+Thx for pointing out the discussion. I proposed guidelines change to FPC:
+
+https://fedorahosted.org/fpc/ticket/549

@@ -1,0 +1,6 @@
+Description of problem:
+Latest upstream release: 2.3.2
+Current version/release in Fedora Rawhide: 2.3.1-3.git20150327.fc23
+URL: http://openvswitch.org/releases/
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10151988
+*** Bug 1233470 has been marked as a duplicate of this bug. ***

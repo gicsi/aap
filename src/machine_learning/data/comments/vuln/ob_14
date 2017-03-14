@@ -1,0 +1,3 @@
+Inetd had a file descriptor leak.  A patch is
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/inetd.patch">
+available here.</a>

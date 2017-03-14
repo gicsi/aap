@@ -1,0 +1,14 @@
+Description of problem:
+I see patch for Madan font is failing against current fontforge. We need to rebase the patch again and add U0970 character.
+
+Version-Release number of selected component (if applicable):
+madan-fonts-2.000-14.fc22.noarch
+
+How reproducible:
+always
+Pravin can you help and provide patch here?
+Created attachment 1045744
+New Patch for addgin u970
+
+Created with fontforge-20150612-1.fc22.x86_64
+Thanks built in madan-fonts-2.000-16.fc23

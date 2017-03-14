@@ -1,0 +1,57 @@
+Description of problem:
+I just installed StarkMenu, it also crashed vmlinuz and kernel-core, don't know if is just coincidence that all crashed at the same time after first time using that menu. I'm using it without no problem.
+
+Version-Release number of selected component:
+cinnamon-2.6.7-3.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        cinnamon --replace
+crash_function: gray_find_cell
+executable:     /usr/bin/cinnamon
+global_pid:     1342
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 3
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #6 gray_find_cell at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:570
+ #7 gray_record_cell at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:590
+ #9 gray_set_cell at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:633
+ #10 gray_render_line at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:875
+ #11 gray_render_conic at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:1001
+ #12 gray_conic_to at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:1186
+ #13 FT_Outline_Decompose at /usr/src/debug/freetype-2.5.5/src/base/ftoutln.c:222
+ #14 gray_convert_glyph_inner at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:1769
+ #15 gray_convert_glyph at /usr/src/debug/freetype-2.5.5/src/smooth/ftgrays.c:1872
+ #16 ft_smooth_render_generic at /usr/src/debug/freetype-2.5.5/src/smooth/ftsmooth.c:308
+
+Potential duplicate: bug 1161815
+Created attachment 1042570
+File: backtrace
+Created attachment 1042571
+File: cgroup
+Created attachment 1042572
+File: core_backtrace
+Created attachment 1042573
+File: dso_list
+Created attachment 1042574
+File: environ
+Created attachment 1042575
+File: limits
+Created attachment 1042576
+File: maps
+Created attachment 1042577
+File: mountinfo
+Created attachment 1042578
+File: namespaces
+Created attachment 1042579
+File: open_fds
+Created attachment 1042580
+File: proc_pid_status
+Created attachment 1042581
+File: var_log_messages
+*** This bug has been marked as a duplicate of bug 1161815 ***

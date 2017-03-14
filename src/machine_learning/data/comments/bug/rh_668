@@ -1,0 +1,53 @@
+Description of problem:
+I have an IBM T-40P (older notebook) that has an ATI Mobility Fire GL 9100 graphics hardware. It is attached via the VGA output to a monitor that supports PNP and has a native VGA resolution of 1920x1080.
+
+I have run fedora 18..22 on it, and I am currently running Fedora 22 (x86) LXDE.
+Over the last week I did a software update. Now the maximum resolution I can specify on the VGA output has been reduced to 1024x768. I verified this was the highest resolution mode using xrandr.
+
+I am not sure what the previous resolution was, but it was significantly higher. I have had to reduce the font size, and the computer is far less useful running at a low resolution.
+
+The computer dual boots with windows xp, and with windows xp I can run the monitor successfully at 1400x1050 (It is an old driver that doesn't support a lot of video resolutions). 
+
+I suspect there was a video driver update or something video related that reduced the resolution.
+
+Version-Release number of selected component (if applicable):
+Fedora 22 x86 LXDE, all updates as of june-20-2015, running 4.0.5 kernel.
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Install Fedora 22, run updates
+2. get low resolution graphics, and cry
+3.
+
+Actual results:
+low resolution graphics
+
+Expected results:
+high resolution graphics
+
+Additional info:
+can you boot with drm.debug=6 and attach the dmesg?
+How do I add those boot parameters?
+Created attachment 1041557
+dmesg with drm.debug=6
+
+Here is the output of dmesg
+can you get one of those for an older kernel as well?
+
+it appears we are failing to get EDID from the monitor on that card now.
+It would not be easy to get the info for an older kernel.
+The machine is in use 24x7 and it is not trivial for me to reload an os.
+Is it possible to do it from a fedora live cd, without installing the os?
+
+I can't say that the EDID used to work from the monitor, but I have made no changes to the wiring or the monitor for about a year, and it used to work fine and yield reasonably high resolution. I suspect this is a software issue.
+I just realized that I changed the main vga cable that attaches to my kvm switch a few weeks ago. I have the old cable, and I could sawp it back in.
+
+I did boot up another computer connected to the kvm switch via vga.
+It is running mageia-4, and it detected my monitor, correctly as a benq bl3200.
+I don't know a whole lot about EDID, but I presume it is reasonably good news
+that the monitor gets correctly identified.
+I swapped the main vga cable, and I can now run the monitor at a reasonable resolution. It must of been the EDID info not getting through the substandard cable.
+
+Thanks a bunch, case closed.

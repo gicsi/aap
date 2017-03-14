@@ -1,0 +1,7 @@
+The <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ste&amp;sektion=4">ste(4)</a>
+driver supporting Ethernet cards based on the Sundance ST201 chipset
+(i.e., the D-Link 550TX) has a bug which causes the machine to panic at
+boot-time.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/i386/015_ste.patch">
+A source code patch exists which remedies this problem.</a>

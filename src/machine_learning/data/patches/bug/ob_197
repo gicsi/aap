@@ -1,0 +1,85 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 019_tcp2.patch
+
+Rebuild your kernel.
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.132.2.2
+retrieving revision 1.132.2.3
+diff -u -p -r1.132.2.2 -r1.132.2.3
+--- sys/netinet/tcp_input.c	3 Mar 2004 08:37:05 -0000	1.132.2.2
++++ sys/netinet/tcp_input.c	6 May 2004 00:39:39 -0000	1.132.2.3
+@@ -116,6 +116,10 @@ int tcp_rst_ppslim = 100;		/* 100pps */
+ int tcp_rst_ppslim_count = 0;
+ struct timeval tcp_rst_ppslim_last;
+ 
++int tcp_synack_ppslim = 100;		/* 100pps */
++int tcp_synack_ppslim_count = 0;
++struct timeval tcp_synack_ppslim_last;
++
+ #endif /* TUBA_INCLUDE */
+ #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
+ 
+@@ -1620,8 +1624,12 @@ trimthenstep6:
+ 	 * error and we send an RST and drop the connection.
+ 	 */
+ 	if (tiflags & TH_SYN) {
+-		tp = tcp_drop(tp, ECONNRESET);
+-		goto dropwithreset;
++		if (ppsratecheck(&tcp_synack_ppslim_last, &tcp_synack_ppslim_count,
++		    tcp_synack_ppslim) == 0) {
++			/* XXX stat */
++			goto drop;
++		}
++		goto dropafterack;
+ 	}
+ 
+ 	/*
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 018_gdt.patch
+
+And then rebuild your kernel.
+
+Index: sys/dev/ic/gdt_common.c
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/gdt_common.c,v
+retrieving revision 1.26
+retrieving revision 1.26.2.1
+diff -u -p -r1.26 -r1.26.2.1
+--- sys/dev/ic/gdt_common.c	28 Jun 2003 23:56:40 -0000	1.26
++++ sys/dev/ic/gdt_common.c	30 Apr 2004 23:30:40 -0000	1.26.2.1
+@@ -58,7 +58,7 @@ int gdt_maxcmds = GDT_MAXCMDS;
+ #endif
+ 
+ #define GDT_DRIVER_VERSION 1
+-#define GDT_DRIVER_SUBVERSION 1
++#define GDT_DRIVER_SUBVERSION 2
+ 
+ int	gdt_async_event(struct gdt_softc *, int);
+ void	gdt_chain(struct gdt_softc *);
+@@ -176,19 +176,6 @@ gdt_attach(gdt)
+ 		return (1);
+ 	}
+ 
+-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_MOUNT, 0xffff, 1,
+-	    0)) {
+-		printf("cache service mount error %d\n",
+-		    gdt->sc_status);
+-		return (1);
+-	}
+-
+-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_INIT, GDT_LINUX_OS, 0,
+-	    0)) {
+-		printf("cache service post-mount initialization error %d\n",
+-		    gdt->sc_status);
+-		return (1);
+-	}
+ 	cdev_cnt = (u_int16_t)gdt->sc_info;
+ 
+ 	/* Detect number of busses */
+

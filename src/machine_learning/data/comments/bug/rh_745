@@ -1,0 +1,11 @@
+Description of problem:
+
+Netty was patched upstream so that cookies are correctly parsed. This vulnerability could lead to XSS if using Netty as HTTP Server, which is not the intended use in EAP
+
+See CVE-2015-2156 for more details.
+
+
+Version-Release number of selected component (if applicable):
+
+5.2.x, and 6.x
+*** This bug has been marked as a duplicate of bug 1234173 ***

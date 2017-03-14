@@ -1,0 +1,23 @@
+Description of problem:
+Fresh install of Fedora 22 on a ThinkPad T440s (yes, the one with the big Touchpad and no buttons).
+
+When the libinput driver is used, things like two-finger scroll and two-finger tap require my fingers to have a gap (I'd guesstimate some 5mm) between the fingers to be properly detected. With the synaptics driver (on both, F21 and F22), the fingers can be tightly together and still be detected as two, thus triggering the right action.
+
+I did not any try three-finger actions, but would not be surprised if this applies there too.
+
+Version-Release number of selected component (if applicable):
+xorg-x11-drv-libinput-0.10.0-5.fc22.x86_64
+
+How reproducible:
+always when libinput driver is used
+
+Steps to Reproduce:
+1. install/enable libinput driver in Xorg
+2. two finger scroll with the fingers tightly together
+
+Actual results:
+usually a bit of scrolling, mixed with the cursor jumping all over the screen
+
+Expected results:
+scrolling only
+*** This bug has been marked as a duplicate of bug 1236540 ***

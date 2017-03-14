@@ -1,0 +1,35 @@
+Fully reproducible with Live Workstation 20150617 image, but ABRT refuses the backtrace it created:
+
+$ rpm -q control-center
+control-center-3.17.2-1.fc23.x86_64
+
+Just open and close the window.
+
+$ gnome-control-center mouse
+
+(gnome-control-center:3794): GLib-GObject-WARNING **: The property GtkCellRendererPixbuf:follow-state is deprecated and shouldn't be used anymore. It will be removed in a future version.
+Segmentation fault (core dumped)
+Mouse panel is irrelevant. It crashes also without any opened panels, just run gnome-control-center and close the window to reproduce the crash.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007fffef591402 in free () from /lib64/libc.so.6
+(gdb) bt
+#0  0x00007fffef591402 in free () from /lib64/libc.so.6
+#1  0x00007fffe33aaaab in _gnutls_ext_deinit () from /lib64/libgnutls.so.30
+#2  0x00007fffe33b1c80 in _gnutls_global_deinit () from /lib64/libgnutls.so.30
+#3  0x00007ffff7de97b7 in _dl_fini () from /lib64/ld-linux-x86-64.so.2
+#4  0x00007fffef5458c8 in __run_exit_handlers () from /lib64/libc.so.6
+#5  0x00007fffef545915 in exit () from /lib64/libc.so.6
+#6  0x00007fffef52b9a7 in __libc_start_main () from /lib64/libc.so.6
+#7  0x00005555555a88b9 in _start ()
+
+Tested on:
+https://kojipkgs.fedoraproject.org//work/tasks/2448/10102448/Fedora-Live-Workstation-x86_64-rawhide-20150617.iso
+
+It seems like a duplicate of Bug 1225736, but will have to test it more...
+see bug 1233191
+
+it will be fixed with gnutls-3.4.2-2.fc23
+Confirmed.
+
+*** This bug has been marked as a duplicate of bug 1233191 ***

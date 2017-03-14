@@ -1,0 +1,8 @@
+Network
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=bridge&amp;sektion=4">bridges</a>
+running
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pf&amp;sektion=4">pf</a>
+with scrubbing enabled could cause mbuf corruption,
+causing the system to crash.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/002_pfbridge.patch">
+A source code patch exists which remedies this problem.</a>

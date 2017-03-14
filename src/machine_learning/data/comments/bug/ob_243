@@ -1,0 +1,5 @@
+Two flaws in the <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=vio&sektion=4">vio(4)</a>
+driver may cause a kernel panic, and may cause IPv6 neighbour discovery to fail
+due to multicast receive problems.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/007_vio.patch">
+A source code patch exists which remedies this problem.</a>

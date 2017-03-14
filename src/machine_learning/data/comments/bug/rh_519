@@ -1,0 +1,141 @@
+Description of problem:
+
+git clone executed here git.go#L80 (https://github.com/openshift/origin/blob/5fecfa3de3b743bd3b8e13101be2bfd8e9ec84ba/Godeps/_workspace/src/github.com/openshift/source-to-image/pkg/git/git.go#L80) doesn't load http(s) proxy setting even if we set http proxy env value in sourceStrategy.
+
+-=~~~~~~~~~=-
+   ...
+"sourceStrategy": {
+    "from": {
+        "kind": "DockerImage",
+        "name": "registry.access.redhat.com/openshift3_beta/ruby-20-rhel7:latest"
+    },
+    "env": [
+        {
+            "name": "HTTP_PROXY",
+            "value": "http://localhost:3128"
+        },
+        {
+            "name": "HTTPS_PROXY",
+            "value": "http://localhost:3128"
+        }
+    ],
+    "incremental": true
+}
+   ...
+-=~~~~~~~~~=-
+
+How reproducible:
+
+Steps to Reproduce:
+1. Setup environment which disabled internet access without http proxy.
+
+2. Run this https://github.com/openshift/training/blob/master/beta-4-setup.md#adding-code-via-the-web-console after adding http proxy config to the buildConfig.
+
+Actual results:
+[joe@ose3-master ~]$ osc build-logs ruby-example-4
+I0622 19:48:44.608477       1 cfg.go:50] Problem accessing /root/.dockercfg: stat /root/.dockercfg: no such file or directory
+I0622 19:48:44.610686       1 sti.go:67] Creating a new S2I builder with build request: ... SNIP(we can check HTTP_PROXY and HTTPS_PROXY has been set correctly.) ....
+I0622 19:48:44.619171       1 docker.go:170] Image registry.access.redhat.com/openshift3_beta/ruby-20-rhel7:latest available locally
+I0622 19:48:44.625068       1 sti.go:73] Starting S2I build from sinatra/ruby-example-4 BuildConfig ...
+I0622 19:48:44.625093       1 sti.go:114] Building 172.30.19.7:5000/sinatra/ruby-example:latest
+I0622 19:48:44.629866       1 clone.go:26] Cloning into /tmp/sti092869243/upload/src
+E0622 19:48:44.831874       1 git.go:102] fatal: unable to access 'https://github.com/openshift/simple-openshift-sinatra-sti/': Could not resolve host: github.com; No address associated with hostname
+I0622 19:48:44.834738       1 clone.go:28] Git clone failed: exit status 128
+I0622 19:48:44.834786       1 cleanup.go:24] Removing temporary directory /tmp/sti092869243
+I0622 19:48:44.834797       1 fs.go:99] Removing directory '/tmp/sti092869243'
+F0622 19:48:44.836703       1 builder.go:75] Build error: exit status 128
+
+
+Expected results:
+- "osc start-build" work without any error under http proxy.
+
+
+Additional info:
+- This is same report with https://github.com/openshift/origin/issues/3395
+- It has Already been fixed in upstream: https://github.com/openshift/origin/pull/3401
+https://github.com/openshift/origin/pull/3401
+Test on Beijing env which was blocked from rubygems.org
+
+Start build without setting http(s) proxy env value in sourceStrategy, and the build was failed for couldn't connect to https://rubygems.org/
+
+Add proxy env to "sourceStrategy" of the buildconfig, start build again. The build was finished successfully. Move the bug to verified.
+Ignore comment 4, the verification step is incorrect.
+
+Seem like the PR is not merged into OSE yet.
+
+# rpm -q openshift
+openshift-3.0.0.1-1.git.0.80e3787.el7ose.x86_64
+
+
+# oc new-app https://github.com/openshift/simple-openshift-sinatra-sti.git  -i openshift/ruby
+
+# oc edit bc simple-openshift-sinatra-sti
+<--snip-->
+  strategy:
+    sourceStrategy:
+      env:
+      - name: HTTP_PROXY
+        value: xx.xx.xx.xx:3128
+      - name: http_proxy
+        value: xx.xx.xx.xx:3128
+      - name: HTTPS_PROXY
+        value: xx.xx.xx.xx:3128
+      - name: https_proxy
+        value: xx.xx.xx.xx:3128
+      from:
+<--snip-->
+
+# oc build-logs simple-openshift-sinatra-sti-2
+E0629 11:18:37.112982       1 git.go:102] fatal: unable to access 'https://github.com/openshift/simple-openshift-sinatra-sti.git/': Failed connect to github.com:443; No route to host
+F0629 11:18:37.117151       1 builder.go:70] Build error: exit status 128
+merged to OSE now (thanks scott)
+
+https://github.com/openshift/ose/pull/44
+The env variable will not be present in the container because it gets explicitly set/unset during the process.
+
+please run with loglevel 5 so we can see if these messages appear in the build log output:
+
+https://github.com/openshift/ose/blob/enterprise-3.0/pkg/build/builder/sti.go#L88-L103
+
+Note that this change is in the origin-sti-builder image itself, so I wonder if your run did not pick up the right image?
+@Ben, Cool, it works now. Thanks for your help.
+
+Verified this bug with openshift-3.0.0.1-1.git.4.eab4c86.el7ose.x86_64 and ose-sti-builder(22a62f8d0d5f) image, PASS.
+
+
+# oc edit bc
+<--snip-->
+  source:
+    git:
+      httpsProxy: xx.xx.xx.xx:3128
+      uri: https://github.com/openshift/simple-openshift-sinatra-sti.git
+    type: Git
+<--snip-->
+  strategy:
+    sourceStrategy:
+      env:
+      - name: HTTP_PROXY
+        value: xx.xx.xx.xx:3128
+      from:
+<--snip-->
+
+# oc start-build simple-openshift-sinatra-sti
+
+# oc build-logs simple-openshift-sinatra-sti-5
+<--snip-->
+I0630 11:24:51.167816       1 sti.go:83] Starting S2I build from jialiu/simple-openshift-sinatra-sti-5 BuildConfig ...
+I0630 11:24:51.167847       1 sti.go:89] Setting https proxy variables for Git to file.rdu.redhat.com:3128
+I0630 11:24:51.167900       1 sti.go:112] Building 172.30.71.210:5000/jialiu/simple-openshift-sinatra-sti
+I0630 11:24:51.168505       1 clone.go:26] Cloning into /tmp/sti131565253/upload/src
+<--snip-->
+I0630 11:27:38.250693       1 sti.go:138] Successfully pushed 172.30.71.210:5000/jialiu/simple-openshift-sinatra-sti
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://access.redhat.com/errata/RHBA-2015:1209

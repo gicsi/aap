@@ -1,0 +1,8 @@
+A problem exists in
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=nginx&sektion=8">nginx(8)</a>
+which might allow an attacker to bypass security restrictions in certain
+configurations by using a specially crafted request.
+This issue was assigned CVE-2013-4547.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/011_nginx.patch">
+A source code patch exists which remedies this problem.</a>

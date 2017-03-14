@@ -1,0 +1,31 @@
+Basically it looks like for some reason on aarch64 the openssl-1.0.2a-enginesdir.patch causes issues with $enginesdir causing the following ling in the patch to be exectured and /lib/engines is wrong on 64 bit:
+
++$enginesdir="$prefix/lib/engines" if $enginesdir eq "";
+
+Causing the follwoing to happen:
+
+SSL.3 => ssl.3
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib/engines'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib/pkgconfig'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/include/openssl'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/etc/pki/tls/misc'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/etc/pki/tls/certs'
+created directory `/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/etc/pki/tls/private'
+making install in crypto...
+
+
+and eventually:
+
+SSL.3 => ssl.3
++ mv /builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib64/engines /builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib64/openssl
+mv: cannot stat '/builddir/build/BUILDROOT/openssl-1.0.2c-1.fc23.aarch64/usr/lib64/engines': No such file or directory
+
+http://arm.koji.fedoraproject.org/koji/buildinfo?buildID=295457
+Please try to build openssl-1.0.2c-3.fc23
+(In reply to Tomas Mraz from comment #1)
+> Please try to build openssl-1.0.2c-3.fc23
+
+Already done, I might have been watching closely for this one ;-) thanks a lot for the quick fix :)
+
+http://arm.koji.fedoraproject.org/koji/taskinfo?taskID=3055755

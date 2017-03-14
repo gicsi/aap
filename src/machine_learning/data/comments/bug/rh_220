@@ -1,0 +1,92 @@
+Description of problem:
+
+Well, I just follow the official documentation "1.4.3. Installing Ansible" - https://access.redhat.com/beta/documentation/en/openshift-enterprise-30-administrator-guide/chapter-1-installation  -
+
+
+I upload the following Ansible hosts file :
+
+//////////////////////////////////////////////////////////////////////
+
+[root@master ~]# cat /etc/ansible/hosts
+# This is an example of a bring your own (byo) host inventory
+
+# Create an OSEv3 group that contains the masters and nodes groups
+[OSEv3:children]
+masters
+nodes
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+# SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user=root
+
+# If ansible_ssh_user is not root, ansible_sudo must be set to true
+#ansible_sudo=true
+
+# To deploy origin, change deployment_type to origin
+deployment_type=enterprise
+
+# Pre-release registry URL
+#openshift_registry_url=docker-buildvm-rhose.usersys.redhat.com:5000/openshift3_beta/ose-${component}:${version}
+
+# Pre-release additional repo
+#openshift_additional_repos=[{'id': 'ose-devel', 'name': 'ose-devel', 'baseurl': 'http://buildvm-devops.usersys.redhat.com/puddle/build/OpenShiftEnterprise/3.0/latest/RH7-RHOSE-3.0/$basearch/os', 'enabled': 1, 'gpgcheck': 0}]
+#openshift_additional_repos=[{'id': 'ose-devel', 'name': 'ose-devel', 'baseurl': 'http://buildvm-devops.usersys.redhat.com/puddle/build/OpenShiftEnterpriseErrata/3.0/latest/RH7-RHOSE-3.0/$basearch/os', 'enabled': 1, 'gpgcheck': 0}]
+
+# Origin copr repo
+#openshift_additional_repos=[{'id': 'openshift-origin-copr', 'name': 'OpenShift Origin COPR', 'baseurl': 'https://copr-be.cloud.fedoraproject.org/results/maxamillion/origin-next/epel-7-$basearch/', 'enabled': 1, 'gpgcheck': 1, gpgkey: 'https://copr-be.cloud.fedoraproject.org/results/maxamillion/origin-next/pubkey.gpg'}]
+
+# enable htpasswd authentication
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
+
+# host group for masters
+[masters]
+master.myredhat.be
+
+# host group for nodes, includes region info
+[nodes]
+master.myredhat.be openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+node1.myredhat.be openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+node2.myredhat.be openshift_node_labels="{'region': 'primary', 'zone': 'west'}
+
+
+//////////////////////////////////////////////////////////////////////
+
+Installation and configuration via ansible went fine.
+However when I run the following command I have got the following output:
+
+[root@master ~]# oc get nodes 
+NAME                 LABELS                                      STATUS
+master.myredhat.be   kubernetes.io/hostname=master.myredhat.be   Ready
+node1.myredhat.be    kubernetes.io/hostname=node1.myredhat.be    Ready
+node2.myredhat.be    kubernetes.io/hostname=node2.myredhat.be    Ready
+
+
+Despite I should have :
+
+NAME                 LABELS                                      STATUS
+master.myredhat.be   kubernetes.io/hostname=master.myredhat.be,region=infra,zone=default   Ready
+node1.myredhat.be    kubernetes.io/hostname=node1.myredhat.be,region=primary,zone=east     Ready
+node2.myredhat.be    kubernetes.io/hostname=node2.myredhat.be,region=primary,zone=west     Ready
+
+So, here is my question :
+Is it normal behaviour ?
+Was this behaviour introduce with OSEv3 G.A. ?
+How can I check region and zone with the OSEv3 G.A. release ?
+During the ansible installation process, I saw region and zone configurations were taken in account.
+
+ok: [node1.myredhat.be] => (item={'local_facts': {'public_hostname': u'', 'hostname': u'', 'deployment_type': u'enterprise'}, 'role': 'common'})
+ok: [node2.myredhat.be] => (item={'local_facts': {'public_hostname': u'', 'hostname': u'', 'deployment_type': u'enterprise'}, 'role': 'common'})
+ok: [master.myredhat.be] => (item={'local_facts': {'public_hostname': u'', 'hostname': u'', 'deployment_type': u'enterprise'}, 'role': 'common'})
+ok: [node2.myredhat.be] => (item={'local_facts': {'pod_cidr': u'', 'labels': {'region': 'primary', 'zone': 'west'}, 'resources_cpu': u'', 'annotations': u'', 'resources_memory': u''}, 'role': 'node'})
+ok: [node1.myredhat.be] => (item={'local_facts': {'pod_cidr': u'', 'labels': {'region': 'primary', 'zone': 'east'}, 'resources_cpu': u'', 'annotations': u'', 'resources_memory': u''}, 'role': 'node'})
+ok: [master.myredhat.be] => (item={'local_facts': {'pod_cidr': u'', 'labels': {'region': 'infra', 'zone': 'default'}, 'resources_cpu': u'', 'annotations': u'', 'resources_memory': u''}, 'role': 'node'})
+
+But I can not see them when I run the followinf command :
+
+[root@master ~]# oc get nodes
+NAME                 LABELS                                      STATUS
+master.myredhat.be   kubernetes.io/hostname=master.myredhat.be   Ready
+node1.myredhat.be    kubernetes.io/hostname=node1.myredhat.be    Ready
+node2.myredhat.be    kubernetes.io/hostname=node2.myredhat.be    Ready
+*** This bug has been marked as a duplicate of bug 1235953 ***

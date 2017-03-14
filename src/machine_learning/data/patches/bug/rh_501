@@ -1,0 +1,85 @@
+From 2fce06d693740db691fa83b2d126ff7b8489a30c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ville=20Skytt=C3=A4?= <ville.skytta@iki.fi>
+Date: Wed, 24 Jun 2015 21:30:44 +0300
+Subject: [PATCH] Install bash completion
+
+- Mark LICENSE as %license where applicable
+---
+ npm.spec | 33 ++++++++++++++++++++++++++++++---
+ 1 file changed, 30 insertions(+), 3 deletions(-)
+
+diff --git a/npm.spec b/npm.spec
+index 74819be..9bb83bd 100644
+--- a/npm.spec
++++ b/npm.spec
+@@ -2,7 +2,7 @@
+ 
+ Name:       npm
+ Version:    1.3.6
+-Release:    7%{?dist}
++Release:    8%{?dist}
+ Summary:    Node.js Package Manager
+ License:    Artistic 2.0
+ Group:      Development/Tools
+@@ -20,6 +20,16 @@ Patch1:     %{name}-use-system-doc-paths.patch
+ Patch2:     %{name}-fix-search.patch
+ 
+ BuildRequires: nodejs-devel
++BuildRequires: bash-completion
++BuildRequires: npm(child-process-close)
++BuildRequires: npm(editor)
++BuildRequires: npm(graceful-fs)
++BuildRequires: npm(npm-registry-client)
++BuildRequires: npm(npmconf)
++BuildRequires: npm(npmlog)
++BuildRequires: npm(slide)
++BuildRequires: npm(uid-number)
++BuildRequires: npm(which)
+ 
+ %description
+ npm is a package manager for node.js. You can use it to install and publish your
+@@ -56,6 +66,17 @@ cp -pr bin lib cli.js package.json %{buildroot}%{nodejs_sitelib}/npm/
+ mkdir -p %{buildroot}%{_bindir}
+ ln -sf ../lib/node_modules/npm/bin/npm-cli.js %{buildroot}%{_bindir}/npm
+ 
++bashcompdir=$(pkg-config --variable=completionsdir bash-completion)
++if [ -n $bashcompdir ]; then
++    dirname $bashcompdir > %{name}.files
++else
++    bashcompdir=%{_sysconfdir}/bash_completion.d
++    echo $bashcompdir > %{name}.files
++fi
++mkdir -p %{buildroot}$bashcompdir
++NODE_PATH=%{nodejs_sitelib} \
++    %{buildroot}%{_bindir}/npm completion > %{buildroot}$bashcompdir/npm
++
+ # ghosted global config files
+ mkdir -p %{buildroot}%{_sysconfdir}
+ touch %{buildroot}%{_sysconfdir}/npmrc
+@@ -78,16 +99,22 @@ ln -sf %{_pkgdocdir}/html %{buildroot}%{nodejs_sitelib}/npm/html
+ %clean
+ rm -rf %{buildroot}
+ 
+-%files
++%files -f %{name}.files
+ %defattr(-,root,root,-)
+ %{nodejs_sitelib}/npm
+ %ghost %{_sysconfdir}/npmrc
+ %ghost %{_sysconfdir}/npmignore
+ %{_bindir}/npm
+ %{_mandir}/man*/*
+-%doc AUTHORS doc html README.md LICENSE
++%{!?_licensedir:%global license %%doc}
++%license LICENSE
++%doc AUTHORS doc html README.md
+ 
+ %changelog
++* Wed Jun 24 2015 Ville Skyttä <ville.skytta@iki.fi> - 1.3.6-8
++- Install bash completion
++- Mark LICENSE as %%license where applicable
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.3.6-7
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+2.4.3

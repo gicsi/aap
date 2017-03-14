@@ -1,0 +1,623 @@
+Apply by doing:
+	cd /usr/XF4     # Assuming XF4 is in /usr/XF4
+	patch -p0 < 012_xorg.patch
+
+And then rebuild and install X:
+	make build
+
+Index: xc/lib/font/bitmap/pcfread.c
+===================================================================
+RCS file: /cvs/XF4/xc/lib/font/bitmap/pcfread.c,v
+retrieving revision 1.4
+retrieving revision 1.4.4.1
+diff -u -p -r1.4 -r1.4.4.1
+--- xc/lib/font/bitmap/pcfread.c	23 Jul 2006 20:36:36 -0000	1.4
++++ xc/lib/font/bitmap/pcfread.c	29 Jan 2008 06:34:41 -0000	1.4.4.1
+@@ -588,6 +588,9 @@ pcfReadFont(FontPtr pFont, FontFilePtr f
+     pFont->info.lastRow = pcfGetINT16(file, format);
+     pFont->info.defaultCh = pcfGetINT16(file, format);
+     if (IS_EOF(file)) goto Bail;
++    if (pFont->info.firstCol > pFont->info.lastCol ||
++       pFont->info.firstRow > pFont->info.lastRow ||
++       pFont->info.lastCol-pFont->info.firstCol > 255) goto Bail;
+ 
+     nencoding = (pFont->info.lastCol - pFont->info.firstCol + 1) *
+ 	(pFont->info.lastRow - pFont->info.firstRow + 1);
+@@ -726,6 +729,9 @@ pcfReadFontInfo(FontInfoPtr pFontInfo, F
+     pFontInfo->lastRow = pcfGetINT16(file, format);
+     pFontInfo->defaultCh = pcfGetINT16(file, format);
+     if (IS_EOF(file)) goto Bail;
++    if (pFontInfo->firstCol > pFontInfo->lastCol ||
++       pFontInfo->firstRow > pFontInfo->lastRow ||
++       pFontInfo->lastCol-pFontInfo->firstCol > 255) goto Bail;
+ 
+     nencoding = (pFontInfo->lastCol - pFontInfo->firstCol + 1) *
+ 	(pFontInfo->lastRow - pFontInfo->firstRow + 1);
+Index: xc/programs/Xserver/Xext/EVI.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xext/EVI.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xext/EVI.c	8 Jan 2006 21:18:12 -0000	1.3
++++ xc/programs/Xserver/Xext/EVI.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -36,6 +36,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ #include <X11/extensions/XEVIstr.h>
+ #include "EVIstruct.h"
+ #include "modinit.h"
++#include "scrnintstr.h"
+ 
+ #if 0
+ static unsigned char XEVIReqCode = 0;
+@@ -89,10 +90,22 @@ ProcEVIGetVisualInfo(ClientPtr client)
+ {
+     REQUEST(xEVIGetVisualInfoReq);
+     xEVIGetVisualInfoReply rep;
+-    int n, n_conflict, n_info, sz_info, sz_conflict;
++    int i, n, n_conflict, n_info, sz_info, sz_conflict;
+     VisualID32 *conflict;
++    unsigned int total_visuals = 0;
+     xExtendedVisualInfo *eviInfo;
+     int status;
++
++    /*
++     * do this first, otherwise REQUEST_FIXED_SIZE can overflow.  we assume
++     * here that you don't have more than 2^32 visuals over all your screens;
++     * this seems like a safe assumption.
++     */
++    for (i = 0; i < screenInfo.numScreens; i++)
++	total_visuals += screenInfo.screens[i]->numVisuals;
++    if (stuff->n_visual > total_visuals)
++	return BadValue;
++
+     REQUEST_FIXED_SIZE(xEVIGetVisualInfoReq, stuff->n_visual * sz_VisualID32);
+     status = eviPriv->getVisualInfo((VisualID32 *)&stuff[1], (int)stuff->n_visual,
+ 		&eviInfo, &n_info, &conflict, &n_conflict);
+Index: xc/programs/Xserver/Xext/cup.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xext/cup.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xext/cup.c	8 Jan 2006 21:18:12 -0000	1.3
++++ xc/programs/Xserver/Xext/cup.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -202,6 +202,9 @@ int ProcGetReservedColormapEntries(
+ 
+     REQUEST_SIZE_MATCH (xXcupGetReservedColormapEntriesReq);
+ 
++    if (stuff->screen >= screenInfo.numScreens)
++	return BadValue;
++
+ #ifndef HAVE_SPECIAL_DESKTOP_COLORS
+     citems[CUP_BLACK_PIXEL].pixel = 
+ 	screenInfo.screens[stuff->screen]->blackPixel;
+Index: xc/programs/Xserver/Xext/sampleEVI.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xext/sampleEVI.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xext/sampleEVI.c	8 Jan 2006 21:18:12 -0000	1.3
++++ xc/programs/Xserver/Xext/sampleEVI.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -36,6 +36,13 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ #include <X11/extensions/XEVIstr.h>
+ #include "EVIstruct.h"
+ #include "scrnintstr.h"
++
++#if HAVE_STDINT_H
++#include <stdint.h>
++#elif !defined(UINT32_MAX)
++#define UINT32_MAX 0xffffffffU
++#endif
++
+ static int sampleGetVisualInfo(
+     VisualID32 *visual,
+     int n_visual,
+@@ -44,24 +51,36 @@ static int sampleGetVisualInfo(
+     VisualID32 **conflict_rn,
+     int *n_conflict_rn)
+ {
+-    int max_sz_evi = n_visual * sz_xExtendedVisualInfo * screenInfo.numScreens;
++    unsigned int max_sz_evi;
+     VisualID32 *temp_conflict;
+     xExtendedVisualInfo *evi;
+-    int max_visuals = 0, max_sz_conflict, sz_conflict = 0;
++    unsigned int max_visuals = 0, max_sz_conflict, sz_conflict = 0;
+     register int visualI, scrI, sz_evi = 0, conflictI, n_conflict;
+-    *evi_rn = evi = (xExtendedVisualInfo *)xalloc(max_sz_evi);
+-    if (!*evi_rn)
+-         return BadAlloc;
++
++    if (n_visual > UINT32_MAX/(sz_xExtendedVisualInfo * screenInfo.numScreens))
++	return BadAlloc;
++    max_sz_evi = n_visual * sz_xExtendedVisualInfo * screenInfo.numScreens;
++    
+     for (scrI = 0; scrI < screenInfo.numScreens; scrI++) {
+         if (screenInfo.screens[scrI]->numVisuals > max_visuals)
+             max_visuals = screenInfo.screens[scrI]->numVisuals;
+     }
++
++    if (n_visual > UINT32_MAX/(sz_VisualID32 * screenInfo.numScreens 
++			       * max_visuals)) 
++	return BadAlloc;
+     max_sz_conflict = n_visual * sz_VisualID32 * screenInfo.numScreens * max_visuals;
++
++    *evi_rn = evi = (xExtendedVisualInfo *)xalloc(max_sz_evi);
++    if (!*evi_rn)
++         return BadAlloc;
++
+     temp_conflict = (VisualID32 *)xalloc(max_sz_conflict);
+     if (!temp_conflict) {
+         xfree(*evi_rn);
+         return BadAlloc;
+     }
++
+     for (scrI = 0; scrI < screenInfo.numScreens; scrI++) {
+         for (visualI = 0; visualI < n_visual; visualI++) {
+ 	    evi[sz_evi].core_visual_id = visual[visualI];
+Index: xc/programs/Xserver/Xext/security.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xext/security.c,v
+retrieving revision 1.5
+retrieving revision 1.5.6.1
+diff -u -p -r1.5 -r1.5.6.1
+--- xc/programs/Xserver/Xext/security.c	8 Jan 2006 21:18:12 -0000	1.5
++++ xc/programs/Xserver/Xext/security.c	29 Jan 2008 06:34:41 -0000	1.5.6.1
+@@ -1647,7 +1647,7 @@ SecurityLoadPropertyAccessList(void)
+ 	return;
+ 
+ #ifndef __UNIXOS2__
+-    f = fopen(SecurityPolicyFile, "r");
++    f = Fopen(SecurityPolicyFile, "r");
+ #else
+     f = fopen((char*)__XOS2RedirRoot(SecurityPolicyFile), "r");
+ #endif    
+@@ -1733,7 +1733,7 @@ SecurityLoadPropertyAccessList(void)
+     }
+ #endif /* PROPDEBUG */
+ 
+-    fclose(f);
++    Fclose(f);
+ } /* SecurityLoadPropertyAccessList */
+ 
+ 
+Index: xc/programs/Xserver/Xext/shm.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xext/shm.c,v
+retrieving revision 1.7
+retrieving revision 1.7.6.2
+diff -u -p -r1.7 -r1.7.6.2
+--- xc/programs/Xserver/Xext/shm.c	8 Jan 2006 21:18:13 -0000	1.7
++++ xc/programs/Xserver/Xext/shm.c	10 Feb 2008 19:54:01 -0000	1.7.6.2
+@@ -728,6 +728,8 @@ ProcPanoramiXShmCreatePixmap(
+     int i, j, result;
+     ShmDescPtr shmdesc;
+     REQUEST(xShmCreatePixmapReq);
++    unsigned int width, height, depth;
++    unsigned long size;
+     PanoramiXRes *newPix;
+ 
+     REQUEST_SIZE_MATCH(xShmCreatePixmapReq);
+@@ -737,11 +739,18 @@ ProcPanoramiXShmCreatePixmap(
+     LEGAL_NEW_RESOURCE(stuff->pid, client);
+     VERIFY_GEOMETRABLE(pDraw, stuff->drawable, client);
+     VERIFY_SHMPTR(stuff->shmseg, stuff->offset, TRUE, shmdesc, client);
+-    if (!stuff->width || !stuff->height)
++
++    width = stuff->width;
++    height = stuff->height;
++    depth = stuff->depth;
++    if (!width || !height || !depth)
+     {
+ 	client->errorValue = 0;
+         return BadValue;
+     }
++    if (width > 32767 || height > 32767)
++        return BadAlloc;
++
+     if (stuff->depth != 1)
+     {
+         pDepth = pDraw->pScreen->allowedDepths;
+@@ -751,10 +760,18 @@ ProcPanoramiXShmCreatePixmap(
+ 	client->errorValue = stuff->depth;
+         return BadValue;
+     }
++
+ CreatePmap:
+-    VERIFY_SHMSIZE(shmdesc, stuff->offset,
+-		   PixmapBytePad(stuff->width, stuff->depth) * stuff->height,
+-		   client);
++    size = PixmapBytePad(width, depth) * height;
++    if (sizeof(size) == 4 && BitsPerPixel(depth) > 8) {
++        if (size < width * height)
++            return BadAlloc;
++    }
++    /* thankfully, offset is unsigned */
++    if (stuff->offset + size < size)
++	return BadAlloc;
++
++    VERIFY_SHMSIZE(shmdesc, stuff->offset, size, client);
+ 
+     if(!(newPix = (PanoramiXRes *) xalloc(sizeof(PanoramiXRes))))
+ 	return BadAlloc;
+@@ -1052,6 +1069,8 @@ ProcShmCreatePixmap(client)
+     register int i;
+     ShmDescPtr shmdesc;
+     REQUEST(xShmCreatePixmapReq);
++    unsigned int width, height, depth;
++    unsigned long size;
+ 
+     REQUEST_SIZE_MATCH(xShmCreatePixmapReq);
+     client->errorValue = stuff->pid;
+@@ -1060,11 +1079,18 @@ ProcShmCreatePixmap(client)
+     LEGAL_NEW_RESOURCE(stuff->pid, client);
+     VERIFY_GEOMETRABLE(pDraw, stuff->drawable, client);
+     VERIFY_SHMPTR(stuff->shmseg, stuff->offset, TRUE, shmdesc, client);
+-    if (!stuff->width || !stuff->height)
++
++    width = stuff->width;
++    height = stuff->height;
++    depth = stuff->depth;
++    if (!width || !height || !depth)
+     {
+ 	client->errorValue = 0;
+         return BadValue;
+     }
++    if (width > 32767 || height > 32767)
++	return BadAlloc;
++
+     if (stuff->depth != 1)
+     {
+         pDepth = pDraw->pScreen->allowedDepths;
+@@ -1074,10 +1100,18 @@ ProcShmCreatePixmap(client)
+ 	client->errorValue = stuff->depth;
+         return BadValue;
+     }
++
+ CreatePmap:
+-    VERIFY_SHMSIZE(shmdesc, stuff->offset,
+-		   PixmapBytePad(stuff->width, stuff->depth) * stuff->height,
+-		   client);
++    size = PixmapBytePad(width, depth) * height;
++    if (sizeof(size) == 4 && BitsPerPixel(depth) > 8) {
++	if (size < width * height)
++	    return BadAlloc;
++    }
++    /* thankfully, offset is unsigned */
++    if (stuff->offset + size < size)
++	return BadAlloc;
++
++    VERIFY_SHMSIZE(shmdesc, stuff->offset, size, client);
+     pMap = (*shmFuncs[pDraw->pScreen->myNum]->CreatePixmap)(
+ 			    pDraw->pScreen, stuff->width,
+ 			    stuff->height, stuff->depth,
+Index: xc/programs/Xserver/Xi/chgfctl.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/chgfctl.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/chgfctl.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/chgfctl.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -506,7 +506,6 @@ ChangeStringFeedback (client, dev, mask,
+     xStringFeedbackCtl 	*f;
+     {
+     register char n;
+-    register long *p;
+     int		i, j;
+     KeySym	*syms, *sup_syms;
+ 
+@@ -514,12 +513,7 @@ ChangeStringFeedback (client, dev, mask,
+     if (client->swapped)
+ 	{
+ 	swaps(&f->length,n);	/* swapped num_keysyms in calling proc */
+-	p = (long *) (syms);
+-	for (i=0; i<f->num_keysyms; i++)
+-	    {
+-	    swapl(p, n);
+-	    p++;
+-	    }
++	SwapLongs((CARD32 *) syms, f->num_keysyms);
+ 	}
+ 
+     if (f->num_keysyms > s->ctrl.max_symbols)
+Index: xc/programs/Xserver/Xi/chgkmap.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/chgkmap.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/chgkmap.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/chgkmap.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -83,19 +83,15 @@ SProcXChangeDeviceKeyMapping(client)
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i, count;
++    unsigned int count;
++
+ 
+     REQUEST(xChangeDeviceKeyMappingReq);
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xChangeDeviceKeyMappingReq);
+-    p = (long *) &stuff[1];
+     count = stuff->keyCodes * stuff->keySymsPerKeyCode;
+-    for (i = 0; i < count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++    REQUEST_FIXED_SIZE(xChangeDeviceKeyMappingReq, count * sizeof(CARD32));
++    SwapLongs((CARD32 *) (&stuff[1]), count);
+     return(ProcXChangeDeviceKeyMapping(client));
+     }
+ 
+@@ -112,9 +108,13 @@ ProcXChangeDeviceKeyMapping(client)
+     int	ret;
+     unsigned len;
+     DeviceIntPtr dev;
++    unsigned int count;
+ 
+     REQUEST(xChangeDeviceKeyMappingReq);
+     REQUEST_AT_LEAST_SIZE(xChangeDeviceKeyMappingReq);
++
++    count = stuff->keyCodes * stuff->keySymsPerKeyCode;
++    REQUEST_FIXED_SIZE(xChangeDeviceKeyMappingReq, count * sizeof(CARD32));
+ 
+     dev = LookupDeviceIntRec (stuff->deviceid);
+     if (dev == NULL)
+Index: xc/programs/Xserver/Xi/chgprop.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/chgprop.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/chgprop.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/chgprop.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -85,20 +85,15 @@ SProcXChangeDeviceDontPropagateList(clie
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i;
+ 
+     REQUEST(xChangeDeviceDontPropagateListReq);
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xChangeDeviceDontPropagateListReq);
+     swapl(&stuff->window, n);
+     swaps(&stuff->count, n);
+-    p = (long *) &stuff[1];
+-    for (i=0; i<stuff->count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++    REQUEST_FIXED_SIZE(xChangeDeviceDontPropagateListReq,
++                      stuff->count * sizeof(CARD32));
++    SwapLongs((CARD32 *) (&stuff[1]), stuff->count);
+     return(ProcXChangeDeviceDontPropagateList(client));
+     }
+ 
+Index: xc/programs/Xserver/Xi/grabdev.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/grabdev.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/grabdev.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/grabdev.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -87,8 +87,6 @@ SProcXGrabDevice(client)
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i;
+ 
+     REQUEST(xGrabDeviceReq);
+     swaps(&stuff->length, n);
+@@ -96,14 +94,13 @@ SProcXGrabDevice(client)
+     swapl(&stuff->grabWindow, n);
+     swapl(&stuff->time, n);
+     swaps(&stuff->event_count, n);
+-    p = (long *) &stuff[1];
+-    for (i=0; i<stuff->event_count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
+ 
++    if (stuff->length != (sizeof(xGrabDeviceReq) >> 2) + stuff->event_count)
++       return BadLength;
++
++    SwapLongs((CARD32 *) (&stuff[1]), stuff->event_count);
+     return(ProcXGrabDevice(client));
++
+     }
+ 
+ /***********************************************************************
+Index: xc/programs/Xserver/Xi/grabdevb.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/grabdevb.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/grabdevb.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/grabdevb.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -84,8 +84,6 @@ SProcXGrabDeviceButton(client)
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i;
+ 
+     REQUEST(xGrabDeviceButtonReq);
+     swaps(&stuff->length, n);
+@@ -93,12 +91,9 @@ SProcXGrabDeviceButton(client)
+     swapl(&stuff->grabWindow, n);
+     swaps(&stuff->modifiers, n);
+     swaps(&stuff->event_count, n);
+-    p = (long *) &stuff[1];
+-    for (i=0; i<stuff->event_count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++    REQUEST_FIXED_SIZE(xGrabDeviceButtonReq,
++                      stuff->event_count * sizeof(CARD32));
++    SwapLongs((CARD32 *) (&stuff[1]), stuff->event_count);
+ 
+     return(ProcXGrabDeviceButton(client));
+     }
+Index: xc/programs/Xserver/Xi/grabdevk.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/grabdevk.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/grabdevk.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/grabdevk.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -84,8 +84,6 @@ SProcXGrabDeviceKey(client)
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i;
+ 
+     REQUEST(xGrabDeviceKeyReq);
+     swaps(&stuff->length, n);
+@@ -93,12 +91,9 @@ SProcXGrabDeviceKey(client)
+     swapl(&stuff->grabWindow, n);
+     swaps(&stuff->modifiers, n);
+     swaps(&stuff->event_count, n);
+-    p = (long *) &stuff[1];
+-    for (i=0; i<stuff->event_count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++
++    REQUEST_FIXED_SIZE(xGrabDeviceKeyReq, stuff->event_count * sizeof(CARD32));
++    SwapLongs((CARD32 *) (&stuff[1]), stuff->event_count);
+     return(ProcXGrabDeviceKey(client));
+     }
+ 
+Index: xc/programs/Xserver/Xi/selectev.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/selectev.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/selectev.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/selectev.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -88,20 +88,16 @@ SProcXSelectExtensionEvent (client)
+ register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
+-    register int i;
+ 
+     REQUEST(xSelectExtensionEventReq);
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xSelectExtensionEventReq);
+     swapl(&stuff->window, n);
+     swaps(&stuff->count, n);
+-    p = (long *) &stuff[1];
+-    for (i=0; i<stuff->count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++    REQUEST_FIXED_SIZE(xSelectExtensionEventReq,
++                      stuff->count * sizeof(CARD32));
++    SwapLongs((CARD32 *) (&stuff[1]), stuff->count);
++
+     return(ProcXSelectExtensionEvent(client));
+     }
+ 
+Index: xc/programs/Xserver/Xi/sendexev.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/Xi/sendexev.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/Xi/sendexev.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xi/sendexev.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -87,7 +87,7 @@ SProcXSendExtensionEvent(client)
+     register ClientPtr client;
+     {
+     register char n;
+-    register long *p;
++    CARD32 *p;
+     register int i;
+     xEvent eventT;
+     xEvent *eventP;
+@@ -98,6 +98,11 @@ SProcXSendExtensionEvent(client)
+     REQUEST_AT_LEAST_SIZE(xSendExtensionEventReq);
+     swapl(&stuff->destination, n);
+     swaps(&stuff->count, n);
++
++    if (stuff->length != (sizeof(xSendExtensionEventReq) >> 2) + stuff->count +
++       (stuff->num_events * (sizeof(xEvent) >> 2)))
++       return BadLength;
++
+     eventP = (xEvent *) &stuff[1];
+     for (i=0; i<stuff->num_events; i++,eventP++)
+         {
+@@ -108,12 +113,8 @@ SProcXSendExtensionEvent(client)
+ 	*eventP = eventT;
+ 	}
+ 
+-    p = (long *) (((xEvent *) &stuff[1]) + stuff->num_events);
+-    for (i=0; i<stuff->count; i++)
+-        {
+-        swapl(p, n);
+-	p++;
+-        }
++    p = (CARD32 *)(((xEvent *) & stuff[1]) + stuff->num_events);
++    SwapLongs(p, stuff->count);
+     return(ProcXSendExtensionEvent(client));
+     }
+ 
+Index: xc/programs/Xserver/dix/dixfonts.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/dix/dixfonts.c,v
+retrieving revision 1.3
+retrieving revision 1.3.6.1
+diff -u -p -r1.3 -r1.3.6.1
+--- xc/programs/Xserver/dix/dixfonts.c	8 Jan 2006 21:18:16 -0000	1.3
++++ xc/programs/Xserver/dix/dixfonts.c	29 Jan 2008 06:34:41 -0000	1.3.6.1
+@@ -336,6 +336,13 @@ doOpenFont(ClientPtr client, OFclosurePt
+ 	err = BadFontName;
+ 	goto bail;
+     }
++    /* check values for firstCol, lastCol, firstRow, and lastRow */
++    if (pfont->info.firstCol > pfont->info.lastCol ||
++       pfont->info.firstRow > pfont->info.lastRow ||
++       pfont->info.lastCol - pfont->info.firstCol > 255) {
++       err = AllocError;
++       goto bail;
++    }
+     if (!pfont->fpe)
+ 	pfont->fpe = fpe;
+     pfont->refcnt++;
+Index: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c
+===================================================================
+RCS file: /cvs/XF4/xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v
+retrieving revision 1.2
+retrieving revision 1.2.6.1
+diff -u -p -r1.2 -r1.2.6.1
+--- xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c	15 Jan 2006 22:07:45 -0000	1.2
++++ xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c	29 Jan 2008 06:34:41 -0000	1.2.6.1
+@@ -647,6 +647,10 @@ MiscExtPassMessage(int scrnIndex, const 
+ 
+     DEBUG_P("MiscExtPassMessage");
+ 
++    /* should check this in the protocol, but xf86NumScreens isn't exported */
++    if (scrnIndex >= xf86NumScreens)
++	return BadValue;
++
+     if (*pScr->HandleMessage == NULL)
+ 	    return BadImplementation;
+     return (*pScr->HandleMessage)(scrnIndex, msgtype, msgval, retstr);
+

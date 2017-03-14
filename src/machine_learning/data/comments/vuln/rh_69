@@ -1,0 +1,228 @@
+Description of problem:
+When trying to install samba on the latest ISO it fails with dependency issues.Below are the dependency problems seen while installing.
+
+--> Running transaction check
+---> Package libwbclient.x86_64 0:4.1.17-7.el6rhs will be installed
+---> Package samba-common.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Processing Dependency: samba-vfs-glusterfs = 4.1.17-7.el6rhs for package: samba-common-4.1.17-7.el6rhs.x86_64
+---> Package samba-libs.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Processing Dependency: libpytalloc-util.so.2(PYTALLOC_UTIL_2.0.6)(64bit) for package: samba-libs-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpytalloc-util.so.2()(64bit) for package: samba-libs-4.1.17-7.el6rhs.x86_64
+--> Running transaction check
+---> Package pytalloc.x86_64 0:2.1.1-3.el6rhs will be installed
+--> Processing Dependency: libtalloc = 2.1.1-3.el6rhs for package: pytalloc-2.1.1-3.el6rhs.x86_64
+---> Package samba-vfs-glusterfs.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Finished Dependency Resolution
+Error: Package: pytalloc-2.1.1-3.el6rhs.x86_64 (rhel-x86_64-server-6-rhs-3)
+           Requires: libtalloc = 2.1.1-3.el6rhs
+           Installed: libtalloc-2.1.1-4.el6rhs.x86_64 (@anaconda-InstallationRepo-201506190938.x86_64/3.1)
+               libtalloc = 2.1.1-4.el6rhs
+           Available: libtalloc-2.0.1-1.1.el6.i686 (rhel-x86_64-server-6)
+               libtalloc = 2.0.1-1.1.el6
+           Available: libtalloc-2.0.7-2.el6.i686 (download.eng.blr.redhat.com_nightly_latest-RHEL-6_6.7_Server_x86_64_os_)
+               libtalloc = 2.0.7-2.el6
+           Available: libtalloc-2.1.1-3.el6rhs.x86_64 (rhel-x86_64-server-6-rhs-3)
+               libtalloc = 2.1.1-3.el6rhs
+ You could try using --skip-broken to work around the problem
+ You could try running: rpm -Va --nofiles --nodigest
+
+
+Version-Release number of selected component (if applicable):
+samba-4.1.17-7.el6rhs.x86_64.rpm
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Install the latest ISO from PXE.
+2. Add samba channels and add latest samba repo.
+3. Run the command 'yum install samba'
+
+Actual results:
+samba installation fails with dependence errors on libtalloc
+
+Expected results:
+Samba install should go successfully.
+
+Additional info:
+Verified on the latest ISO and adding puddle for rhgs3.1 and samba repo : the dependency issue is not seen and samba installed successfully.
+
+
+ http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo
+-bash: http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo: No such file or directory
+[root@dhcp159-189 yum.repos.d]# wget http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo
+--2015-07-03 06:00:19--  http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Server.repo
+Resolving download.eng.bos.redhat.com... 10.16.36.64
+Connecting to download.eng.bos.redhat.com|10.16.36.64|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 578 [text/plain]
+Saving to: “RH-Gluster-3-Server.repo”
+
+100%[==============================================================================================================================>] 578         --.-K/s   in 0s      
+
+2015-07-03 06:00:20 (51.2 MB/s) - “RH-Gluster-3-Server.repo” saved [578/578]
+
+[root@dhcp159-189 yum.repos.d]# ls
+redhat.repo  rhel-source.repo  RH-Gluster-3-Server.repo
+[root@dhcp159-189 yum.repos.d]# wget http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Samba-.repo
+--2015-07-03 06:00:50--  http://download.eng.bos.redhat.com/rel-eng/RHGS/3.1-RHEL-6/latest/RH-Gluster-3-Samba-.repo
+Resolving download.eng.bos.redhat.com... 10.16.36.64
+Connecting to download.eng.bos.redhat.com|10.16.36.64|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 578 [text/plain]
+Saving to: “RH-Gluster-3-Samba-.repo”
+
+100%[==============================================================================================================================>] 578         --.-K/s   in 0s      
+
+2015-07-03 06:00:50 (56.2 MB/s) - “RH-Gluster-3-Samba-.repo” saved [578/578]
+
+[root@dhcp159-189 yum.repos.d]# ls
+redhat.repo  rhel-source.repo  RH-Gluster-3-Samba-.repo  RH-Gluster-3-Server.repo
+[root@dhcp159-189 yum.repos.d]# yum install samba
+Loaded plugins: aliases, changelog, product-id, security, subscription-manager, tmprepo, verify, versionlock
+Setting up Install Process
+RH-Gluster-3-Samba-                                                                                                                              | 1.2 kB     00:00     
+RH-Gluster-3-Samba-/primary                                                                                                                      | 9.8 kB     00:00     
+RH-Gluster-3-Samba-                                                                                                                                               25/25
+RH-Gluster-3-Server                                                                                                                              | 1.2 kB     00:00     
+RH-Gluster-3-Server/primary                                                                                                                      |  28 kB     00:00     
+RH-Gluster-3-Server                                                                                                                                               91/91
+Resolving Dependencies
+--> Running transaction check
+---> Package samba.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Processing Dependency: samba-libs = 4.1.17-7.el6rhs for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: samba-common = 4.1.17-7.el6rhs for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libwbclient = 4.1.17-7.el6rhs for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libxattr_tdb.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libwbclient.so.0(WBCLIENT_0.9)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libutil_tdb.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libutil_reg.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libtevent-util.so.0(TEVENT_UTIL_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbregistry.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbd_shim.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbd_base.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbconf.so.0(SMBCONF_0)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmb_transport.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsecrets3.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba3-util.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-util.so.0(SAMBA_UTIL_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-sockets.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-security.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-hostconfig.so.0(SAMBA_HOSTCONFIG_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libreplace.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpopt_samba3.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpdb.so.0(PDB_0)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr.so.0(NDR_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-standard.so.0(NDR_STANDARD_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-samba.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-nbt.so.0(NDR_NBT_0.0.1)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: liblibsmb.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libgse.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: liberrors.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libdbwrap.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcliauth.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli_smb_common.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli_cldap.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli-nbt.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libccan.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libauth.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libCHARSET3.so(SAMBA_4.1.17)(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libxattr_tdb.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libwbclient.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libutil_tdb.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libutil_reg.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libtevent-util.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbregistry.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbd_shim.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbd_base.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmbconf.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsmb_transport.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsecrets3.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba3-util.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-util.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-sockets.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-security.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libsamba-hostconfig.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libreplace.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpopt_samba3.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpdb.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-standard.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-samba.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libndr-nbt.so.0()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: liblibsmb.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libgse.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: liberrors.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libdbwrap.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcliauth.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli_smb_common.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli_cldap.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libcli-nbt.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libccan.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libauth.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libCHARSET3.so()(64bit) for package: samba-4.1.17-7.el6rhs.x86_64
+--> Running transaction check
+---> Package libwbclient.x86_64 0:4.1.17-7.el6rhs will be installed
+---> Package samba-common.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Processing Dependency: samba-vfs-glusterfs = 4.1.17-7.el6rhs for package: samba-common-4.1.17-7.el6rhs.x86_64
+---> Package samba-libs.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Processing Dependency: libpytalloc-util.so.2(PYTALLOC_UTIL_2.0.6)(64bit) for package: samba-libs-4.1.17-7.el6rhs.x86_64
+--> Processing Dependency: libpytalloc-util.so.2()(64bit) for package: samba-libs-4.1.17-7.el6rhs.x86_64
+--> Running transaction check
+---> Package pytalloc.x86_64 0:2.1.1-4.el6rhs will be installed
+---> Package samba-vfs-glusterfs.x86_64 0:4.1.17-7.el6rhs will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+========================================================================================================================================================================
+ Package                                     Arch                           Version                                   Repository                                   Size
+========================================================================================================================================================================
+Installing:
+ samba                                       x86_64                         4.1.17-7.el6rhs                           RH-Gluster-3-Samba-                         517 k
+Installing for dependencies:
+ libwbclient                                 x86_64                         4.1.17-7.el6rhs                           RH-Gluster-3-Samba-                          86 k
+ pytalloc                                    x86_64                         2.1.1-4.el6rhs                            RH-Gluster-3-Samba-                         9.0 k
+ samba-common                                x86_64                         4.1.17-7.el6rhs                           RH-Gluster-3-Samba-                         698 k
+ samba-libs                                  x86_64                         4.1.17-7.el6rhs                           RH-Gluster-3-Samba-                         4.2 M
+ samba-vfs-glusterfs                         x86_64                         4.1.17-7.el6rhs                           RH-Gluster-3-Samba-                          78 k
+
+Transaction Summary
+========================================================================================================================================================================
+Install       6 Package(s)
+
+Total download size: 5.5 M
+Installed size: 20 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/6): libwbclient-4.1.17-7.el6rhs.x86_64.rpm                                                                                                    |  86 kB     00:00     
+(2/6): pytalloc-2.1.1-4.el6rhs.x86_64.rpm                                                                                                        | 9.0 kB     00:00     
+(3/6): samba-4.1.17-7.el6rhs.x86_64.rpm                                                                                                          | 517 kB     00:00     
+(4/6): samba-common-4.1.17-7.el6rhs.x86_64.rpm                                                                                                   | 698 kB     00:00     
+(5/6): samba-libs-4.1.17-7.el6rhs.x86_64.rpm                                                                                                     | 4.2 MB     00:00     
+(6/6): samba-vfs-glusterfs-4.1.17-7.el6rhs.x86_64.rpm                                                                                            |  78 kB     00:00     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                    18 MB/s | 5.5 MB     00:00     
+Running rpm_check_debug
+Running Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing : pytalloc-2.1.1-4.el6rhs.x86_64                                                                                                                       1/6 
+  Installing : libwbclient-4.1.17-7.el6rhs.x86_64                                                                                                                   2/6 
+  Installing : samba-libs-4.1.17-7.el6rhs.x86_64                                                                                                                    3/6 
+  Installing : samba-vfs-glusterfs-4.1.17-7.el6rhs.x86_64                                                                                                           4/6 
+  Installing : samba-common-4.1.17-7.el6rhs.x86_64                                                                                                                  5/6 
+  Installing : samba-4.1.17-7.el6rhs.x86_64                                                                                                                         6/6 
+  Verifying  : samba-4.1.17-7.el6rhs.x86_64                                                                                                                         1/6 
+  Verifying  : samba-libs-4.1.17-7.el6rhs.x86_64                                                                                                                    2/6 
+  Verifying  : libwbclient-4.1.17-7.el6rhs.x86_64                                                                                                                   3/6 
+  Verifying  : samba-vfs-glusterfs-4.1.17-7.el6rhs.x86_64                                                                                                           4/6 
+  Verifying  : samba-common-4.1.17-7.el6rhs.x86_64                                                                                                                  5/6 
+  Verifying  : pytalloc-2.1.1-4.el6rhs.x86_64                                                                                                                       6/6 
+
+Installed:
+  samba.x86_64 0:4.1.17-7.el6rhs                                                                                                                                        
+
+Dependency Installed:
+  libwbclient.x86_64 0:4.1.17-7.el6rhs            pytalloc.x86_64 0:2.1.1-4.el6rhs    samba-common.x86_64 0:4.1.17-7.el6rhs    samba-libs.x86_64 0:4.1.17-7.el6rhs   
+  samba-vfs-glusterfs.x86_64 0:4.1.17-7.el6rhs

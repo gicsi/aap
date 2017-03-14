@@ -1,0 +1,26 @@
+Description of problem:
+
+In glusterd, some messages are still being logged using the older logging API. This has to be ported to the new API.
+
+Version-Release number of selected component (if applicable):
+RHGS 3.1
+
+How reproducible:
+
+N/A
+
+Steps to Reproduce:
+N/A
+
+Actual results:
+
+Unavailability of new logging mechanism (MSG ID) in glusterd.
+
+Expected results:
+
+Implement logging based on message ids for glusterd.
+The patches in the upstream are:
+master: http://review.gluster.org/11388
+release-3.7: http://review.gluster.org/11422
+
+Backport of the above patch has been sent to downstream, fixing this issue. The patch is: https://code.engineering.redhat.com/gerrit/51682

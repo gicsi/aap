@@ -1,0 +1,12 @@
+Two problems have recently been discovered in the KerberosIV code.<p>
+1. A symlink problem was discovered in the KerberosIV password checking
+routines /usr/bin/su and /usr/bin/login, which makes it possible for a
+local user to overwrite any file on the local machine.<p>
+2. It is possible to specify environment variables in telnet
+which will be passed over the to the remote host. This makes it
+possible to set environment variables on the remote side, including
+ones that have special meaning on the server. It is not clear at this
+time what the impact is, but we recommend everyone to upgrade their
+machines immediately.<p>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/008_kerberos.patch">
+A source code patch exists which remedies this problem.</a>

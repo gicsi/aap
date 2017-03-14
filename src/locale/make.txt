@@ -1,0 +1,2 @@
+python manage.py makemessages -l en -l es
+python manage.py compilemessages

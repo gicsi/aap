@@ -1,0 +1,27 @@
+loading ./data/patches
+2 labels: ['bug', 'vuln']
+calculating word scores
+using bag of words from known set feature extraction
+1000 words meet min_score and/or max_feats
+400 training feats, 204 testing feats
+training NaiveBayes classifier
+accuracy: 0.808824
+bug precision: 0.975610
+bug recall: 0.512821
+bug f-measure: 0.672269
+vuln precision: 0.766871
+vuln recall: 0.992063
+vuln f-measure: 0.865052
+10 most informative features
+Most Informative Features
+                     mon = True              bug : vuln   =     80.2 : 1.0
+                    dist = True              bug : vuln   =     76.0 : 1.0
+     ('file', 'changed') = True              bug : vuln   =     57.9 : 1.0
+              monitoring = True              bug : vuln   =     50.5 : 1.0
+           ('1', 'file') = True              bug : vuln   =     35.4 : 1.0
+         ('1', 'update') = True              bug : vuln   =     35.4 : 1.0
+     ('v', 'retrieving') = None              bug : vuln   =     27.8 : 1.0
+         ('rcs', 'file') = None              bug : vuln   =     27.8 : 1.0
+              retrieving = None              bug : vuln   =     27.8 : 1.0
+                revision = None              bug : vuln   =     27.8 : 1.0
+dumping NaiveBayesClassifier to ./patches_NaiveBayes.pickle

@@ -1,0 +1,22 @@
+Description of problem:
+"The bootsector failed to write correctly.Resulting installation may not be bootable.This may be a kernel bug.Continue?" dialog pops up during install.The Dialog is bogus.The boot sector gets written fine.This shouldnt happen. A update to anaconda must have done this.
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+on install of 22. More recently with newer anaconda update.Didnt used to happen.
+
+Steps to Reproduce:
+1.install fc22.Choose to format the efi boot partition.
+
+Actual results:
+causes error to display when there is no error.
+
+Expected results:
+error should not pop up.
+
+Additional info:
+happened with recent spin of fedora22.didnt happen before.Package update must have caused this.no major issues detected that would cause the dialog to pop up.
+Please attach the logs from /tmp as individual, text/plain attachments.
+BUG SQUISHED in recent update it appears.

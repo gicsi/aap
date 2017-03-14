@@ -1,0 +1,34 @@
+Description of problem:
+The sos package and the plugin to collect the openstack-related logs are not installed at all on the nodes:
+
+sudo -i
+rpm -qa |grep sos
+
+^^ returns no output at all.
+
+
+Version-Release number of selected component (if applicable):
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-tripleo-0.0.7-0.1.1664e566.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-4.el7ost.noarch
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-22.el7ost.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy on bare metals or VMs
+2. Log in to the controller node
+3. sudo -i
+4. rpm -qa |grep sos
+
+
+Actual results:
+No package is installed
+
+
+Expected results:
+There should be the sos package, and the plugin for collecting the logs of the openstack components
+*** This bug has been marked as a duplicate of bug 1238821 ***

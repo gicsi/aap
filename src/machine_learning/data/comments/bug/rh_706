@@ -1,0 +1,37 @@
+Description of problem: One more option would be SUPER. The ability to remove (expunge) all trash older than some day would be great (suggest 30, 60, 90 days) - this should be a manual thing. Deleting ALL manually is not a great option.
+
+
+Version-Release number of selected component (if applicable):
+3.16.3
+
+How reproducible: n.a.
+
+
+Steps to Reproduce: n.a.
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info: This is a simple feature request.
+Thanks for a bug report. This is reported upstream already [1], thus I'm closing this in a favour of it. Please see [1] for any further updates.
+
+[1] https://bugzilla.gnome.org/show_bug.cgi?id=377352
+I suggested this a long time ago, but most of these suggestions were lost in the Fedora 20 eulogy.
+
+One other thing that would work just as well as the above named options is:
+
+  In the Trash folder, change the option "delete" to "expunge" and mean it.
+  Deleting from trash should mean expunge IMHO.
+(In reply to Ray Holme from comment #2)
+>   Deleting from trash should mean expunge IMHO.
+
+That's [2], but still the same issue, selective expunge is not straight possible in IMAP (it can be worked around, but it has its caveats).
+
+[2] https://bugzilla.gnome.org/show_bug.cgi?id=301388
+OK, I tried to find another way. Thanks - hope you can put some way to do this in the future. Thanks all.

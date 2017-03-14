@@ -1,0 +1,6 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=pppd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">pppd(8)</a>
+contains a bug that allows an attacker to crash his own connection, but it cannot
+be used to deny service to other users.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/022_pppd.patch">
+A source code patch exists which remedies this problem.</a>

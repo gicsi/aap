@@ -1,0 +1,14 @@
+Your package julia failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10100232
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047181
+build.log
+Created attachment 1047182
+root.log
+Created attachment 1047183
+state.log
+Thanks, I'm aware of that. Waiting on Bug 1109390 to be resolved.
+
+*** This bug has been marked as a duplicate of bug 1231163 ***

@@ -1,0 +1,77 @@
+Description of problem:
+
+Based on an email request:
+
+> I hit a case where I required /etc/pulp/*conf files and I realized neither sosreport or foreman-debug collect them. Do you think either tool should gather them?
+
+
+Version-Release number of selected component (if applicable):
+
+* Satellite 6.1.0
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+this should have been working
+
+https://github.com/Katello/katello/blob/master/deploy/script/katello-debug.sh
+
+Works for me with the latest compose:
+
+foreman-debug -g -a -d /tmp/test
+find /tmp/test | grep pulp
+/tmp/test/etc/httpd/conf.d/pulp.conf
+/tmp/test/etc/httpd/conf.d/pulp_docker.conf
+...
+
+Note this is only collected when this package is present:
+
+[root@hp-sl2x170zg6-01 ~]# rpm -q katello-debug
+katello-debug-2.2.0.11-1.el7sat.noarch
+[root@hp-sl2x170zg6-01 ~]# rpm -ql katello-debug
+/usr/share/foreman/script/foreman-debug.d/katello-debug.sh
+
+It should be present by default for Capsules.
+
+So the question is - what kind if deployment is it?·
+(In reply to Lukas Zapletal from comment #2)
+> this should have been working
+> 
+> https://github.com/Katello/katello/blob/master/deploy/script/katello-debug.sh
+> 
+> Works for me with the latest compose:
+> 
+> foreman-debug -g -a -d /tmp/test
+> find /tmp/test | grep pulp
+> /tmp/test/etc/httpd/conf.d/pulp.conf
+> /tmp/test/etc/httpd/conf.d/pulp_docker.conf
+> ...
+> 
+> Note this is only collected when this package is present:
+> 
+> [root@hp-sl2x170zg6-01 ~]# rpm -q katello-debug
+> katello-debug-2.2.0.11-1.el7sat.noarch
+> [root@hp-sl2x170zg6-01 ~]# rpm -ql katello-debug
+> /usr/share/foreman/script/foreman-debug.d/katello-debug.sh
+> 
+> It should be present by default for Capsules.
+> 
+> So the question is - what kind if deployment is it?·
+
+I noticed it on Sat6.0 as missing. Confirmed both upstream and 6.1 beta collect the configs properly due to:
+
+https://github.com/Katello/katello/blob/master/deploy/script/katello-debug.sh#L44
+
+closing as fixed in 6.1 beta.

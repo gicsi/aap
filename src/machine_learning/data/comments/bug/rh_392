@@ -1,0 +1,11 @@
+Description of problem:
+Per the Python Packaging guidelines [1], python-setuptools should provide python2-setuptools.
+
+Actual results:
+python-setuptools does not provide python2-setuptools
+
+Expected results:
+python-setuptools should provide python2-setuptools
+
+Additional info:
+[1]: http://fedoraproject.org/wiki/Packaging:Python

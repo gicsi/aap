@@ -1,0 +1,13 @@
+'git am'able fix attached, let me know if you'd like me to push and
+build this for devel.
+Created attachment 1042802
+Install bash completion
+
+- Mark LICENSE as %license where applicable
+Comment on attachment 1042802
+Install bash completion
+
+Thanks, this resolves bug #1096322, which I keep forgetting because I use zsh.  :-(
+
+But if you apply it can you split the %license change into a seperate patch please? I definitely want the bash completion fix in all branches. :-D
+Done and building, http://koji.fedoraproject.org/koji/taskinfo?taskID=10216071

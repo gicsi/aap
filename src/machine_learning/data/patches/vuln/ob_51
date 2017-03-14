@@ -1,0 +1,62 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 035_sshforwarding.patch
+
+And then rebuild and install ssh.
+	cd usr.bin/ssh
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.bin/ssh/clientloop.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/clientloop.c,v
+retrieving revision 1.26
+diff -u -r1.26 clientloop.c
+--- usr.bin/ssh/clientloop.c	2000/05/08 17:42:24	1.26
++++ usr.bin/ssh/clientloop.c	2000/11/10 21:43:12
+@@ -31,6 +31,8 @@
+ #include "dispatch.h"
+ 
+ 
++extern Options options;
++
+ /* Flag indicating that stdin should be redirected from /dev/null. */
+ extern int stdin_null_flag;
+ 
+@@ -734,7 +736,6 @@
+ int
+ client_loop(int have_pty, int escape_char_arg)
+ {
+-	extern Options options;
+ 	double start_time, total_time;
+ 	int len;
+ 	char buf[100];
+@@ -974,7 +975,7 @@
+ 	debug("client_input_channel_open: ctype %s rchan %d win %d max %d",
+ 	    ctype, rchan, rwindow, rmaxpack);
+ 
+-	if (strcmp(ctype, "x11") == 0) {
++	if (strcmp(ctype, "x11") == 0 && options.forward_x11) {
+ 		int sock;
+ 		char *originator;
+ 		int originator_port;
+@@ -1046,11 +1047,14 @@
+ 	dispatch_set(SSH_MSG_CHANNEL_OPEN_CONFIRMATION, &channel_input_open_confirmation);
+ 	dispatch_set(SSH_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
+ 	dispatch_set(SSH_MSG_PORT_OPEN, &channel_input_port_open);
+-	dispatch_set(SSH_SMSG_AGENT_OPEN, &auth_input_open_request);
+ 	dispatch_set(SSH_SMSG_EXITSTATUS, &client_input_exit_status);
+ 	dispatch_set(SSH_SMSG_STDERR_DATA, &client_input_stderr_data);
+ 	dispatch_set(SSH_SMSG_STDOUT_DATA, &client_input_stdout_data);
+-	dispatch_set(SSH_SMSG_X11_OPEN, &x11_input_open);
++
++	dispatch_set(SSH_SMSG_AGENT_OPEN, options.forward_agent ?
++	    &auth_input_open_request : NULL);
++	dispatch_set(SSH_SMSG_X11_OPEN, options.forward_x11 ?
++	    &x11_input_open : NULL);
+ }
+ void
+ client_init_dispatch_15()
+

@@ -1,0 +1,47 @@
+Created attachment 1040845
+overview
+
+Description of problem:
+The Undercloud UI overview doesn't reflect the overcloud deployment status. After having successful overcloud deployment via CLI I'd expect it to be reflected in the UI. 
+
+Version-Release number of selected component (if applicable):
+python-tuskarclient-0.1.17-3.el7ost.noarch
+openstack-tuskar-0.4.18-2.el7ost.noarch
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tuskar-ui-0.3.0-2.el7ost.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Deploy undercloud and overcloud 
+2. Log in to the undercloud UI dashboard
+3. Check the overview tab
+
+Actual results:
+Deployment roles / deployed nodes don't match the existing deployment. Dashboard also shows 'Initialization Needed' but the overcloud already has the tenant/public networks defined.
+
+Expected results:
+The UI shows the actual overcloud deployment status. 
+
+Additional info:
+Screenshot attached. 
+
+Actual overcloud deployment:
+
++--------------------------------------+---------------------------+--------+------------+-------------+---------------------+
+| ID                                   | Name                      | Status | Task State | Power State | Networks            |
++--------------------------------------+---------------------------+--------+------------+-------------+---------------------+
+| f0fb453d-7529-4b37-a76c-a95aaea3b470 | overcloud-blockstorage-0  | ACTIVE | -          | Running     | ctlplane=192.0.2.14 |
+| 28adf8a0-3681-4afe-a143-f04b5fdb89be | overcloud-cephstorage-0   | ACTIVE | -          | Running     | ctlplane=192.0.2.11 |
+| a199f366-81ae-4f04-9811-f07545a96b29 | overcloud-cephstorage-1   | ACTIVE | -          | Running     | ctlplane=192.0.2.10 |
+| a83a3064-3ddb-49f1-bc81-8ce4b19663bc | overcloud-cephstorage-2   | ACTIVE | -          | Running     | ctlplane=192.0.2.12 |
+| 689cb903-0404-4ec6-b050-cfb99da85ba3 | overcloud-compute-0       | ACTIVE | -          | Running     | ctlplane=192.0.2.15 |
+| 243321c6-1ddd-489f-bd83-d56f94f29d6d | overcloud-compute-1       | ACTIVE | -          | Running     | ctlplane=192.0.2.13 |
+| 817c5301-2467-4520-8078-36d2ce50635a | overcloud-controller-0    | ACTIVE | -          | Running     | ctlplane=192.0.2.17 |
+| 8f59adf4-751b-45a9-baea-1514b0e9b58d | overcloud-controller-1    | ACTIVE | -          | Running     | ctlplane=192.0.2.16 |
+| 24274fd7-e8bf-45ad-92e2-6581f3a53d24 | overcloud-controller-2    | ACTIVE | -          | Running     | ctlplane=192.0.2.18 |
+| 22b9f49d-65ef-4783-8259-12fb92bca0d2 | overcloud-objectstorage-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.9  |
++--------------------------------------+---------------------------+--------+------------+-------------+---------------------+
+*** This bug has been marked as a duplicate of bug 1193922 ***

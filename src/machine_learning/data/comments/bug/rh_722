@@ -1,0 +1,60 @@
+Description of problem:
+The alert popped up immediately after logging in and X server and DT manager were up.
+SELinux is preventing /usr/bin/python2.7 from 'add_name' accesses on the directory .
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that python2.7 should be allowed add_name access on the  directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep python /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:blueman_t:s0-s0:c0.c1023
+Target Context                system_u:object_r:tmp_t:s0
+Target Objects                 [ dir ]
+Source                        python
+Source Path                   /usr/bin/python2.7
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           python-2.7.5-16.fc20.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.12.1-197.fc20.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 3.11.10-301.fc20.x86_64 #1 SMP Thu
+                              Dec 5 14:01:17 UTC 2013 x86_64 x86_64
+Alert Count                   4
+First Seen                    2015-06-18 20:03:06 MDT
+Last Seen                     2015-06-19 12:10:43 MDT
+Local ID                      1ec0d128-b48b-45ea-a444-275bd67adc4c
+
+Raw Audit Messages
+type=AVC msg=audit(1434737443.265:294): avc:  denied  { add_name } for  pid=2015 comm="python" name="ffiCXiiBI" scontext=system_u:system_r:blueman_t:s0-s0:c0.c1023 tcontext=system_u:object_r:tmp_t:s0 tclass=dir
+
+
+type=SYSCALL msg=audit(1434737443.265:294): arch=x86_64 syscall=open success=no exit=EACCES a0=7fff7091c980 a1=c2 a2=180 a3=0 items=0 ppid=2014 pid=2015 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm=python exe=/usr/bin/python2.7 subj=system_u:system_r:blueman_t:s0-s0:c0.c1023 key=(null)
+
+Hash: python,blueman_t,tmp_t,dir,add_name
+
+Additional info:
+reporter:       libreport-2.2.3
+hashmarkername: setroubleshoot
+kernel:         3.11.10-301.fc20.x86_64
+type:           libreport
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

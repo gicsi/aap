@@ -1,0 +1,51 @@
+From 20af7c1a4a427fb523c96e3338d26db645fd9b03 Mon Sep 17 00:00:00 2001
+From: Eric Harney <eharney@redhat.com>
+Date: Mon, 29 Jun 2015 10:59:11 -0400
+Subject: [PATCH] Change default el7 iscsi_helper option to 'lioadm'
+
+Resolves: rhbz #1236633
+---
+ openstack-cinder.spec | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/openstack-cinder.spec b/openstack-cinder.spec
+index 7b99718..5907054 100644
+--- a/openstack-cinder.spec
++++ b/openstack-cinder.spec
+@@ -2,7 +2,7 @@
+ 
+ Name:             openstack-cinder
+ Version:          2014.1.4
+-Release:          5%{?dist}
++Release:          6%{?dist}
+ Summary:          OpenStack Volume service
+ 
+ Group:            Applications/System
+@@ -184,6 +184,13 @@ rm -rf {test-,}requirements.txt tools/{pip,test}-requires
+ sed -i s/REDHATCINDERVERSION/%{version}/ cinder/version.py
+ sed -i s/REDHATCINDERRELEASE/%{release}/ cinder/version.py
+ 
++# Fix problem related to RHBZ 1221614
++# Multi-backend configuration doesn't inherit the default/dist
++# configuration as expected, so set the default to lioadm for
++# el7.
++sed -i "0,/default='tgtadm'/{s/default='tgtadm'/default='lioadm'/}" cinder/volume/driver.py
++
++
+ %build
+ %{__python} setup.py build
+ 
+@@ -317,6 +324,9 @@ fi
+ %endif
+ 
+ %changelog
++* Mon Jun 29 2015 Eric Harney <eharney@redhat.com> - 2014.1.4-6
++- Change default iscsi_helper option to 'lioadm' (RHBZ #1236633)
++
+ * Tue Jun 23 2015 Haïkel Guémar <hguemar@redhat.com> - 2014.1.4-5
+ - Fix CVE-2015-1851 (RHBZ #1232926)
+ 
+-- 
+2.4.3
+
+

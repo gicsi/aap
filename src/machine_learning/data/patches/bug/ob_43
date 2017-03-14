@@ -1,0 +1,86 @@
+Apply by doing:
+	cd /usr/src
+        patch -p0 < 008_fortran.patch
+
+However, that will not get the file onto your system in a convenient
+way, since lots of recompilation would be needed to put the file in
+place.  Instead, to get it onto your system, do the following:
+
+        cd /usr/include
+	ftp ftp://ftp.openbsd.org/pub/OpenBSD/patches/2.6/common/g2c.h
+
+Index: include/Makefile
+===================================================================
+RCS file: /cvs/src/include/Makefile,v
+retrieving revision 1.75
+diff -u -r1.75 Makefile
+--- include/Makefile	1999/10/05 22:29:36	1.75
++++ include/Makefile	1999/11/10 12:04:38
+@@ -51,7 +51,7 @@
+ 
+ # Places using Makefile.bsd-wrapper that needs a prerequisite target met
+ # before includes
+-PWDIRS=	../lib/libssl ../usr.sbin/httpd
++PWDIRS=	../lib/libssl ../usr.sbin/httpd ../gnu/egcs/libf2c
+ 
+ NOOBJ=	noobj
+ 
+Index: distrib/sets/lists/comp/mi
+===================================================================
+RCS file: /cvs/src/distrib/sets/lists/comp/mi,v
+retrieving revision 1.121
+diff -u -r1.121 mi
+--- distrib/sets/lists/comp/mi	1999/11/07 20:28:46	1.121
++++ distrib/sets/lists/comp/mi	1999/11/10 12:04:59
+@@ -603,6 +603,7 @@
+ ./usr/include/g++/valarray
+ ./usr/include/g++/vector
+ ./usr/include/g++/vector.h
++./usr/include/g2c.h
+ ./usr/include/glob.h
+ ./usr/include/gmp.h
+ ./usr/include/grp.h
+Index: gnu/egcs/libf2c/Makefile.bsd-wrapper
+===================================================================
+RCS file: /cvs/src/gnu/egcs/libf2c/Makefile.bsd-wrapper,v
+retrieving revision 1.2
+diff -u -r1.2 Makefile.bsd-wrapper
+--- gnu/egcs/libf2c/Makefile.bsd-wrapper	1999/08/24 00:20:14	1.2
++++ gnu/egcs/libf2c/Makefile.bsd-wrapper	1999/11/10 12:04:59
+@@ -110,11 +110,6 @@
+ SRCS+= ${F77_SRCS:S/^/libF77\//}
+ SRCS+= ${VERSION_SRCS}
+ 
+-depend: 
+-	cd ${.CURDIR}/../gcc && \
+-		make -f Makefile.bsd-wrapper config.status tree-check.h 
+-	mkdir -p libE77
+-	
+ ${.OBJDIR}/VersionI.c: libI77/Version.c
+ 	ln -sf $> $@
+ 
+@@ -129,6 +124,9 @@
+ #	CPPFLAGS=-I${.CURDIR}/../gcc/obj \
+ 	
+ config.status: Makefile.in configure 
++	mkdir -p libE77
++	cd ${.CURDIR}/../gcc && \
++		make -f Makefile.bsd-wrapper config.status tree-check.h 
+ 	# fake g771 existence
+ 	cd $(EGCS_OBJDIR)/gcc && touch f771
+ 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+@@ -138,8 +136,13 @@
+ 		--prefix=/usr --with-local-prefix=/usr ${CF} \
+ 		&& touch config.status
+ 
++# Configuring is needed for g2c.h to be built
++prereq depend: config.status 
++
+ includes:
+ 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+ 		${.CURDIR}/f2c.h ${DESTDIR}/usr/include
++	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
++		g2c.h ${DESTDIR}/usr/include
+ 
+ .include <bsd.lib.mk>
+

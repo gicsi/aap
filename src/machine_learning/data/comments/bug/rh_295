@@ -1,0 +1,32 @@
+Description of problem:
+By default the $EDITOR environment variable is set to "emacs".  Emacs is not installed by default.
+This means that the shell hotkey "Ctrl-x Ctrl-e" to open the commandline in the default editor does not work.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Can be reproduced on a fresh install of RHEL 7.0
+
+Steps to Reproduce:
+1. Log in to shell
+2. Press Ctrl-x Ctrl-e to try to open the commandline in the default $EDITOR
+3. Error is displayed 
+
+Actual results:
+-bash: emacs: command not found
+
+Expected results:
+It should open in a default editor that is installed by default.  Either vim or nano or pico or whichever is preffered as a default editor by the Red Hat project.
+
+Additional info:
+Tested in the RHEL 7.0 image available on AWS.
+
+I'm not sure exactly which component this bug report should be filed under so have chosen bash for now.  Please assign it to a more appropriate component if necessary.
+Hey Aaron, if you could find out where in your system the environtment is set
+or if you could attach the output of:
+bash -v -l -c 'exit'
+
+...that would really help me.
+On second though, and second peek in the bash manpage, I've decided to close this.
+Bash's order of resolution in your case (C-x C-e) is $VISUAL, $EDITOR and emacs, so not having them set would not solve your issue anyway.

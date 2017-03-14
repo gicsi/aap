@@ -1,0 +1,53 @@
+Created attachment 1044015
+engine log
+
+Description of problem:
+When creating vm disk using CLI api and setting the alias, the given name is 'VM_NAME_Disk1'
+
+
+Version-Release number of selected component (if applicable):
+vt15.4
+
+How reproducible:
+100%%
+
+Steps to Reproduce:
+1. create vm
+2. create new disk with alias
+3.
+
+Actual results:
+The given alias is ignored
+
+Expected results:
+
+
+Additional info:
+Update: It occurs when updating disk's alias.
+
+Steps to Reproduce:
+1. create vm
+2. create new disk with alias
+3. update disk's alias
+(In reply to ratamir from comment #1)
+> Update: It occurs when updating disk's alias.
+> 
+> Steps to Reproduce:
+> 1. create vm
+> 2. create new disk with alias
+> 3. update disk's alias
+Please provide the code snippet you used. Thanks!
+Possibly related to bug 1108006. 
+Juan - do you want to take a look, or should we have someone from the Storage team take take lead on this?
+This can be the same that bug 1108006 or also bug 1230270. I don't see any hint in the attached engine log.
+
+In order to determine if this is a duplicate we will need to have a simple reproducer, including the debug output of the command line. Please run the following command with the relevant VM and disk identifier:
+
+  # rhevm-shell -d
+  [RHEVM shell (connected)]# update disk --vm-identifier {vm:id} {disk:id} --alias newalias
+
+In my environment this worked correctly.
+This is duplicate of bug 1230270.
+Thanks Juan
+
+*** This bug has been marked as a duplicate of bug 1230270 ***

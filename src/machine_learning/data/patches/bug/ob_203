@@ -1,0 +1,220 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 005_exec.patch
+And then rebuild your kernel.
+
+Index: sys/compat/ibcs2/ibcs2_exec.c
+===================================================================
+RCS file: /cvs/src/sys/compat/ibcs2/ibcs2_exec.c,v
+retrieving revision 1.14
+retrieving revision 1.14.6.1
+diff -u -p -r1.14 -r1.14.6.1
+--- sys/compat/ibcs2/ibcs2_exec.c	22 Aug 2002 22:04:42 -0000	1.14
++++ sys/compat/ibcs2/ibcs2_exec.c	3 Nov 2003 23:23:50 -0000	1.14.6.1
+@@ -616,6 +616,8 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, 
+ 	struct xseg *xs;
+ 
+ 	/* read in segment table */
++	if (xep->xe_segsize > 16 * sizeof(*xs))
++		return (ENOEXEC);
+ 	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
+ 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
+ 			xep->xe_segsize, xep->xe_segpos,
+Index: sys/kern/exec_elf.c
+===================================================================
+RCS file: /cvs/src/sys/kern/exec_elf.c,v
+retrieving revision 1.48
+retrieving revision 1.48.2.1
+diff -u -p -r1.48 -r1.48.2.1
+--- sys/kern/exec_elf.c	21 Aug 2003 18:56:07 -0000	1.48
++++ sys/kern/exec_elf.c	3 Nov 2003 23:23:50 -0000	1.48.2.1
+@@ -863,6 +863,7 @@ ELFNAME(os_pt_note)(struct proc *p, stru
+ 
+ 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
+ 		if (ph->p_type != PT_NOTE ||
++		    ph->p_filesz > 1024 ||
+ 		    ph->p_filesz < sizeof(Elf_Note) + name_size)
+ 			continue;
+ 
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 004_httpd.patch
+
+And then rebuild and install httpd and its modules:
+        cd usr.sbin/httpd
+        make -f Makefile.bsd-wrapper obj
+        make -f Makefile.bsd-wrapper cleandir
+        make -f Makefile.bsd-wrapper depend
+        make -f Makefile.bsd-wrapper
+        make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+        apachectl stop
+before running "make install", and
+        apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/include/httpd.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/include/httpd.h,v
+retrieving revision 1.18
+retrieving revision 1.18.2.1
+diff -u -p -r1.18 -r1.18.2.1
+--- usr.sbin/httpd/src/include/httpd.h	21 Aug 2003 13:11:35 -0000	1.18
++++ usr.sbin/httpd/src/include/httpd.h	31 Oct 2003 00:20:31 -0000	1.18.2.1
+@@ -291,6 +291,9 @@ extern "C" {
+ /* The size of the server's internal read-write buffers */
+ #define IOBUFSIZE 8192
+ 
++/* The max number of regex captures that can be expanded by ap_pregsub */
++#define AP_MAX_REG_MATCH 10
++
+ /* Number of servers to spawn off by default --- also, if fewer than
+  * this free when the caretaker checks, it will spawn more.
+  */
+Index: usr.sbin/httpd/src/modules/standard/mod_alias.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_alias.c,v
+retrieving revision 1.10
+retrieving revision 1.10.2.1
+diff -u -p -r1.10 -r1.10.2.1
+--- usr.sbin/httpd/src/modules/standard/mod_alias.c	21 Aug 2003 13:11:36 -0000	1.10
++++ usr.sbin/httpd/src/modules/standard/mod_alias.c	31 Oct 2003 00:20:31 -0000	1.10.2.1
+@@ -304,7 +304,7 @@ static int alias_matches(const char *uri
+ static char *try_alias_list(request_rec *r, array_header *aliases, int doesc, int *status)
+ {
+     alias_entry *entries = (alias_entry *) aliases->elts;
+-    regmatch_t regm[10];
++    regmatch_t regm[AP_MAX_REG_MATCH];
+     char *found = NULL;
+     int i;
+ 
+@@ -313,10 +313,10 @@ static char *try_alias_list(request_rec 
+ 	int l;
+ 
+ 	if (p->regexp) {
+-	    if (!ap_regexec(p->regexp, r->uri, p->regexp->re_nsub + 1, regm, 0)) {
++	    if (!ap_regexec(p->regexp, r->uri, AP_MAX_REG_MATCH, regm, 0)) {
+ 		if (p->real) {
+ 		    found = ap_pregsub(r->pool, p->real, r->uri,
+-				    p->regexp->re_nsub + 1, regm);
++                                       AP_MAX_REG_MATCH, regm);
+ 		    if (found && doesc) {
+ 			found = ap_escape_uri(r->pool, found);
+ 		    }
+Index: usr.sbin/httpd/src/modules/standard/mod_rewrite.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_rewrite.c,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- usr.sbin/httpd/src/modules/standard/mod_rewrite.c	21 Aug 2003 13:11:37 -0000	1.19
++++ usr.sbin/httpd/src/modules/standard/mod_rewrite.c	31 Oct 2003 00:20:31 -0000	1.19.2.1
+@@ -1845,7 +1845,7 @@ static int apply_rewrite_rule(request_re
+     const char *vary;
+     char newuri[MAX_STRING_LEN];
+     regex_t *regexp;
+-    regmatch_t regmatch[MAX_NMATCH];
++    regmatch_t regmatch[AP_MAX_REG_MATCH];
+     backrefinfo *briRR = NULL;
+     backrefinfo *briRC = NULL;
+     int prefixstrip;
+@@ -1902,7 +1902,7 @@ static int apply_rewrite_rule(request_re
+         rewritelog(r, 3, "[per-dir %s] applying pattern '%s' to uri '%s'",
+                    perdir, p->pattern, uri);
+     }
+-    rc = (ap_regexec(regexp, uri, regexp->re_nsub+1, regmatch, 0) == 0);
++    rc = (ap_regexec(regexp, uri, AP_MAX_REG_MATCH, regmatch, 0) == 0);
+     if (! (( rc && !(p->flags & RULEFLAG_NOTMATCH)) ||
+            (!rc &&  (p->flags & RULEFLAG_NOTMATCH))   ) ) {
+         return 0;
+@@ -2190,7 +2190,7 @@ static int apply_rewrite_cond(request_re
+     char input[MAX_STRING_LEN];
+     struct stat sb;
+     request_rec *rsub;
+-    regmatch_t regmatch[MAX_NMATCH];
++    regmatch_t regmatch[AP_MAX_REG_MATCH];
+     int rc;
+ 
+     /*
+@@ -2294,8 +2294,7 @@ static int apply_rewrite_cond(request_re
+     }
+     else {
+         /* it is really a regexp pattern, so apply it */
+-        rc = (ap_regexec(p->regexp, input,
+-                         p->regexp->re_nsub+1, regmatch,0) == 0);
++        rc = (ap_regexec(p->regexp, input, AP_MAX_REG_MATCH, regmatch,0) == 0);
+ 
+         /* if it isn't a negated pattern and really matched
+            we update the passed-through regex subst info structure */
+@@ -2453,7 +2452,7 @@ static void do_expand(request_rec *r, ch
+ 		bri = briRC;
+ 	    }
+ 	    /* see ap_pregsub() in src/main/util.c */
+-            if (bri && n <= bri->nsub &&
++            if (bri && n < AP_MAX_REG_MATCH &&
+ 		bri->regmatch[n].rm_eo > bri->regmatch[n].rm_so) {
+ 		span = bri->regmatch[n].rm_eo - bri->regmatch[n].rm_so;
+ 		if (span > space) {
+Index: usr.sbin/httpd/src/modules/standard/mod_rewrite.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_rewrite.h,v
+retrieving revision 1.8
+retrieving revision 1.8.2.1
+diff -u -p -r1.8 -r1.8.2.1
+--- usr.sbin/httpd/src/modules/standard/mod_rewrite.h	21 Aug 2003 13:11:37 -0000	1.8
++++ usr.sbin/httpd/src/modules/standard/mod_rewrite.h	31 Oct 2003 00:20:31 -0000	1.8.2.1
+@@ -253,8 +253,6 @@
+ 
+ #define MAX_ENV_FLAGS 15
+ 
+-#define MAX_NMATCH    10
+-
+ /* default maximum number of internal redirects */
+ #define REWRITE_REDIRECT_LIMIT 10
+ 
+@@ -368,7 +366,7 @@ typedef struct cache {
+ typedef struct backrefinfo {
+     char *source;
+     int nsub;
+-    regmatch_t regmatch[10];
++    regmatch_t regmatch[AP_MAX_REG_MATCH];
+ } backrefinfo;
+ 
+ 
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_arp.patch
+And then rebuild your kernel.
+
+Index: sys/netinet/if_ether.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/if_ether.c,v
+retrieving revision 1.48
+retrieving revision 1.48.2.1
+diff -u -p -r1.48 -r1.48.2.1
+--- sys/netinet/if_ether.c	2 Jun 2003 23:28:13 -0000	1.48
++++ sys/netinet/if_ether.c	31 Oct 2003 00:07:52 -0000	1.48.2.1
+@@ -740,10 +740,18 @@ arplookup(addr, create, proxy)
+ 	rt->rt_refcnt--;
+ 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
+ 	    rt->rt_gateway->sa_family != AF_LINK) {
+-		if (create)
++		if (create) {
+ 			log(LOG_DEBUG,
+ 			    "arplookup: unable to enter address for %s\n",
+ 			    inet_ntoa(sin.sin_addr));
++			if (rt->rt_refcnt <= 0 &&
++			    (rt->rt_flags & RTF_CLONED) != 0) {
++				rtrequest(RTM_DELETE,
++				    (struct sockaddr *)rt_key(rt),
++				    rt->rt_gateway, rt_mask(rt), rt->rt_flags,
++				    0);
++			}
++		}
+ 		return (0);
+ 	}
+ 	return ((struct llinfo_arp *)rt->rt_llinfo);
+

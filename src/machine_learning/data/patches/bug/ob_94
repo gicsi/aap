@@ -1,0 +1,582 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 022_zlib.patch
+
+And then rebuild and install libz:
+	cd lib/libz
+	make obj
+	make depend
+	make
+	make install
+
+You should also rebuild your kernel.
+
+Index: lib/libz/README
+===================================================================
+RCS file: /cvs/src/lib/libz/README,v
+retrieving revision 1.3
+retrieving revision 1.3.12.1
+diff -u -r1.3 -r1.3.12.1
+--- lib/libz/README	8 Aug 1998 20:57:06 -0000	1.3
++++ lib/libz/README	14 Mar 2002 00:08:41 -0000	1.3.12.1
+@@ -1,7 +1,7 @@
+-zlib 1.1.3 is a general purpose data compression library.  All the code
++zlib 1.1.4 is a general purpose data compression library.  All the code
+ is thread safe.  The data format used by the zlib library
+ is described by RFCs (Request for Comments) 1950 to 1952 in the files 
+-ftp://ds.internic.net/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate
++http://www.ietf.org/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate
+ format) and rfc1952.txt (gzip format). These documents are also available in
+ other formats from ftp://ftp.uu.net/graphics/png/documents/zlib/zdoc-index.html
+ 
+@@ -14,51 +14,50 @@
+ 
+ To compile all files and run the test program, follow the instructions
+ given at the top of Makefile. In short "make test; make install"
+-should work for most machines. For Unix: "configure; make test; make install"
++should work for most machines. For Unix: "./configure; make test; make install"
+ For MSDOS, use one of the special makefiles such as Makefile.msc.
+ For VMS, use Make_vms.com or descrip.mms.
+ 
+-Questions about zlib should be sent to <zlib@quest.jpl.nasa.gov>, or to
++Questions about zlib should be sent to <zlib@gzip.org>, or to
+ Gilles Vollant <info@winimage.com> for the Windows DLL version.
+-The zlib home page is http://www.cdrom.com/pub/infozip/zlib/
+-The official zlib ftp site is ftp://ftp.cdrom.com/pub/infozip/zlib/
+-Before reporting a problem, please check those sites to verify that
++The zlib home page is http://www.zlib.org or http://www.gzip.org/zlib/
++Before reporting a problem, please check this site to verify that
+ you have the latest version of zlib; otherwise get the latest version and
+ check whether the problem still exists or not.
+ 
+-Mark Nelson <markn@tiny.com> wrote an article about zlib for the Jan. 1997
++PLEASE read the zlib FAQ http://www.gzip.org/zlib/zlib_faq.html
++before asking for help.
++
++Mark Nelson <markn@ieee.org> wrote an article about zlib for the Jan. 1997
+ issue of  Dr. Dobb's Journal; a copy of the article is available in
+-http://web2.airmail.net/markn/articles/zlibtool/zlibtool.htm
++http://dogma.net/markn/articles/zlibtool/zlibtool.htm
+ 
+-The changes made in version 1.1.3 are documented in the file ChangeLog.
+-The main changes since 1.1.2 are:
++The changes made in version 1.1.4 are documented in the file ChangeLog.
++The only changes made since 1.1.3 are bug corrections:
+ 
+-- fix "an inflate input buffer bug that shows up on rare but persistent
+-  occasions" (Mark)
+-- fix gzread and gztell for concatenated .gz files (Didier Le Botlan)
+-- fix gzseek(..., SEEK_SET) in write mode
+-- fix crc check after a gzeek (Frank Faubert)
+-- fix miniunzip when the last entry in a zip file is itself a zip file
+-  (J Lillge)
+-- add contrib/asm586 and contrib/asm686 (Brian Raiter)
+-  See http://www.muppetlabs.com/~breadbox/software/assembly.html
+-- add support for Delphi 3 in contrib/delphi (Bob Dellaca)
+-- add support for C++Builder 3 and Delphi 3 in contrib/delphi2 (Davide Moretti)
+-- do not exit prematurely in untgz if 0 at start of block (Magnus Holmgren)
+-- use macro EXTERN instead of extern to support DLL for BeOS (Sander Stoks)
+-- added a FAQ file
++- ZFREE was repeated on same allocation on some error conditions.
++  This creates a security problem described in
++  http://www.zlib.org/advisory-2002-03-11.txt
++- Returned incorrect error (Z_MEM_ERROR) on some invalid data
++- Avoid accesses before window for invalid distances with inflate window
++  less than 32K.
++- force windowBits > 8 to avoid a bug in the encoder for a window size
++  of 256 bytes. (A complete fix will be available in 1.1.5).
++
++The beta version 1.1.5beta includes many more changes. A new official
++version 1.1.5 will be released as soon as extensive testing has been
++completed on it.
+ 
+-plus many changes for portability.
+ 
+ Unsupported third party contributions are provided in directory "contrib".
+ 
+-A Java implementation of zlib is available in the Java Development Kit 1.1
++A Java implementation of zlib is available in the Java Development Kit
+ http://www.javasoft.com/products/JDK/1.1/docs/api/Package-java.util.zip.html
+-See the zlib home page http://www.cdrom.com/pub/infozip/zlib/ for details.
++See the zlib home page http://www.zlib.org for details.
+ 
+ A Perl interface to zlib written by Paul Marquess <pmarquess@bfsec.bt.co.uk>
+-is in the CPAN (Comprehensive Perl Archive Network) sites, such as:
+-ftp://ftp.cis.ufl.edu/pub/perl/CPAN/modules/by-module/Compress/Compress-Zlib*
++is in the CPAN (Comprehensive Perl Archive Network) sites
++http://www.cpan.org/modules/by-module/Compress/
+ 
+ A Python interface to zlib written by A.M. Kuchling <amk@magnet.com>
+ is available in Python 1.5 and later versions, see
+@@ -117,7 +116,7 @@
+ 
+ Copyright notice:
+ 
+- (C) 1995-1998 Jean-loup Gailly and Mark Adler
++ (C) 1995-2002 Jean-loup Gailly and Mark Adler
+ 
+   This software is provided 'as-is', without any express or implied
+   warranty.  In no event will the authors be held liable for any damages
+Index: lib/libz/deflate.c
+===================================================================
+RCS file: /cvs/src/lib/libz/deflate.c,v
+retrieving revision 1.4
+retrieving revision 1.4.6.1
+diff -u -r1.4 -r1.4.6.1
+--- lib/libz/deflate.c	2 Mar 2000 00:29:51 -0000	1.4
++++ lib/libz/deflate.c	14 Mar 2002 00:08:41 -0000	1.4.6.1
+@@ -1,6 +1,6 @@
+-/*	$OpenBSD: deflate.c,v 1.4 2000/03/02 00:29:51 todd Exp $	*/
++/*	$OpenBSD: deflate.c,v 1.4.6.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* deflate.c -- compress data using the deflation algorithm
+- * Copyright (C) 1995-1998 Jean-loup Gailly.
++ * Copyright (C) 1995-2002 Jean-loup Gailly.
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -52,7 +52,7 @@
+ #include "deflate.h"
+ 
+ const char deflate_copyright[] =
+-   " deflate 1.1.3 Copyright 1995-1998 Jean-loup Gailly ";
++   " deflate 1.1.4 Copyright 1995-2002 Jean-loup Gailly ";
+ /*
+   If you use the zlib library in a product, an acknowledgment is welcome
+   in the documentation of your product. If for some reason you cannot
+@@ -242,7 +242,7 @@
+         windowBits = -windowBits;
+     }
+     if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method != Z_DEFLATED ||
+-        windowBits < 8 || windowBits > 15 || level < 0 || level > 9 ||
++        windowBits < 9 || windowBits > 15 || level < 0 || level > 9 ||
+ 	strategy < 0 || strategy > Z_HUFFMAN_ONLY) {
+         return Z_STREAM_ERROR;
+     }
+Index: lib/libz/infcodes.c
+===================================================================
+RCS file: /cvs/src/lib/libz/infcodes.c,v
+retrieving revision 1.2
+retrieving revision 1.2.12.1
+diff -u -r1.2 -r1.2.12.1
+--- lib/libz/infcodes.c	8 Aug 1998 20:57:17 -0000	1.2
++++ lib/libz/infcodes.c	14 Mar 2002 00:08:41 -0000	1.2.12.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: infcodes.c,v 1.2.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* infcodes.c -- process literals and length/distance pairs
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -196,15 +197,9 @@
+       Tracevv((stderr, "inflate:         distance %u\n", c->sub.copy.dist));
+       c->mode = COPY;
+     case COPY:          /* o: copying bytes in window, waiting for space */
+-#ifndef __TURBOC__ /* Turbo C bug for following expression */
+-      f = (uInt)(q - s->window) < c->sub.copy.dist ?
+-          s->end - (c->sub.copy.dist - (q - s->window)) :
+-          q - c->sub.copy.dist;
+-#else
+       f = q - c->sub.copy.dist;
+-      if ((uInt)(q - s->window) < c->sub.copy.dist)
+-        f = s->end - (c->sub.copy.dist - (uInt)(q - s->window));
+-#endif
++      while (f < s->window)             /* modulo window size-"while" instead */
++        f += s->end - s->window;        /* of "if" handles invalid distances */
+       while (c->len)
+       {
+         NEEDOUT
+Index: lib/libz/inffast.c
+===================================================================
+RCS file: /cvs/src/lib/libz/inffast.c,v
+retrieving revision 1.2
+retrieving revision 1.2.12.1
+diff -u -r1.2 -r1.2.12.1
+--- lib/libz/inffast.c	8 Aug 1998 20:57:19 -0000	1.2
++++ lib/libz/inffast.c	14 Mar 2002 00:08:41 -0000	1.2.12.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: inffast.c,v 1.2.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* inffast.c -- process literals and length/distance pairs fast
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -93,28 +94,41 @@
+ 
+             /* do the copy */
+             m -= c;
+-            if ((uInt)(q - s->window) >= d)     /* offset before dest */
+-            {                                   /*  just copy */
+-              r = q - d;
+-              *q++ = *r++;  c--;        /* minimum count is three, */
+-              *q++ = *r++;  c--;        /*  so unroll loop a little */
+-            }
+-            else                        /* else offset after destination */
++            r = q - d;
++            if (r < s->window)                  /* wrap if needed */
+             {
+-              e = d - (uInt)(q - s->window); /* bytes from offset to end */
+-              r = s->end - e;           /* pointer to offset */
+-              if (c > e)                /* if source crosses, */
++              do {
++                r += s->end - s->window;        /* force pointer in window */
++              } while (r < s->window);          /* covers invalid distances */
++              e = s->end - r;
++              if (c > e)
+               {
+-                c -= e;                 /* copy to end of window */
++                c -= e;                         /* wrapped copy */
+                 do {
+-                  *q++ = *r++;
++                    *q++ = *r++;
+                 } while (--e);
+-                r = s->window;          /* copy rest from start of window */
++                r = s->window;
++                do {
++                    *q++ = *r++;
++                } while (--c);
+               }
++              else                              /* normal copy */
++              {
++                *q++ = *r++;  c--;
++                *q++ = *r++;  c--;
++                do {
++                    *q++ = *r++;
++                } while (--c);
++              }
++            }
++            else                                /* normal copy */
++            {
++              *q++ = *r++;  c--;
++              *q++ = *r++;  c--;
++              do {
++                *q++ = *r++;
++              } while (--c);
+             }
+-            do {                        /* copy all or what's left */
+-              *q++ = *r++;
+-            } while (--c);
+             break;
+           }
+           else if ((e & 64) == 0)
+Index: lib/libz/inftrees.c
+===================================================================
+RCS file: /cvs/src/lib/libz/inftrees.c,v
+retrieving revision 1.3
+retrieving revision 1.3.12.1
+diff -u -r1.3 -r1.3.12.1
+--- lib/libz/inftrees.c	8 Aug 1998 20:57:23 -0000	1.3
++++ lib/libz/inftrees.c	14 Mar 2002 00:08:41 -0000	1.3.12.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: inftrees.c,v 1.3.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* inftrees.c -- generate Huffman trees for efficient decoding
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -11,7 +12,7 @@
+ #endif
+ 
+ const char inflate_copyright[] =
+-   " inflate 1.1.3 Copyright 1995-1998 Mark Adler ";
++   " inflate 1.1.4 Copyright 1995-2002 Mark Adler ";
+ /*
+   If you use the zlib library in a product, an acknowledgment is welcome
+   in the documentation of your product. If for some reason you cannot
+@@ -104,8 +105,7 @@
+ /* Given a list of code lengths and a maximum table size, make a set of
+    tables to decode that set of codes.  Return Z_OK on success, Z_BUF_ERROR
+    if the given code set is incomplete (the tables are still built in this
+-   case), Z_DATA_ERROR if the input is invalid (an over-subscribed set of
+-   lengths), or Z_MEM_ERROR if not enough memory. */
++   case), or Z_DATA_ERROR if the input is invalid. */
+ {
+ 
+   uInt a;                       /* counter for codes of length k */
+@@ -231,7 +231,7 @@
+ 
+         /* allocate new table */
+         if (*hn + z > MANY)     /* (note: doesn't matter for fixed) */
+-          return Z_MEM_ERROR;   /* not enough memory */
++          return Z_DATA_ERROR;  /* overflow of MANY */
+         u[h] = q = hp + *hn;
+         *hn += z;
+ 
+Index: lib/libz/zlib.h
+===================================================================
+RCS file: /cvs/src/lib/libz/zlib.h,v
+retrieving revision 1.4
+retrieving revision 1.4.12.1
+diff -u -r1.4 -r1.4.12.1
+--- lib/libz/zlib.h	8 Aug 1998 20:57:32 -0000	1.4
++++ lib/libz/zlib.h	14 Mar 2002 00:08:41 -0000	1.4.12.1
+@@ -1,7 +1,8 @@
++/*	$OpenBSD: zlib.h,v 1.4.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* zlib.h -- interface of the 'zlib' general purpose compression library
+-  version 1.1.3, July 9th, 1998
++  version 1.1.4, March 11th, 2002
+ 
+-  Copyright (C) 1995-1998 Jean-loup Gailly and Mark Adler
++  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
+ 
+   This software is provided 'as-is', without any express or implied
+   warranty.  In no event will the authors be held liable for any damages
+@@ -37,7 +38,7 @@
+ extern "C" {
+ #endif
+ 
+-#define ZLIB_VERSION "1.1.3"
++#define ZLIB_VERSION "1.1.4"
+ 
+ /* 
+      The 'zlib' compression library provides in-memory compression and
+Index: lib/libz/zutil.c
+===================================================================
+RCS file: /cvs/src/lib/libz/zutil.c,v
+retrieving revision 1.4
+retrieving revision 1.4.6.1
+diff -u -r1.4 -r1.4.6.1
+--- lib/libz/zutil.c	2 Mar 2000 00:29:52 -0000	1.4
++++ lib/libz/zutil.c	14 Mar 2002 00:08:41 -0000	1.4.6.1
+@@ -1,6 +1,6 @@
+-/*	$OpenBSD: zutil.c,v 1.4 2000/03/02 00:29:52 todd Exp $	*/
++/*	$OpenBSD: zutil.c,v 1.4.6.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* zutil.c -- target dependent utility functions for the compression library
+- * Copyright (C) 1995-1998 Jean-loup Gailly.
++ * Copyright (C) 1995-2002 Jean-loup Gailly.
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -211,6 +211,8 @@
+     unsigned size;
+ {
+     if (opaque) items += size - size; /* make compiler happy */
++    if (items * size == 0)
++	return (NULL);
+     return (voidpf)calloc(items, size);
+ }
+ 
+Index: sys/lib/libz/infcodes.c
+===================================================================
+RCS file: /cvs/src/sys/lib/libz/infcodes.c,v
+retrieving revision 1.5
+retrieving revision 1.5.12.1
+diff -u -r1.5 -r1.5.12.1
+--- sys/lib/libz/infcodes.c	14 Feb 1999 19:47:37 -0000	1.5
++++ sys/lib/libz/infcodes.c	14 Mar 2002 00:08:41 -0000	1.5.12.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: infcodes.c,v 1.5.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* infcodes.c -- process literals and length/distance pairs
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -196,15 +197,9 @@
+       Tracevv(("inflate:         distance %u\n", c->sub.copy.dist));
+       c->mode = COPY;
+     case COPY:          /* o: copying bytes in window, waiting for space */
+-#ifndef __TURBOC__ /* Turbo C bug for following expression */
+-      f = (uInt)(q - s->window) < c->sub.copy.dist ?
+-          s->end - (c->sub.copy.dist - (q - s->window)) :
+-          q - c->sub.copy.dist;
+-#else
+       f = q - c->sub.copy.dist;
+-      if ((uInt)(q - s->window) < c->sub.copy.dist)
+-        f = s->end - (c->sub.copy.dist - (uInt)(q - s->window));
+-#endif
++      while (f < s->window)             /* modulo window size-"while" instead */
++        f += s->end - s->window;        /* of "if" handles invalid distances */
+       while (c->len)
+       {
+         NEEDOUT
+Index: sys/lib/libz/inffast.c
+===================================================================
+RCS file: /cvs/src/sys/lib/libz/inffast.c,v
+retrieving revision 1.5
+retrieving revision 1.5.12.1
+diff -u -r1.5 -r1.5.12.1
+--- sys/lib/libz/inffast.c	14 Feb 1999 19:47:37 -0000	1.5
++++ sys/lib/libz/inffast.c	14 Mar 2002 00:08:41 -0000	1.5.12.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: inffast.c,v 1.5.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* inffast.c -- process literals and length/distance pairs fast
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -93,28 +94,41 @@
+ 
+             /* do the copy */
+             m -= c;
+-            if ((uInt)(q - s->window) >= d)     /* offset before dest */
+-            {                                   /*  just copy */
+-              r = q - d;
+-              *q++ = *r++;  c--;        /* minimum count is three, */
+-              *q++ = *r++;  c--;        /*  so unroll loop a little */
+-            }
+-            else                        /* else offset after destination */
++            r = q - d;
++            if (r < s->window)                  /* wrap if needed */
+             {
+-              e = d - (uInt)(q - s->window); /* bytes from offset to end */
+-              r = s->end - e;           /* pointer to offset */
+-              if (c > e)                /* if source crosses, */
++              do {
++                r += s->end - s->window;        /* force pointer in window */
++              } while (r < s->window);          /* covers invalid distances */
++              e = s->end - r;
++              if (c > e)
+               {
+-                c -= e;                 /* copy to end of window */
++                c -= e;                         /* wrapped copy */
+                 do {
+-                  *q++ = *r++;
++                    *q++ = *r++;
+                 } while (--e);
+-                r = s->window;          /* copy rest from start of window */
++                r = s->window;
++                do {
++                    *q++ = *r++;
++                } while (--c);
+               }
++              else                              /* normal copy */
++              {
++                *q++ = *r++;  c--;
++                *q++ = *r++;  c--;
++                do {
++                    *q++ = *r++;
++                } while (--c);
++              }
++            }
++            else                                /* normal copy */
++            {
++              *q++ = *r++;  c--;
++              *q++ = *r++;  c--;
++              do {
++                *q++ = *r++;
++              } while (--c);
+             }
+-            do {                        /* copy all or what's left */
+-              *q++ = *r++;
+-            } while (--c);
+             break;
+           }
+           else if ((e & 64) == 0)
+Index: sys/lib/libz/inftrees.c
+===================================================================
+RCS file: /cvs/src/sys/lib/libz/inftrees.c,v
+retrieving revision 1.8
+retrieving revision 1.8.14.1
+diff -u -r1.8 -r1.8.14.1
+--- sys/lib/libz/inftrees.c	8 Sep 1998 04:07:48 -0000	1.8
++++ sys/lib/libz/inftrees.c	14 Mar 2002 00:08:41 -0000	1.8.14.1
+@@ -1,5 +1,6 @@
++/*	$OpenBSD: inftrees.c,v 1.8.14.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* inftrees.c -- generate Huffman trees for efficient decoding
+- * Copyright (C) 1995-1998 Mark Adler
++ * Copyright (C) 1995-2002 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h 
+  */
+ 
+@@ -11,7 +12,7 @@
+ #endif
+ 
+ const char inflate_copyright[] =
+-   " inflate 1.1.3 Copyright 1995-1998 Mark Adler ";
++   " inflate 1.1.4 Copyright 1995-2002 Mark Adler ";
+ /*
+   If you use the zlib library in a product, an acknowledgment is welcome
+   in the documentation of your product. If for some reason you cannot
+@@ -104,8 +105,7 @@
+ /* Given a list of code lengths and a maximum table size, make a set of
+    tables to decode that set of codes.  Return Z_OK on success, Z_BUF_ERROR
+    if the given code set is incomplete (the tables are still built in this
+-   case), Z_DATA_ERROR if the input is invalid (an over-subscribed set of
+-   lengths), or Z_MEM_ERROR if not enough memory. */
++   case), or Z_DATA_ERROR if the input is invalid. */
+ {
+ 
+   uInt a;                       /* counter for codes of length k */
+@@ -231,7 +231,7 @@
+ 
+         /* allocate new table */
+         if (*hn + z > MANY)     /* (note: doesn't matter for fixed) */
+-          return Z_MEM_ERROR;   /* not enough memory */
++          return Z_DATA_ERROR;  /* overflow of MANY */
+         u[h] = q = hp + *hn;
+         *hn += z;
+ 
+Index: sys/lib/libz/zlib.h
+===================================================================
+RCS file: /cvs/src/sys/lib/libz/zlib.h,v
+retrieving revision 1.5
+retrieving revision 1.5.12.1
+diff -u -r1.5 -r1.5.12.1
+--- sys/lib/libz/zlib.h	25 Jan 1999 19:28:40 -0000	1.5
++++ sys/lib/libz/zlib.h	14 Mar 2002 00:08:41 -0000	1.5.12.1
+@@ -1,7 +1,8 @@
++/*	$OpenBSD: zlib.h,v 1.5.12.1 2002/03/14 00:08:41 miod Exp $	*/
+ /* zlib.h -- interface of the 'zlib' general purpose compression library
+-  version 1.1.3, July 9th, 1998
++  version 1.1.4, March 11th, 2002
+ 
+-  Copyright (C) 1995-1998 Jean-loup Gailly and Mark Adler
++  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
+ 
+   This software is provided 'as-is', without any express or implied
+   warranty.  In no event will the authors be held liable for any damages
+@@ -37,7 +38,7 @@
+ extern "C" {
+ #endif
+ 
+-#define ZLIB_VERSION "1.1.3"
++#define ZLIB_VERSION "1.1.4"
+ 
+ /* 
+      The 'zlib' compression library provides in-memory compression and
+Index: sys/net/zlib.c
+===================================================================
+RCS file: /cvs/src/sys/net/zlib.c,v
+retrieving revision 1.9
+retrieving revision 1.9.2.1
+diff -u -r1.9 -r1.9.2.1
+--- sys/net/zlib.c	29 Jan 2001 06:12:11 -0000	1.9
++++ sys/net/zlib.c	14 Mar 2002 00:08:39 -0000	1.9.2.1
+@@ -3405,7 +3405,10 @@
+       {
+         r = t;
+         if (r == Z_DATA_ERROR)
++        {
++          ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
+           s->mode = BADB;
++        }
+         LEAVE
+       }
+       s->sub.trees.index = 0;
+@@ -3468,7 +3471,10 @@
+         if (t != Z_OK)
+         {
+           if (t == (uInt)Z_DATA_ERROR)
++          {
++            ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
+             s->mode = BADB;
++          }
+           r = t;
+           LEAVE
+         }
+Index: lib/libz/shlib_version
+===================================================================
+RCS file: /cvs/src/lib/libz/shlib_version,v
+retrieving revision 1.4
+diff -u -r1.4 shlib_version
+--- lib/libz/shlib_version	8 Aug 1998 20:57:27 -0000	1.4
++++ lib/libz/shlib_version	15 Mar 2002 23:43:37 -0000
+@@ -1,2 +1,2 @@
+ major=1
+-minor=3
++minor=4
+

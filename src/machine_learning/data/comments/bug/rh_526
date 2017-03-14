@@ -1,0 +1,13 @@
+Description of problem:
+
+My Wi-fi card doesn't show up on the last kernel release 4.0.5-300.fc22.x86_64 under /sys/class/net/
+
+I can't have a network connection because of that.
+
+However, it shows up and everything works fine with version 4.0.4-303.fc22.x86_64
+
+lspci
+...
+02:00.0 Network controller: Broadcom Corporation BCM4360 802.11ac Wireless Network Adapter (rev 03)
+...
+*** This bug has been marked as a duplicate of bug 1235095 ***

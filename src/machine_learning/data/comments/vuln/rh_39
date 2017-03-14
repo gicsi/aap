@@ -1,0 +1,66 @@
+Description of problem:
+
+Our software has hundreds of DSOs loaded on demand based on workflows. Framework is being rewriting to be multi-threaded thus people started to use thread_local in C++11. This yielded a high number of DSOs with TLS segments.
+
+It happens that DTV is not always expanded and we go beyond DTV SURPLUS. This causes out-of-bounds writes in dynamic loader thus we get unexpected behaviour in the application, usually segfault.
+
+Currently we are forced to ship our own dynamic loader with the software.
+
+This affects RHEL6/7, x86_64 and aarch64.
+
+Below is a snipped from valgrind on aarch64 machine:
+
+==1706== Thread 7:
+==1706== Invalid write of size 8
+==1706==    at 0x40101EC: _dl_allocate_tls_init (in /usr/lib64/ld-2.17.so)
+==1706==    by 0x48E823B: pthread_create@@GLIBC_2.17 (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x400F1B: dso_process(void*) (dso_driver.cc:54)
+==1706==    by 0x48E7C4F: start_thread (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x4C0ABBF: thread_start (in /usr/lib64/libc-2.17.so)
+==1706==  Address 0x5575f60 is 0 bytes after a block of size 320 alloc'd
+==1706==    at 0x4875C24: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-arm64-linux.so)
+==1706==    by 0x401027B: _dl_allocate_tls (in /usr/lib64/ld-2.17.so)
+==1706==    by 0x48E87DF: pthread_create@@GLIBC_2.17 (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x40101F: main (dso_driver.cc:83)
+==1706==
+==1706== Invalid write of size 1
+==1706==    at 0x40101F4: _dl_allocate_tls_init (in /usr/lib64/ld-2.17.so)
+==1706==    by 0x48E823B: pthread_create@@GLIBC_2.17 (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x400F1B: dso_process(void*) (dso_driver.cc:54)
+==1706==    by 0x48E7C4F: start_thread (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x4C0ABBF: thread_start (in /usr/lib64/libc-2.17.so)
+==1706==  Address 0x5575f68 is 8 bytes after a block of size 320 alloc'd
+==1706==    at 0x4875C24: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-arm64-linux.so)
+==1706==    by 0x401027B: _dl_allocate_tls (in /usr/lib64/ld-2.17.so)
+==1706==    by 0x48E87DF: pthread_create@@GLIBC_2.17 (in /usr/lib64/libpthread-2.17.so)
+==1706==    by 0x40101F: main (dso_driver.cc:83)
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+Original ticked (incl. reproducer and fix): https://sourceware.org/bugzilla/show_bug.cgi?id=13862
+
+Additional info:
+
+BZ #13862 from glibc doesn't solve all the problems. thread_create() and dlopen() [Static TLS involved] are still racy.
+
+I would suggest reviewing the following TLS related issues/fixes (all except the last landed in 2.21 glibc, the last one is not yet upstreamed, but patch is available and being tested).
+
+BZ #13862 https://sourceware.org/bugzilla/show_bug.cgi?id=13862
+BZ #17090 https://sourceware.org/bugzilla/show_bug.cgi?id=17090
+BZ #17620 https://sourceware.org/bugzilla/show_bug.cgi?id=17620
+BZ #17621 https://sourceware.org/bugzilla/show_bug.cgi?id=17621
+BZ #17628 https://sourceware.org/bugzilla/show_bug.cgi?id=17628
+BZ #18457 https://sourceware.org/bugzilla/show_bug.cgi?id=18457
+The RHEL 7.2 release will contain backports that fix BZ #13862, BZ #17090, BZ #17620, BZ #17621, and BZ #17628. These should address the issues reported.
+
+Please note that BZ #17457 can't impact RHEL 7 because the glibc and gcc coordination over thread_local destructors (glibc's __cxa_thread_atexit_impl) is not used. The compiler does all the thread_local destruction work.
+
+Therefore all of these issues should be fixed with the release of RHEL 7.2. We can't guarantee that, but the glibc team is reviewing and resolving all serious concurrency problems in TLS and threads that are reported. If you have any specific uses cases you think are not being fixed, please report those in a distinct issue.
+
+If you need any of these fixes immediately please work with global support services to discuss a possible RHEL 7.1 errata.
+
+I can't comment on when RHEL 7.2 will be released.

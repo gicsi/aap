@@ -1,0 +1,8 @@
+Upon reception of an invalid update with 4-byte AS attributes, bgpd -
+adhering to the RFCs - closed the session to the neighbor.
+This error in the specification allowed 3rd parties to close remote BGP
+sessions.
+In the worst case Internet connectivity could be lost.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/009_bgpd.patch">
+A source code patch exists which remedies this problem.</a>

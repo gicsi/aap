@@ -1,0 +1,59 @@
+Description of problem:
+
+The sparse file support in lz4cat breaks piping.
+
+Version-Release number of selected component (if applicable):
+
+lz4-r129-1.fc22.x86_64
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. rpm -qi lz4 | lz4 | lz4cat
+
+Actual results:
+
+Error 68 : Skip error (sparse file)
+
+Expected results:
+
+Successful decompression.
+
+Additional info:
+
+Debian's version is based on r122 and does not have this problem.
+
+A workaround is to use the --no-sparse option.
+This has been fixed in the latest upstream release lz4-r130
+    -> https://groups.google.com/forum/#!topic/lz4c/YGS4bE9f3-M
+lz4-r130-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/lz4-r130-1.fc21
+lz4-r130-1.el7 has been submitted as an update for Fedora EPEL 7.
+https://admin.fedoraproject.org/updates/lz4-r130-1.el7
+lz4-r130-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/lz4-r130-1.fc22
+lz4-r130-1.el6 has been submitted as an update for Fedora EPEL 6.
+https://admin.fedoraproject.org/updates/lz4-r130-1.el6
+lz4-r130-1.el5 has been submitted as an update for Fedora EPEL 5.
+https://admin.fedoraproject.org/updates/lz4-r130-1.el5
+lz4-r130-1.fc20 has been submitted as an update for Fedora 20.
+https://admin.fedoraproject.org/updates/lz4-r130-1.fc20
+Package lz4-r130-1.el6:
+* should fix your issue,
+* was pushed to the Fedora EPEL 6 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=epel-testing lz4-r130-1.el6'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-EPEL-2015-6781/lz4-r130-1.el6
+then log in and leave karma (feedback).
+lz4-r130-1.el6.x86_64 from epel-testing corrected the "Error 68 : Skip error (sparse file)" error for me on RHEL 6.6.
+
+Thanks,
+--James
+lz4-r130-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+lz4-r130-1.el5 has been pushed to the Fedora EPEL 5 stable repository.  If problems still persist, please make note of it in this bug report.
+lz4-r130-1.el7 has been pushed to the Fedora EPEL 7 stable repository.  If problems still persist, please make note of it in this bug report.
+lz4-r130-1.el6 has been pushed to the Fedora EPEL 6 stable repository.  If problems still persist, please make note of it in this bug report.

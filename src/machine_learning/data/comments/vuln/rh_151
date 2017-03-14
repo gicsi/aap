@@ -1,0 +1,43 @@
+Created attachment 1041056
+horizon_error.log excerpt
+
+Description of problem:
+Unable to an image into glance.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Attempt to load an image into glance through horizon.
+
+Steps to Reproduce:
+1. Navigate to System->Images->Create Image
+2. Load an image as a file
+3. Note failure
+
+Actual results:
+Image status show as Queued indefinitely in horizon.
+
+Expected results:
+Image should load successfully.
+
+Additional info:
+- The attached exception appears in /var/log/httpd/horizon_error.log.
+- Deployment is on Centos 7.1
+- Image being uploaded is Cirros 0.3.3
+This looks like a Horizon issue (not related to the installer).
+This sounds like something we fixed already.
+
+Could you please report back the version of horizon?
+
+rpm -q openstack-dashbboard
+
+Make sure, you're using at least python-django-horizon-2015.1.0-9.el7ost
+Thank you.
+These are the rpms that were installed:
+
+python-django-horizon-2015.1.0-7.el7.noarch
+openstack-dashboard-2015.1.0-7.el7.noarch
+this seems to be a duplicate of .bug 1226906
+
+*** This bug has been marked as a duplicate of bug 1226906 ***

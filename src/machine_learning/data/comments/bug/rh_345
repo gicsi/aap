@@ -1,0 +1,18 @@
+Description of problem:
+After a major distro upgrade, debuginfo packages will not be updated, neither with dnf or dnf distrosync.
+yum instead, used to do that.
+
+I could not retrieve a log because I have already erased F21 debuginfos and I am downloading F22 debuginfo packages right now.
+
+Version-Release number of selected component (if applicable):
+$ dnf --version
+1.0.1                                                                                                                                    
+  Installato: dnf-0:1.0.1-2.fc22.noarch da 2015-06-21 15:47                                                                              
+  Build    : Fedora Project su 2015-06-12 09:00                                                                                          
+
+  Installato: rpm-0:4.12.0.1-10.fc22.x86_64 da 2015-06-21 15:46
+  Build    : Fedora Project su 2015-06-15 07:11
+Editing title because DNF does not update debuginfo packages in every situation, not only after a distro upgrade. To update them you must run 
+# dnf debuginfo-install packagename
+Just enable *-debuginfo repositories to have debuginfo packages updated automatically.
+Closing. Germano, if solution from comment 2 doesn't help, feel free to reopen.

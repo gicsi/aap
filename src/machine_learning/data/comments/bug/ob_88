@@ -1,0 +1,4 @@
+Systems running with IP-in-IP encapsulation can be made to crash by
+malformed packets.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/010_ipip.patch">
+A source code patch exists which remedies this problem.</a>

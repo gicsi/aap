@@ -1,0 +1,52 @@
+Description of problem:
+SELinux is preventing mysqld from write, open access on the file /home/mikhail/www/bpl-syrena/xml_archive/tables/appl_products.csv.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that mysqld should be allowed write open access on the appl_products.csv file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep mysqld /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:mysqld_t:s0
+Target Context                system_u:object_r:httpd_user_content_t:s0
+Target Objects                /home/mikhail/www/bpl-
+                              syrena/xml_archive/tables/appl_products.csv [ file
+                              ]
+Source                        mysqld
+Source Path                   mysqld
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.4.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.7-300.fc22.x86_64+debug #1 SMP
+                              Mon Jun 29 21:56:44 UTC 2015 x86_64 x86_64
+Alert Count                   2
+First Seen                    2015-07-03 12:38:10 YEKT
+Last Seen                     2015-07-03 12:38:10 YEKT
+Local ID                      c084e24d-344f-4d62-9713-78c32576cb24
+
+Raw Audit Messages
+type=AVC msg=audit(1435909090.180:3054): avc:  denied  { write open } for  pid=14834 comm="mysqld" path="/home/mikhail/www/bpl-syrena/xml_archive/tables/appl_products.csv" dev="sdb1" ino=39701355 scontext=system_u:system_r:mysqld_t:s0 tcontext=system_u:object_r:httpd_user_content_t:s0 tclass=file permissive=1
+
+
+Hash: mysqld,mysqld_t,httpd_user_content_t,file,write,open
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.4.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.7-300.fc22.x86_64+debug
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1238970 ***

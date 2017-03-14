@@ -1,0 +1,7 @@
+named(8) did not correctly check the return value of a DSA verification
+function, potentially allowing bypass of verification of DNSSEC DSA
+signatures.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0025">CVE-2009-0025</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/008_bind.patch">
+A source code patch exists which remedies this problem.</a>

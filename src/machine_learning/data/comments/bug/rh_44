@@ -1,0 +1,22 @@
+Description of problem:
+gucharmap can show character either by script or by unicode block. If user choose view by script, the list of scripts appears in the left pane, and list is sorted alphabetically: Arabic, Armenian, Avestan, Balinese, ... However, if user choose view by Unicode block, the list of blocks is not sorted (alphabetically). This looks confusing.
+
+Version-Release number of selected component (if applicable):
+Fedora 22
+gucharmap-3.16.2-1.fc22.x86_64
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Start gucharmap
+2. Menu -> View -> By Unicode Block
+
+Actual results:
+Left pane of the window contains list of Unicode blocks. List is not sorted alphabetically.
+
+Expected results:
+I would expect the list of unicode blocks is sorted alphabetically.
+
+Additional info:
+Unicode blocks are sorted numerically. I think that makes quite a bit of sense.

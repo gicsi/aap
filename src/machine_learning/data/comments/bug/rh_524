@@ -1,0 +1,27 @@
+Latest upstream release: 18.0
+Current version/release in rawhide: 17.1.1-3.fc23
+URL: https://pypi.python.org/pypi/setuptools
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1042568
+[patch] Update to 18.0 (#1235096)
+Scratch build failed http://koji.fedoraproject.org/koji/taskinfo?taskID=10194484
+Latest upstream release: 18.0.1
+Current version/release in rawhide: 17.1.1-3.fc23
+URL: https://pypi.python.org/pypi/setuptools
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1042909
+[patch] Update to 18.0.1 (#1235096)
+Scratch build succeeded http://koji.fedoraproject.org/koji/taskinfo?taskID=10203284
+Built in rawhide:
+
+ https://koji.fedoraproject.org/koji/taskinfo?taskID=10212879

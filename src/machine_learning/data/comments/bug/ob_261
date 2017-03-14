@@ -1,0 +1,5 @@
+Several bugs were fixed that allowed a crash from remote when an active pipex
+session exists.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/016_pipex.patch.sig">
+A source code patch exists which remedies this problem.</a>

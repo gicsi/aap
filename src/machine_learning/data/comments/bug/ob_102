@@ -1,0 +1,8 @@
+An improper bounds check makes it possible for a local user to cause a crash
+by passing the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=semctl&amp;apropos=0&amp;sektion=2&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">semctl(2)</a> and
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=semop&amp;apropos=0&amp;sektion=2&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">semop(2)</a> functions
+certain arguments.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/013_sem.patch">
+A source code patch exists which remedies this problem.</a>

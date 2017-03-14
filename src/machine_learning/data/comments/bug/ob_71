@@ -1,0 +1,6 @@
+First off, AES (Rijndael) encryption and decryption were broken for IPsec
+and swap encryption.<br>
+Secondly, the AES code did not work properly on big endian machines.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/004_rijndael.patch">
+A source code patch exists which remedies this problem.</a>
+This is the second revision of the patch.

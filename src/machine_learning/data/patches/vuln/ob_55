@@ -1,0 +1,199 @@
+The following patch fixes several printf-style format string bugs.
+Note that the 'eeprom' program is only available on the sparc platform.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 028_format_strings.patch
+
+The rebuild the affected programs:
+	cd usr.bin/fstat
+	make depend && make && make install
+
+	cd ../passwd
+	make depend && make && make install
+
+	cd ../top
+	make depend && make && make install
+
+	cd ../su
+	make depend && make && make install
+
+	cd ../ssh
+	make depend && make && make install
+
+	# sparc only
+	cd ../../usr.sbin/eeprom
+	make depend && make && make install
+
+Index: usr.bin/fstat/fstat.c
+===================================================================
+RCS file: /cvs/src/usr.bin/fstat/fstat.c,v
+retrieving revision 1.26
+diff -u -r1.26 fstat.c
+--- usr.bin/fstat/fstat.c	2000/01/17 16:26:19	1.26
++++ usr.bin/fstat/fstat.c	2000/10/09 14:51:06
+@@ -1018,7 +1018,7 @@
+ 	DEVS *cur;
+ 
+ 	if (stat(filename, &statbuf)) {
+-		warn(filename);
++		warn("%s", filename);
+ 		return(0);
+ 	}
+ 	if ((cur = malloc(sizeof(DEVS))) == NULL)
+Index: usr.bin/passwd/yp_passwd.c
+===================================================================
+RCS file: /cvs/src/usr.bin/passwd/yp_passwd.c,v
+retrieving revision 1.12
+diff -u -r1.12 yp_passwd.c
+--- usr.bin/passwd/yp_passwd.c	1998/07/13 02:15:01	1.12
++++ usr.bin/passwd/yp_passwd.c	2000/10/09 14:51:06
+@@ -72,7 +72,7 @@
+ 	int err, eval;
+ {
+ 	if(err) 
+-		warn(name);
++		warn("%s", name);
+ 
+ 	warnx("YP passwd database unchanged.");
+ 	exit(eval);
+Index: usr.bin/su/su.c
+===================================================================
+RCS file: /cvs/src/usr.bin/su/su.c,v
+retrieving revision 1.31
+diff -u -r1.31 su.c
+--- usr.bin/su/su.c	1998/03/25 21:27:27	1.31
++++ usr.bin/su/su.c	2000/10/09 14:51:06
+@@ -300,7 +300,7 @@
+ 	(void)setpriority(PRIO_PROCESS, 0, prio);
+ 
+ 	execv(shell, np);
+-	err(1, shell);
++	err(1, "%s", shell);
+ }
+ 
+ int
+Index: usr.sbin/eeprom/eehandlers.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/eeprom/eehandlers.c,v
+retrieving revision 1.5
+diff -u -r1.5 eehandlers.c
+--- usr.sbin/eeprom/eehandlers.c	1996/08/31 12:56:06	1.5
++++ usr.sbin/eeprom/eehandlers.c	2000/10/09 14:51:06
+@@ -79,14 +79,14 @@
+ }
+ 
+ #define FAILEDREAD(kt) {						\
+-	warnx(err_str);							\
++	warnx("%s", err_str);						\
+ 	warnx("failed to read field `%s'", (kt)->kt_keyword);		\
+ 	++eval;								\
+ 	return;								\
+ }
+ 
+ #define FAILEDWRITE(kt) {						\
+-	warnx(err_str);							\
++	warnx("%s", err_str);						\
+ 	warnx("failed to update field `%s'", (kt)->kt_keyword);		\
+ 	++eval;								\
+ 	return;								\
+Index: usr.sbin/eeprom/main.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/eeprom/main.c,v
+retrieving revision 1.5
+diff -u -r1.5 main.c
+--- usr.sbin/eeprom/main.c	1998/07/08 22:13:26	1.5
++++ usr.sbin/eeprom/main.c	2000/10/09 14:51:06
+@@ -264,7 +264,7 @@
+ 		 * the generic op_handler.
+ 		 */
+ 		if ((cp = op_handler(keyword, arg)) != NULL)
+-			warnx(cp);
++			warnx("%s", cp);
+ 		return;
+ 	} else
+ #endif /* __sparc__ */
+Index: usr.bin/top/top.c
+===================================================================
+RCS file: /cvs/src/usr.bin/top/top.c,v
+retrieving revision 1.3
+diff -u -r1.3 top.c
+--- usr.bin/top/top.c	1999/05/23 17:19:21	1.3
++++ usr.bin/top/top.c	2000/10/09 14:51:06
+@@ -761,7 +761,7 @@
+ 				{
+ 				    if ((errmsg = kill_procs(tempbuf2)) != NULL)
+ 				    {
+-					new_message(MT_standout, errmsg);
++					new_message(MT_standout, "%s", errmsg);
+ 					putchar('\r');
+ 					no_command = Yes;
+ 				    }
+@@ -778,7 +778,7 @@
+ 				{
+ 				    if ((errmsg = renice_procs(tempbuf2)) != NULL)
+ 				    {
+-					new_message(MT_standout, errmsg);
++					new_message(MT_standout, "%s", errmsg);
+ 					putchar('\r');
+ 					no_command = Yes;
+ 				    }
+Index: usr.bin/ssh/auth-rsa.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/auth-rsa.c,v
+retrieving revision 1.23
+diff -u -r1.23 auth-rsa.c
+--- usr.bin/ssh/auth-rsa.c	2000/04/29 18:11:51	1.23
++++ usr.bin/ssh/auth-rsa.c	2000/10/09 14:51:06
+@@ -186,8 +186,8 @@
+ 		}
+ 		if (fail) {
+ 			fclose(f);
+-			log(buf);
+-			packet_send_debug(buf);
++			log("%s",buf);
++			packet_send_debug("%s",buf);
+ 			restore_uid();
+ 			return 0;
+ 		}
+Index: usr.bin/ssh/auth2.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/auth2.c,v
+retrieving revision 1.8
+diff -u -r1.8 auth2.c
+--- usr.bin/ssh/auth2.c	2000/05/08 17:42:24	1.8
++++ usr.bin/ssh/auth2.c	2000/10/09 14:51:06
+@@ -433,8 +433,8 @@
+ 			}
+ 		}
+ 		if (fail) {
+-			log(buf);
+ 			fclose(f);
++			log("%s",buf);
+ 			restore_uid();
+ 			return 0;
+ 		}
+Index: usr.bin/ssh/ssh-keygen.c
+===================================================================
+RCS file: /cvs/src/usr.bin/ssh/ssh-keygen.c,v
+retrieving revision 1.25
+diff -u -r1.25 ssh-keygen.c
+--- usr.bin/ssh/ssh-keygen.c	2000/05/08 18:23:07	1.25
++++ usr.bin/ssh/ssh-keygen.c	2000/10/09 14:51:06
+@@ -123,13 +123,13 @@
+ 		exit(1);
+ 	}
+ 	dsa_make_key_blob(k, &blob, &len);
+-	fprintf(stdout, SSH_COM_MAGIC_BEGIN "\n");
++	fprintf(stdout, "%s\n", SSH_COM_MAGIC_BEGIN);
+ 	fprintf(stdout,
+ 	    "Comment: \"%d-bit DSA, converted from openssh by %s@%s\"\n",
+ 	    BN_num_bits(k->dsa->p),
+ 	    pw->pw_name, hostname);
+ 	dump_base64(stdout, blob, len);
+-	fprintf(stdout, SSH_COM_MAGIC_END "\n");
++	fprintf(stdout, "%s\n", SSH_COM_MAGIC_END);
+ 	key_free(k);
+ 	xfree(blob);
+ 	exit(0);
+

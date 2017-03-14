@@ -1,0 +1,3 @@
+<strong>userdir</strong> support was accidentally left out of httpd(8).
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/userdir.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,75 @@
+Description of problem:
+
+I upgraded my undercloud from puddle 2015-06-24 to puddle 2015-06-29. Now whenever I try to login to tuskar-ui I get "Something went wrong!". This is from the horizon logs:
+
+
+2015-06-30 09:52:08,809 9270 INFO openstack_auth.forms Login successful for user "admin".
+2015-06-30 09:52:13,169 9271 ERROR django.request Internal Server Error: /dashboard/infrastructure/
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/django/core/handlers/base.py", line 132, in get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/lib/python2.7/site-packages/horizon/decorators.py", line 36, in dec
+    return view_func(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/horizon/decorators.py", line 84, in dec
+    return view_func(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/horizon/decorators.py", line 52, in dec
+    return view_func(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/horizon/decorators.py", line 36, in dec
+    return view_func(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/django/views/generic/base.py", line 71, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/django/views/generic/base.py", line 89, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/infrastructure/overview/views.py", line 147, in get
+    return super(IndexView, self).get(request, *args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/django/views/generic/edit.py", line 205, in get
+    form = self.get_form()
+  File "/usr/lib/python2.7/site-packages/django/views/generic/edit.py", line 35, in get_form_with_form_class
+    return get_form(self, form_class=form_class)
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/infrastructure/overview/views.py", line 150, in get_form
+    return form_class(self.request, **self.get_form_kwargs())
+  File "/usr/lib/python2.7/site-packages/tuskar_boxes/overview/forms.py", line 29, in __init__
+    super(EditPlan, self).__init__(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/infrastructure/overview/forms.py", line 208, in __init__
+    self.plan = api.tuskar.Plan.get_the_plan(self.request)
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/api/tuskar.py", line 195, in get_the_plan
+    plan_list = cls.list(request)
+  File "/usr/lib/python2.7/site-packages/tuskar_ui/api/tuskar.py", line 164, in list
+    plans = tuskarclient(request).plans.list()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/v2/plans.py", line 86, in list
+    return self._list(self._path())
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/base.py", line 131, in _list
+    body = self.client.get(url).json()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 355, in get
+    return self.client_request("GET", url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 345, in client_request
+    self, method, url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 271, in client_request
+    self.authenticate()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 315, in authenticate
+    self.auth_plugin.authenticate(self)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/auth.py", line 202, in authenticate
+    self.sufficient_options()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/common/auth.py", line 78, in sufficient_options
+    ' or '.join(tenant_opts))
+AuthPluginOptionsMissing: Authentication failed. Missing options: t, e, n, a, n, t, _, i, d,  , o, r,  , t, e, n, a, n, t, _, n, a, m, e
+
+I also tried to edit the local_settings and allow all hosts, then restarted httpd. It didn't help.
+
+
+Version-Release number of selected component (if applicable):
+openstack-tuskar-ui-0.3.0-6.el7ost.noarch
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Log in to the undercloud as admin
+2. After you click the login button you get this
+
+
+Additional info:
+Installation on bare metals, no ssh tunnels used.
+Upgrades from one puddle to another puddle aren't a supported path.

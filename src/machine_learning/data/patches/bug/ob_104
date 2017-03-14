@@ -1,0 +1,94 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_pwd_mkdb.patch
+
+And then rebuild and install pwd_mkdb:
+	cd usr.sbin/pwd_mkdb
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.sbin/pwd_mkdb/pwd_mkdb.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/pwd_mkdb/pwd_mkdb.c,v
+retrieving revision 1.23
+retrieving revision 1.24
+diff -u -r1.23 -r1.24
+--- usr.sbin/pwd_mkdb/pwd_mkdb.c	2000/11/26 19:35:46	1.23
++++ usr.sbin/pwd_mkdb/pwd_mkdb.c	2001/06/07 16:21:49	1.24
+@@ -285,7 +285,7 @@
+ 		data.data = (u_char *)NULL;
+ 		data.size = 0;
+ 
+-		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
++		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+ 			error("put");
+ 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+ 			error("put");
+@@ -538,7 +538,7 @@
+ 				tbuf[0] = _PW_KEYBYUID;
+ 				memcpy(tbuf + 1, &olduid, sizeof(olduid));
+ 				key.size = sizeof(olduid) + 1;
+-				(edp->del)(dp, &key, 0);
++				(edp->del)(edp, &key, 0);
+ 				(dp->del)(dp, &key, 0);
+ 			}
+ 			/* XXX - should check to see if line number changed. */
+@@ -586,7 +586,7 @@
+ 		data.size = p - buf;
+ 
+ 		/* Write the secure record. */
+-		if ((dp->put)(edp, &key, &data, dbmode) == -1)
++		if ((edp->put)(edp, &key, &data, dbmode) == -1)
+ 			error("put");
+ 
+ 		/* Star out password to make insecure record. */
+@@ -594,7 +594,8 @@
+ 		len = strlen(pw->pw_passwd);
+ 		memset(p, 0, len);			/* zero pw_passwd */
+ 		t = p + len + 1;			/* skip pw_passwd */
+-		*p++ = '*';
++		if (len != 0)
++			*p++ = '*';
+ 		*p++ = '\0';
+ 		memmove(p, t, data.size - (t - buf));
+ 		data.size -= len - 1;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_isakmpd.patch
+
+And the rebuild isakmpd:
+	cd sbin/isakmpd
+	make obj
+	make depend
+	make
+	make install
+
+Index: sbin/isakmpd/pf_key_v2.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/pf_key_v2.c,v
+retrieving revision 1.50
+diff -u -r1.50 pf_key_v2.c
+--- sbin/isakmpd/pf_key_v2.c	2001/04/24 07:27:37	1.50
++++ sbin/isakmpd/pf_key_v2.c	2001/06/05 21:27:30
+@@ -1215,7 +1215,7 @@
+ 	    goto cleanup;
+ 
+ 	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+-	    + PF_KEY_V2_ROUND (srcid_len) / PF_KEY_V2_CHUNK;
++	    + PF_KEY_V2_ROUND (srcid_len + 1) / PF_KEY_V2_CHUNK;
+ 	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
+ 	  sid->sadb_ident_type = srcid_type;
+ 
+@@ -1237,7 +1237,7 @@
+ 	    goto cleanup;
+ 
+ 	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+-	    + PF_KEY_V2_ROUND (dstid_len) / PF_KEY_V2_CHUNK;
++	    + PF_KEY_V2_ROUND (dstid_len + 1) / PF_KEY_V2_CHUNK;
+ 	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
+ 	  sid->sadb_ident_type = dstid_type;
+ 
+

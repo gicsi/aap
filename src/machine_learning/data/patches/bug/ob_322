@@ -1,0 +1,846 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_getsockopt.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet/ip_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_output.c,v
+retrieving revision 1.193
+diff -u -p -r1.193 ip_output.c
+--- sys/netinet/ip_output.c	30 Jan 2009 20:46:33 -0000	1.193
++++ sys/netinet/ip_output.c	28 Oct 2009 20:04:32 -0000
+@@ -1483,6 +1483,7 @@ ip_ctloutput(op, so, level, optname, mp)
+ 		case IP_ESP_TRANS_LEVEL:
+ 		case IP_ESP_NETWORK_LEVEL:
+ 		case IP_IPCOMP_LEVEL:
++			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 			m->m_len = sizeof(int);
+ 			*mtod(m, int *) = IPSEC_LEVEL_NONE;
+Index: sys/netinet6/ip6_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/ip6_output.c,v
+retrieving revision 1.106
+diff -u -p -r1.106 ip6_output.c
+--- sys/netinet6/ip6_output.c	22 Oct 2008 14:36:08 -0000	1.106
++++ sys/netinet6/ip6_output.c	28 Oct 2009 21:08:20 -0000
+@@ -1892,6 +1892,7 @@ do { \
+ 			case IPV6_ESP_TRANS_LEVEL:
+ 			case IPV6_ESP_NETWORK_LEVEL:
+ 			case IPV6_IPCOMP_LEVEL:
++				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 				m->m_len = sizeof(int);
+ 				*mtod(m, int *) = IPSEC_LEVEL_NONE;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 008_xmm.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/i386/i386/trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/trap.c,v
+retrieving revision 1.87
+retrieving revision 1.87.4.1
+diff -u -p -r1.87 -r1.87.4.1
+--- sys/arch/i386/i386/trap.c	9 Apr 2008 16:49:17 -0000	1.87
++++ sys/arch/i386/i386/trap.c	5 Oct 2009 00:36:33 -0000	1.87.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trap.c,v 1.87 2008/04/09 16:49:17 thib Exp $	*/
++/*	$OpenBSD: trap.c,v 1.87.4.1 2009/10/05 00:36:33 sthen Exp $	*/
+ /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
+ 
+ /*-
+@@ -426,6 +426,10 @@ trap(struct trapframe frame)
+ 		KERNEL_PROC_LOCK(p);
+ 		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, sv);
+ 		KERNEL_PROC_UNLOCK(p);
++		goto out;
++
++	case T_XFTRAP|T_USER:
++		npxtrap(&frame);
+ 		goto out;
+ 
+ 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+Index: sys/arch/i386/include/npx.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/npx.h,v
+retrieving revision 1.10
+retrieving revision 1.10.10.1
+diff -u -p -r1.10 -r1.10.10.1
+--- sys/arch/i386/include/npx.h	1 Oct 2006 18:07:56 -0000	1.10
++++ sys/arch/i386/include/npx.h	5 Oct 2009 00:36:33 -0000	1.10.10.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.h,v 1.10 2006/10/01 18:07:56 kettenis Exp $	*/
++/*	$OpenBSD: npx.h,v 1.10.10.1 2009/10/05 00:36:33 sthen Exp $	*/
+ /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
+ 
+ /*-
+@@ -161,8 +161,11 @@ struct	emcsts {
+ 
+ void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
+ void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
++
+ struct cpu_info;
++struct trapframe;
+ 
+ void	npxinit(struct cpu_info *);
++void	npxtrap(struct trapframe *);
+ 
+ #endif /* !_I386_NPX_H_ */
+Index: sys/arch/i386/isa/npx.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/isa/npx.c,v
+retrieving revision 1.44
+retrieving revision 1.44.2.1
+diff -u -p -r1.44 -r1.44.2.1
+--- sys/arch/i386/isa/npx.c	4 Dec 2008 15:48:19 -0000	1.44
++++ sys/arch/i386/isa/npx.c	5 Oct 2009 00:36:33 -0000	1.44.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.c,v 1.44 2008/12/04 15:48:19 weingart Exp $	*/
++/*	$OpenBSD: npx.c,v 1.44.2.1 2009/10/05 00:36:33 sthen Exp $	*/
+ /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
+ 
+ #if 0
+@@ -134,8 +134,9 @@ extern int i386_fpu_present;
+ extern int i386_fpu_exception;
+ extern int i386_fpu_fdivbug;
+ 
+-#define        fxsave(addr)            __asm("fxsave %0" : "=m" (*addr))
+-#define        fxrstor(addr)           __asm("fxrstor %0" : : "m" (*addr))
++#define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
++#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
++#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
+ 
+ static __inline void
+ fpu_save(union savefpu *addr)
+@@ -533,6 +534,38 @@ npxintr(void *arg)
+ 	}
+ 
+ 	return (1);
++}
++
++void
++npxtrap(struct trapframe *frame)
++{
++	struct proc *p = curcpu()->ci_fpcurproc;
++	union savefpu *addr = &p->p_addr->u_pcb.pcb_savefpu;
++	u_int32_t mxcsr, statbits;
++	int code;
++	union sigval sv;
++
++#ifdef DIAGNOSTIC
++	/*
++	 * At this point, fpcurproc should be curproc.  If it wasn't, the TS
++	 * bit should be set, and we should have gotten a DNA exception.
++	 */
++	if (p != curproc)
++		panic("npxtrap: wrong process");
++#endif
++
++	fxsave(&addr->sv_xmm);
++	mxcsr = addr->sv_xmm.sv_env.en_mxcsr;
++	statbits = mxcsr;
++	mxcsr &= ~0x3f;
++	ldmxcsr(&mxcsr);
++	addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
++	addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
++	code = x86fpflags_to_siginfo (statbits);
++	sv.sival_int = frame->tf_eip;
++	KERNEL_PROC_LOCK(p);
++	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
++	KERNEL_PROC_UNLOCK(p);
+ }
+ 
+ static int
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 007_bind.patch
+
+And then rebuild and install bind:
+	cd usr.sbin/bind
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/bind/bin/named/update.c
+===================================================================
+--- usr.sbin/bind/bin/named/update.c	(revision 1875)
++++ usr.sbin/bind/bin/named/update.c	(working copy)
+@@ -861,7 +861,11 @@
+ 			if (type == dns_rdatatype_rrsig ||
+ 			    type == dns_rdatatype_sig)
+ 				covers = dns_rdata_covers(&t->rdata);
+-			else
++			else if (type == dns_rdatatype_any) {
++				dns_db_detachnode(db, &node);
++				dns_diff_clear(&trash);
++				return (DNS_R_NXRRSET);
++			} else
+ 				covers = 0;
+ 
+ 			/*
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 006_perl_zlib.patch
+
+Then rebuild and install perl:
+	cd gnu/usr.bin/perl
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: gnu/usr.bin/perl/ext/Compress/Raw/Zlib/Zlib.xs
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/ext/Compress/Raw/Zlib/Zlib.xs,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 Zlib.xs
+--- gnu/usr.bin/perl/ext/Compress/Raw/Zlib/Zlib.xs	29 Sep 2008 17:18:14 -0000	1.1.1.1
++++ gnu/usr.bin/perl/ext/Compress/Raw/Zlib/Zlib.xs	21 Jun 2009 15:34:44 -0000
+@@ -1295,7 +1295,7 @@
+ 
+         if (s->stream.avail_out == 0 ) {
+ 	    /* out of space in the output buffer so make it bigger */
+-            Sv_Grow(output, SvLEN(output) + bufinc) ;
++            Sv_Grow(output, SvLEN(output) + bufinc +1) ;
+             cur_length += increment ;
+             s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
+             increment = bufinc ;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_audio.patch
+
+Then build and install a new kernel.
+
+Index: sys/dev/audio.c
+===================================================================
+RCS file: /cvs/src/sys/dev/audio.c,v
+retrieving revision 1.101
+diff -u -p sys/dev/audio.c
+--- sys/dev/audio.c	16 Jan 2009 23:07:33 -0000	1.101
++++ sys/dev/audio.c	24 Apr 2009 13:54:02 -0000
+@@ -860,8 +860,6 @@ audio_init_ringbuffer(struct audio_ringbuffer *rp)
+ 	rp->stamp_last = 0;
+ 	rp->drops = 0;
+ 	rp->pdrops = 0;
+-	rp->copying = 0;
+-	rp->needfill = 0;
+ 	rp->mmapped = 0;
+ }
+ 
+@@ -1138,12 +1136,6 @@ audio_drain(struct audio_softc *sc)
+ 	 * XXX This should be done some other way to avoid
+ 	 * playing silence.
+ 	 */
+-#ifdef DIAGNOSTIC
+-	if (cb->copying) {
+-		printf("audio_drain: copying in progress!?!\n");
+-		cb->copying = 0;
+-	}
+-#endif
+ 	drops = cb->drops;
+ 	error = 0;
+ 	s = splaudio();
+@@ -1233,7 +1225,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
+ 	struct audio_softc *sc = audio_cd.cd_devs[unit];
+ 	struct audio_ringbuffer *cb = &sc->sc_rr;
+ 	u_char *outp;
+-	int error, s, used, cc, n;
++	int error, s, cc, n, resid;
+ 
+ 	if (cb->mmapped)
+ 		return EINVAL;
+@@ -1279,7 +1271,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
+ 		}
+ 		return (error);
+ 	}
+-	while (uio->uio_resid > 0 && !error) {
++	while (uio->uio_resid > 0) {
+ 		s = splaudio();
+ 		while (cb->used <= 0) {
+ 			if (!sc->sc_rbus && !sc->sc_rr.pause) {
+@@ -1302,34 +1294,28 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
+ 				return error;
+ 			}
+ 		}
+-		used = cb->used;
++		resid = uio->uio_resid * sc->sc_rparams.factor;
+ 		outp = cb->outp;
+-		cb->copying = 1;
+-		splx(s);
+-		cc = used - cb->usedlow; /* maximum to read */
++		cc = cb->used - cb->usedlow; /* maximum to read */
+ 		n = cb->end - outp;
+-		if (n < cc)
+-			cc = n;	/* don't read beyond end of buffer */
+-
+-		 /* and no more than we want */
+-		if (uio->uio_resid < cc / sc->sc_rparams.factor)
+-			cc = uio->uio_resid * sc->sc_rparams.factor;
+-
++		if (cc > n)
++			cc = n;		/* don't read beyond end of buffer */
++		
++		if (cc > resid)
++			cc = resid;	/* and no more than we want */
++		cb->used -= cc;
++		cb->outp += cc;
++		if (cb->outp >= cb->end)
++			cb->outp = cb->start;
++		splx(s);
++		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+ 		if (sc->sc_rparams.sw_code)
+ 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
+-		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+ 		error = uiomove(outp, cc / sc->sc_rparams.factor, uio);
+-		used -= cc;
+-		outp += cc;
+-		if (outp >= cb->end)
+-			outp = cb->start;
+-		s = splaudio();
+-		cb->outp = outp;
+-		cb->used = used;
+-		cb->copying = 0;
+-		splx(s);
++		if (error)
++			return error;
+ 	}
+-	return (error);
++	return 0;
+ }
+ 
+ void
+@@ -1473,8 +1459,8 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
+ 	int unit = AUDIOUNIT(dev);
+ 	struct audio_softc *sc = audio_cd.cd_devs[unit];
+ 	struct audio_ringbuffer *cb = &sc->sc_pr;
+-	u_char *inp, *einp;
+-	int saveerror, error, s, n, cc, used;
++	u_char *inp;
++	int error, s, n, cc, resid, avail;
+ 
+ 	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
+ 		 uio->uio_resid, sc->sc_pr.used, sc->sc_pr.usedhigh));
+@@ -1513,12 +1499,18 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
+ 	    sc->sc_pparams.precision, sc->sc_pparams.channels,
+ 	    sc->sc_pparams.sw_code, sc->sc_pparams.factor));
+ 
+-	error = 0;
+-	while (uio->uio_resid > 0 && !error) {
++	while (uio->uio_resid > 0) {
+ 		s = splaudio();
+ 		while (cb->used >= cb->usedhigh) {
+ 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d hiwat=%d\n",
+ 				 cb->used, cb->usedlow, cb->usedhigh));
++			if (!sc->sc_pbus && !cb->pause) {
++				error = audiostartp(sc);
++				if (error) {
++					splx(s);
++					return error;
++				}
++			}
+ 			if (ioflag & IO_NDELAY) {
+ 				splx(s);
+ 				return (EWOULDBLOCK);
+@@ -1531,103 +1523,36 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
+ 				return error;
+ 			}
+ 		}
+-		used = cb->used;
++		resid = uio->uio_resid * sc->sc_pparams.factor;
++		avail = cb->end - cb->inp;
+ 		inp = cb->inp;
+-		cb->copying = 1;
+-		splx(s);
+-		cc = cb->usedhigh - used;	/* maximum to write */
+-		n = cb->end - inp;
+-		if (sc->sc_pparams.factor != 1) {
+-			/* Compensate for software coding expansion factor. */
+-			n /= sc->sc_pparams.factor;
+-			cc /= sc->sc_pparams.factor;
+-		}
+-		if (n < cc)
+-			cc = n;			/* don't write beyond end of buffer */
+-		if (uio->uio_resid < cc)
+-			cc = uio->uio_resid;	/* and no more than we have */
+-
+-#ifdef DIAGNOSTIC
++		cc = cb->usedhigh - cb->used;
++		if (cc > resid)
++			cc = resid;
++		if (cc > avail)
++			cc = avail;
++		cb->inp += cc;
++		if (cb->inp >= cb->end)
++			cb->inp = cb->start;
++		cb->used += cc;
+ 		/*
+-		 * This should never happen since the block size and and
+-		 * block pointers are always nicely aligned.
++		 * This is a very suboptimal way of keeping track of
++		 * silence in the buffer, but it is simple.
+ 		 */
+-		if (cc == 0) {
+-			printf("audio_write: cc == 0, swcode=%p, factor=%d\n",
+-			    sc->sc_pparams.sw_code, sc->sc_pparams.factor);
+-			cb->copying = 0;
+-			return EINVAL;
+-		}
+-#endif
++		sc->sc_sil_count = 0;
++		splx(s);
++		cc /= sc->sc_pparams.factor;
+ 		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%d\n",
+ 		    cc, inp, uio->uio_resid));
+-		n = uio->uio_resid;
+ 		error = uiomove(inp, cc, uio);
+-		cc = n - uio->uio_resid; /* number of bytes actually moved */
+-#ifdef AUDIO_DEBUG
+ 		if (error)
+-			printf("audio_write:(1) uiomove failed %d; cc=%d inp=%p\n",
+-			    error, cc, inp);
+-#endif
+-		/*
+-		 * Continue even if uiomove() failed because we may have
+-		 * gotten a partial block.
+-		 */
+-
++			return 0;
+ 		if (sc->sc_pparams.sw_code) {
+ 			sc->sc_pparams.sw_code(sc->hw_hdl, inp, cc);
+-			/* Adjust count after the expansion. */
+-			cc *= sc->sc_pparams.factor;
+ 			DPRINTFN(1, ("audio_write: expanded cc=%d\n", cc));
+ 		}
+-
+-		einp = cb->inp + cc;
+-		if (einp >= cb->end)
+-			einp = cb->start;
+-
+-		s = splaudio();
+-		/*
+-		 * This is a very suboptimal way of keeping track of
+-		 * silence in the buffer, but it is simple.
+-		 */
+-		sc->sc_sil_count = 0;
+-
+-		cb->inp = einp;
+-		cb->used += cc;
+-		/* If the interrupt routine wants the last block filled AND
+-		 * the copy did not fill the last block completely it needs to
+-		 * be padded.
+-		 */
+-		if (cb->needfill &&
+-		    (inp  - cb->start) / cb->blksize ==
+-		    (einp - cb->start) / cb->blksize) {
+-			/* Figure out how many bytes there is to a block boundary. */
+-			cc = cb->blksize - (einp - cb->start) % cb->blksize;
+-			DPRINTF(("audio_write: partial fill %d\n", cc));
+-		} else
+-			cc = 0;
+-		cb->needfill = 0;
+-		cb->copying = 0;
+-		if (!sc->sc_pbus && !cb->pause) {
+-			saveerror = error;
+-			error = audiostartp(sc);
+-			if (saveerror != 0) {
+-				/* Report the first error that occurred. */
+-				error = saveerror;
+-			}
+-		}
+-		splx(s);
+-		if (cc) {
+-			DPRINTFN(1, ("audio_write: fill %d\n", cc));
+-			if (sc->sc_pparams.sw_code) {
+-				int ncc = cc / sc->sc_pparams.factor;
+-				audio_fill_silence(&sc->sc_pparams, cb->start, einp, ncc);
+-				sc->sc_pparams.sw_code(sc->hw_hdl, einp, ncc);
+-			} else
+-				audio_fill_silence(&sc->sc_pparams, cb->start, einp, cc);
+-		}
+ 	}
+-	return (error);
++	return 0;
+ }
+ 
+ int
+@@ -2115,30 +2040,24 @@ audio_pint(void *v)
+ 	cb->used -= blksize;
+ 	if (cb->used < blksize) {
+ 		/* we don't have a full block to use */
+-		if (cb->copying) {
+-			/* writer is in progress, don't disturb */
+-			cb->needfill = 1;
+-			DPRINTFN(1, ("audio_pint: copying in progress\n"));
+-		} else {
+-			inp = cb->inp;
+-			cc = blksize - (inp - cb->start) % blksize;
+-			if (cb->pause)
+-				cb->pdrops += cc;
+-			else {
+-				cb->drops += cc;
+-				sc->sc_playdrop += cc;
+-			}
+-			audio_pint_silence(sc, cb, inp, cc);
+-			inp += cc;
+-			if (inp >= cb->end)
+-				inp = cb->start;
+-			cb->inp = inp;
+-			cb->used += cc;
+-
+-			/* Clear next block so we keep ahead of the DMA. */
+-			if (cb->used + cc < cb->usedhigh)
+-				audio_pint_silence(sc, cb, inp, blksize);
++		inp = cb->inp;
++		cc = blksize - (inp - cb->start) % blksize;
++		if (cb->pause)
++			cb->pdrops += cc;
++		else {
++			cb->drops += cc;
++			sc->sc_playdrop += cc;
+ 		}
++		audio_pint_silence(sc, cb, inp, cc);
++		inp += cc;
++		if (inp >= cb->end)
++			inp = cb->start;
++		cb->inp = inp;
++		cb->used += cc;
++
++		/* Clear next block so we keep ahead of the DMA. */
++		if (cb->used + cc < cb->usedhigh)
++			audio_pint_silence(sc, cb, inp, blksize);
+ 	}
+ 
+ 	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->outp, blksize));
+@@ -2232,7 +2151,7 @@ audio_rint(void *v)
+ 		if (cb->outp >= cb->end)
+ 			cb->outp = cb->start;
+ 		cb->used -= blksize;
+-	} else if (cb->used >= cb->usedhigh && !cb->copying) {
++	} else if (cb->used >= cb->usedhigh) {
+ 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
+ 		cb->drops += blksize;
+ 		cb->outp += blksize;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_aucat.patch
+
+And then rebuild and install file:
+	cd usr.bin/aucat
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: usr.bin/aucat/sock.c
+===================================================================
+RCS file: /cvs/src/usr.bin/aucat/sock.c,v
+retrieving revision 1.14
+diff -u -p usr.bin/aucat/sock.c
+--- usr.bin/aucat/sock.c	6 Feb 2009 08:29:35 -0000	1.14
++++ usr.bin/aucat/sock.c	24 Apr 2009 13:53:30 -0000
+@@ -127,7 +127,7 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int del
+ {
+ 	struct sock *f = (struct sock *)p->u.io.file;
+ 
+-	if (!(f->mode & AMSG_PLAY))
++	if (f->mode & AMSG_REC)
+ 		return;
+ 
+ 	f->delta += delta;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_bus_dma.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/i386/i386/bus_dma.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/bus_dma.c,v
+retrieving revision 1.3
+diff -u -p sys/arch/i386/i386/bus_dma.c
+--- sys/arch/i386/i386/bus_dma.c	5 Feb 2009 01:13:21 -0000	1.3
++++ sys/arch/i386/i386/bus_dma.c	24 Apr 2009 13:54:31 -0000
+@@ -370,6 +370,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *se
+ 	bus_addr_t addr;
+ 	int curseg, pmapflags;
+ 
++	pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
+ 	if (flags & BUS_DMA_NOCACHE)
+ 		pmapflags |= PMAP_NOCACHE;
+ 
+@@ -387,9 +388,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *se
+ 			if (size == 0)
+ 				panic("_bus_dmamem_map: size botch");
+ 			pmap_enter(pmap_kernel(), va, addr,
+-			    VM_PROT_READ | VM_PROT_WRITE,
+-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+-			    pmapflags);
++			    VM_PROT_READ | VM_PROT_WRITE, pmapflags);
+ 		}
+ 	}
+ 	pmap_update(pmap_kernel());
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_pf.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/pf.c
+===================================================================
+RCS file: /cvs/src/sys/net/pf.c,v
+retrieving revision 1.634
+diff -u -p -r1.634 pf.c
+--- sys/net/pf.c	27 Feb 2009 12:37:45 -0000	1.634
++++ sys/net/pf.c	10 Apr 2009 22:44:23 -0000
+@@ -5243,6 +5243,15 @@ pf_test(int dir, struct ifnet *ifp, stru
+ 		break;
+ 	}
+ 
++#ifdef INET6
++	case IPPROTO_ICMPV6: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
++		goto done;
++	}
++#endif
++
+ 	default:
+ 		action = pf_test_state_other(&s, dir, kif, m, &pd);
+ 		if (action == PF_PASS) {
+@@ -5595,6 +5604,13 @@ pf_test6(int dir, struct ifnet *ifp, str
+ 			action = pf_test_rule(&r, &s, dir, kif,
+ 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+ 		break;
++	}
++
++	case IPPROTO_ICMP: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv6 packet with ICMPv4 payload\n"));
++		goto done;
+ 	}
+ 
+ 	case IPPROTO_ICMPV6: {
+
+This is version 2 of this patch.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 001_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+	make obj
+        make depend
+	make includes
+        make
+        make install
+	cd ../../sbin
+	make obj
+        make depend
+	make
+	make install
+
+Index: lib/libssl/src/crypto/asn1/asn1.h
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1.h,v
+retrieving revision 1.10
+diff -u -p -r1.10 asn1.h
+--- lib/libssl/src/crypto/asn1/asn1.h	6 Sep 2008 12:17:48 -0000	1.10
++++ lib/libssl/src/crypto/asn1/asn1.h	8 Apr 2009 00:26:37 -0000
+@@ -1217,6 +1217,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_BAD_OBJECT_HEADER			 102
+ #define ASN1_R_BAD_PASSWORD_READ			 103
+ #define ASN1_R_BAD_TAG					 104
++#define ASN1_R_BMPSTRING_IS_WRONG_LENGTH		 210
+ #define ASN1_R_BN_LIB					 105
+ #define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 106
+ #define ASN1_R_BUFFER_TOO_SMALL				 107
+@@ -1306,6 +1307,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 157
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 158
+ #define ASN1_R_UNEXPECTED_EOC				 159
++#define ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH		 211
+ #define ASN1_R_UNKNOWN_FORMAT				 160
+ #define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 161
+ #define ASN1_R_UNKNOWN_OBJECT_TYPE			 162
+Index: lib/libssl/src/crypto/asn1/asn1_err.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1_err.c,v
+retrieving revision 1.9
+diff -u -p -r1.9 asn1_err.c
+--- lib/libssl/src/crypto/asn1/asn1_err.c	6 Sep 2008 12:17:48 -0000	1.9
++++ lib/libssl/src/crypto/asn1/asn1_err.c	8 Apr 2009 00:26:37 -0000
+@@ -195,6 +195,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_BAD_OBJECT_HEADER)    ,"bad object header"},
+ {ERR_REASON(ASN1_R_BAD_PASSWORD_READ)    ,"bad password read"},
+ {ERR_REASON(ASN1_R_BAD_TAG)              ,"bad tag"},
++{ERR_REASON(ASN1_R_BMPSTRING_IS_WRONG_LENGTH),"bmpstring is wrong length"},
+ {ERR_REASON(ASN1_R_BN_LIB)               ,"bn lib"},
+ {ERR_REASON(ASN1_R_BOOLEAN_IS_WRONG_LENGTH),"boolean is wrong length"},
+ {ERR_REASON(ASN1_R_BUFFER_TOO_SMALL)     ,"buffer too small"},
+@@ -284,6 +285,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY),"unable to decode rsa key"},
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY),"unable to decode rsa private key"},
+ {ERR_REASON(ASN1_R_UNEXPECTED_EOC)       ,"unexpected eoc"},
++{ERR_REASON(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH),"universalstring is wrong length"},
+ {ERR_REASON(ASN1_R_UNKNOWN_FORMAT)       ,"unknown format"},
+ {ERR_REASON(ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM),"unknown message digest algorithm"},
+ {ERR_REASON(ASN1_R_UNKNOWN_OBJECT_TYPE)  ,"unknown object type"},
+Index: lib/libssl/src/crypto/asn1/tasn_dec.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/tasn_dec.c,v
+retrieving revision 1.8
+diff -u -p -r1.8 tasn_dec.c
+--- lib/libssl/src/crypto/asn1/tasn_dec.c	9 Jan 2009 12:15:27 -0000	1.8
++++ lib/libssl/src/crypto/asn1/tasn_dec.c	8 Apr 2009 00:26:37 -0000
+@@ -611,7 +611,6 @@ static int asn1_template_ex_d2i(ASN1_VAL
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ 	}
+ 
+@@ -758,7 +757,6 @@ static int asn1_template_noexp_d2i(ASN1_
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ 	}
+ 
+@@ -1012,6 +1010,18 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const
+ 		case V_ASN1_SET:
+ 		case V_ASN1_SEQUENCE:
+ 		default:
++		if (utype == V_ASN1_BMPSTRING && (len & 1))
++			{
++			ASN1err(ASN1_F_ASN1_EX_C2I,
++					ASN1_R_BMPSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
++		if (utype == V_ASN1_UNIVERSALSTRING && (len & 3))
++			{
++			ASN1err(ASN1_F_ASN1_EX_C2I,
++					ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
+ 		/* All based on ASN1_STRING and handled the same */
+ 		if (!*pval)
+ 			{
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 012_trunklacp.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/trunklacp.c
+===================================================================
+RCS file: /cvs/src/sys/net/trunklacp.c,v
+retrieving revision 1.9
+retrieving revision 1.9.6.1
+diff -u -r1.9 -r1.9.6.1
+--- sys/net/trunklacp.c	1 Dec 2008 10:40:57 -0000	1.9
++++ sys/net/trunklacp.c	14 May 2010 11:54:14 -0000	1.9.6.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trunklacp.c,v 1.9 2008/12/01 10:40:57 brad Exp $ */
++/*	$OpenBSD: trunklacp.c,v 1.9.6.1 2010/05/14 11:54:14 stephan Exp $ */
+ /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
+ /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
+ 
+@@ -365,7 +365,7 @@
+ 	struct mbuf *m;
+ 	struct ether_header *eh;
+ 	struct lacpdu *du;
+-	int error;
++	int error, s;
+ 
+ 	m = m_gethdr(M_DONTWAIT, MT_DATA);
+ 	if (m == NULL)
+@@ -409,7 +409,9 @@
+ 	 * XXX should use higher priority queue.
+ 	 * otherwise network congestion can break aggregation.
+ 	 */
++	s = splnet();
+ 	error = trunk_enqueue(lp->lp_ifp, m);
++	splx(s);
+ 	return (error);
+ }
+ 
+@@ -420,7 +422,7 @@
+ 	struct mbuf *m;
+ 	struct ether_header *eh;
+ 	struct markerdu *mdu;
+-	int error;
++	int error, s;
+ 
+ 	m = m_gethdr(M_DONTWAIT, MT_DATA);
+ 	if (m == NULL)
+@@ -452,7 +454,9 @@
+ 	    ntohl(mdu->mdu_info.mi_rq_xid)));
+ 
+ 	m->m_flags |= M_MCAST;
++	s = splnet();
+ 	error = trunk_enqueue(lp->lp_ifp, m);
++	splx(s);
+ 	return (error);
+ }
+ 
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 011_pfsync.patch
+
+Then build and install a new kernel.
+
+Index: sys/net/if_pfsync.c
+===================================================================
+RCS file: /cvs/src/sys/net/if_pfsync.c,v
+retrieving revision 1.127
+retrieving revision 1.127.4.1
+diff -u -r1.127 -r1.127.4.1
+--- sys/net/if_pfsync.c	17 Jun 2009 04:24:02 -0000	1.127
++++ sys/net/if_pfsync.c	14 May 2010 09:08:34 -0000	1.127.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: if_pfsync.c,v 1.127 2009/06/17 04:24:02 dlg Exp $	*/
++/*	$OpenBSD: if_pfsync.c,v 1.127.4.1 2010/05/14 09:08:34 stephan Exp $	*/
+ 
+ /*
+  * Copyright (c) 2002 Michael Shalayeff
+@@ -1522,6 +1522,7 @@
+ {
+ 	struct pfsync_upd_c *up = buf;
+ 
++	bzero(up, sizeof(*up));
+ 	up->id = st->id;
+ 	pf_state_peer_hton(&st->src, &up->src);
+ 	pf_state_peer_hton(&st->dst, &up->dst);
+@@ -1533,8 +1534,6 @@
+ 	else
+ 		up->expire = htonl(up->expire - time_second);
+ 	up->timeout = st->timeout;
+-
+-	bzero(up->_pad, sizeof(up->_pad)); /* XXX */
+ }
+ 
+ void
+

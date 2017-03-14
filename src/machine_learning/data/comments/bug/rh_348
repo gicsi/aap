@@ -1,0 +1,25 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-Archive-Any-Create/perl-Archive-Any-Create.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-Archive-Any-Create/perl-Archive-Any-Create-0.03-1.fc23.src.rpm
+Description:
+Archive::Any::Create is a wrapper module to create tar/tar.gz/zip files
+with a single easy-to-use API.
+
+Fedora Account System Username: jplesnik@redhat.com
+Add a version constraint for ExtUtils::MakeMaker
+ - Makefile.PL requires v6.30+
+ - since you're using NO_PACKLIST, you need v6.76+
+
+Description mentions three formats while summary just two.  Consider adding uncompressed tar to the summary.
+
+
+No real blockers, approving.
+New Package SCM Request
+=======================
+Package Name: perl-Archive-Any-Create
+Short Description: Abstract API to create archives (tar.gz and zip)
+Upstream URL: http://search.cpan.org/dist/Archive-Any-Create/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

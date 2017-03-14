@@ -1,0 +1,525 @@
+Description of problem:
+
+Example(s) are not shown when using osgviewerQt
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Reproduced with existing version of osgviewerQt that is linked against Qt4
+I do not have the issue with  osgviewer, osgviewerWX, osgviewerGLUT
+Checked with ldd that there is no Qt5 also (fine)
+
+I recompiled also fully from source (in another place) the last RC of openscenegraph against provided Qt5 (same issue too on this Qt version and no problem on the other viewers)
+Checked with ldd that there is no Qt4 also (fine)
+
+Minor stuff for any osgviewerGLUT there is a segfault when I close it
+
+X11 Driver: Nvidia 340xx
+GPU: Nvidia GT 8800
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+Example is not shown, no crash, no warning.
+
+Expected results:
+Show the example as expected
+
+Additional info:
+Additional test.
+Reinstalled X11 Nouveau driver and removed NVidia driver
+
+I have a crash with the following now:
+
+[boucaron@boucaron-i7 ~]$ osgviewerQt 
+[xcb] Unknown request in queue while dequeuing
+[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+[xcb] Aborting, sorry about that.
+[xcb] Unknown request in queue while dequeuing
+[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+[xcb] Aborting, sorry about that.
+osgviewerQt: xcb_io.c:179: dequeue_pending_request: Assertion `!xcb_xlib_unknown_req_in_deq' failed.
+osgviewerQt: xcb_io.c:179: dequeue_pending_request: Assertion `!xcb_xlib_unknown_req_in_deq' failed.
+Aborted (core dumped)
+
+
+
+
+(gdb) r
+Starting program: /usr/bin/osgviewerQt 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+*** Error in `/usr/bin/osgviewerQt': realloc(): invalid next size: 0x00000000008f6bb0 ***
+======= Backtrace: =========
+/lib64/libc.so.6[0x3388e77e9d]
+/lib64/libc.so.6[0x3388e82116]
+/lib64/libc.so.6(realloc+0xeb)[0x3388e8410b]
+/lib64/libdrm_nouveau.so.2(+0x39a4)[0x7fffeee059a4]
+/lib64/libdrm_nouveau.so.2(+0x3db9)[0x7fffeee05db9]
+/usr/lib64/dri/nouveau_dri.so(+0x4803d8)[0x7fffef4893d8]
+/usr/lib64/dri/nouveau_dri.so(+0x48236a)[0x7fffef48b36a]
+/usr/lib64/dri/nouveau_dri.so(+0x1b9efd)[0x7fffef1c2efd]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage18drawImplementationERN3osg10RenderInfoERPNS_10RenderLeafE+0x462)[0x7ffff6dd5292]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage9drawInnerERN3osg10RenderInfoERPNS_10RenderLeafERb+0xa2)[0x7ffff6dd4122]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage4drawERN3osg10RenderInfoERPNS_10RenderLeafE+0x84f)[0x7ffff6dd605f]
+/lib64/libosgUtil.so.100(_ZN7osgUtil9SceneView4drawEv+0x231)[0x7ffff6dde031]
+/lib64/libosgViewer.so.100(_ZN9osgViewer8Renderer9cull_drawEv+0xaa7)[0x7ffff78c47f7]
+/lib64/libosg.so.100(_ZN3osg15GraphicsContext13runOperationsEv+0xf9)[0x7ffff691dbd9]
+/lib64/libosg.so.100(_ZN3osg15OperationThread3runEv+0x12f)[0x7ffff696dadf]
+/lib64/libosg.so.100(_ZN3osg14GraphicsThread3runEv+0x58)[0x7ffff691f7d8]
+/lib64/libOpenThreads.so.20(_ZN11OpenThreads20ThreadPrivateActions11StartThreadEPv+0xce)[0x36d7404b0e]
+/lib64/libpthread.so.0[0x3389207555]
+/lib64/libc.so.6(clone+0x6d)[0x3388f01f3d]
+Not any crash on the last RC compiled with Qt5, but still not any example shown when passed on the command line
+
+All other viewers are working fine GLUT, WX (still same crash on GLUT version)
+
+
+
+[boucaron@boucaron-i7 bin]$ gdb /usr/bin/osgviewerGLUT 
+GNU gdb (GDB) Fedora 7.9.1-13.fc22
+Copyright (C) 2015 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from /usr/bin/osgviewerGLUT...Reading symbols from /usr/bin/osgviewerGLUT...(no debugging symbols found)...done.
+(no debugging symbols found)...done.
+Missing separate debuginfos, use: dnf debuginfo-install OpenSceneGraph-examples-3.2.1-4.fc22.x86_64
+(gdb) r ~/Téléchargements/OpenSceneGraph-Data-3.0.0/cow.osg
+Starting program: /usr/bin/osgviewerGLUT ~/Téléchargements/OpenSceneGraph-Data-3.0.0/cow.osg
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff6b190e8 in osg::GLBufferObjectManager::deleteAllGLBufferObjects() () from /lib64/libosg.so.100
+(gdb)
+OpenSceneGraph-3.2.1-7.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/OpenSceneGraph-3.2.1-7.fc22
+Thanks for the report, I can reproduce this issue.
+
+I believe to have found a fix for this issue in upstream's git and have applied a patch to rawhide and fc22.
+
+Updated packages (*-3.2.1-7*) should appear in updates-testing in near future.
+
+Alternatively try the package below
+https://koji.fedoraproject.org/koji/taskinfo?taskID=10201868
+I tried the *3.2.1-7*
+
+[boucaron@boucaron-i7 Téléchargements]$ rpm -qa | grep OpenSceneGraph
+OpenSceneGraph-qt-devel-3.2.1-7.fc22.x86_64
+OpenSceneGraph-3.2.1-7.fc22.x86_64
+OpenSceneGraph-qt-3.2.1-7.fc22.x86_64
+OpenSceneGraph-libs-3.2.1-7.fc22.x86_64
+OpenSceneGraph-devel-3.2.1-7.fc22.x86_64
+OpenSceneGraph-examples-qt-3.2.1-7.fc22.x86_64
+OpenSceneGraph-examples-SDL-3.2.1-7.fc22.x86_64
+OpenSceneGraph-examples-3.2.1-7.fc22.x86_64
+
+Some segfaults with osgviewerQt
+
+
+[boucaron@boucaron-i7 Téléchargements]$ osgviewerQt
+*** Error in `osgviewerQt': realloc(): invalid next size: 0x0000000001ce4af0 ***
+======= Backtrace: =========
+/lib64/libc.so.6[0x3388e77e9d]
+/lib64/libc.so.6[0x3388e82116]
+/lib64/libc.so.6(realloc+0xeb)[0x3388e8410b]
+/lib64/libdrm_nouveau.so.2(+0x39a4)[0x7f0a423199a4]
+/lib64/libdrm_nouveau.so.2(+0x3db9)[0x7f0a42319db9]
+/usr/lib64/dri/nouveau_dri.so(+0x4803d8)[0x7f0a429cf3d8]
+/usr/lib64/dri/nouveau_dri.so(+0x48236a)[0x7f0a429d136a]
+/usr/lib64/dri/nouveau_dri.so(+0x1b9efd)[0x7f0a42708efd]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage18drawImplementationERN3osg10RenderInfoERPNS_10RenderLeafE+0x462)[0x7f0a4b60a302]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage9drawInnerERN3osg10RenderInfoERPNS_10RenderLeafERb+0xa2)[0x7f0a4b609192]
+/lib64/libosgUtil.so.100(_ZN7osgUtil11RenderStage4drawERN3osg10RenderInfoERPNS_10RenderLeafE+0x84f)[0x7f0a4b60b0cf]
+/lib64/libosgUtil.so.100(_ZN7osgUtil9SceneView4drawEv+0x231)[0x7f0a4b6130a1]
+/lib64/libosgViewer.so.100(_ZN9osgViewer8Renderer9cull_drawEv+0xaa7)[0x7f0a4c0f97f7]
+/lib64/libosg.so.100(_ZN3osg15GraphicsContext13runOperationsEv+0xf9)[0x7f0a4b152c09]
+/lib64/libosg.so.100(_ZN3osg15OperationThread3runEv+0x12f)[0x7f0a4b1a2b0f]
+/lib64/libosg.so.100(_ZN3osg14GraphicsThread3runEv+0x58)[0x7f0a4b154808]
+/lib64/libOpenThreads.so.20(_ZN11OpenThreads20ThreadPrivateActions11StartThreadEPv+0xce)[0x7f0a4ade2b0e]
+/lib64/libpthread.so.0[0x3389207555]
+/lib64/libc.so.6(clone+0x6d)[0x3388f01f3d]
+======= Memory map: ========
+00400000-00409000 r-xp 00000000 08:11 10888769                           /usr/bin/osgviewerQt
+00608000-00609000 r--p 00008000 08:11 10888769                           /usr/bin/osgviewerQt
+00609000-0060a000 rw-p 00009000 08:11 10888769                           /usr/bin/osgviewerQt
+01899000-01d7a000 rw-p 00000000 00:00 0                                  [heap]
+313ba00000-313ba32000 r-xp 00000000 08:11 9438112                        /usr/lib64/libedit.so.0.0.53
+313ba32000-313bc31000 ---p 00032000 08:11 9438112                        /usr/lib64/libedit.so.0.0.53
+313bc31000-313bc33000 r--p 00031000 08:11 9438112                        /usr/lib64/libedit.so.0.0.53
+313bc33000-313bc34000 rw-p 00033000 08:11 9438112                        /usr/lib64/libedit.so.0.0.53
+313bc34000-313bc38000 rw-p 00000000 00:00 0 
+319b800000-319b80c000 r-xp 00000000 08:11 9438371                        /usr/lib64/libpangocairo-1.0.so.0.3600.8
+319b80c000-319ba0b000 ---p 0000c000 08:11 9438371                        /usr/lib64/libpangocairo-1.0.so.0.3600.8
+319ba0b000-319ba0c000 r--p 0000b000 08:11 9438371                        /usr/lib64/libpangocairo-1.0.so.0.3600.8
+319ba0c000-319ba0d000 rw-p 0000c000 08:11 9438371                        /usr/lib64/libpangocairo-1.0.so.0.3600.8
+319d600000-319d6f9000 r-xp 00000000 08:11 9444734                        /usr/lib64/libQtOpenGL.so.4.8.6
+319d6f9000-319d8f8000 ---p 000f9000 08:11 9444734                        /usr/lib64/libQtOpenGL.so.4.8.6
+319d8f8000-319d8fb000 r--p 000f8000 08:11 9444734                        /usr/lib64/libQtOpenGL.so.4.8.6
+319d8fb000-319d900000 rw-p 000fb000 08:11 9444734                        /usr/lib64/libQtOpenGL.so.4.8.6
+319d900000-319d901000 rw-p 00000000 00:00 0 
+319de00000-319debd000 r-xp 00000000 08:11 9439361                        /usr/lib64/libgdk-x11-2.0.so.0.2400.28
+319debd000-319e0bc000 ---p 000bd000 08:11 9439361                        /usr/lib64/libgdk-x11-2.0.so.0.2400.28
+319e0bc000-319e0c0000 r--p 000bc000 08:11 9439361                        /usr/lib64/libgdk-x11-2.0.so.0.2400.28
+319e0c0000-319e0c2000 rw-p 000c0000 08:11 9439361                        /usr/lib64/libgdk-x11-2.0.so.0.2400.28
+3334600000-3334626000 r-xp 00000000 08:11 9438115                        /usr/lib64/libtinfo.so.5.9
+3334626000-3334825000 ---p 00026000 08:11 9438115                        /usr/lib64/libtinfo.so.5.9
+3334825000-3334829000 r--p 00025000 08:11 9438115                        /usr/lib64/libtinfo.so.5.9
+3334829000-333482a000 rw-p 00029000 08:11 9438115                        /usr/lib64/libtinfo.so.5.9
+3388600000-3388621000 r-xp 00000000 08:11 9437861                        /usr/lib64/ld-2.21.so
+3388820000-3388821000 r--p 00020000 08:11 9437861                        /usr/lib64/ld-2.21.so
+3388821000-3388822000 rw-p 00021000 08:11 9437861                        /usr/lib64/ld-2.21.so
+3388822000-3388823000 rw-p 00000000 00:00 0 
+3388a00000-3388b37000 r-xp 00000000 08:11 9439198                        /usr/lib64/libglib-2.0.so.0.4400.1
+3388b37000-3388d37000 ---p 00137000 08:11 9439198                        /usr/lib64/libglib-2.0.so.0.4400.1
+3388d37000-3388d38000 r--p 00137000 08:11 9439198                        /usr/lib64/libglib-2.0.so.0.4400.1
+3388d38000-3388d39000 rw-p 00138000 08:11 9439198                        /usr/lib64/libglib-2.0.so.0.4400.1
+3388d39000-3388d3a000 rw-p 00000000 00:00 0 
+3388e00000-3388fb6000 r-xp 00000000 08:11 9437865                        /usr/lib64/libc-2.21.so
+3388fb6000-33891b6000 ---p 001b6000 08:11 9437865                        /usr/lib64/libc-2.21.so
+33891b6000-33891ba000 r--p 001b6000 08:11 9437865                        /usr/lib64/libc-2.21.so
+33891ba000-33891bc000 rw-p 001ba000 08:11 9437865                        /usr/lib64/libc-2.21.so
+33891bc000-33891c0000 rw-p 00000000 00:00 0 
+3389200000-3389217000 r-xp 00000000 08:11 9438126                        /usr/lib64/libpthread-2.21.so
+3389217000-3389416000 ---p 00017000 08:11 9438126                        /usr/lib64/libpthread-2.21.so
+3389416000-3389417000 r--p 00016000 08:11 9438126                        /usr/lib64/libpthread-2.21.so
+3389417000-3389418000 rw-p 00017000 08:11 9438126                        /usr/lib64/libpthread-2.21.so
+3389418000-338941c000 rw-p 00000000 00:00 0 
+3389600000-3389603000 r-xp 00000000 08:11 9438261                        /usr/lib64/libdl-2.21.so
+3389603000-3389802000 ---p 00003000 08:11 9438261                        /usr/lib64/libdl-2.21.so
+3389802000-3389803000 r--p 00002000 08:11 9438261                        /usr/lib64/libdl-2.21.so
+3389803000-3389804000 rw-p 00003000 08:11 9438261                        /usr/lib64/libdl-2.21.so
+3389a00000-3389b07000 r-xp 00000000 08:11 9437870                        /usr/lib64/libm-2.21.so
+3389b07000-3389d06000 ---p 00107000 08:11 9437870                        /usr/lib64/libm-2.21.so
+3389d06000-3389d07000 r--p 00106000 08:11 9437870                        /usr/lib64/libm-2.21.so
+3389d07000-3389d08000 rw-p 00107000 08:11 9437870                        /usr/lib64/libm-2.21.so
+3389e00000-3389e15000 r-xp 00000000 08:11 9438182                        /usr/lib64/libz.so.1.2.8
+3389e15000-338a014000 ---p 00015000 08:11 9438182                        /usr/lib64/libz.so.1.2.8
+338a014000-338a015000 r--p 00014000 08:11 9438182                        /usr/lib64/libz.so.1.2.8
+338a015000-338a016000 rw-p 00015000 08:11 9438182                        /usr/lib64/libz.so.1.2.8
+338a200000-338a26e000 r-xp 00000000 08:11 9438416                        /usr/lib64/libpcre.so.1.2.5
+338a26e000-338a46e000 ---p 0006e000 08:11 9438416                        /usr/lib64/libpcre.so.1.2.5
+338a46e000-338a46f000 r--p 0006e000 08:11 9438416                        /usr/lib64/libpcre.so.1.2.5
+338a46f000-338a470000 rw-p 0006f000 08:11 9438416                        /usr/lib64/libpcre.so.1.2.5
+338aa00000-338aa21000 r-xp 00000000 08:11 9438423                        /usr/lib64/libselinux.so.1
+338aa21000-338ac20000 ---p 00021000 08:11 9438423                        /usr/lib64/libselinux.so.1
+338ac20000-338ac21000 r--p 00020000 08:11 9438423                        /usr/lib64/libselinux.so.1
+338ac21000-338ac22000 rw-p 00021000 08:11 9438423                        /usr/lib64/libselinux.so.1
+338ac22000-338ac24000 rw-p 00000000 00:00 0 
+338ae00000-338ae07000 r-xp 00000000 08:11 9438405                        /usr/lib64/librt-2.21.so
+338ae07000-338b006000 ---p 00007000 08:11 9438405                        /usr/lib64/librt-2.21.so
+338b006000-338b007000 r--p 00006000 08:11 9438405                        /usr/lib64/librt-2.21.so
+338b007000-338b008000 rw-p 00007000 08:11 9438405                        /usr/lib64/librt-2.21.so
+338b200000-338b217000 r-xp 00000000 08:11 9439965                        /usr/lib64/libresolv-2.21.so
+338b217000-338b417000 ---p 00017000 08:11 9439965                        /usr/lib64/libresolv-2.21.so
+338b417000-338b418000 r--p 00017000 08:11 9439965                        /usr/lib64/libresolv-2.21.so
+338b418000-338b419000 rw-p 00018000 08:11 9439965                        /usr/lib64/libresolv-2.21.so
+338b419000-338b41b000 rw-p 00000000 00:00 0 
+338b600000-338b607000 r-xp 00000000 08:11 9438378                        /usr/lib64/libffi.so.6.0.2
+338b607000-338b806000 ---p 00007000 08:11 9438378                        /usr/lib64/libffi.so.6.0.2
+338b806000-338b807000 r--p 00006000 08:11 9438378                        /usr/lib64/libffi.so.6.0.2
+338b807000-338b808000 rw-p 00007000 08:11 9438378                        /usr/lib64/libffi.so.6.0.2
+338ba00000-338ba0f000 r-xp 00000000 08:11 9438184                        /usr/lib64/libbz2.so.1.0.6
+338ba0f000-338bc0e000 ---p 0000f000 08:11 9438184                        /usr/lib64/libbz2.so.1.0.6
+338bc0e000-338bc0f000 r--p 0000e000 08:11 9438184                        /usr/lib64/libbz2.so.1.0.6
+338bc0f000-338bc10000 rw-p 0000f000 08:11 9438184                        /usr/lib64/libbz2.so.1.0.6
+338be00000-338be50000 r-xp 00000000 08:11 9439206                        /usr/lib64/libgobject-2.0.so.0.4400.1
+338be50000-338c050000 ---p 00050000 08:11 9439206                        /usr/lib64/libgobject-2.0.so.0.4400.1
+338c050000-338c051000 r--p 00050000 08:11 9439206                        /usr/lib64/libgobject-2.0.so.0.4400.1
+338c051000-338c052000 rw-p 00051000 08:11 9439206                        /usr/lib64/libgobject-2.0.so.0.4400.1
+338c200000-338c225000 r-xp 00000000 08:11 9440964                        /usr/lib64/liblzma.so.5.2.0
+338c225000-338c424000 ---p 00025000 08:11 9440964                        /usr/lib64/liblzma.so.5.2.0
+338c424000-338c425000 r--p 00024000 08:11 9440964                        /usr/lib64/liblzma.so.5.2.0
+338c425000-338c426000 rw-p 00025000 08:11 9440964                        /usr/lib64/liblzma.so.5.2.0
+338c600000-338c603000 r-xp 00000000 08:11 9439241                        /usr/lib64/libgmodule-2.0.so.0.4400.1
+338c603000-338c802000 ---p 00003000 08:11 9439241                        /usr/lib64/libgmodule-2.0.so.0.4400.1
+338c802000-338c803000 r--p 00002000 08:11 9439241                        /usr/lib64/libgmodule-2.0.so.0.4400.1
+338c803000-338c804000 rw-p 00003000 08:11 9439241                        /usr/lib64/libgmodule-2.0.so.0.4400.1
+338ce00000-338cf76000 r-xp 00000000 08:11 9439971                        /usr/lib64/libgio-2.0.so.0.4400.1
+338cf76000-338d176000 ---p 00176000 08:11 9439971                        /usr/lib64/libgio-2.0.so.0.4400.1
+338d176000-338d17a000 r--p 00176000 08:11 9439971                        /usr/lib64/libgio-2.0.so.0.4400.1
+338d17a000-338d17c000 rw-p 0017a000 08:11 9439971                        /usr/lib64/libgio-2.0.so.0.4400.1
+338d17c000-338d17e000 rw-p 00000000 00:00 0 
+338d200000-338d33b000 r-xp 00000000 08:11 9438283                        /usr/lib64/libX11.so.6.3.0
+338d33b000-338d53b000 ---p 0013b000 08:11 9438283                        /usr/lib64/libX11.so.6.3.0
+338d53b000-338d53c000 r--p 0013b000 08:11 9438283                        /usr/lib64/libX11.so.6.3.0
+338d53c000-338d541000 rw-p 0013c000 08:11 9438283                        /usr/lib64/libX11.so.6.3.0
+338d600000-338d632000 r-xp 00000000 08:11 9438188                        /usr/lib64/libpng16.so.16.16.0
+338d632000-338d831000 ---p 00032000 08:11 9438188                        /usr/lib64/libpng16.so.16.16.0
+338d831000-338d832000 r--p 00031000 08:11 9438188                        /usr/lib64/libpng16.so.16.16.0
+338d832000-338d833000 rw-p 00032000 08:11 9438188                        /usr/lib64/libpng16.so.16.16.0
+338da00000-338da02000 r-xp 00000000 08:11 9438207                        /usr/lib64/libXau.so.6.0.0
+338da02000-338dc02000 ---p 00002000 08:11 9438207                        /usr/lib64/libXau.so.6.0.0
+338dc02000-338dc03000 r--p 00002000 08:11 9438207                        /usr/lib64/libXau.so.6.0.0
+338dc03000-338dc04000 rw-p 00003000 08:11 9438207                        /usr/lib64/libXau.so.6.0.0
+338de00000-338de21000 r-xp 00000000 08:11 9438209                        /usr/lib64/libxcb.so.1.1.0
+338de21000-338e020000 ---p 00021000 08:11 9438209                        /usr/lib64/libxcb.so.1.1.0
+338e020000-338e021000 r--p 00020000 08:11 9438209                        /usr/lib64/libxcb.so.1.1.0
+338e021000-338e022000 rw-p 00021000 08:11 9438209                        /usr/lib64/libxcb.so.1.1.0
+338e200000-338e226000 r-xp 00000000 08:11 9438193                        /usr/lib64/libexpat.so.1.6.0
+338e226000-338e426000 ---p 00026000 08:11 9438193                        /usr/lib64/libexpat.so.1.6.0
+338e426000-338e429000 r--p 00026000 08:11 9438193                        /usr/lib64/libexpat.so.1.6.0
+338e429000-338e42a000 rw-p 00029000 08:11 9438193                        /usr/lib64/libexpat.so.1.6.0
+338e600000-338e611000 r-xp 00000000 08:11 9438583                        /usr/lib64/libXext.so.6.4.0
+338e611000-338e810000 ---p 00011000 08:11 9438583                        /usr/lib64/libXext.so.6.4.0
+338e810000-338e811000 r--p 00010000 08:11 9438583                        /usr/lib64/libXext.so.6.4.0
+338e811000-338e812000 rw-p 00011000 08:11 9438583                        /usr/lib64/libXext.so.6.4.0
+338ea00000-338eaa4000 r-xp 00000000 08:11 9438192                        /usr/lib64/libfreetype.so.6.11.4
+338eaa4000-338eca4000 ---p 000a4000 08:11 9438192                        /usr/lib64/libfreetype.so.6.11.4
+338eca4000-338ecaa000 r--p 000a4000 08:11 9438192                        /usr/lib64/libfreetype.so.6.11.4
+338ecaa000-338ecab000 rw-p 000aa000 08:11 9438192                        /usr/lib64/libfreetype.so.6.11.4
+338ee00000-338ee01000 r-xp 00000000 08:11 9439352                        /usr/lib64/libgthread-2.0.so.0.4400.1
+338ee01000-338f000000 ---p 00001000 08:11 9439352                        /usr/lib64/libgthread-2.0.so.0.4400.1
+338f000000-338f001000 r--p 00000000 08:11 9439352                        /usr/lib64/libgthread-2.0.so.0.4400.1
+338f001000-338f002000 rw-p 00001000 08:11 9439352                        /usr/lib64/libgthread-2.0.so.0.4400.1
+338f200000-338f23d000 r-xp 00000000 08:11 9438196                        /usr/lib64/libfontconfig.so.1.9.0
+338f23d000-338f43c000 ---p 0003d000 08:11 9438196                        /usr/lib64/libfontconfig.so.1.9.0
+338f43c000-338f43e000 r--p 0003c000 08:11 9438196                        /usr/lib64/libfontconfig.so.1.9.0
+338f43e000-338f443000 rw-p 0003e000 08:11 9438196                        /usr/lib64/libfontconfig.so.1.9.0
+338f600000-338f609000 r-xp 00000000 08:11 9438510                        /usr/lib64/libXrender.so.1.3.0
+338f609000-338f808000 ---p 00009000 08:11 9438510                        /usr/lib64/libXrender.so.1.3.0
+338f808000-338f809000 r--p 00008000 08:11 9438510                        /usr/lib64/libXrender.so.1.3.0
+338f809000-338f80a000 rw-p 00009000 08:11 9438510                        /usr/lib64/libXrender.so.1.3.0
+338fa00000-338fa02000 r-xp 00000000 08:11 9439977                        /usr/lib64/libXinerama.so.1.0.0
+338fa02000-338fc01000 ---p 00002000 08:11 9439977                        /usr/lib64/libXinerama.so.1.0.0
+338fc01000-338fc02000 r--p 00001000 08:11 9439977                        /usr/lib64/libXinerama.so.1.0.0
+338fc02000-338fc03000 rw-p 00002000 08:11 9439977                        /usr/lib64/libXinerama.so.1.0.0
+338fe00000-338fe05000 r-xp 00000000 08:11 9438888                        /usr/lib64/libXxf86vm.so.1.0.0
+338fe05000-3390004000 ---p 00005000 08:11 9438888                        /usr/lib64/libXxf86vm.so.1.0.0
+3390004000-3390005000 r--p 00004000 08:11 9438888                        /usr/lib64/libXxf86vm.so.1.0.0
+3390005000-3390006000 rw-p 00005000 08:11 9438888                        /usr/lib64/libXxf86vm.so.1.0.0
+3390200000-3390204000 r-xp 00000000 08:11 9442502                        /usr/lib64/libattr.so.1.1.0
+3390204000-3390403000 ---p 00004000 08:11 9442502                        /usr/lib64/libattr.so.1.1.0
+3390403000-3390404000 r--p 00003000 08:11 9442502                        /usr/lib64/libattr.so.1.1.0
+3390404000-3390405000 rw-p 00004000 08:11 9442502                        /usr/lib64/libattr.so.1.1.0
+3390600000-3390609000 r-xp 00000000 08:11 9439998                        /usr/lib64/libXrandr.so.2.2.0
+3390609000-3390808000 ---p 00009000 08:11 9439998                        /usr/lib64/libXrandr.so.2.2.0
+3390808000-3390809000 r--p 00008000 08:11 9439998                        /usr/lib64/libXrandr.so.2.2.0
+3390809000-339080a000 rw-p 00009000 08:11 9439998                        /usr/lib64/libXrandr.so.2.2.0
+3390a00000-3390a47000 r-xp 00000000 08:11 9440002                        /usr/lib64/libdbus-1.so.3.8.12
+3390a47000-3390c47000 ---p 00047000 08:11 9440002                        /usr/lib64/libdbus-1.so.3.8.12
+3390c47000-3390c48000 r--p 00047000 08:11 9440002                        /usr/lib64/libdbus-1.so.3.8.12
+3390c48000-3390c49000 rw-p 00048000 08:11 9440002                        /usr/lib64/libdbus-1.so.3.8.12
+3390e00000-3390f5b000 r-xp 00000000 08:11 9441243                        /usr/lib64/libxml2.so.2.9.2
+3390f5b000-339115b000 ---p 0015b000 08:11 9441243                        /usr/lib64/libxml2.so.2.9.2
+339115b000-3391163000 r--p 0015b000 08:11 9441243                        /usr/lib64/libxml2.so.2.9.2
+3391163000-3391165000 rw-p 00163000 08:11 9441243                        /usr/lib64/libxml2.so.2.9.2
+3391165000-3391166000 rw-p 00000000 00:00 0 
+3391200000-3391203000 r-xp 00000000 08:11 9442323                        /usr/lib64/libcom_err.so.2.1
+3391203000-3391402000 ---p 00003000 08:11 9442323                        /usr/lib64/libcom_err.so.2.1
+3391402000-3391403000 r--p 00002000 08:11 9442323                        /usr/lib64/libcom_err.so.2.1
+3391403000-3391404000 rw-p 00003000 08:11 9442323                        /usr/lib64/libcom_err.so.2.1
+3391600000-3391605000 r-xp 00000000 08:11 9438589                        /usr/lib64/libXfixes.so.3.1.0
+3391605000-3391804000 ---p 00005000 08:11 9438589                        /usr/lib64/libXfixes.so.3.1.0
+3391804000-3391805000 r--p 00004000 08:11 9438589                        /usr/lib64/libXfixes.so.3.1.0
+3391805000-3391806000 rw-p 00005000 08:11 9438589                        /usr/lib64/libXfixes.so.3.1.0
+3391e00000-3391e0f000 r-xp 00000000 08:11 9439981                        /usr/lib64/libXi.so.6.1.0
+3391e0f000-339200e000 ---p 0000f000 08:11 9439981                        /usr/lib64/libXi.so.6.1.0
+339200e000-339200f000 r--p 0000e000 08:11 9439981                        /usr/lib64/libXi.so.6.1.0
+339200f000-3392010000 rw-p 0000f000 08:11 9439981                        /usr/lib64/libXi.so.6.1.0
+3392a00000-3392a03000 r-xp 00000000 08:11 9442318                        /usr/lib64/libkeyutils.so.1.5
+3392a03000-3392c02000 ---p 00003000 08:11 9442318                        /usr/lib64/libkeyutils.so.1.5
+3392c02000-3392c03000 r--p 00002000 08:11 9442318                        /usr/lib64/libkeyutils.so.1.5
+3392c03000-3392c04000 rw-p 00003000 08:11 9442318                        /usr/lib64/libkeyutils.so.1.5
+3392e00000-3392e04000 r-xp 00000000 08:11 9442504                        /usr/lib64/libcap.so.2.24
+3392e04000-3393003000 ---p 00004000 08:11 9442504                        /usr/lib64/libcap.so.2.24
+3393003000-3393004000 r--p 00003000 08:11 9442504                        /usr/lib64/libcap.so.2.24
+3393004000-3393005000 rw-p 00004000 08:11 9442504                        /usr/lib64/libcap.so.2.24
+3393200000-339320c000 r-xp 00000000 08:Aborted (core dumped)
+[boucaron@boucaron-i7 Téléchargements]$ gdb /usr/bin/osgviewerQt 
+GNU gdb (GDB) Fedora 7.9.1-13.fc22
+Copyright (C) 2015 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from /usr/bin/osgviewerQt...Reading symbols from /usr/bin/osgviewerQt...(no debugging symbols found)...done.
+(no debugging symbols found)...done.
+Missing separate debuginfos, use: dnf debuginfo-install OpenSceneGraph-examples-qt-3.2.1-7.fc22.x86_64
+(gdb) r
+Starting program: /usr/bin/osgviewerQt 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[New Thread 0x7fffeb2d0700 (LWP 6028)]
+[New Thread 0x7fffe92cc700 (LWP 6032)]
+[New Thread 0x7fffe9acd700 (LWP 6031)]
+[New Thread 0x7fffea2ce700 (LWP 6030)]
+[New Thread 0x7fffeaacf700 (LWP 6029)]
+
+Program received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7fffeb2d0700 (LWP 6028)]
+0x00007fffedae46fc in pushbuf_kref () from /lib64/libdrm_nouveau.so.2
+I installed also the debuginfos
+Crashing randomly or after some time, model not shown follows GDB bt
+
+
+
+[boucaron@boucaron-i7 Téléchargements]$ sudo rpm -Uvh OpenSceneGraph-debuginfo-3.2.1-7.fc22.x86_64.rpm 
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:OpenSceneGraph-debuginfo-3.2.1-7.################################# [100%]
+[boucaron@boucaron-i7 Téléchargements]$ gdb /usr/bin/osg
+Display all 162 possibilities? (y or n)
+[boucaron@boucaron-i7 Téléchargements]$ gdb /usr/bin/osgviewerQt
+GNU gdb (GDB) Fedora 7.9.1-13.fc22
+Copyright (C) 2015 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from /usr/bin/osgviewerQt...Reading symbols from /usr/lib/debug/usr/bin/osgviewerQt.debug...done.
+done.
+(gdb) r
+Starting program: /usr/bin/osgviewerQt 
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.21-5.fc22.x86_64
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[Thread 0x7ffff6592880 (LWP 6951) exited]
+[Inferior 1 (process 6951) exited normally]
+Missing separate debuginfos, use: dnf debuginfo-install adwaita-gtk2-theme-3.16.2-1.fc22.x86_64 atk-2.16.0-1.fc22.x86_64 avahi-glib-0.6.31-30.fc22.x86_64 avahi-libs-0.6.31-30.fc22.x86_64 bzip2-libs-1.0.6-14.fc22.x86_64 cairo-1.14.2-1.fc22.x86_64 dbus-glib-0.104-1.fc22.x86_64 dbus-libs-1.8.18-1.fc22.x86_64 elfutils-libelf-0.161-6.fc22.x86_64 elfutils-libs-0.161-6.fc22.x86_64 expat-2.1.0-10.fc22.x86_64 fontconfig-2.11.94-1.fc22.x86_64 freetype-2.5.5-1.fc22.x86_64 GConf2-3.2.6-11.fc22.x86_64 gdk-pixbuf2-2.31.4-1.fc22.x86_64 glib2-2.44.1-1.fc22.x86_64 gnome-vfs2-2.24.4-18.fc22.x86_64 graphite2-1.2.4-3.fc22.x86_64 gtk2-2.24.28-1.fc22.x86_64 harfbuzz-0.9.40-1.fc22.x86_64 keyutils-libs-1.5.9-4.fc22.x86_64 krb5-libs-1.13.2-3.fc22.x86_64 libattr-2.4.47-9.fc22.x86_64 libcanberra-0.30-7.fc22.x86_64 libcanberra-gtk2-0.30-7.fc22.x86_64 libcap-2.24-7.fc22.x86_64 libcom_err-1.42.12-4.fc22.x86_64 libdrm-2.4.61-3.fc22.x86_64 libedit-3.1-12.20150325cvs.fc22.x86_64 libffi-3.1-7.fc22.x86_64 libgcc-5.1.1-4.fc22.x86_64 libICE-1.0.9-2.fc22.x86_64 libicu-54.1-1.fc22.x86_64 libogg-1.3.2-2.fc22.x86_64 libpciaccess-0.13.3-0.3.fc22.x86_64 libpng-1.6.16-3.fc22.x86_64 libselinux-2.3-10.fc22.x86_64 libSM-1.2.2-2.fc22.x86_64 libstdc++-5.1.1-4.fc22.x86_64 libtdb-1.3.4-1.fc22.x86_64 libtool-ltdl-2.4.2-34.fc22.x86_64 libuuid-2.26.2-1.fc22.x86_64 libvorbis-1.3.4-3.fc22.x86_64 libwayland-client-1.7.0-1.fc22.x86_64 libwayland-server-1.7.0-1.fc22.x86_64 libX11-1.6.3-1.fc22.x86_64 libXau-1.0.8-4.fc22.x86_64 libxcb-1.11-5.fc22.x86_64 libXcomposite-0.4.4-6.fc22.x86_64 libXcursor-1.1.14-4.fc22.x86_64 libXdamage-1.1.4-6.fc22.x86_64 libXext-1.3.3-2.fc22.x86_64 libXfixes-5.0.1-4.fc22.x86_64 libXi-1.7.4-2.fc22.x86_64 libXinerama-1.1.3-4.fc22.x86_64 libxml2-2.9.2-3.fc22.x86_64 libXrandr-1.4.2-2.fc22.x86_64 libXrender-0.9.9-1.fc22.x86_64 libxshmfence-1.2-1.fc22.x86_64 libXxf86vm-1.1.4-1.fc22.x86_64 llvm-libs-3.5.0-9.fc22.x86_64 mesa-dri-drivers-10.5.4-1.20150505.fc22.x86_64 mesa-libEGL-10.5.4-1.20150505.fc22.x86_64 mesa-libgbm-10.5.4-1.20150505.fc22.x86_64 mesa-libGL-10.5.4-1.20150505.fc22.x86_64 mesa-libglapi-10.5.4-1.20150505.fc22.x86_64 ncurses-libs-5.9-18.20150214.fc22.x86_64 nss-softokn-freebl-3.19.1-1.0.fc22.x86_64 openssl-libs-1.0.1k-10.fc22.x86_64 PackageKit-gtk3-module-1.0.6-6.fc22.x86_64 pango-1.36.8-5.fc22.x86_64 pcre-8.37-1.fc22.x86_64 pixman-0.32.6-4.fc22.x86_64 qt-4.8.6-30.fc22.x86_64 qt-x11-4.8.6-30.fc22.x86_64 systemd-libs-219-18.fc22.x86_64 xz-libs-5.2.0-2.fc22.x86_64 zlib-1.2.8-7.fc22.x86_64
+(gdb) r ../Téléchargements/
+Display all 294 possibilities? (y or n)
+(gdb) r ../Téléchargements/OpenSceneGraph-Data-3.0.0/cessna.osg
+Starting program: /usr/bin/osgviewerQt ../Téléchargements/OpenSceneGraph-Data-3.0.0/cessna.osg
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[New Thread 0x7fffeb2d0700 (LWP 6973)]
+[New Thread 0x7fffe92cc700 (LWP 6977)]
+[New Thread 0x7fffe9acd700 (LWP 6976)]
+[New Thread 0x7fffea2ce700 (LWP 6975)]
+[New Thread 0x7fffeaacf700 (LWP 6974)]
+
+Program received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7fffeb2d0700 (LWP 6973)]
+0x00007fffedae46fc in pushbuf_kref () from /lib64/libdrm_nouveau.so.2
+(gdb) bt
+#0  0x00007fffedae46fc in pushbuf_kref () at /lib64/libdrm_nouveau.so.2
+#1  0x00007fffedae4db9 in pushbuf_validate () at /lib64/libdrm_nouveau.so.2
+#2  0x00007fffee19a3d8 in nv50_state_validate () at /usr/lib64/dri/nouveau_dri.so
+#3  0x00007fffee19c36a in nv50_clear () at /usr/lib64/dri/nouveau_dri.so
+#4  0x00007fffeded3efd in st_Clear () at /usr/lib64/dri/nouveau_dri.so
+#5  0x00007ffff6dd5302 in osgUtil::RenderStage::drawImplementation(osg::RenderInfo&, osgUtil::RenderLeaf*&) (this=0x8cac50, renderInfo=..., previous=@0x7fffeb2cfb30: 0x0) at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osgUtil/RenderStage.cpp:1372
+#6  0x00007ffff6dd4192 in osgUtil::RenderStage::drawInner(osg::RenderInfo&, osgUtil::RenderLeaf*&, bool&) (this=0x8cac50, renderInfo=..., previous=@0x7fffeb2cfb30: 0x0, doCopyTexture=@0x7fffeb2cfa9d: false)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osgUtil/RenderStage.cpp:930
+#7  0x00007ffff6dd60cf in osgUtil::RenderStage::draw(osg::RenderInfo&, osgUtil::RenderLeaf*&) (this=0x8cac50, renderInfo=..., previous=@0x7fffeb2cfb30: 0x0) at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osgUtil/RenderStage.cpp:1237
+#8  0x00007ffff6dde0a1 in osgUtil::SceneView::draw() (this=0x8c7dd0)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osgUtil/SceneView.cpp:1383
+#9  0x00007ffff78c47f7 in osgViewer::Renderer::cull_draw() (this=<optimized out>)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osgViewer/Renderer.cpp:864
+#10 0x00007ffff691dc09 in osg::GraphicsContext::runOperations() (this=0x83cb20)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osg/GraphicsContext.cpp:778
+#11 0x00007ffff696db0f in osg::OperationThread::run() (this=this@entry=0xabce30)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osg/OperationThread.cpp:426
+#12 0x00007ffff691f808 in osg::GraphicsThread::run() (this=0xabce30)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osg/GraphicsThread.cpp:38
+#13 0x00007ffff65adb0e in OpenThreads::ThreadPrivateActions::StartThread(void*) (data=0xabce48)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/OpenThreads/pthreads/PThread.cpp:204
+#14 0x0000003389207555 in start_thread () at /lib64/libpthread.so.0
+#15 0x0000003388f01f3d in clone () at /lib64/libc.so.6
+Something else, for the GLUT viewer the segfault comes from here
+
+
+[boucaron@boucaron-i7 Téléchargements]$ gdb /usr/bin/osgviewerGLUT 
+GNU gdb (GDB) Fedora 7.9.1-13.fc22
+Copyright (C) 2015 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from /usr/bin/osgviewerGLUT...Reading symbols from /usr/lib/debug/usr/bin/osgviewerGLUT.debug...done.
+done.
+(gdb) r ../Téléchargements/OpenSceneGraph-Data-3.0.0/cessna.osg
+Starting program: /usr/bin/osgviewerGLUT ../Téléchargements/OpenSceneGraph-Data-3.0.0/cessna.osg
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.21-5.fc22.x86_64
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+osg::GLBufferObjectManager::deleteAllGLBufferObjects (this=0x632940)
+    at /usr/src/debug/OpenSceneGraph-3.2.1/OpenSceneGraph-3.2.1/src/osg/BufferObject.cpp:1111
+1111	        (*itr).second->deleteAllGLBufferObjects();
+Missing separate debuginfos, use: dnf debuginfo-install bzip2-libs-1.0.6-14.fc22.x86_64 elfutils-libelf-0.161-6.fc22.x86_64 elfutils-libs-0.161-6.fc22.x86_64 expat-2.1.0-10.fc22.x86_64 freeglut-2.8.1-5.fc22.x86_64 libattr-2.4.47-9.fc22.x86_64 libcap-2.24-7.fc22.x86_64 libdrm-2.4.61-3.fc22.x86_64 libedit-3.1-12.20150325cvs.fc22.x86_64 libffi-3.1-7.fc22.x86_64 libgcc-5.1.1-4.fc22.x86_64 libpciaccess-0.13.3-0.3.fc22.x86_64 libselinux-2.3-10.fc22.x86_64 libstdc++-5.1.1-4.fc22.x86_64 libX11-1.6.3-1.fc22.x86_64 libXau-1.0.8-4.fc22.x86_64 libxcb-1.11-5.fc22.x86_64 libXdamage-1.1.4-6.fc22.x86_64 libXext-1.3.3-2.fc22.x86_64 libXfixes-5.0.1-4.fc22.x86_64 libXi-1.7.4-2.fc22.x86_64 libXrandr-1.4.2-2.fc22.x86_64 libXrender-0.9.9-1.fc22.x86_64 libxshmfence-1.2-1.fc22.x86_64 libXxf86vm-1.1.4-1.fc22.x86_64 llvm-libs-3.5.0-9.fc22.x86_64 mesa-dri-drivers-10.5.4-1.20150505.fc22.x86_64 mesa-libGL-10.5.4-1.20150505.fc22.x86_64 mesa-libglapi-10.5.4-1.20150505.fc22.x86_64 ncurses-libs-5.9-18.20150214.fc22.x86_64 pcre-8.37-1.fc22.x86_64 systemd-libs-219-18.fc22.x86_64 xz-libs-5.2.0-2.fc22.x86_64 zlib-1.2.8-7.fc22.x86_64
+(gdb) 
+(gdb) p itr
+$1 = Cannot access memory at address 0x20
+Well, now I am clueless.
+
+As I said, I can deterministically reproduce your original problem on 2 fc22/x86_64 machines with *-4, but I can not reproduce this issue with *-7 on fc22/x86_64.
+
+I have also seen the GLUT-segfault when testing 0SG-3.2.2-rc2, but I do not see it with OSG-3.2.1. Are you sure all of your OSG packages originate from Fedora and you don't have locally installed packages or packages from other origins installed?
+
+Side note: The 2 machines, I can reproduce your original problem use intel-graphics. I can not reproduce it on a 3rd machine, which is using NVidia-Graphic (An old GeForce 8600 GT w/ x11-drv-nvidia-340xx).
+Hi, for the OSG I installed the list of rpm this morning.
+The 3.2.2-rc2 is an other directory, no LD_LIBRARY_PATH set.
+
+[boucaron@boucaron-i7 Téléchargements]$ set | grep LD
+OLDPWD=/home/boucaron/BACKUP/ASUS/PROJECTS/3dpsl/tools
+[boucaron@boucaron-i7 Téléchargements]$ ls -tlr ~/osg-3.2.2-rc2/
+total 16
+drwxrwxr-x. 20 boucaron boucaron 4096 Jun 23 20:16 include
+drwxrwxr-x.  4 boucaron boucaron 4096 Jun 23 21:04 lib64
+drwxrwxr-x.  3 boucaron boucaron 4096 Jun 23 21:04 share
+drwxrwxr-x.  2 boucaron boucaron 4096 Jun 23 21:04 bin
+[boucaron@boucaron-i7 Téléchargements]$ ls -ltr /usr/bin/osgviewer*
+-rwxr-xr-x. 1 root root 466640 Jun 25 01:32 /usr/bin/osgviewerWX
+-rwxr-xr-x. 1 root root 149096 Jun 25 01:32 /usr/bin/osgviewerSDL
+-rwxr-xr-x. 1 root root 273000 Jun 25 01:32 /usr/bin/osgviewerQt
+-rwxr-xr-x. 1 root root 148104 Jun 25 01:32 /usr/bin/osgviewerGLUT
+-rwxr-xr-x. 1 root root 194160 Jun 25 01:32 /usr/bin/osgviewer
+
+I have a 8800 GT with nouveau driver, I can try with nvidia-340xx if you want
+OpenSceneGraph-3.2.1-7.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/OpenSceneGraph-3.2.1-7.fc21
+Package OpenSceneGraph-3.2.1-7.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing OpenSceneGraph-3.2.1-7.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10768/OpenSceneGraph-3.2.1-7.fc22
+then log in and leave karma (feedback).
+No display with unstable OSG 3.3.8 with Qt5
+It crashes if using any flag not of single thread kind see osviewerQt sources
+OpenSceneGraph-3.2.1-7.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.
+OpenSceneGraph-3.2.1-7.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

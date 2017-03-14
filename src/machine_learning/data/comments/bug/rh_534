@@ -1,0 +1,31 @@
+Latest upstream release: v0.15.2
+Current version/release in rawhide: 0.14-7.de2653d.fc23
+URL: https://github.com/scanmem/scanmem
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+spectool was unable to grab new sources
+
+old source: scanmem-0.14-de2653d.tar.gz
+old sha256: 48a276ce5d51f86fd4179efd855e2c8620db4b690e295c8c8bead32f877cfc6e
+
+new source: ./scanmem-v0.15.2-de2653d.tar.gz
+new sha256: 48a276ce5d51f86fd4179efd855e2c8620db4b690e295c8c8bead32f877cfc6e
+scanmem-0.15.2-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/scanmem-0.15.2-1.fc22
+Package scanmem-0.15.2-1.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing scanmem-0.15.2-1.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10686/scanmem-0.15.2-1.fc22
+then log in and leave karma (feedback).
+scanmem-0.15.2-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

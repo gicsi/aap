@@ -1,0 +1,20 @@
+Description of problem:
+when you search the history, you can see the timestamp of the action, the action itself and the number of packages included in the transaction. However, you have no information about it. What was the original command, or why you installed that package. 
+
+For example, it would be great to use dnf history list and have a list like the following:
+
+ID     | Description          | Date a           | Action  | Altere  | User 
+-------------------------------------------------------------------------------
+...
+4001   | Change Control #1233 | 2014-06-24 09:01 | Install |    8  < | Me
+4000   | Install oVirt        | 2014-06-24 09:01 | Install |    8  < | Me
+...
+
+That could be implemented with a "--description" directive in the dnf [install
+erase] action, like for example:
+
+dnf install oVirt --description "Install oVirt"
+dnf install package123 --description "Change Control #1233"
+I believe this is a duplicate. Now you are the second person requesting this feature. It could be handy in layered images too, to see what packages were installed in which image from running container. Maybe you want a little more helpful output of history list too (bug 1218401).
+
+*** This bug has been marked as a duplicate of bug 1192684 ***

@@ -1,0 +1,45 @@
+Apply by doing:
+	cd /etc
+	patch -p0 < 008_rc.patch
+
+And things should be much happier on the next reboot.
+
+Index: rc
+===================================================================
+RCS file: /cvs/src/etc/rc,v
+retrieving revision 1.95
+diff -u -r1.95 rc
+--- rc	1998/12/28 06:58:30	1.95
++++ rc	1999/08/05 08:12:29
+@@ -263,7 +263,7 @@
+ # (not needed with mfs /tmp, but doesn't hurt there...)
+ (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
+     find . ! -name . ! -name lost+found ! -name quota.user \
+-	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
++	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
+ 
+ if [ -f /etc/sysctl.conf ]; then
+ (
+@@ -286,13 +286,14 @@
+ if [ ! -f /etc/motd ]; then
+ 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
+ fi
+-T=/tmp/_motd
+-rm -f $T
+-sysctl -n kern.version | sed 1q > $T
+-echo "" >> $T
+-sed '1,/^$/d' < /etc/motd >> $T
+-cmp -s $T /etc/motd || cp $T /etc/motd
+-rm -f $T
++T=`mktemp /tmp/_motd.XXXXXXXXXX` 
++if [ $? -eq 0 ]; then
++	sysctl -n kern.version | sed 1q > $T
++	echo "" >> $T
++	sed '1,/^$/d' < /etc/motd >> $T
++	cmp -s $T /etc/motd || cp $T /etc/motd
++	rm -f $T
++fi
+ 
+ # nvi file recovery
+ if [ ! -d /var/tmp/vi.recover ]; then
+

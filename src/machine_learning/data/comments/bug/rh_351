@@ -1,0 +1,19 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-Proc-Terminator/perl-Proc-Terminator.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-Proc-Terminator/perl-Proc-Terminator-0.05-1.fc23.src.rpm
+Description:
+Proc::Terminator provides a convenient way to kill a process, often useful
+in utility and startup functions which need to ensure the death of an
+external process.
+
+Fedora Account System Username: jplesnik@redhat.com
+Okay, all looks good here.  Approving.
+New Package SCM Request
+=======================
+Package Name: perl-Proc-Terminator
+Short Description: Conveniently terminate processes
+Upstream URL: http://search.cpan.org/dist/Proc-Terminator/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

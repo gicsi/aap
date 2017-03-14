@@ -1,0 +1,59 @@
+Description of problem:
+My first Problem was: I can't start (no more) my VM via KVM (virt-manager)
+I search arround, found a HowTo on fedoraprojekt. I install "yum install @virtualization" and reboot
+caja and also mate-notification hangs - my Menue in Mate Desktop hangs
+a new reboot (hard reset!) and after the hard reset ABRT came up 
+
+Version-Release number of selected component:
+mate-notification-daemon-1.10.0-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/mate-notification-daemon
+crash_function: _g_log_abort
+executable:     /usr/libexec/mate-notification-daemon
+global_pid:     2222
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 _g_log_abort at gmessages.c:315
+ #3 dconf_shm_open at dconf-shm.c:87
+ #4 dconf_engine_source_user_reopen at dconf-engine-source-user.c:76
+ #5 dconf_engine_source_refresh at dconf-engine-source.c:57
+ #6 dconf_engine_acquire_sources at dconf-engine.c:203
+ #7 dconf_engine_get_state at dconf-engine.c:314
+ #8 dconf_engine_watch_fast at dconf-engine.c:815
+ #9 g_settings_read_from_backend at gsettings.c:1096
+ #10 g_settings_get_value at gsettings.c:1144
+ #11 g_settings_get_string at gsettings.c:1730
+Created attachment 1041733
+File: backtrace
+Created attachment 1041734
+File: cgroup
+Created attachment 1041735
+File: core_backtrace
+Created attachment 1041736
+File: dso_list
+Created attachment 1041737
+File: environ
+Created attachment 1041738
+File: limits
+Created attachment 1041739
+File: maps
+Created attachment 1041740
+File: mountinfo
+Created attachment 1041741
+File: namespaces
+Created attachment 1041742
+File: open_fds
+Created attachment 1041743
+File: proc_pid_status
+msg = 0x758a90 "unable to create file '/run/user/1000/dconf/user': Keine Berechtigung.  dconf will not work properly."
+        msg_alloc = 0x758a90 "unable to create file '/run/user/1000/dconf/user': Keine Berechtigung.  dconf will not work properly."
+
+*** This bug has been marked as a duplicate of bug 753882 ***

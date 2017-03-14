@@ -1,0 +1,3 @@
+Some machines locked up while trying to use the mouse in console mode. This patch solves that problem.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/i386/015_pms.patch">
+A source code patch exists which remedies this problem.</a>

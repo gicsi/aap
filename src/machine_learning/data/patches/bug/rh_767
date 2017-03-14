@@ -1,0 +1,36 @@
+From fb36ea6e41d7928e90981b1147df946a49d1bf93 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 19 Jun 2015 01:22:03 +0000
+Subject: [PATCH] Update to 2.7 (#1233455)
+
+---
+ abcde.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/abcde.spec b/abcde.spec
+index 550f7c0..376beac 100644
+--- a/abcde.spec
++++ b/abcde.spec
+@@ -1,6 +1,6 @@
+ Name:           abcde
+-Version:        2.6
+-Release:        2%{?dist}
++Version:        2.7
++Release:        1%{?dist}
+ Summary:        A Better CD Encoder
+ 
+ # Public domain after 2010-01-01, see comments in abcde and cddb-tool
+@@ -59,6 +59,9 @@ rm $RPM_BUILD_ROOT%{_bindir}/abcde-musicbrainz-tool # optional, some deps N/A
+ 
+ 
+ %changelog
++* Fri Jun 19 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.7-1
++- Update to 2.7 (#1233455)
++
+ * Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

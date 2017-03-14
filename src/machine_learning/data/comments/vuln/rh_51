@@ -1,0 +1,91 @@
+Description of problem:
+
+glusterfs-server-3.7.1-<>.el7rhgs should have a dependency >= selinux-policy-3.13.1-23.el7_1.8.noarch and selinux-policy-targeted-3.13.1-23.el7_1.8.noarch to make sure that all the latest gluster related SELinux policy fixes are available in the system before the users start using glusterfs in Enforcing mode of SELinux.
+
+Version-Release number of selected component (if applicable):
+glusterfs-server-3.7.1-6.el7rhgs.x86_64
+selinux-policy-3.13.1-23.el7_1.8.noarch
+selinux-policy-targeted-3.13.1-23.el7_1.8.noarch
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. # yum install glusterfs-server
+2.
+3.
+
+Actual results: glusterfs-server is currently not having any dependency on selinux-policy to ensure that a RHGS-3.1 system has all the required gluster SELinux policies. This might end up in SELinux related issues later in customer environments if they haven't updated the selinux-policy\* to the latest in their system which has all the fixes required for the proper functioning of glusterfs.
+
+
+Expected results: The objective of this dependency on SELinux is to make sure that all the gluster related SELinux fixes are present in the RHGS-3.1 system before using glusterfs.
+
+
+Additional info: Brew build: https://brewweb.devel.redhat.com/buildinfo?buildID=441837
+I think a dependency on selinux-policy package is enough. It should pull in the selinux-policy-targeted package as dependency. Can you check this out ?
+(In reply to Rejy M Cyriac from comment #1)
+> I think a dependency on selinux-policy package is enough. It should pull in
+> the selinux-policy-targeted package as dependency. Can you check this out ?
+
+In fact, it's the other way. 'selinux-policy-targeted' pulls in 'selinux-policy'. See below:
+
+#########
+# yum install selinux-policy-targeted
+Loaded plugins: product-id, rhnplugin, security, subscription-manager
+This system is receiving updates from RHN Classic or RHN Satellite.
+Setting up Install Process
+Resolving Dependencies
+--> Running transaction check
+---> Package selinux-policy-targeted.noarch 0:3.7.19-279.el6 will be installed
+--> Processing Dependency: selinux-policy = 3.7.19-279.el6 for package: selinux-policy-targeted-3.7.19-279.el6.noarch
+--> Processing Dependency: selinux-policy = 3.7.19-279.el6 for package: selinux-policy-targeted-3.7.19-279.el6.noarch
+--> Running transaction check
+---> Package selinux-policy.noarch 0:3.7.19-279.el6 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==============================================================================================================================================================================================
+ Package                                             Arch                               Version                                       Repository                                         Size
+==============================================================================================================================================================================================
+Installing:
+ selinux-policy-targeted                             noarch                             3.7.19-279.el6                                RHEL_Guest-6.7-Puddle                             3.1 M
+Installing for dependencies:
+ selinux-policy                                      noarch                             3.7.19-279.el6                                RHEL_Guest-6.7-Puddle                             881 k
+
+Transaction Summary
+==============================================================================================================================================================================================
+Install       2 Package(s)
+
+Total download size: 3.9 M
+Installed size: 13 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/2): selinux-policy-3.7.19-279.el6.noarch.rpm                                                                                                                        | 881 kB     00:00     
+(2/2): selinux-policy-targeted-3.7.19-279.el6.noarch.rpm                                                                                                               | 3.1 MB     00:05     
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#########
+Adding a dependency on selinux-policy-targeted does not like the right approach to me. After talking to Prasanth, it was assumed that this would solve problems like this:
+
+ - some package from RHGS gets updates
+ - said package has a %post script that modifies a new selinux boolean
+   - the new selinux boolean is not available yet, setting it fails
+ - selinux-policy-targeted gets updated, new boolean is made available
+
+
+I am not sure if it is common practise to change an selinux boolean in a %post script of an RPM package. It is not something I have seen getting done before. I would assume that there is a cleaner way of doing this, maybe by providing some selinux policy module that overloads the default boolean values. This is something selinux developers should be able to assist with.
+
+For the immediate need of fixing the sketched problem, a dependency in the package(s) that modifies selinux booleans in %post is needed. The only (ugly) way to do this that I know of, is by adding a dependency like this:
+
+   Requires(post): selinux-policy-targeted >= 3.7.19-279
+
+The (post) after the Requires indicates that %post script. In case the package modifies a selinux boolean in %pre, the format would be like "Requires(pre)". This needs some testing, a versioned dependency like this is not very common.
+patch is under review https://code.engineering.redhat.com/gerrit/52096
+Prasanth, do you know what the plan is with this? Should I close this bug and do you open separate bugs for each of the packages that modify SElinux booleans in rpm scriptlets?
+RCM gave a similar response in https://bugzilla.redhat.com/show_bug.cgi?id=1237065#c5
+(In reply to Niels de Vos from comment #7)
+> Prasanth, do you know what the plan is with this? Should I close this bug
+> and do you open separate bugs for each of the packages that modify SElinux
+> booleans in rpm scriptlets?
+
+Niels, as discussed in today's meeting, we all agreed to a common solution which is to create a dependency in the package(s) that modifies selinux booleans, instead of creating a dependency for glusterfs-server on selinux-policy. So based on that, i'm closing this bZ for now and will open new BZ's for different components that needs this fix.

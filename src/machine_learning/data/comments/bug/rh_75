@@ -1,0 +1,23 @@
+Description of problem:
+Currently the firefox srpm bundles a source rpm for GCC so that it can build a sufficiently modern compiler for the latest firefox.  This process could be replaced via use of the devtoolset-3 compiler.
+
+Version-Release number of selected component (if applicable):
+firefox-38.1.0-1.el6_6.src.rpm
+
+How reproducible:100%
+
+
+Steps to Reproduce:
+1.recompile firefox source
+2.watch it build gcc
+3.watch it build python2.7
+
+Actual results:
+builds compiler and interpreter already packed by RH
+
+Expected results:
+scl enable devtoolset-3 python27
+
+Additional info:
+The python27 software collection can supplant the python build as well.
+Devtoolset miss support for second arches (ppc, s390) so we can't use it.

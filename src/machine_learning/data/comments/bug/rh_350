@@ -1,0 +1,35 @@
+When discovering nodes via CLI: `instack-ironic-deployment --nodes-json nodes.json --discover-nodes` containing a lot of information, there are Errors
+
+[stack@gklab-17-081 ~]$ instack-ironic-deployment --nodes-json nodes.json --discover-nodes                                                                                                                                                                                     
+Preparing for deployment...
+  Discovering nodes.
+    Sending node ID c97ac648-3544-40e0-978b-7f73291e6e94 to discoverd for discovery ... DONE.
+    Sending node ID d07f8502-cd52-4500-9f62-95b83993b389 to discoverd for discovery ... DONE.
+    Sending node ID 38614558-f9de-46ca-a32c-5d0b5f432956 to discoverd for discovery ... DONE.
+    Sending node ID 485f0d1d-d3cc-4ece-955d-fc938cece419 to discoverd for discovery ... DONE.
+    Sending node ID c501dbac-a9d1-4459-87ed-1d12d8dc8284 to discoverd for discovery ... DONE.
+    Sending node ID d9505a57-beb3-4f51-b798-a655b5d6c17f to discoverd for discovery ... DONE.
+    Sending node ID 366ae640-f55f-4b21-9778-2e1cdff1504a to discoverd for discovery ... DONE.
+    Sending node ID 19d20f51-391d-471d-ba1b-1d59d5957237 to discoverd for discovery ... DONE.
+    Sending node ID af8c3b55-e0fb-4f39-958d-c616b74b8273 to discoverd for discovery ... DONE.
+   Polling discoverd for discovery results ... 
+       Result for node c97ac648-3544-40e0-978b-7f73291e6e94 is ... DISCOVERED.
+       Result for node d07f8502-cd52-4500-9f62-95b83993b389 is ... DISCOVERED.
+       Result for node 38614558-f9de-46ca-a32c-5d0b5f432956 is ... DISCOVERED.
+       Result for node 485f0d1d-d3cc-4ece-955d-fc938cece419 is ... ERROR: Unexpected exception during processing
+       Result for node c501dbac-a9d1-4459-87ed-1d12d8dc8284 is ... ERROR: Unexpected exception during processing
+       Result for node d9505a57-beb3-4f51-b798-a655b5d6c17f is ... ERROR: Unexpected exception during processing
+       Result for node 366ae640-f55f-4b21-9778-2e1cdff1504a is ... DISCOVERED.
+       Result for node 19d20f51-391d-471d-ba1b-1d59d5957237 is ... DISCOVERED.
+       Result for node af8c3b55-e0fb-4f39-958d-c616b74b8273 is ... DISCOVERED.
+
+Prepared.
+
+
+This is already fixed upstream but not included in current release: https://review.openstack.org/#/c/189427/
+
+OSP7 RC2, OSP Director Beta1
+
+How reproducible:
+100%
+*** This bug has been marked as a duplicate of bug 1227755 ***

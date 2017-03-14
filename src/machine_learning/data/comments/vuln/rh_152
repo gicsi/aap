@@ -1,0 +1,31 @@
+Description of problem:
+Instack-deploy-overcloud isn't using the OVERCLOUD_EXTRA environment variable setting as part of its final heat-stack-create command, so we are unable to pass in values for additional parameters. 
+
+Version-Release number of selected component (if applicable):
+OSP-D Beta 1
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Create a neutron_env.yaml file with a value for a parameter to be set.  
+2. Run- `export OVERCLOUD_EXTRA="-e /home/stack/neutron_env.yaml $OVERCLOUD_EXTRA"` or `export OVERCLOUD_EXTRA="$OVERCLOUD_EXTRA -e /home/stack/neutron_env.yaml "` 
+3. Run instack-deploy-overcloud
+
+Actual results:
+The OVERCLOUD_EXTRA file doesn't appear on the heat-stack-create command line and the passed in value for the parameter isn't set in the final deployment.
+
+Expected results:
+Heat-stack-create should include the OVERCLOUD_EXTRA file and the parameter should be properly set in the deployment.
+
+Additional info:
+N/A
+I think this needs to be a CLI command and is related to bug 1235000 which changes how the extra config stuff works.  
+
+@trown:  any thoughts?
+Yes, instack-deploy-overcloud is deprecated at this point. The way this will work with the unified cli, using the given example, is:
+
+openstack overcloud deploy --use-tripleo-heat-templates -e /home/stack/neutron_env.yaml
+
+This functionality has not yet made it to the beta yet though.
+The documentation for beta 2 should contain the right steps to follow.  If not, please re-open

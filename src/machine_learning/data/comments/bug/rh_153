@@ -1,0 +1,14 @@
+Your package kdepim3 failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10100969
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047205
+build.log
+Created attachment 1047206
+root.log
+Created attachment 1047207
+state.log
+%changelog
+* Mon Jul 06 2015 Rex Dieter <rdieter@fedoraproject.org> 3.5.10-16
+- kdepim3 FTBFS (#1239630)

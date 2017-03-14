@@ -1,0 +1,127 @@
+There is an unexploitable buffer overflow in sendmail's test mode (-bt).
+This patch also allows one to cause sendmail to drop privileges by
+defining _FFR_TESTMODE_DROP_PRIVS in the Makefile.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 029_sendmail.patch
+
+And then rebuild and install sendmail:
+	cd gnu/usr.sbin/sendmail
+	make depend
+	make
+	make install
+
+Index: gnu/usr.sbin/sendmail/sendmail/macro.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/macro.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- gnu/usr.sbin/sendmail/sendmail/macro.c	2000/04/02 19:05:45	1.1.1.1
++++ gnu/usr.sbin/sendmail/sendmail/macro.c	2000/10/09 23:45:01	1.2
+@@ -377,7 +377,7 @@
+ 			*ep = p + 1;
+ 		if (tTd(35, 14))
+ 			dprintf("%c\n", *p);
+-		return *p;
++		return ((unsigned int)*p) & 0xff;
+ 	}
+ 	bp = mbuf;
+ 	while (*++p != '\0' && *p != '}' && bp < &mbuf[sizeof mbuf - 1])
+@@ -401,7 +401,7 @@
+ 	else if (mbuf[1] == '\0')
+ 	{
+ 		/* ${x} == $x */
+-		mid = mbuf[0];
++		mid = ((unsigned int)mbuf[0]) & 0xff;
+ 		p++;
+ 	}
+ 	else
+@@ -428,6 +428,11 @@
+ 	}
+ 	if (ep != NULL)
+ 		*ep = p;
++	if (mid < 0 || mid > MAXMACROID)
++	{
++		syserr("Unable to assign macro/class ID (mid = 0x%x)", mid);
++		mid = 0;
++	}
+ 	if (tTd(35, 14))
+ 		dprintf("0x%x\n", mid);
+ 	return mid;
+Index: gnu/usr.sbin/sendmail/sendmail/main.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/main.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -u -r1.2 -r1.3
+--- gnu/usr.sbin/sendmail/sendmail/main.c	2000/04/07 19:20:41	1.2
++++ gnu/usr.sbin/sendmail/sendmail/main.c	2000/10/09 23:45:01	1.3
+@@ -1517,6 +1517,15 @@
+ 	{
+ 		char buf[MAXLINE];
+ 
++#if _FFR_TESTMODE_DROP_PRIVS
++		dp = drop_privileges(TRUE);
++		if (dp != EX_OK)
++		{
++			CurEnv->e_id = NULL;
++			finis(TRUE, dp);
++		}
++#endif /* _FFR_TESTMODE_DROP_PRIVS */
++
+ 		if (isatty(fileno(stdin)))
+ 			Verbose = 2;
+ 
+Index: gnu/usr.sbin/sendmail/sendmail/readcf.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/readcf.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -u -r1.2 -r1.3
+--- gnu/usr.sbin/sendmail/sendmail/readcf.c	2000/04/07 19:20:43	1.2
++++ gnu/usr.sbin/sendmail/sendmail/readcf.c	2000/10/09 23:45:01	1.3
+@@ -2985,7 +2985,7 @@
+ 			dprintf("setclass(%s, %s)\n", macname(class), str);
+ 
+ 		s = stab(str, ST_CLASS, ST_ENTER);
+-		setbitn(class, s->s_class);
++		setbitn(((unsigned int)class) & 0xff, s->s_class);
+ 	}
+ }
+ /*
+Index: gnu/usr.sbin/sendmail/sendmail/stab.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/stab.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -u -r1.1.1.1 -r1.2
+--- gnu/usr.sbin/sendmail/sendmail/stab.c	2000/04/02 19:05:48	1.1.1.1
++++ gnu/usr.sbin/sendmail/sendmail/stab.c	2000/10/09 23:45:01	1.2
+@@ -306,6 +306,7 @@
+ 	register STAB **shead;
+ 	register STAB *s;
+ 
++	dst = ((unsigned int)dst) & 0xff;
+ 	for (shead = SymTab; shead < &SymTab[STABSIZE]; shead++)
+ 	{
+ 		for (s = *shead; s != NULL; s = s->s_next)
+Index: gnu/usr.sbin/sendmail/sendmail/Makefile
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/Makefile,v
+retrieving revision 1.6
+diff -u -r1.6 Makefile
+--- gnu/usr.sbin/sendmail/sendmail/Makefile	2000/04/06 15:45:44	1.6
++++ gnu/usr.sbin/sendmail/sendmail/Makefile	2000/10/09 23:51:01
+@@ -5,6 +5,9 @@
+ WANT_LIBWRAP=1
+ WANT_LIBSMUTIL=1
+ 
++# To casue sendmail to drop privs in test mode (-bt) uncomment the following
++#ENVDEF+= -D_FFR_TESTMODE_DROP_PRIVS
++
+ SRCS=	main.c alias.c arpadate.c bf_torek.c clock.c collect.c \
+ 	conf.c control.c convtime.c daemon.c deliver.c domain.c \
+ 	envelope.c err.c headers.c macro.c map.c mci.c milter.c \
+

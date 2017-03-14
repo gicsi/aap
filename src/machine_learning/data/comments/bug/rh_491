@@ -1,0 +1,6 @@
+Using dnf in Fedora 22, it appears that "dnf repoquery --help" is producing the same output as "dnf --help". I checked a couple of other subcommands which exhibited the same behaviour.
+
+The online docs at https://dnf-plugins-core.readthedocs.org/en/latest/repoquery.html are great (thank you!), but would it be feasible to also make at least a summary of the options available via the CLI?
+Hello, this is a duplicate of the bug 1158548.
+
+*** This bug has been marked as a duplicate of bug 1158548 ***

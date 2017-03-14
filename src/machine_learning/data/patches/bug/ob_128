@@ -1,0 +1,31 @@
+Add sanity checking on inner IP header for IP-in-IP encapsulation that
+could cause crashes for systems with IP-in-IP protocol enabled
+(sysctl -w net.inet.ipip.allow=1)
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_ipip.patch
+And then rebuild your kernel.
+
+Index: sys/netinet/ip_ipip.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_ipip.c,v
+retrieving revision 1.21
+diff -u -u -r1.21 ip_ipip.c
+--- sys/netinet/ip_ipip.c	2001/08/19 06:31:56	1.21
++++ sys/netinet/ip_ipip.c	2001/12/13 19:18:13
+@@ -208,6 +208,13 @@
+ 	/* Remove outer IP header */
+ 	m_adj(m, iphlen);
+ 
++	/* Sanity check */
++	if (m->m_pkthdr.len < sizeof(struct ip))  {
++		ipipstat.ipips_hdrops++;
++		m_freem(m);
++		return;
++	}
++
+ 	m_copydata(m, 0, 1, &v);
+ 
+ 	switch (v >> 4) {
+

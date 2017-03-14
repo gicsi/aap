@@ -1,0 +1,544 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_procfs.patch
+
+And then rebuild your kernel.
+
+Index: sys/miscfs/procfs/procfs_status.c
+===================================================================
+RCS file: /cvs/src/sys/miscfs/procfs/procfs_status.c,v
+retrieving revision 1.3
+retrieving revision 1.4
+diff -u -r1.3 -r1.4
+--- sys/miscfs/procfs/procfs_status.c	1997/12/30 01:33:14	1.3
++++ sys/miscfs/procfs/procfs_status.c	2000/12/18 18:44:28	1.4
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: procfs_status.c,v 1.3 1997/12/30 01:33:14 deraadt Exp $	*/
++/*	$OpenBSD: procfs_status.c,v 1.4 2000/12/18 18:44:28 provos Exp $	*/
+ /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
+ 
+ /*
+@@ -44,6 +44,7 @@
+ #include <sys/systm.h>
+ #include <sys/time.h>
+ #include <sys/kernel.h>
++#include <sys/malloc.h>
+ #include <sys/proc.h>
+ #include <sys/vnode.h>
+ #include <sys/ioctl.h>
+@@ -52,95 +53,133 @@
+ #include <sys/resourcevar.h>
+ #include <miscfs/procfs/procfs.h>
+ 
++int	procfs_stat_gen(struct proc *, char *s, int);
++
++#define COUNTORCAT(s, l, ps, n)	do { \
++					if (s) \
++						strlcat(s, ps, l); \
++					else \
++						n += strlen(ps); \
++				} while (0)
++
++/* Generates:
++ *  comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups
++ */
+ int
+-procfs_dostatus(curp, p, pfs, uio)
+-	struct proc *curp;
++procfs_stat_gen(p, s, l)
+ 	struct proc *p;
+-	struct pfsnode *pfs;
+-	struct uio *uio;
++	char *s;
++	int l;
+ {
+ 	struct session *sess;
+ 	struct tty *tp;
+ 	struct ucred *cr;
+-	char *ps;
+-	char *sep;
+ 	int pid, ppid, pgid, sid;
+-	int i;
+-	int xlen;
+-	int error;
+-	char psbuf[256];		/* XXX - conservative */
++	struct timeval ut, st;
++	char ps[256], *sep;
++	int i, n;
+ 
+-	if (uio->uio_rw != UIO_READ)
+-		return (EOPNOTSUPP);
+-
+ 	pid = p->p_pid;
+ 	ppid = p->p_pptr ? p->p_pptr->p_pid : 0;
+ 	pgid = p->p_pgrp->pg_id;
+ 	sess = p->p_pgrp->pg_session;
+ 	sid = sess->s_leader ? sess->s_leader->p_pid : 0;
+ 
+-/* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups ... */
++	n = 0;
++	if (s)
++		bzero(s, l);
+ 
+-	ps = psbuf;
+-	bcopy(p->p_comm, ps, MAXCOMLEN);
++	bcopy(p->p_comm, ps, MAXCOMLEN-1);
+ 	ps[MAXCOMLEN] = '\0';
+-	ps += strlen(ps);
+-	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
++	COUNTORCAT(s, l, ps, n);
+ 
++	(void) snprintf(ps, sizeof(ps), " %d %d %d %d ",
++	    pid, ppid, pgid, sid);
++	COUNTORCAT(s, l, ps, n);
++
+ 	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
+-		ps += sprintf(ps, "%d,%d ", major(tp->t_dev), minor(tp->t_dev));
++		snprintf(ps, sizeof(ps), "%d,%d ",
++		    major(tp->t_dev), minor(tp->t_dev));
+ 	else
+-		ps += sprintf(ps, "%d,%d ", -1, -1);
++		snprintf(ps, sizeof(ps), "%d,%d ",
++		    -1, -1);
++	COUNTORCAT(s, l, ps, n);
+ 
+ 	sep = "";
+ 	if (sess->s_ttyvp) {
+-		ps += sprintf(ps, "%sctty", sep);
++		snprintf(ps, sizeof(ps), "%sctty", sep);
+ 		sep = ",";
+ 	}
++	COUNTORCAT(s, l, ps, n);
++
+ 	if (SESS_LEADER(p)) {
+-		ps += sprintf(ps, "%ssldr", sep);
++		snprintf(ps, sizeof(ps), "%ssldr", sep);
+ 		sep = ",";
+ 	}
++	COUNTORCAT(s, l, ps, n);
++
+ 	if (*sep != ',')
+-		ps += sprintf(ps, "noflags");
++		snprintf(ps, sizeof(ps), "noflags");
++	COUNTORCAT(s, l, ps, n);
+ 
+ 	if (p->p_flag & P_INMEM)
+-		ps += sprintf(ps, " %ld,%ld",
+-			p->p_stats->p_start.tv_sec,
+-			p->p_stats->p_start.tv_usec);
++		snprintf(ps, sizeof(ps), " %ld,%ld",
++		    p->p_stats->p_start.tv_sec, p->p_stats->p_start.tv_usec);
+ 	else
+-		ps += sprintf(ps, " -1,-1");
+-	
+-	{
+-		struct timeval ut, st;
+-
+-		calcru(p, &ut, &st, (void *) 0);
+-		ps += sprintf(ps, " %ld,%ld %ld,%ld",
+-			ut.tv_sec,
+-			ut.tv_usec,
+-			st.tv_sec,
+-			st.tv_usec);
+-	}
++		snprintf(ps, sizeof(ps), " -1,-1");
++	COUNTORCAT(s, l, ps, n);
+ 
+-	ps += sprintf(ps, " %s",
+-		(p->p_wchan && p->p_wmesg) ? p->p_wmesg : "nochan");
++	calcru(p, &ut, &st, (void *) 0);
++	snprintf(ps, sizeof(ps), " %ld,%ld %ld,%ld",
++	    ut.tv_sec, ut.tv_usec, st.tv_sec, st.tv_usec);
++	COUNTORCAT(s, l, ps, n);
++
++	snprintf(ps, sizeof(ps), " %s",
++	    (p->p_wchan && p->p_wmesg) ? p->p_wmesg : "nochan");
++	COUNTORCAT(s, l, ps, n);
+ 
+ 	cr = p->p_ucred;
++
++	snprintf(ps, sizeof(ps), " %u, %u", cr->cr_uid, cr->cr_gid);
++	COUNTORCAT(s, l, ps, n);
++	for (i = 0; i < cr->cr_ngroups; i++) {
++		snprintf(ps, sizeof(ps), ",%u", cr->cr_groups[i]);
++		COUNTORCAT(s, l, ps, n);
++	}
+ 
+-	ps += sprintf(ps, " %d", cr->cr_uid);
+-	ps += sprintf(ps, " %d", cr->cr_gid);
+-	for (i = 0; i < cr->cr_ngroups; i++)
+-		ps += sprintf(ps, ",%d", cr->cr_groups[i]);
+-	ps += sprintf(ps, "\n");
+-
+-	xlen = ps - psbuf;
+-	xlen -= uio->uio_offset;
+-	ps = psbuf + uio->uio_offset;
+-	xlen = imin(xlen, uio->uio_resid);
+-	if (xlen <= 0)
++	snprintf(ps, sizeof(ps), "\n");
++	COUNTORCAT(s, l, ps, n);
++
++	return (s != NULL ? strlen(s) + 1 : n + 1);
++}
++
++int
++procfs_dostatus(curp, p, pfs, uio)
++	struct proc *curp;
++	struct proc *p;
++	struct pfsnode *pfs;
++	struct uio *uio;
++{
++	char *ps;
++	int error, len;
++
++	if (uio->uio_rw != UIO_READ)
++		return (EOPNOTSUPP);
++
++	len = procfs_stat_gen(p, NULL, 0);
++	ps = malloc(len, M_TEMP, M_WAITOK);
++	if (!ps)
++		return (ENOMEM);
++	(void) procfs_stat_gen(p, ps, len);
++
++	len -= uio->uio_offset;
++	len = imin(len, uio->uio_resid);
++	if (len <= 0)
+ 		error = 0;
+ 	else
+-		error = uiomove(ps, xlen, uio);
++		error = uiomove(ps + uio->uio_offset, len, uio);
+ 
++	free(ps, M_TEMP);
+ 	return (error);
+ }
++
+Index: sys/lib/libkern/libkern.h
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/libkern.h,v
+retrieving revision 1.15
+retrieving revision 1.16
+diff -u -r1.15 -r1.16
+--- sys/lib/libkern/libkern.h	2000/06/16 20:20:30	1.15
++++ sys/lib/libkern/libkern.h	2000/12/18 18:40:44	1.16
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: libkern.h,v 1.15 2000/06/16 20:20:30 millert Exp $	*/
++/*	$OpenBSD: libkern.h,v 1.16 2000/12/18 18:40:44 provos Exp $	*/
+ /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
+ 
+ /*-
+@@ -167,6 +167,8 @@
+ char	*strcat __P((char *, const char *));
+ char	*strcpy __P((char *, const char *));
+ char	*strncpy __P((char *, const char *, size_t));
++size_t	 strlcpy __P((char *, const char *, size_t));
++size_t	 strlcat __P((char *, const char *, size_t));
+ int	 strcmp __P((const char *, const char *));
+ int	 strncmp __P((const char *, const char *, size_t));
+ int	 strncasecmp __P((const char *, const char *, size_t));
+Index: sys/lib/libkern/strlcat.c
+===================================================================
+RCS file: strlcat.c
+diff -N strlcat.c
+--- /dev/null	Wed Dec 20 08:02:27 2000
++++ /tmp/cvsNGrXxe3039	Wed Dec 20 08:29:40 2000
+@@ -0,0 +1,76 @@
++/*	$OpenBSD: strlcat.c,v 1.1 2000/12/18 18:40:44 provos Exp $	*/
++
++/*
++ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
++ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
++ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
++ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#if defined(LIBC_SCCS) && !defined(lint)
++static char *rcsid = "$OpenBSD: strlcat.c,v 1.1 2000/12/18 18:40:44 provos Exp $";
++#endif /* LIBC_SCCS and not lint */
++
++#if !defined(_KERNEL) && !defined(_STANDALONE)
++#include <sys/types.h>
++#include <string.h>
++#else
++#include <lib/libkern/libkern.h>
++#endif
++
++/*
++ * Appends src to string dst of size siz (unlike strncat, siz is the
++ * full size of dst, not space left).  At most siz-1 characters
++ * will be copied.  Always NUL terminates (unless siz == 0).
++ * Returns strlen(initial dst) + strlen(src); if retval >= siz,
++ * truncation occurred.
++ */
++size_t strlcat(dst, src, siz)
++	char *dst;
++	const char *src;
++	size_t siz;
++{
++	register char *d = dst;
++	register const char *s = src;
++	register size_t n = siz;
++	size_t dlen;
++
++	/* Find the end of dst and adjust bytes left but don't go past end */
++	while (*d != '\0' && n-- != 0)
++		d++;
++	dlen = d - dst;
++	n = siz - dlen;
++
++	if (n == 0)
++		return(dlen + strlen(s));
++	while (*s != '\0') {
++		if (n != 1) {
++			*d++ = *s;
++			n--;
++		}
++		s++;
++	}
++	*d = '\0';
++
++	return(dlen + (s - src));	/* count does not include NUL */
++}
+Index: sys/lib/libkern/strlcpy.c
+===================================================================
+RCS file: strlcpy.c
+diff -N strlcpy.c
+--- /dev/null	Wed Dec 20 08:02:27 2000
++++ /tmp/cvsRWHTRJ3039	Wed Dec 20 08:29:40 2000
+@@ -0,0 +1,72 @@
++/*	$OpenBSD: strlcpy.c,v 1.1 2000/12/18 18:40:45 provos Exp $	*/
++
++/*
++ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
++ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
++ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
++ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
++ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
++ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#if defined(LIBC_SCCS) && !defined(lint)
++static char *rcsid = "$OpenBSD: strlcpy.c,v 1.1 2000/12/18 18:40:45 provos Exp $";
++#endif /* LIBC_SCCS and not lint */
++
++#if !defined(_KERNEL) && !defined(_STANDALONE)
++#include <sys/types.h>
++#include <string.h>
++#else
++#include <lib/libkern/libkern.h>
++#endif
++
++/*
++ * Copy src to string dst of size siz.  At most siz-1 characters
++ * will be copied.  Always NUL terminates (unless siz == 0).
++ * Returns strlen(src); if retval >= siz, truncation occurred.
++ */
++size_t strlcpy(dst, src, siz)
++	char *dst;
++	const char *src;
++	size_t siz;
++{
++	register char *d = dst;
++	register const char *s = src;
++	register size_t n = siz;
++
++	/* Copy as many bytes as will fit */
++	if (n != 0 && --n != 0) {
++		do {
++			if ((*d++ = *s++) == 0)
++				break;
++		} while (--n != 0);
++	}
++
++	/* Not enough room in dst, add NUL and traverse rest of src */
++	if (n == 0) {
++		if (siz != 0)
++			*d = '\0';		/* NUL-terminate dst */
++		while (*s++)
++			;
++	}
++
++	return(s - src - 1);	/* count does not include NUL */
++}
+Index: sys/lib/libkern/arch/i386/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/i386/Makefile.inc,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- sys/lib/libkern/arch/i386/Makefile.inc	2000/06/16 19:56:54	1.6
++++ sys/lib/libkern/arch/i386/Makefile.inc	2000/12/18 18:40:46	1.7
+@@ -1,8 +1,9 @@
+-#	$OpenBSD: Makefile.inc,v 1.6 2000/06/16 19:56:54 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.7 2000/12/18 18:40:46 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.10 1996/04/13 01:17:41 cgd Exp $
+ 
+ SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.S memcmp.S \
+-	bcmp.S ffs.S memset.S strcat.S strcmp.S strcpy.S strlen.S strncmp.c \
++	bcmp.S ffs.S memset.S strcat.S strcmp.S strcpy.S strlcat.c strlcpy.c \
++	strlen.S strncmp.c \
+ 	strncpy.c scanc.S skpc.S locc.S htonl.S htons.S ntohl.S ntohs.S \
+ 	strncasecmp.c
+Index: sys/lib/libkern/arch/m68k/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/m68k/Makefile.inc,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- sys/lib/libkern/arch/m68k/Makefile.inc	2000/06/16 19:56:54	1.6
++++ sys/lib/libkern/arch/m68k/Makefile.inc	2000/12/18 18:40:46	1.7
+@@ -1,8 +1,9 @@
+-#	$OpenBSD: Makefile.inc,v 1.6 2000/06/16 19:56:54 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.7 2000/12/18 18:40:46 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.7 1996/04/18 01:53:04 cgd Exp $
+ 
+ SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.S memset.S \
+-	bcmp.S bzero.S ffs.S strcat.S strcmp.S strcpy.S strlen.S strncmp.S \
++	bcmp.S bzero.S ffs.S strcat.S strcmp.S strcpy.S strlcat.c strlcpy.c \
++	strlen.S strncmp.S \
+ 	strncpy.S htonl.S htons.S ntohl.S ntohs.S scanc.S skpc.S locc.S \
+ 	strncasecmp.c
+Index: sys/lib/libkern/arch/m88k/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/m88k/Makefile.inc,v
+retrieving revision 1.3
+retrieving revision 1.4
+diff -u -r1.3 -r1.4
+--- sys/lib/libkern/arch/m88k/Makefile.inc	2000/06/16 19:56:55	1.3
++++ sys/lib/libkern/arch/m88k/Makefile.inc	2000/12/18 18:40:46	1.4
+@@ -1,7 +1,7 @@
+-#	$OpenBSD: Makefile.inc,v 1.3 2000/06/16 19:56:55 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.4 2000/12/18 18:40:46 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.2 1996/04/13 01:17:58 cgd Exp $
+ 
+ SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.c bcmp.c random.c \
+-	strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
++	strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c strlen.c strncmp.c \
+ 	strncpy.c scanc.c skpc.c strncasecmp.c ffs.c
+Index: sys/lib/libkern/arch/mips/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/mips/Makefile.inc,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -r1.8 -r1.9
+--- sys/lib/libkern/arch/mips/Makefile.inc	2000/08/15 01:06:12	1.8
++++ sys/lib/libkern/arch/mips/Makefile.inc	2000/12/18 18:40:46	1.9
+@@ -1,11 +1,12 @@
+-#	$OpenBSD: Makefile.inc,v 1.8 2000/08/15 01:06:12 imp Exp $
++#	$OpenBSD: Makefile.inc,v 1.9 2000/12/18 18:40:46 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.4 1996/04/13 01:17:46 cgd Exp $
+ #
+ #	There are likely more that we will notice when we go native
+ 
+ SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.c memset.c strcmp.c \
+-	bcmp.S bcopy.S bzero.S strcat.c strcmp.c strcpy.c ffs.S htonl.S \
++	bcmp.S bcopy.S bzero.S strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c \
++	ffs.S htonl.S \
+ 	htons.S strcmp.S strlen.S strncmp.c random.c scanc.c skpc.c strncpy.c \
+ 	strncasecmp.c
+ 
+Index: sys/lib/libkern/arch/powerpc/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/powerpc/Makefile.inc,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -r1.6 -r1.7
+--- sys/lib/libkern/arch/powerpc/Makefile.inc	2000/06/16 19:56:55	1.6
++++ sys/lib/libkern/arch/powerpc/Makefile.inc	2000/12/18 18:40:47	1.7
+@@ -1,4 +1,4 @@
+-#	$OpenBSD: Makefile.inc,v 1.6 2000/06/16 19:56:55 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.7 2000/12/18 18:40:47 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.6 1994/10/26 06:39:03 cgd Exp $
+ 
+ CFLAGS	+= -D_KERNEL
+@@ -6,7 +6,8 @@
+ SRCS+=	__main.c __eabi.c \
+ 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.c memset.c \
+-	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
++	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c \
++	strlen.c strncmp.c \
+ 	strncpy.c scanc.c skpc.c locc.c htonl.c htons.c ntohl.c ntohs.c \
+ 	memcpy.c random.c strncasecmp.c
+ #	bcopy.c htolel.c letohl.c htoles.c letohs.c copystr.c \
+Index: sys/lib/libkern/arch/sparc/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/sparc/Makefile.inc,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -r1.8 -r1.9
+--- sys/lib/libkern/arch/sparc/Makefile.inc	2000/06/16 19:56:55	1.8
++++ sys/lib/libkern/arch/sparc/Makefile.inc	2000/12/18 18:40:47	1.9
+@@ -1,9 +1,10 @@
+-#	$OpenBSD: Makefile.inc,v 1.8 2000/06/16 19:56:55 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.9 2000/12/18 18:40:47 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.12 1996/04/23 23:05:22 christos Exp $
+ 
+ SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.c memset.c \
+-	bcmp.c bzero.S strcat.c strcmp.c strcpy.c strlen.S strncmp.c \
++	bcmp.c bzero.S strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c \
++	strlen.S strncmp.c \
+ 	strncpy.c htonl.S htons.S ntohl.S ntohs.S scanc.c skpc.c \
+ 	strncasecmp.c
+ 
+Index: sys/lib/libkern/arch/vax/Makefile.inc
+===================================================================
+RCS file: /cvs/src/sys/lib/libkern/arch/vax/Makefile.inc,v
+retrieving revision 1.5
+retrieving revision 1.6
+diff -u -r1.5 -r1.6
+--- sys/lib/libkern/arch/vax/Makefile.inc	2000/06/16 19:56:56	1.5
++++ sys/lib/libkern/arch/vax/Makefile.inc	2000/12/18 18:40:47	1.6
+@@ -1,7 +1,7 @@
+-#	$OpenBSD: Makefile.inc,v 1.5 2000/06/16 19:56:56 millert Exp $
++#	$OpenBSD: Makefile.inc,v 1.6 2000/12/18 18:40:47 provos Exp $
+ #	$NetBSD: Makefile.inc,v 1.2 1996/04/13 01:17:58 cgd Exp $
+ 
+ SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+ 	memchr.c memcmp.c \
+-	strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
++	strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c strlen.c strncmp.c \
+ 	strncpy.c scanc.c skpc.c strncasecmp.c
+

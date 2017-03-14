@@ -1,0 +1,43 @@
+Latest upstream release: 1.2.3
+Current version/release in rawhide: 1.2.1-4.fc23
+URL: https://pypi.python.org/pypi/pyshp
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+cmd:  spectool -g /var/tmp/thn-mceYVN/pyshp.spec
+return code:  22
+stdout:
+Getting http://pypi.python.org/packages/source/p/pyshp/pyshp-1.2.3.zip to ./pyshp-1.2.3.zip
+
+stderr:
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (22) The requested URL returned error: 404 Not Found
+volter's pyshp-1.2.3-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=664439
+pyshp-1.2.3-1.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/pyshp-1.2.3-1.fc22
+pyshp-1.2.3-1.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/pyshp-1.2.3-1.fc21
+Package pyshp-1.2.3-1.fc21:
+* should fix your issue,
+* was pushed to the Fedora 21 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing pyshp-1.2.3-1.fc21'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10608/pyshp-1.2.3-1.fc21
+then log in and leave karma (feedback).
+pyshp-1.2.3-1.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.
+pyshp-1.2.3-1.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

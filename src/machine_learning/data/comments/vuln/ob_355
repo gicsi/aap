@@ -1,0 +1,6 @@
+Sendmail was not properly closing file descriptions before executing programs.
+This could enable local users to interfere with an open SMTP connection.
+This issue was assigned CVE-2014-3956.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/007_sendmail.patch.sig">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,126 @@
+untrusted comment: signature from openbsd 5.7 base secret key
+RWSvUZXnw9gUb0EA8qodxX6VJYgaKQ3ItV2Y4dDimPZmWCykm5ztSqf9Mfu82xxgoXSmFUWXqTBSg5P17RPyVPyruRaJKTIsEwk=
+
+OpenBSD 5.7 errata 8, Jun 9, 2015:
+
+Fix multiple reliability issues in smtpd:
+    * local user can cause smtpd to fail by writing an invalid imsg to
+      control socket.
+    * local user can prevent smtpd from serving new requests by
+      exhausting descriptors.
+
+Apply by doing:
+    signify -Vep /etc/signify/openbsd-57-base.pub -x 008_smtpd.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+And then rebuild and install smtpd:
+    cd /usr/src/usr.sbin/smtpd
+    make obj
+    make
+    make install
+
+Index: usr.sbin/smtpd/control.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/control.c,v
+retrieving revision 1.102
+diff -u -p -u -p -r1.102 control.c
+--- usr.sbin/smtpd/control.c	20 Jan 2015 17:37:54 -0000	1.102
++++ usr.sbin/smtpd/control.c	8 Jun 2015 21:04:45 -0000
+@@ -73,9 +73,11 @@ extern const char *backend_stat;
+ 
+ static uint32_t			connid = 0;
+ static struct tree		ctl_conns;
++static struct tree		ctl_count;
+ static struct stat_digest	digest;
+ 
+-#define	CONTROL_FD_RESERVE	5
++#define	CONTROL_FD_RESERVE		5
++#define	CONTROL_MAXCONN_PER_CLIENT	32
+ 
+ static void
+ control_imsg(struct mproc *p, struct imsg *imsg)
+@@ -279,6 +281,7 @@ control(void)
+ 	signal(SIGHUP, SIG_IGN);
+ 
+ 	tree_init(&ctl_conns);
++	tree_init(&ctl_count);
+ 
+ 	memset(&digest, 0, sizeof digest);
+ 	digest.startup = time(NULL);
+@@ -327,6 +330,9 @@ control_accept(int listenfd, short event
+ 	socklen_t		 len;
+ 	struct sockaddr_un	 sun;
+ 	struct ctl_conn		*c;
++	size_t			*count;
++	uid_t			 euid;
++	gid_t			 egid;
+ 
+ 	if (getdtablesize() - getdtablecount() < CONTROL_FD_RESERVE)
+ 		goto pause;
+@@ -343,9 +349,26 @@ control_accept(int listenfd, short event
+ 
+ 	session_socket_blockmode(connfd, BM_NONBLOCK);
+ 
+-	c = xcalloc(1, sizeof(*c), "control_accept");
+-	if (getpeereid(connfd, &c->euid, &c->egid) == -1)
++	if (getpeereid(connfd, &euid, &egid) == -1)
+ 		fatal("getpeereid");
++
++	count = tree_get(&ctl_count, euid);
++	if (count == NULL) {
++		count = xcalloc(1, sizeof *count, "control_accept");
++		tree_xset(&ctl_count, euid, count);
++	}
++
++	if (*count == CONTROL_MAXCONN_PER_CLIENT) {
++		close(connfd);
++		log_warnx("warn: too many connections to control socket "
++		    "from user with uid %lu", (unsigned long int)euid);
++		return;
++	}
++	(*count)++;
++
++	c = xcalloc(1, sizeof(*c), "control_accept");
++	c->euid = euid;
++	c->egid = egid;
+ 	c->id = ++connid;
+ 	c->mproc.proc = PROC_CLIENT;
+ 	c->mproc.handler = control_dispatch_ext;
+@@ -365,6 +388,14 @@ pause:
+ static void
+ control_close(struct ctl_conn *c)
+ {
++	size_t	*count;
++
++	count = tree_xget(&ctl_count, c->euid);
++	(*count)--;
++	if (*count == 0) {
++		tree_xpop(&ctl_count, c->euid);
++		free(count);
++	}
+ 	tree_xpop(&ctl_conns, c->id);
+ 	mproc_clear(&c->mproc);
+ 	free(c);
+Index: usr.sbin/smtpd/mproc.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/smtpd/mproc.c,v
+retrieving revision 1.11
+diff -u -p -u -p -r1.11 mproc.c
+--- usr.sbin/smtpd/mproc.c	16 Jan 2015 06:40:20 -0000	1.11
++++ usr.sbin/smtpd/mproc.c	8 Jun 2015 21:04:45 -0000
+@@ -186,6 +186,14 @@ mproc_dispatch(int fd, short event, void
+ 
+ 	for (;;) {
+ 		if ((n = imsg_get(&p->imsgbuf, &imsg)) == -1) {
++
++			if (smtpd_process == PROC_CONTROL &&
++			    p->proc == PROC_CLIENT) {
++				log_warnx("warn: client sent invalid imsg "
++				    "over control socket");
++				p->handler(p, NULL);
++				return;
++			}
+ 			log_warn("fatal: %s: error in imsg_get for %s",
+ 			    proc_name(smtpd_process),  p->name);
+ 			fatalx(NULL);
+

@@ -1,0 +1,5 @@
+If a line in /etc/exports which contains hostnames results in an empty
+list because none of the supplied hostnames is known, mountd(8) will
+accidentally export the filesystem to the world.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/common/mountd.patch">
+A patch is available which corrects this behaviour</a>.

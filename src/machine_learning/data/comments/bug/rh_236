@@ -1,0 +1,11 @@
+As of 3.19.0 glade supports Python3 [0] also the Pyhon3 as default change
+was accepted (under different name) which implies that all packages shipped on
+LiveCD must run on Python3.
+
+Please switch your package to use python3.
+
+
+
+
+[0] http://lists.ximian.com/pipermail/glade-devel/2015-June/002090.html
+Thanks, fixed in http://pkgs.fedoraproject.org/cgit/glade.git/commit/?id=14ea8aaca3bbb720a98125483d7633fba44b396f

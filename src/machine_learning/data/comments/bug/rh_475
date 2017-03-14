@@ -1,0 +1,7 @@
+Option parseUsername from LdapExtLoginModule works with usernameBeginString and usernameEndString which using in code is wrongly implemented in LdapExtLoginModule getUsername() method[1]. This method contains several issues related to this parsing:
+
+1) Even if value of usernameBeginString is not found in username then first part of username with length usernameBeginString.length()-1 is removed.
+2) Everything what is in username before first occurrence of usernameBeginString is removed. IMHO usernameBeginString should be first part of username and only then it should be removed.
+3) End index of substring from username is obtained from first occurrence of usernameEndString value. IMHO usernameEndString should be last occurrence in username and also it should be end of username and only then it should be removed.
+
+[1] https://github.com/picketbox/picketbox/blob/master/security-jboss-sx/jbosssx/src/main/java/org/jboss/security/auth/spi/LdapExtLoginModule.java#L946

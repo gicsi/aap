@@ -1,0 +1,26 @@
+> What is the nature and description of the request?  
+
+We would like to be able to rename a disk once created. 
+
+> What are your business requirements for wanting to rename a VM's disk?
+
+Being able to have "good" disks names makes it easier to manage disks, particularly when a disk is detached from it's VM and we don't know where it belonged anymore. This is even more important when using VM templates because disks created by templates all share the same name, which makes it impossible to differentiate them from each other when detached. 
+
+> How would you like to achieve this? (List the functional requirements here)  
+
+Right-click on the disk, Rename. 
+
+> Do you have any specific timeline dependencies and which release would you like to target (i.e. RHEL5, RHEL6)?  
+
+ASAP
+
+> Would you be able to assist in testing this functionality if implemented?  
+
+Yes
+There currently is no way to edit a disk without a vm/template context to it (see bug 1080097).
+Making this happen requires moving WAY too much code around, and isn't in scope for 3.6.0.
+Let's reconsider for 4.0.0.
+
+Current available workaround for the customer:
+From a VM's Disks subtab you can edit the disk, where you can set its name/alias/description
+*** This bug has been marked as a duplicate of bug 1011446 ***

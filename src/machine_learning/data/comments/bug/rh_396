@@ -1,0 +1,17 @@
+Spec URL: http://marcdeop.fedorapeople.org/vim-fugitive.spec
+SRPM URL: http://marcdeop.fedorapeople.org/vim-fugitive-2.2-1.fc21.src.rpm
+
+Description: 
+
+View any blob, tree, commit, or tag in the repository with :Gedit (and :Gsplit, :Gvsplit, :Gtabedit, ...). Edit a file in the index and write to it to stage the changes. Use :Gdiff to bring up the staged version of the file side by side with the working tree version and use Vim's diff handling capabilities to stage a subset of the file's changes.
+
+Fedora Account System Username: marcdeop
+Oops, it looks like vim-fugitive is already packaged for Fedora:
+
+http://koji.fedoraproject.org/koji/buildinfo?buildID=662169
+
+I guess we should re-use the existing package then.  You can ask the maintainer to grant you the co-maintainer access if you want to help with maintaining the package:
+
+https://admin.fedoraproject.org/pkgdb/package/vim-fugitive/
+
+*** This bug has been marked as a duplicate of bug 1220770 ***

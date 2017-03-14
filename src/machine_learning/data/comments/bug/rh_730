@@ -1,0 +1,75 @@
+Description of problem:
+SELinux is preventing mongod from 'read' accesses on the lnk_file /var/lib/mongodb.
+
+*****  Plugin restorecon (94.8 confidence) suggests   ************************
+
+If sie die Kennzeichnung korrigieren möchten.
+/var/lib/mongodb Standard-Kennzeichnung sollte mongod_var_lib_t sein.
+Then sie können restorecon ausführen.
+Do
+# /sbin/restorecon -v /var/lib/mongodb
+
+*****  Plugin catchall_labels (5.21 confidence) suggests   *******************
+
+If you want to allow mongod to have read access on the mongodb lnk_file
+Then sie müssen das Label auf /var/lib/mongodb ändern
+Do
+# semanage fcontext -a -t FILE_TYPE '/var/lib/mongodb'
+wobei FILE_TYPE einer der folgenen Werte ist: admin_home_t, bin_t, boot_t, cert_t, device_t, etc_runtime_t, etc_t, file_context_t, fonts_cache_t, fonts_t, ld_so_t, lib_t, locale_t, man_cache_t, man_t, net_conf_t, proc_t, root_t, rpm_script_tmp_t, security_t, shell_exec_t, src_t, sssd_var_lib_t, sysfs_t, system_conf_t, system_db_t, textrel_shlib_t, tmp_t, usr_t, var_run_t, var_t. 
+Führen Sie danach Folgendes aus: 
+restorecon -v '/var/lib/mongodb'
+
+
+*****  Plugin catchall (1.44 confidence) suggests   **************************
+
+If sie denken, dass es mongod standardmässig erlaubt sein sollte, read Zugriff auf mongodb lnk_file zu erhalten.
+Then sie sollten dies als Fehler melden.
+Um diesen Zugriff zu erlauben, können Sie ein lokales Richtlinien-Modul erstellen.
+Do
+zugriff jetzt erlauben, indem Sie die nachfolgenden Befehle ausführen:
+# grep mongod /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:mongod_t:s0
+Target Context                unconfined_u:object_r:var_lib_t:s0
+Target Objects                /var/lib/mongodb [ lnk_file ]
+Source                        mongod
+Source Path                   mongod
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           mongodb-server-2.6.9-1.fc22.x86_64
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.5-300.fc22.x86_64 #1 SMP Mon
+                              Jun 8 16:15:26 UTC 2015 x86_64 x86_64
+Alert Count                   63
+First Seen                    2015-06-15 14:20:23 CEST
+Last Seen                     2015-06-19 18:02:20 CEST
+Local ID                      892d784f-95a8-42b9-a14b-c3732975ef3f
+
+Raw Audit Messages
+type=AVC msg=audit(1434729740.750:484): avc:  denied  { read } for  pid=1428 comm="mongod" name="mongodb" dev="sdb1" ino=268435557 scontext=system_u:system_r:mongod_t:s0 tcontext=unconfined_u:object_r:var_lib_t:s0 tclass=lnk_file permissive=1
+
+
+Hash: mongod,mongod_t,var_lib_t,lnk_file,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.5-300.fc22.x86_64
+type:           libreport
+*****  Plugin restorecon (94.8 confidence) suggests   ************************
+
+If sie die Kennzeichnung korrigieren möchten.
+/var/lib/mongodb Standard-Kennzeichnung sollte mongod_var_lib_t sein.
+Then sie können restorecon ausführen.
+Do
+# /sbin/restorecon -v /var/lib/mongodb

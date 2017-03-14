@@ -1,0 +1,7 @@
+Created attachment 1042035
+Proposed patch for jffi-native.jar OSGi MANIFEST.MF
+
+Description of problem:
+
+Eclipse needs jffi and jffi-native and requires them to have OSGi MANIFEST.MF files.  While the jffi main MANIFEST.MF has been successfully patched, a change is also required for the jffi-native.jar.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=664476

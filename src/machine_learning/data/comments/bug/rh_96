@@ -1,0 +1,15 @@
+Your package synaptic failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10156527
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048456
+build.log
+Created attachment 1048457
+root.log
+Created attachment 1048458
+state.log
+Created attachment 1049183
+Fix for -Werror=format-security
+
+Instead would you consider to apply the attached patch?

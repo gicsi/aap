@@ -1,0 +1,108 @@
+Description of problem:
+Instack undercloud installation fails in post-deployment phase because roles can't be added to overcloud plan:
+
+dib-run-parts Wed Jun 24 04:56:58 EDT 2015 Running /usr/libexec/os-refresh-config/post-configure.d/100-tuskar-api
++ os-svc-enable -an tuskar-api
++ os-svc-restart -an tuskar-api
+dib-run-parts Wed Jun 24 04:56:58 EDT 2015 100-tuskar-api completed
+dib-run-parts Wed Jun 24 04:56:58 EDT 2015 Running /usr/libexec/os-refresh-config/post-configure.d/101-plan-add-roles
+ERROR (shell) Exiting due to an error:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/tuskarclient/shell.py", line 248, in main
+    TuskarShell(sys.argv[1:]).run()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/shell.py", line 76, in run
+    args.func(tuskar_client, args)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/v2/plans_shell.py", line 43, in do_plan_show
+    plan = utils.find_resource(tuskar.plans, args.plan)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/common/utils.py", line 80, in find_resource
+    listing = manager.list()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/v2/plans.py", line 86, in list
+    return self._list(self._path())
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/base.py", line 131, in _list
+    body = self.client.get(url).json()
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 355, in get
+    return self.client_request("GET", url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 345, in client_request
+    self, method, url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 261, in client_request
+    method, self.concat_url(endpoint, url), **kwargs)
+  File "/usr/lib/python2.7/site-packages/tuskarclient/openstack/common/apiclient/client.py", line 201, in request
+    raise exceptions.from_response(resp, method, url)
+Unauthorized: Unauthorized (HTTP 401)
+ERROR (shell) Exiting due to an error:
+
+
+in journalctl output, there is a related tuskar-api error:
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: /usr/lib/python2.7/site-packages/requests/packages/urllib3/util/ssl_.py:90: InsecurePlatformWarning: A true SSLContext object is not av
+ailable. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail. For more information, see https://urllib3.readthedocs.org/en/latest/security
+.html#insecureplatformwarning.
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: InsecurePlatformWarning
+Jun 24 05:01:42 instack.localdomain keystone-all[3266]: 127.0.0.1 - - [24/Jun/2015 05:01:42] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00\xe0\x01\x00\x00\xdc\x03\x03U\x8aq
+\xf6\xd63\xe60\xa1<\xaa\xf0\xf0\xca\xef\xd5\xc3\xbb\x7f\x12')
+Jun 24 05:01:42 instack.localdomain keystone-all[3266]: 127.0.0.1 - - [24/Jun/2015 05:01:42] "^V^C^A
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: 2015-06-24 05:01:42.704 4358 ERROR keystoneclient.middleware.auth_token [-] HTTP connection exception: [Errno 1] _ssl.c:504: error:1407
+70FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protocol
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: 2015-06-24 05:01:42.704 4358 WARNING keystoneclient.middleware.auth_token [-] Authorization failed for token
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: 2015-06-24 05:01:42.704 4358 INFO keystoneclient.middleware.auth_token [-] Invalid user token - rejecting request
+Jun 24 05:01:42 instack.localdomain tuskar-api[4358]: 192.0.2.1 - - [24/Jun/2015 05:01:42] "GET /v2/roles HTTP/1.1" 401 23
+
+
+tuskar version:
+openstack-tuskar-0.4.18-3.el7ost.noarch
+
+openstack pkgs:
+[root@instack ~]# rpm -qa|grep openstack
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tripleo-0.0.7-0.1.1664e566.el7ost.noarch
+openstack-heat-common-2015.1.0-4.el7ost.noarch
+openstack-puppet-modules-2015.1.7-1.el7ost.noarch
+openstack-swift-object-2.3.0-1.el7ost.noarch
+openstack-dashboard-2015.1.0-10.el7ost.noarch
+openstack-nova-console-2015.1.0-13.el7ost.noarch
+openstack-neutron-2015.1.0-8.el7ost.noarch
+openstack-tuskar-0.4.18-3.el7ost.noarch
+openstack-selinux-0.6.35-1.el7ost.noarch
+openstack-tempest-kilo-20150507.2.el7ost.noarch
+openstack-neutron-ml2-2015.1.0-8.el7ost.noarch
+openstack-keystone-2015.1.0-1.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-15.el7ost.noarch
+openstack-heat-templates-0-0.6.20150605git.el7ost.noarch
+openstack-utils-2014.2-1.el7ost.noarch
+openstack-heat-api-cloudwatch-2015.1.0-4.el7ost.noarch
+openstack-ceilometer-notification-2015.1.0-4.el7ost.noarch
+openstack-ceilometer-collector-2015.1.0-4.el7ost.noarch
+openstack-ironic-conductor-2015.1.0-7.el7ost.noarch
+python-django-openstack-auth-1.2.0-2.el7ost.noarch
+openstack-ceilometer-api-2015.1.0-4.el7ost.noarch
+openstack-ceilometer-alarm-2015.1.0-4.el7ost.noarch
+openstack-ironic-api-2015.1.0-7.el7ost.noarch
+openstack-swift-account-2.3.0-1.el7ost.noarch
+openstack-swift-proxy-2.3.0-1.el7ost.noarch
+openstack-tuskar-ui-0.3.0-4.el7ost.noarch
+openstack-glance-2015.1.0-6.el7ost.noarch
+openstack-heat-api-2015.1.0-4.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-1.el7ost.noarch
+python-openstackclient-1.0.3-2.el7ost.noarch
+openstack-ironic-common-2015.1.0-7.el7ost.noarch
+redhat-access-plugin-openstack-7.0.0-0.el7ost.noarch
+openstack-ceilometer-central-2015.1.0-4.el7ost.noarch
+openstack-nova-compute-2015.1.0-13.el7ost.noarch
+openstack-nova-conductor-2015.1.0-13.el7ost.noarch
+openstack-neutron-openvswitch-2015.1.0-8.el7ost.noarch
+openstack-swift-container-2.3.0-1.el7ost.noarch
+openstack-nova-api-2015.1.0-13.el7ost.noarch
+openstack-nova-common-2015.1.0-13.el7ost.noarch
+openstack-ironic-discoverd-1.1.0-4.el7ost.noarch
+openstack-nova-scheduler-2015.1.0-13.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-nova-cert-2015.1.0-13.el7ost.noarch
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-neutron-common-2015.1.0-8.el7ost.noarch
+openstack-heat-engine-2015.1.0-4.el7ost.noarch
+openstack-ceilometer-common-2015.1.0-4.el7ost.noarch
+openstack-heat-api-cfn-2015.1.0-4.el7ost.noarch
+openstack-swift-2.3.0-1.el7ost.noarch
+openstack-nova-novncproxy-2015.1.0-13.el7ost.noarch
+openstack-swift-plugin-swift3-1.7-3.el7ost.noarch
+openstack-dashboard-theme-2015.1.0-10.el7ost.noarch
+*** This bug has been marked as a duplicate of bug 1220651 ***

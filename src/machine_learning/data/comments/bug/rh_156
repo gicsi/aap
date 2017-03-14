@@ -1,0 +1,14 @@
+Your package jspc failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10100167
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047175
+build.log
+Created attachment 1047176
+root.log
+Created attachment 1047177
+state.log
+http://koji.fedoraproject.org/koji/buildinfo?buildID=667151
+
+removed the cobertura dep (unneeded)

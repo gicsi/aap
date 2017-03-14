@@ -1,0 +1,62 @@
+After today's yum update I am now getting plenty of
+
+   Jun 25 16:50:10 host journal: Suppressed 1864 messages from /system.slice/cups.service
+
+and similar. First appeared shortly after a sleep-to-RAM and restore cycle. Not doing sleep to RAM very often, perhaps every 1-4 weeks.
+
+Last related update:
+    Updated cups-1:1.7.5-15.fc21.i686               @updates
+    Update       1:1.7.5-17.fc21.i686               @updates
+    Updated cups-client-1:1.7.5-15.fc21.i686        @updates
+    Update              1:1.7.5-17.fc21.i686        @updates
+    Updated cups-filesystem-1:1.7.5-15.fc21.noarch  @updates
+    Update                  1:1.7.5-17.fc21.noarch  @updates
+    Updated cups-libs-1:1.7.5-15.fc21.i686          @updates
+    Update            1:1.7.5-17.fc21.i686          @updates
+Perhaps you could run 'strace -s200 -p ...' on the PID for cupsd to find out what the messages would have been?
+getting very few messages right now, got "journalctl -b 0 |grep cupsd> cupslog.txt" instead which I will attach.
+
+The last suppressed messages were Jun 25 17:31:13,
+
+Jun 25 17:10:21 rz journal: Suppressed 523 messages from /system.slice/cups.service
+Jun 25 17:15:15 rz journal: Suppressed 2126 messages from /system.slice/cups.service
+Jun 25 17:15:56 rz journal: Suppressed 3651 messages from /system.slice/cups.service
+Jun 25 17:17:14 rz journal: Suppressed 900 messages from /system.slice/cups.service
+Jun 25 17:17:44 rz journal: Suppressed 3390 messages from /system.slice/cups.service
+Jun 25 17:20:29 rz journal: Suppressed 1152 messages from /system.slice/cups.service
+Jun 25 17:21:27 rz journal: Suppressed 1172 messages from /system.slice/cups.service
+Jun 25 17:22:32 rz journal: Suppressed 719 messages from /system.slice/cups.service
+Jun 25 17:23:04 rz journal: Suppressed 3797 messages from /system.slice/cups.service
+Jun 25 17:23:35 rz journal: Suppressed 2927 messages from /system.slice/cups.service
+Jun 25 17:24:19 rz journal: Suppressed 3093 messages from /system.slice/cups.service
+Jun 25 17:25:00 rz journal: Suppressed 2859 messages from /system.slice/cups.service
+Jun 25 17:26:21 rz journal: Suppressed 6302 messages from /system.slice/cups.service
+Jun 25 17:26:56 rz journal: Suppressed 5876 messages from /system.slice/cups.service
+Jun 25 17:28:18 rz journal: Suppressed 1064 messages from /system.slice/cups.service
+Jun 25 17:28:52 rz journal: Suppressed 916 messages from /system.slice/cups.service
+Jun 25 17:29:28 rz journal: Suppressed 1558 messages from /system.slice/cups.service
+Jun 25 17:30:04 rz journal: Suppressed 7871 messages from /system.slice/cups.service
+Jun 25 17:30:40 rz journal: Suppressed 6539 messages from /system.slice/cups.service
+Jun 25 17:31:13 rz journal: Suppressed 7205 messages from /system.slice/cups.service
+Created attachment 1043210
+output of "journalctl -b 0 |grep cupsd> cupslog.txt"
+What does 'cupsctl' say, as root?
+
+You have LogLevel set to debug2. Was that from a previous request for debugging information?
+So far did not appear again after another reboot/sleep/restore cycle. Do not remember why/if/when/how I changed LogLevel.
+
+# cupsctl
+_debug_logging=1
+_remote_admin=0
+_remote_any=0
+_share_printers=0
+_user_cancel_any=0
+BrowseLocalProtocols=dnssd
+DefaultAuthType=Basic
+JobPrivateAccess=default
+JobPrivateValues=default
+MaxLogSize=0
+SubscriptionPrivateAccess=default
+SubscriptionPrivateValues=default
+WebInterface=Yes
+OK. You can just turn off debug logging from cupsd using 'cupsctl --no-debug-logging'.

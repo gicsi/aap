@@ -1,0 +1,425 @@
+This patch fixes several buffer overflows in ISC's BIND 4.9.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 018_named.patch
+
+And rebuild named by doing:
+	cd usr.sbin/named
+	make obj
+	make depend
+	make
+	make install
+
+Index: usr.sbin/named/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/Makefile,v
+retrieving revision 1.10
+diff -u -r1.10 Makefile
+--- usr.sbin/named/Makefile	2000/03/29 20:32:55	1.10
++++ usr.sbin/named/Makefile	2001/01/30 00:12:57
+@@ -1,4 +1,4 @@
+-#	$OpenBSD: Makefile,v 1.10 2000/03/29 20:32:55 deraadt Exp $
++#	$OpenBSD: Makefile,v 1.10.4.1 2001/01/30 00:06:40 jason Exp $
+ 
+ SUBDIR= named named-xfer ndc reload restart dig nslookup \
+ 	host dnsquery
+@@ -6,6 +6,6 @@
+ SUBDIR+= doc/bog
+ .endif
+ 
+-VER= 4.9.7-REL
++VER= 4.9.8-REL
+ 
+ .include <bsd.subdir.mk>
+Index: usr.sbin/named/libresolv/res_comp.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/libresolv/res_comp.c,v
+retrieving revision 1.3
+diff -u -r1.3 res_comp.c
+--- usr.sbin/named/libresolv/res_comp.c	1998/05/22 07:09:08	1.3
++++ usr.sbin/named/libresolv/res_comp.c	2001/01/30 00:12:57
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: res_comp.c,v 1.3 1998/05/22 07:09:08 millert Exp $	*/
++/*	$OpenBSD: res_comp.c,v 1.3.10.1 2001/01/30 00:06:01 jason Exp $	*/
+ 
+ /*
+  * ++Copyright++ 1985, 1993
+@@ -60,7 +60,7 @@
+ static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
+ static char rcsid[] = "$From: res_comp.c,v 8.14 1998/05/11 04:19:47 vixie Exp $";
+ #else
+-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.3 1998/05/22 07:09:08 millert Exp $";
++static char rcsid[] = "$OpenBSD: res_comp.c,v 1.3.10.1 2001/01/30 00:06:01 jason Exp $";
+ #endif
+ #endif /* LIBC_SCCS and not lint */
+ 
+@@ -801,6 +801,25 @@
+ 	if (ns_name_pton(src, tmp, sizeof tmp) == -1)
+ 		return (-1);
+ 	return (ns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
++}
++
++/*
++ * Reset dnptrs so that there are no active references to pointers at or
++ * after src.
++ */
++void
++ns_name_rollback(src, dnptrs, lastdnptr)
++	const u_char *src;
++	const u_char **dnptrs;
++	const u_char **lastdnptr;
++{
++	while (dnptrs < lastdnptr && *dnptrs != NULL) {
++		if (*dnptrs >= src) {
++			*dnptrs = NULL;
++			break;
++		}
++		dnptrs++;
++	}
+ }
+ 
+ /*
+Index: usr.sbin/named/named/ns_forw.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_forw.c,v
+retrieving revision 1.4
+diff -u -r1.4 ns_forw.c
+--- usr.sbin/named/named/ns_forw.c	1998/05/22 00:47:38	1.4
++++ usr.sbin/named/named/ns_forw.c	2001/01/30 00:13:02
+@@ -1,11 +1,11 @@
+-/*	$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $	*/
++/*	$OpenBSD: ns_forw.c,v 1.4.10.1 2001/01/30 00:06:02 jason Exp $	*/
+ 
+ #if !defined(lint) && !defined(SABER)
+ #if 0
+ static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
+ static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
+ #else
+-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $";
++static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.4.10.1 2001/01/30 00:06:02 jason Exp $";
+ #endif
+ #endif /* not lint */
+ 
+@@ -291,17 +291,23 @@
+  *	dname and a_rr are the problematic other name server.
+  */
+ static void
+-nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
+-	const char *sysloginfo, *queryname, *complaint, *dname;
++nslookupComplain(sysloginfo, net_queryname, complaint, net_dname, a_rr, nsdp)
++	const char *sysloginfo, *net_queryname, *complaint, *net_dname;
+ 	const struct databuf *a_rr, *nsdp;
+ {
++	char queryname[64], dname[64];
+ #ifdef STATS
+ 	char nsbuf[20];
+ 	char abuf[20];
+ #endif
+-	char *a, *ns;
++	const char *a, *ns;
+ 	const char *a_type;
+ 	int print_a;
++
++	strncpy(queryname, net_queryname, (sizeof queryname) - 1);
++	queryname[(sizeof queryname) - 1] = '\0';
++	strncpy(dname, net_dname, (sizeof dname) - 1);
++	dname[(sizeof dname) - 1] = '\0';
+ 
+ 	dprintf(2, (ddt, "NS '%s' %s\n", dname, complaint));
+ 	if (sysloginfo && queryname && !haveComplained(queryname, complaint))
+Index: usr.sbin/named/named/ns_req.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_req.c,v
+retrieving revision 1.6
+diff -u -r1.6 ns_req.c
+--- usr.sbin/named/named/ns_req.c	1998/05/22 07:09:18	1.6
++++ usr.sbin/named/named/ns_req.c	2001/01/30 00:13:06
+@@ -1,11 +1,11 @@
+-/*	$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $	*/
++/*	$OpenBSD: ns_req.c,v 1.6.10.1 2001/01/30 00:06:03 jason Exp $	*/
+ 
+ #if !defined(lint) && !defined(SABER)
+ #if 0
+ static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
+ static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
+ #else
+-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $";
++static char rcsid[] = "$OpenBSD: ns_req.c,v 1.6.10.1 2001/01/30 00:06:03 jason Exp $";
+ #endif
+ #endif /* not lint */
+ 
+@@ -243,6 +243,14 @@
+ 	hp->qr = 1;		/* set Response flag */
+ 	hp->ra = (NoRecurse == 0);
+ 
++	if (hp->rcode == FORMERR) {
++		hp->qdcount = htons(0);
++		hp->ancount = htons(0);
++		hp->nscount = htons(0);
++		hp->arcount = htons(0);
++		cp = msg + HFIXEDSZ;
++	}
++
+ 	n = doaddinfo(hp, cp, buflen);
+ 	cp += n;
+ 	buflen -= n;
+@@ -1012,12 +1020,12 @@
+ 	GETSHORT(class, *cpp);
+ 	*cpp += INT32SZ;	/* ttl */
+ 	GETSHORT(dlen, *cpp);
+-	*cpp += dlen;
+-	if (*cpp != eom) {
++	if (*cpp + dlen != eom) {
+ 		dprintf(1, (ddt, "FORMERR IQuery message length off\n"));
+ 		hp->rcode = FORMERR;
+ 		return (Finish);
+ 	}
++	*cpp += dlen;
+ 
+ 	/*
+ 	 * not all inverse queries are handled.
+@@ -1223,6 +1231,25 @@
+ }
+ 
+ /*
++ * Reset dnptrs so that there are no active references to pointers at or
++ * after src.
++ */
++static void
++ns_name_rollback(src, dnptrs, lastdnptr)
++	const u_char *src;
++	const u_char **dnptrs;
++	const u_char **lastdnptr;
++{
++	while (dnptrs < lastdnptr && *dnptrs != NULL) {
++		if (*dnptrs >= src) {
++			*dnptrs = NULL;
++			break;
++		}
++		dnptrs++;
++	}
++}
++
++/*
+  * Copy databuf into a resource record for replies.
+  * Return size of RR if OK, -1 if buffer is full.
+  */
+@@ -1294,11 +1321,11 @@
+ 	}
+ #endif
+ 	if ((n = dn_comp(name, buf, buflen, dnptrs, edp)) < 0)
+-		return (-1);
++		goto cleanup;
+ 	cp = buf + n;
+ 	buflen -= n;
+ 	if (buflen < 0)
+-		return (-1);
++		goto cleanup;
+ 	PUTSHORT((u_int16_t)type, cp);
+ 	PUTSHORT((u_int16_t)dp->d_class, cp);
+ 	PUTLONG(ttl, cp);
+@@ -1311,7 +1338,7 @@
+ 	case T_PTR:
+ 		n = dn_comp((char *)dp->d_data, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		PUTSHORT((u_int16_t)n, sp);
+ 		cp += n;
+ 		break;
+@@ -1321,7 +1348,7 @@
+ 		/* Store domain name in answer */
+ 		n = dn_comp((char *)dp->d_data, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		PUTSHORT((u_int16_t)n, sp);
+ 		cp += n;
+ 		if (doadd)
+@@ -1335,15 +1362,15 @@
+ 		cp1 = dp->d_data;
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 		buflen -= type == T_SOA ? n + 5 * INT32SZ : n;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp1 += strlen((char *)cp1) + 1;
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 		if (type == T_SOA) {
+ 			cp1 += strlen((char *)cp1) + 1;
+@@ -1361,7 +1388,7 @@
+  		/* copy order */
+ 		buflen -= INT16SZ;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+  		bcopy(cp1, cp, INT16SZ);
+  		cp += INT16SZ;
+  		cp1 += INT16SZ;
+@@ -1371,7 +1398,7 @@
+ 		/* copy preference */
+ 		buflen -= INT16SZ;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+ 		bcopy(cp1, cp, INT16SZ);
+ 		cp += INT16SZ;
+ 		cp1 += INT16SZ;
+@@ -1382,7 +1409,7 @@
+ 		n = *cp1++;
+ 		buflen -= n + 1;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+ 		dprintf(1, (ddt, "size of n at flags = %d\n", n));
+ 		*cp++ = n;
+ 		bcopy(cp1,cp,n);
+@@ -1395,7 +1422,7 @@
+ 		n = *cp1++;
+ 		buflen -= n + 1;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+ 		*cp++ = n;
+ 		bcopy(cp1,cp,n);
+ 		cp += n;
+@@ -1407,7 +1434,7 @@
+ 		n = *cp1++;
+ 		buflen -= n + 1;
+ 		if (buflen < 0)
+-			return (-1);
++			goto cleanup;
+ 		*cp++ = n;
+ 		bcopy(cp1,cp,n);
+ 		cp += n;
+@@ -1420,7 +1447,7 @@
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		dprintf(1, (ddt, "dn_comp's n = %u\n", n));
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 
+ 		/* save data length */
+@@ -1438,7 +1465,7 @@
+ 		cp1 = dp->d_data;
+ 
+  		if ((buflen -= INT16SZ) < 0)
+-			return (-1);
++			goto cleanup;
+ 
+  		/* copy preference */
+  		bcopy(cp1, cp, INT16SZ);
+@@ -1448,7 +1475,7 @@
+ 		if (type == T_SRV) {
+ 			buflen -= INT16SZ*2;
+ 			if (buflen < 0)
+-				return (-1);
++				goto cleanup;
+ 			bcopy(cp1, cp, INT16SZ*2);
+ 			cp += INT16SZ*2;
+ 			cp1 += INT16SZ*2;
+@@ -1456,7 +1483,7 @@
+ 
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 
+ 		/* save data length */
+@@ -1470,7 +1497,7 @@
+ 		cp1 = dp->d_data;
+ 
+ 		if ((buflen -= INT16SZ) < 0)
+-			return (-1);
++			goto cleanup;
+ 
+ 		/* copy preference */
+ 		bcopy(cp1, cp, INT16SZ);
+@@ -1479,13 +1506,13 @@
+ 
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 		buflen -= n;
+ 		cp1 += strlen((char *)cp1) + 1;
+ 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 
+ 		/* save data length */
+@@ -1500,7 +1527,7 @@
+ 		/* first just copy over the type_covered, algorithm, */
+ 		/* labels, orig ttl, two timestamps, and the footprint */
+ 		if ((dp->d_size - 18) > buflen)
+-			return (-1);  /* out of room! */
++			goto cleanup;
+ 		bcopy( cp1, cp, 18 );
+ 		cp  += 18;
+ 		cp1 += 18;
+@@ -1509,7 +1536,7 @@
+ 		/* then the signer's name */
+ 		n = dn_comp((char *)cp1, cp, buflen, NULL, NULL);
+ 		if (n < 0)
+-			return (-1);
++			goto cleanup;
+ 		cp += n;
+ 		buflen -= n;
+ 		cp1 += strlen((char*)cp1)+1;
+@@ -1517,7 +1544,7 @@
+ 		/* finally, we copy over the variable-length signature */
+ 		n = dp->d_size - (u_int16_t)((cp1 - dp->d_data));
+ 		if (n > buflen)
+-			return (-1);  /* out of room! */
++			goto cleanup;
+ 		bcopy(cp1, cp, n);
+ 		cp += n;
+ 		
+@@ -1528,12 +1555,19 @@
+ 
+ 	default:
+ 		if (dp->d_size > buflen)
+-			return (-1);
++			goto cleanup;
+ 		bcopy(dp->d_data, cp, dp->d_size);
+ 		PUTSHORT((u_int16_t)dp->d_size, sp);
+ 		cp += dp->d_size;
+ 	}
+ 	return (cp - buf);
++
++ cleanup:
++	/* Rollback RR. */
++	ns_name_rollback(buf, (const u_char **)dnptrs,
++			 (const u_char **)(dnptrs +
++					   sizeof dnptrs / sizeof dnptrs[0]));
++	return (-1);
+ }
+ 
+ #if defined(__STDC__) || defined(__GNUC__)
+@@ -1649,6 +1683,11 @@
+ 				dprintf(5, (ddt,
+ 					    "addinfo: not enough room, remaining msglen = %d\n",
+ 					    save_msglen));
++				/* Rollback RRset. */
++				ns_name_rollback(save_cp,
++						 (const u_char **)dnptrs,
++						 (const u_char **)(dnptrs +
++					   sizeof dnptrs / sizeof dnptrs[0]));
+ 				cp = save_cp;
+ 				msglen = save_msglen;
+ 				count = save_count;
+

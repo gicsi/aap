@@ -1,0 +1,8 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&amp;sektion=8">httpd(8)</a>
+does not sanitize the Expect header from an HTTP request when it is
+reflected back in an error message, which might allow cross-site scripting (XSS)
+style attacks.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-3918">CVE-2006-3918</a>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/012_httpd2.patch">
+A source code patch exists which remedies this problem.</a>

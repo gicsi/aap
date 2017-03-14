@@ -1,0 +1,56 @@
++++ This bug was initially created as a clone of Bug #1229446 +++
+
+Description of problem:
+
+needs libglusterfs
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+--- Additional comment from Anand Avati on 2015-06-08 15:18:02 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for multiple Mac OS X build issues) posted (#1) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-08 20:58:48 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for multiple Mac OS X build issues) posted (#2) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-08 22:02:24 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for multiple Mac OS X build issues) posted (#3) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-09 10:43:54 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for multiple Mac OS X build issues) posted (#4) for review on master by Niels de Vos (ndevos@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-18 14:09:56 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for Mac OS X build issues) posted (#5) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-24 22:23:55 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for Mac OS X build issues) posted (#6) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+
+--- Additional comment from Anand Avati on 2015-06-24 22:31:50 EDT ---
+
+REVIEW: http://review.gluster.org/11130 (build: omnibus patch for Mac OS X build issues) posted (#7) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+REVIEW: http://review.gluster.org/11516 (build: Mac OS X build issues, tools/gfind_missing_files/Makefile(.am)) posted (#1) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+REVIEW: http://review.gluster.org/11516 (build: Mac OS X build issues, tools/gfind_missing_files/Makefile(.am)) posted (#2) for review on master by Kaleb KEITHLEY (kkeithle@redhat.com)
+this is needed for https://bugzilla.redhat.com/show_bug.cgi?id=1238793

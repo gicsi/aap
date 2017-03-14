@@ -1,0 +1,36 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_httpd.patch
+
+And then rebuild and install httpd and its modules:
+	cd usr.sbin/httpd
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper cleandir
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+If httpd had been started, you might want to run
+	apachectl stop
+before running "make install", and
+	apachectl start
+afterwards.
+
+Index: usr.sbin/httpd/src/modules/standard/mod_rewrite.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/modules/standard/mod_rewrite.c,v
+retrieving revision 1.24
+retrieving revision 1.24.4.1
+diff -u -p -r1.24 -r1.24.4.1
+--- usr.sbin/httpd/src/modules/standard/mod_rewrite.c	9 Feb 2005 12:13:10 -0000	1.24
++++ usr.sbin/httpd/src/modules/standard/mod_rewrite.c	28 Jul 2006 15:23:54 -0000	1.24.4.1
+@@ -2762,7 +2762,7 @@ static char *escape_absolute_uri(ap_pool
+             int c = 0;
+ 
+             token[0] = cp = ap_pstrdup(p, cp);
+-            while (*cp && c < 5) {
++            while (*cp && c < 4) {
+                 if (*cp == '?') {
+                     token[++c] = cp + 1;
+                     *cp = '\0';
+

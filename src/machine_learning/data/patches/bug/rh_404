@@ -1,0 +1,36 @@
+From 25b2184fcd00e4731b007f14b85280879da47fa3 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sun, 28 Jun 2015 00:22:03 +0000
+Subject: [PATCH] Update to 2006 (#1236346)
+
+---
+ perl-Canary-Stability.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-Canary-Stability.spec b/perl-Canary-Stability.spec
+index 5e1aa9f..e1bb910 100644
+--- a/perl-Canary-Stability.spec
++++ b/perl-Canary-Stability.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-Canary-Stability
+-Version:        2001
+-Release:        3%{?dist}
++Version:        2006
++Release:        1%{?dist}
+ Summary:        Canary to check perl compatibility for Schmorp's modules
+ # See COPYING file.
+ License:        GPL+ or Artistic
+@@ -44,6 +44,9 @@ make test
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Sun Jun 28 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2006-1
++- Update to 2006 (#1236346)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2001-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

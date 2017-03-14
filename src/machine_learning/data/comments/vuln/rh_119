@@ -1,0 +1,49 @@
+Description of problem:
+  Attempting to boot from the Fedora 22 installation DVD (x86_64.. Downloaded June 23, 2015), results in kernel panic before installation can switch to graphics mode.
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+1.  Download Fedora 22 64-bit
+2.  Burn installation image
+3.  Boot DVD
+4.  Kernel panics during boot
+
+
+Steps to Reproduce:
+1.  See 'how reproducible' above
+2.
+3.
+
+Actual results:
+
+see above
+
+
+Expected results:
+
+Expect normal installer to start and proceed with normal installation
+
+Additional info:
+
+Fedora 18-21 have run on this computer with no difficulty.
+
+
+Photo of screen (all that could be captured with cell phone) attached.
+Photo not directly permitted.   Uploaded screen to imgur.com
+
+Direct link to screen.  http://i.imgur.com/tnZyZZK.jpg
+
+Note:  VFS mount failure captured in image.
+That's a generic error when the kernel cannot find the root filesystem.  It is normally indicative of the initramfs not being loaded properly, or something missing in the initramfs that would be required to find the rootfs.
+
+You might want to attempt to verify the ISO file matches the shasum provided and reburn it or use a USB key.  If that still doesn't work, there is really nothing we can do at this point as Fedora does not respin release images.
+Thank you for the prompt feedback.
+
+I verified the iso before burning and it was also verified as part of the burning process (brasero).
+
+Both the DVD and iso will boot in VirtualBox without failure.
+
+It appears Fedora no longer supports my 3 year old computer, which is sad as all other older versions will boot,  install, and run fine. The other distros (Ubuntu, et al) all run without issue.  I don't like how Ubuntu does things, but oh well.   Time to move on I'm afraid.

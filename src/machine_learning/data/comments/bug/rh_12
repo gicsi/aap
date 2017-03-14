@@ -1,0 +1,8 @@
+Description of problem:
+Package is way out of date, last update to package in Fedora was nearly a year ago, upstream is up to 1.1.2 while Fedora only has 0.8.6.
+
+PyPi:
+https://pypi.python.org/pypi/cffi
+
+I need the newer version to update my own packages.
+So, does this mean that rawhide will be getting an update?  Soon?

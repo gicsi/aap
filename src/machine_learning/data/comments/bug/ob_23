@@ -1,0 +1,4 @@
+Retransmitted TCP packets could get corrupted when flowing over an
+IPSEC ESP tunnel.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/003_espdata.patch">
+A source code patch exists which remedies this problem.</a>

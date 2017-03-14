@@ -1,0 +1,43 @@
+I confirmed ibus-fbterm works fine with ibus-anthy with the following patch:
+
+--- ibus-fbterm-0.9.1/src/display.c.orig	2015-06-18 19:28:33.106570726 +0900
++++ ibus-fbterm-0.9.1/src/display.c	2015-06-19 11:20:16.021660197 +0900
+@@ -3,7 +3,7 @@ enum { AuxiliaryTextWin = 0, LookupTable
+ static unsigned short cursor_x, cursor_y;
+ static Rectangle auxiliary_text_win, lookup_table_win, status_bar_win;
+ 
+-static const Info info;
++static Info info;
+ 
+ #define FW(x) ((x) * info.fontWidth)
+ #define FH(y) ((y) * info.fontHeight)
+--- ibus-fbterm-0.9.1/src/ibus-fbterm.c.orig	2015-06-18 18:58:58.658818930 +0900
++++ ibus-fbterm-0.9.1/src/ibus-fbterm.c	2015-06-19 11:20:22.192781198 +0900
+@@ -244,7 +244,11 @@ int main()
+ 					 "signal::register-properties", slot_register_properties, NULL,
+ 					 "signal::update-property", slot_update_property, NULL,
+ 					 NULL);
++#if IBUS_CHECK_VERSION (1, 4, 99)
++	ibus_input_context_set_capabilities(ibus_ctx, IBUS_CAP_AUXILIARY_TEXT | IBUS_CAP_LOOKUP_TABLE | IBUS_CAP_PROPERTY | IBUS_CAP_FOCUS);
++#else
+ 	ibus_input_context_set_capabilities(ibus_ctx, IBUS_CAP_AUXILIARY_TEXT | IBUS_CAP_LOOKUP_TABLE | IBUS_CAP_PROPERTY);
++#endif
+ 
+ 	register_im_callbacks(cbs);
+ 	connect_fbterm(1);
+ibus-fbterm-0.9.1-21.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/ibus-fbterm-0.9.1-21.fc21
+ibus-fbterm-0.9.1-21.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/ibus-fbterm-0.9.1-21.fc22
+Package ibus-fbterm-0.9.1-21.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing ibus-fbterm-0.9.1-21.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10573/ibus-fbterm-0.9.1-21.fc22
+then log in and leave karma (feedback).
+ibus-fbterm-0.9.1-21.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.
+ibus-fbterm-0.9.1-21.fc21 has been pushed to the Fedora 21 stable repository.  If problems still persist, please make note of it in this bug report.

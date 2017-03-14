@@ -1,0 +1,337 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 016_getsockopt.patch
+
+Then build and install a new kernel.
+
+Index: sys/netinet/ip_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_output.c,v
+retrieving revision 1.191
+diff -u -p -r1.191 ip_output.c
+--- sys/netinet/ip_output.c	9 May 2008 02:56:36 -0000	1.191
++++ sys/netinet/ip_output.c	28 Oct 2009 19:57:05 -0000
+@@ -1485,6 +1485,7 @@ ip_ctloutput(op, so, level, optname, mp)
+ 		case IP_ESP_TRANS_LEVEL:
+ 		case IP_ESP_NETWORK_LEVEL:
+ 		case IP_IPCOMP_LEVEL:
++			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 			m->m_len = sizeof(int);
+ 			*mtod(m, int *) = IPSEC_LEVEL_NONE;
+Index: sys/netinet6/ip6_output.c
+===================================================================
+RCS file: /cvs/src/sys/netinet6/ip6_output.c,v
+retrieving revision 1.103
+diff -u -p -r1.103 ip6_output.c
+--- sys/netinet6/ip6_output.c	30 Jul 2008 15:07:40 -0000	1.103
++++ sys/netinet6/ip6_output.c	28 Oct 2009 21:06:57 -0000
+@@ -1882,6 +1882,7 @@ do { \
+ 			case IPV6_ESP_TRANS_LEVEL:
+ 			case IPV6_ESP_NETWORK_LEVEL:
+ 			case IPV6_IPCOMP_LEVEL:
++				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+ #ifndef IPSEC
+ 				m->m_len = sizeof(int);
+ 				*mtod(m, int *) = IPSEC_LEVEL_NONE;
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 015_xmm.patch
+
+Then build and install a new kernel.
+
+Index: sys/arch/i386/i386/trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/trap.c,v
+retrieving revision 1.87
+retrieving revision 1.87.2.1
+diff -u -p -r1.87 -r1.87.2.1
+--- sys/arch/i386/i386/trap.c	9 Apr 2008 16:49:17 -0000	1.87
++++ sys/arch/i386/i386/trap.c	5 Oct 2009 00:36:05 -0000	1.87.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: trap.c,v 1.87 2008/04/09 16:49:17 thib Exp $	*/
++/*	$OpenBSD: trap.c,v 1.87.2.1 2009/10/05 00:36:05 sthen Exp $	*/
+ /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
+ 
+ /*-
+@@ -426,6 +426,10 @@ trap(struct trapframe frame)
+ 		KERNEL_PROC_LOCK(p);
+ 		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, sv);
+ 		KERNEL_PROC_UNLOCK(p);
++		goto out;
++
++	case T_XFTRAP|T_USER:
++		npxtrap(&frame);
+ 		goto out;
+ 
+ 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+Index: sys/arch/i386/include/npx.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/npx.h,v
+retrieving revision 1.10
+retrieving revision 1.10.8.1
+diff -u -p -r1.10 -r1.10.8.1
+--- sys/arch/i386/include/npx.h	1 Oct 2006 18:07:56 -0000	1.10
++++ sys/arch/i386/include/npx.h	5 Oct 2009 00:36:05 -0000	1.10.8.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.h,v 1.10 2006/10/01 18:07:56 kettenis Exp $	*/
++/*	$OpenBSD: npx.h,v 1.10.8.1 2009/10/05 00:36:05 sthen Exp $	*/
+ /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
+ 
+ /*-
+@@ -161,8 +161,11 @@ struct	emcsts {
+ 
+ void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
+ void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
++
+ struct cpu_info;
++struct trapframe;
+ 
+ void	npxinit(struct cpu_info *);
++void	npxtrap(struct trapframe *);
+ 
+ #endif /* !_I386_NPX_H_ */
+Index: sys/arch/i386/isa/npx.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/isa/npx.c,v
+retrieving revision 1.43
+retrieving revision 1.43.4.1
+diff -u -p -r1.43 -r1.43.4.1
+--- sys/arch/i386/isa/npx.c	28 Nov 2007 17:05:09 -0000	1.43
++++ sys/arch/i386/isa/npx.c	5 Oct 2009 00:36:05 -0000	1.43.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: npx.c,v 1.43 2007/11/28 17:05:09 tedu Exp $	*/
++/*	$OpenBSD: npx.c,v 1.43.4.1 2009/10/05 00:36:05 sthen Exp $	*/
+ /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
+ 
+ #if 0
+@@ -134,8 +134,9 @@ extern int i386_fpu_present;
+ extern int i386_fpu_exception;
+ extern int i386_fpu_fdivbug;
+ 
+-#define        fxsave(addr)            __asm("fxsave %0" : "=m" (*addr))
+-#define        fxrstor(addr)           __asm("fxrstor %0" : : "m" (*addr))
++#define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
++#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
++#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
+ 
+ static __inline void
+ fpu_save(union savefpu *addr)
+@@ -533,6 +534,38 @@ npxintr(void *arg)
+ 	}
+ 
+ 	return (1);
++}
++
++void
++npxtrap(struct trapframe *frame)
++{
++	struct proc *p = curcpu()->ci_fpcurproc;
++	union savefpu *addr = &p->p_addr->u_pcb.pcb_savefpu;
++	u_int32_t mxcsr, statbits;
++	int code;
++	union sigval sv;
++
++#ifdef DIAGNOSTIC
++	/*
++	 * At this point, fpcurproc should be curproc.  If it wasn't, the TS
++	 * bit should be set, and we should have gotten a DNA exception.
++	 */
++	if (p != curproc)
++		panic("npxtrap: wrong process");
++#endif
++
++	fxsave(&addr->sv_xmm);
++	mxcsr = addr->sv_xmm.sv_env.en_mxcsr;
++	statbits = mxcsr;
++	mxcsr &= ~0x3f;
++	ldmxcsr(&mxcsr);
++	addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
++	addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
++	code = x86fpflags_to_siginfo (statbits);
++	sv.sival_int = frame->tf_eip;
++	KERNEL_PROC_LOCK(p);
++	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
++	KERNEL_PROC_UNLOCK(p);
+ }
+ 
+ static int
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 014_bind.patch
+
+And then rebuild and install bind:
+	cd usr.sbin/bind
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/bind/bin/named/update.c
+===================================================================
+--- usr.sbin/bind/bin/named/update.c	(revision 1875)
++++ usr.sbin/bind/bin/named/update.c	(working copy)
+@@ -861,7 +861,11 @@
+ 			if (type == dns_rdatatype_rrsig ||
+ 			    type == dns_rdatatype_sig)
+ 				covers = dns_rdata_covers(&t->rdata);
+-			else
++			else if (type == dns_rdatatype_any) {
++				dns_db_detachnode(db, &node);
++				dns_diff_clear(&trash);
++				return (DNS_R_NXRRSET);
++			} else
+ 				covers = 0;
+ 
+ 			/*
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_pf.patch
+
+Then build and install a new kernel.
+
+--- sys/net/pf.c	2 Aug 2008 12:34:37 -0000	1.614
++++ sys/net/pf.c	10 Apr 2009 22:47:58 -0000
+@@ -5755,6 +5755,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
+ 		break;
+ 	}
+ 
++#ifdef INET6
++	case IPPROTO_ICMPV6: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
++		goto done;
++	}
++#endif
++
+ 	default:
+ 		action = pf_test_state_other(&s, dir, kif, m, &pd);
+ 		if (action == PF_PASS) {
+@@ -6104,6 +6113,13 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
+ 			action = pf_test_rule(&r, &s, dir, kif,
+ 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+ 		break;
++	}
++
++	case IPPROTO_ICMP: {
++		action = PF_DROP;
++		DPFPRINTF(PF_DEBUG_MISC,
++		    ("pf: dropping IPv6 packet with ICMPv4 payload\n"));
++		goto done;
+ 	}
+ 
+ 	case IPPROTO_ICMPV6: {
+
+This is version 2 of this patch.
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 012_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+        make depend
+	make includes
+        make
+        make install
+	cd ../../sbin
+	make obj
+        make depend
+	make
+	make install
+
+Index: lib/libssl/src/crypto/asn1/asn1.h
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1.h,v
+retrieving revision 1.9
+diff -u -p -r1.9 asn1.h
+--- lib/libssl/src/crypto/asn1/asn1.h	27 Jun 2006 05:07:00 -0000	1.9
++++ lib/libssl/src/crypto/asn1/asn1.h	7 Apr 2009 07:21:06 -0000
+@@ -1037,6 +1037,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_BAD_OBJECT_HEADER			 102
+ #define ASN1_R_BAD_PASSWORD_READ			 103
+ #define ASN1_R_BAD_TAG					 104
++#define ASN1_R_BMPSTRING_IS_WRONG_LENGTH		 210
+ #define ASN1_R_BN_LIB					 105
+ #define ASN1_R_BOOLEAN_IS_WRONG_LENGTH			 106
+ #define ASN1_R_BUFFER_TOO_SMALL				 107
+@@ -1096,6 +1097,7 @@ void ERR_load_ASN1_strings(void);
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 157
+ #define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 158
+ #define ASN1_R_UNEXPECTED_EOC				 159
++#define ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH		 211
+ #define ASN1_R_UNKNOWN_FORMAT				 160
+ #define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM		 161
+ #define ASN1_R_UNKNOWN_OBJECT_TYPE			 162
+Index: lib/libssl/src/crypto/asn1/asn1_err.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/asn1_err.c,v
+retrieving revision 1.8
+diff -u -p -r1.8 asn1_err.c
+--- lib/libssl/src/crypto/asn1/asn1_err.c	27 Jun 2006 05:07:00 -0000	1.8
++++ lib/libssl/src/crypto/asn1/asn1_err.c	7 Apr 2009 07:21:06 -0000
+@@ -164,6 +164,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_BAD_OBJECT_HEADER)    ,"bad object header"},
+ {ERR_REASON(ASN1_R_BAD_PASSWORD_READ)    ,"bad password read"},
+ {ERR_REASON(ASN1_R_BAD_TAG)              ,"bad tag"},
++{ERR_REASON(ASN1_R_BMPSTRING_IS_WRONG_LENGTH),"bmpstring is wrong length"},
+ {ERR_REASON(ASN1_R_BN_LIB)               ,"bn lib"},
+ {ERR_REASON(ASN1_R_BOOLEAN_IS_WRONG_LENGTH),"boolean is wrong length"},
+ {ERR_REASON(ASN1_R_BUFFER_TOO_SMALL)     ,"buffer too small"},
+@@ -223,6 +224,7 @@ static ERR_STRING_DATA ASN1_str_reasons[
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY),"unable to decode rsa key"},
+ {ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY),"unable to decode rsa private key"},
+ {ERR_REASON(ASN1_R_UNEXPECTED_EOC)       ,"unexpected eoc"},
++{ERR_REASON(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH),"universalstring is wrong length"},
+ {ERR_REASON(ASN1_R_UNKNOWN_FORMAT)       ,"unknown format"},
+ {ERR_REASON(ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM),"unknown message digest algorithm"},
+ {ERR_REASON(ASN1_R_UNKNOWN_OBJECT_TYPE)  ,"unknown object type"},
+Index: lib/libssl/src/crypto/asn1/tasn_dec.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/tasn_dec.c,v
+retrieving revision 1.6
+diff -u -p -r1.6 tasn_dec.c
+--- lib/libssl/src/crypto/asn1/tasn_dec.c	4 Oct 2006 07:10:32 -0000	1.6
++++ lib/libssl/src/crypto/asn1/tasn_dec.c	7 Apr 2009 07:21:06 -0000
+@@ -474,7 +474,6 @@ static int asn1_template_ex_d2i(ASN1_VAL
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ }
+ 
+@@ -574,7 +573,6 @@ static int asn1_template_noexp_d2i(ASN1_
+ 
+ 	err:
+ 	ASN1_template_free(val, tt);
+-	*val = NULL;
+ 	return 0;
+ }
+ 
+@@ -768,6 +766,18 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsig
+ 		case V_ASN1_SET:
+ 		case V_ASN1_SEQUENCE:
+ 		default:
++		if (utype == V_ASN1_BMPSTRING && (len & 1))
++			{
++			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
++					ASN1_R_BMPSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
++		if (utype == V_ASN1_UNIVERSALSTRING && (len & 3))
++			{
++			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
++					ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
++			goto err;
++			}
+ 		/* All based on ASN1_STRING and handled the same */
+ 		if(!*pval) {
+ 			stmp = ASN1_STRING_type_new(utype);
+

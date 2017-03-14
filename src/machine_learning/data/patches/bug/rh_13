@@ -1,0 +1,36 @@
+From 1bc034e25f1440ef7dad917880b734ca84921078 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 9 Jul 2015 00:17:28 +0000
+Subject: [PATCH] Update to 2.1.1 (#1241308)
+
+---
+ nodejs-uri-js.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/nodejs-uri-js.spec b/nodejs-uri-js.spec
+index 03c384e..965a7fd 100644
+--- a/nodejs-uri-js.spec
++++ b/nodejs-uri-js.spec
+@@ -1,6 +1,6 @@
+ Name:           nodejs-uri-js
+-Version:        2.1.0
+-Release:        2%{?dist}
++Version:        2.1.1
++Release:        1%{?dist}
+ Summary:        URI parsing/validating/resolving library for Javascript
+ 
+ # License text is in README.md
+@@ -42,6 +42,9 @@ cp -pr package.json dist src %{buildroot}/%{nodejs_sitelib}/uri-js
+ 
+ 
+ %changelog
++* Thu Jul 09 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.1.1-1
++- Update to 2.1.1 (#1241308)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

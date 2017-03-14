@@ -1,0 +1,56 @@
+Description of problem:
+
+Unhandled exception reference #6e3e28eca186cd53c6b01bb82a6ac163: IP spoofing attack?!HTTP_CLIENT_IP="127.0.0.1"HTTP_X_FORWARDED_FOR="203.99.208.3, 10.151.101.43, 10.153.178.23"
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.click on applications tab inopenshift website
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+
+Document URL: 
+
+Section Number and Name: 
+
+Describe the issue: 
+
+Suggestions for improvement: 
+
+Additional information: 
+
+
+Description of problem:
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1230632 ***

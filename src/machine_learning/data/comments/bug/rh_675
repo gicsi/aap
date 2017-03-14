@@ -1,0 +1,26 @@
+Description of problem:
+updates from fc21 keep getting pushed on top of a fc22 system because there is no way to 'pin' updates to installed versions.They want to override the fc22 versions by default.
+
+Version-Release number of selected component (if applicable):
+22
+
+How reproducible:
+(need non-fedora repos to do this.)
+always
+
+Steps to Reproduce:
+1. install another repo containing fc21 files
+2. yum update (when updates available)
+
+
+Actual results:
+Im getting updates for fc21 that want to override fc22 files.
+
+Expected results:
+pinning should prevent this from happening, preferring the installed version over what is to be installed.fc22 is newer than fc21, so any fc21 updates should be ignored unless only fc21 version of said app/lib is installed.Additionally this allows for kernels and files like virtualbox to be version 'frozen' and to stop updates to them that would cause breakage.This could also prevent depends from breaking nVidia or ATI drivers for instance.
+
+Additional info:
+This exists in Debian.Its called Apt-Pinning.It sets priority of versions pulled from repositories.Pinnig prevents this sort of BAD behaviour by other repos.Others use 'rogue' repos in Debian as well.Im sure this is more of a feature request than a bug, but it presents as a bug when using fc21 files on fc22, which normally dont break anything.
+This can be done with versionlock plugin which has been recently pushed into dnf-plugins-extras.
+
+See bug 1213594.

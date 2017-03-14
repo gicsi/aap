@@ -1,0 +1,13 @@
+This patch [1] for bug 1221614 introduces a problem on el7 by changing from use of the global configuration object to self.configuration for the iscsi_helper option.  This causes the default option of 'tgtadm' to be used rather than 'lioadm' from cinder-dist.conf.
+
+Rather than fixing this with another patch for RHOS5-el7, the proposal is to change the default iscsi_helper option for the el7 branch to the desired option, which gives the desired behavior.
+
+'tgtadm' is not functional/supported on el7 so there is not a risk of breaking anyone relying on that current default.
+
+
+[1] https://code.engineering.redhat.com/gerrit/#/c/48333/
+Created attachment 1044406
+change default iscsi_helper option
+This problem was introduced from an in-flight patch for bug 1221868.  Will complete this fix on that BZ.
+
+*** This bug has been marked as a duplicate of bug 1221868 ***

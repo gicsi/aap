@@ -1,0 +1,8 @@
+The ELF
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ld.so&amp;sektion=1">ld.so(1)</a>
+fails to properly sanitize the environment. There is a potential localhost security
+problem in cases we have not found yet.  This patch applies to all ELF-based
+systems (m68k, m88k, and vax are a.out-based systems).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/016_ldso.patch">
+A source code patch exists which remedies this problem.</a>

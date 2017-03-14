@@ -1,0 +1,6 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=mail&amp;sektion=1">mail(1)</a>
+will process tilde escapes even in non-interactive mode.
+This can lead to a local root compromise.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/common/018_mail.patch">
+A source code patch exists which remedies this problem.</a>

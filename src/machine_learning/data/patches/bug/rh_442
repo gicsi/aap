@@ -1,0 +1,12 @@
+--- run-crons   2015-06-26 10:05:43.807512131 +0200
++++ run-crons.new       2015-06-26 10:05:27.776910439 +0200
+@@ -99,7 +99,7 @@
+                for SCRIPT in $CRONDIR/* ; do
+                        if [[ -x $SCRIPT && ! -d $SCRIPT ]]; then
+                                [ -x /usr/bin/logger ] && /usr/bin/logger -i -p cron.info -t run-crons "(`whoami`) CMD ($SCRIPT)"
+-                               $SCRIPT
++                               $SCRIPT 2>&1 | sed -e "s|^|${SCRIPT##*/}:  |"
+                        fi
+                done
+        fi
+

@@ -1,0 +1,79 @@
+Description of problem:
+
+iiuc notifier app by default would notify only for explicitly defined filter entries, thus those you are "enabled" are included. that means there's "transparent" exclude in the code. that's ok.
+
+but if you do following:
+
+# grep ^FILTER /etc/ovirt-engine/notifier/notifier.conf.d/my.conf 
+FILTER="include:VDC_START(smtp:jbelka@redhat.com) ${FILTER}"
+
+then FILTER var will contain app default behavior even you don't have exclude FILTER entry in the conf file.
+
+# /etc/init.d/ovirt-engine-notifier restart ; tail -f /var/log/ovirt-engine/notifier/notifier.log | egrep 'Value of property.*FILTER|addFilterEntry'
+Stopping oVirt Engine Notifier:                            [  OK  ]
+Starting oVirt Engine Notifier:                            [  OK  ]
+2015-07-02 14:53:04,380 INFO    [org.ovirt.engine.core.uutils.config.ShellLikeConfd dumpConfig] Value of property 'FILTER' is 'include:VDC_START(smtp:jbelka@redhat.com) exclude:*'.
+
+^^^ ${FILTER} got value 'exclude:*'
+
+IMHO this is useless and having FILTER=${FILTER} as first filter entry could bring surprises why following filter entries are not accepted.
+
+So IMO default exclude behaviour should be kept but auto-added as last rule and not to be populated into FILTER.
+
+If anybody would like to exclude anything, he can use 'exclude' keyword and think about order of filter entries.
+
+Plus, I would comment following line, it does not make much sense.
+
+# grep ^FILTER /usr/share/ovirt-engine/services/ovirt-engine-notifier/ovirt-engine-notifier.conf
+FILTER="exclude:*"
+
+Although default behaviour should be documented in conf file (as you don't have man pages).
+
+Version-Release number of selected component (if applicable):
+ovirt-engine-tools-3.6.0-0.0.master.20150627185750.git6f063c1.el6.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. have only this line in conf file - FILTER="include:VDC_START(smtp:foobar@example.com) ${FILTER}"
+2. /etc/init.d/ovirt-engine-notifier restart ; tail -f /var/log/ovirt-engine/notifier/notifier.log | egrep 'Value of property.*FILTER'
+3.
+
+Actual results:
+default app behaviour leaks into FILTER variable
+
+Expected results:
+nothing should leak into variables if it is not written in conf file
+
+Additional info:
+it is yours/sysadmin call if one wants he current settings to be appended or not, the logic nor configuration enforces that.
+
+you can entire:
+
+FILTER="whatever"
+FILTER="${FILTER} whatever"
+FILTER="whatever ${FILTER}"
+
+based on the conf.d logic the previous filter setting can be used or not.
+
+this is as standard conf.d is designed.
+
+so unless I am missing something closing this as not a bug.
+
+thanks
+As far as understand this bug, this 'leak' is the intended behavior of FILTER.
+
+FILTER is a "first match filter" -  For each combination of subscriber/method/event the first matching pattern is acted upon and evaluation stops.
+
+FILTER is assembled from orderly evaluation of multiple config files - This is also how we instruct users to build it in help documents; each file a user adds can prepend to the value of FILTER leaving earlier defined rules for non matching events.
+
+There is no code default, but the basic rule in our default conf file is: "exclude everything". if it makes sense to a user he can define FILTER="include:*(smtp:admin@example.com) $FILTER" (=FILTER="include:*" because this rules matches everything anyway, so no need to keep evaluating).
+
+
+One file does no give the complete value of filter:
+# grep ^FILTER /etc/ovirt-engine/notifier/notifier.conf.d/my.conf 
+FILTER="include:VDC_START(smtp:jbelka@redhat.com) ${FILTER}"
+
+The right place to look is the log:
+'FILTER' is 'include:VDC_START(smtp:jbelka@redhat.com) exclude:*'.

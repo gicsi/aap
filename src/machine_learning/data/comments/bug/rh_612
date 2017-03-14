@@ -1,0 +1,22 @@
+Seeing the following AVC's, triggered from neutron-openvswitch-agent and neutron-dhcp-agent:
+
+type=AVC msg=audit(1434989121.839:1265): avc:  denied  { create } for  pid=29978 comm="neutron-rootwra" name="rootwrap.sock" scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989121.839:1266): avc:  denied  { setattr } for  pid=29978 comm="neutron-rootwra" name="rootwrap.sock" dev="sda1" ino=1843822 scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989121.839:1267): avc:  denied  { write } for  pid=29948 comm="neutron-openvsw" name="rootwrap.sock" dev="sda1" ino=1843822 scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989203.565:1537): avc:  denied  { create } for  pid=31193 comm="neutron-rootwra" name="rootwrap.sock" scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989203.565:1538): avc:  denied  { setattr } for  pid=31193 comm="neutron-rootwra" name="rootwrap.sock" dev="sda1" ino=1836174 scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989203.566:1539): avc:  denied  { write } for  pid=29167 comm="neutron-dhcp-ag" name="rootwrap.sock" dev="sda1" ino=1836174 scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+type=AVC msg=audit(1434989204.167:1547): avc:  denied  { write } for  pid=29167 comm="neutron-dhcp-ag" name="rootwrap.sock" dev="sda1" ino=1836174 scontext=system_u:system_r:neutron_t:s0 tcontext=system_u:object_r:neutron_tmp_t:s0 tclass=sock_file
+
+My package versions:
+[root@instack ~]# rpm -qa | grep neutron
+openstack-neutron-2015.1.1-dev61.el7.centos.noarch
+python-neutronclient-2.4.0-1.el7.noarch
+python-neutron-2015.1.1-dev61.el7.centos.noarch
+openstack-neutron-ml2-2015.1.1-dev61.el7.centos.noarch
+openstack-neutron-common-2015.1.1-dev61.el7.centos.noarch
+openstack-neutron-openvswitch-2015.1.1-dev61.el7.centos.noarch
+
+[root@instack ~]# rpm -q openstack-selinux
+openstack-selinux-0.6.31-1.el7.noarch
+This is fixed in 0.6.32, which hasn't been pushed to RDO yet, but will be soon.

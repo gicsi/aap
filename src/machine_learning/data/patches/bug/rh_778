@@ -1,0 +1,79 @@
+From 8e09f8108b0252447a57293bcd1c149a0e4cb6ca Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 15:06:30 -0400
+Subject: [PATCH] Fix MANIFEST file.
+
+---
+ fix-manifest.patch | 23 +++++++++++++++++++++++
+ jnr-posix.spec     |  7 ++++++-
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+ create mode 100644 fix-manifest.patch
+
+diff --git a/fix-manifest.patch b/fix-manifest.patch
+new file mode 100644
+index 0000000..d8fb1f8
+--- /dev/null
++++ b/fix-manifest.patch
+@@ -0,0 +1,23 @@
++diff -up ./MANIFEST.MF.fix ./MANIFEST.MF
++--- ./MANIFEST.MF.fix	2015-06-17 12:54:35.553446165 -0400
+++++ ./MANIFEST.MF	2015-06-17 12:58:57.054808857 -0400
++@@ -1,2 +1,19 @@
++ Implementation-Title: JNA-POSIX
++ Implementation-Version: 0.5
+++Manifest-Version: 1.0
+++Bundle-SymbolicName: jnr.posix
+++Export-Package: jnr.posix;version="3.0.14",jnr.posix.util;version="3.0.
+++ 14"
+++Bundle-Name: Java POSIX Layer
+++Bundle-Version: 3.0.14
+++Bundle-Localization: plugin
+++Bundle-ManifestVersion: 2
+++Bundle-ActivationPolicy: lazy
+++Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+++Bundle-Vendor: Eclipse Orbit
+++Import-Package: jnr.constants;version="0.8.6",jnr.constants.platform;v
+++ ersion="0.8.6",jnr.constants.platform.windows;version="0.8.6",jnr.ffi
+++ ;version="2.0.1",jnr.ffi.annotations;version="2.0.1",jnr.ffi.byref;ve
+++ rsion="2.0.1",jnr.ffi.mapper;version="2.0.1",jnr.ffi.provider;version
+++ ="2.0.1",jnr.ffi.types;version="2.0.1"
+++
+diff --git a/jnr-posix.spec b/jnr-posix.spec
+index 43093ba..66cfc5e 100644
+--- a/jnr-posix.spec
++++ b/jnr-posix.spec
+@@ -1,10 +1,11 @@
+ Name:           jnr-posix
+ Version:        3.0.14
+-Release:        1%{?dist}
++Release:        2%{?dist}
+ Summary:        Java Posix layer
+ License:        CPL or GPLv2+ or LGPLv2+
+ URL:            http://github.com/jnr/jnr-posix
+ Source0:        https://github.com/jnr/%{name}/archive/%{version}.tar.gz
++Patch0:		fix-manifest.patch
+ 
+ BuildRequires:  maven-local
+ BuildRequires:  mvn(com.github.jnr:jnr-constants) >= 0.8.8
+@@ -26,6 +27,7 @@ Javadoc for %{name}.
+ 
+ %prep
+ %setup -q
++%patch0
+ 
+ # fix test which assumes that there is a group named "nogroup"
+ sed -i 's|"nogroup"|"root"|' src/test/java/jnr/posix/GroupTest.java
+@@ -47,6 +49,9 @@ sed -i 's|"nogroup"|"root"|' src/test/java/jnr/posix/GroupTest.java
+ %files javadoc -f .mfiles-javadoc
+ 
+ %changelog
++* Wed Jun 17 2015 Jeff Johnston <jjohnstn@redhat.com> 3.0.14-2
++- Fix MANIFEST file.
++
+ * Tue Jun 16 2015 Alexander Kurtakov <akurtako@redhat.com> 3.0.14-1
+ - Update to upstream 3.0.14.
+ - Skip tests as there are more failing tests with this release.
+-- 
+1.9.3
+
+

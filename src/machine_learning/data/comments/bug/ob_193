@@ -1,0 +1,6 @@
+Fix the IPv4 TCP/IP stack's TIME_WAIT socket recycling. Due to the bug this
+can result in TCP connections between two IPs being reset instead of accepted
+if being received on a socket in the TIME_WAIT state.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/003_tcpinput.patch">
+A source code patch exists which remedies this problem.</a>

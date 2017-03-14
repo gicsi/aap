@@ -1,0 +1,7 @@
+Due to incorrect PKCS#1 v1.5 padding validation in OpenSSL, it is possible for
+an attacker to construct an invalid signature which OpenSSL would accept as a
+valid PKCS#1 v1.5 signature.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-4339">CVE-2006-4339</a>
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.8/common/016_openssl.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,62 @@
+Description of problem:
+
+I followed https://fedoraproject.org/wiki/Changes/Default_Local_DNS_Resolver#Option_1_-_Use_experimental_implementation_available_in_Fedora_20_and_newer
+
+and got:
+
+SELinux is preventing dnssec-trigger- from relabelfrom access on the file /etc/resolv.conf.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that dnssec-trigger- should be allowed relabelfrom access on the resolv.conf file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep dnssec-trigger- /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:dnssec_trigger_t:s0
+Target Context                system_u:object_r:net_conf_t:s0
+Target Objects                /etc/resolv.conf [ file ]
+Source                        dnssec-trigger-
+Source Path                   dnssec-trigger-
+Port                          <Unknown>
+Host                          sofja.berg.ol
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.4.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     sofja.berg.ol
+Platform                      Linux sofja.berg.ol 4.0.7-300.fc22.x86_64 #1 SMP
+                              Mon Jun 29 22:15:06 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-07-06 09:29:29 CEST
+Last Seen                     2015-07-06 09:29:29 CEST
+Local ID                      e728a93c-aff1-456e-bd9b-7fe80ec571ec
+
+Raw Audit Messages
+type=AVC msg=audit(1436167769.30:593): avc:  denied  { relabelfrom } for  pid=4802 comm="dnssec-trigger-" name="resolv.conf" dev="dm-2" ino=1311278 scontext=system_u:system_r:dnssec_trigger_t:s0 tcontext=system_u:object_r:net_conf_t:s0 tclass=file permissive=0
+dnssec-trigger-0.12-20.fc22.x86_64
+selinux-policy-3.13.1-128.4.fc22.noarch
+dnssec-trigger creates new resolv.conf with different name and then renames it to cope with possible issues if the resolv.conf is a symlink. I think that SELinux should allow dnssec-trigger to do that.
+
+Also the SELinux reports in general could be more verbose, since most of the time I'm having a hard time understanding what actually happened.
+
+Moving to selinux-policy.
+Hi Tomas, 
+Could you reproduce this issue in permissive mode? 
+Thank you!
+(In reply to Lukas Vrabec from comment #3)
+> Hi Tomas, 
+> Could you reproduce this issue in permissive mode? 
+> Thank you!
+
+I'm not sure if I'll be able to. Setting NEEDINFO on the reporter...
+OK, I need all AVCS to fix in in one step.
+Yesterday, I relabeled my file system; system install was a fresh f22 install. I can not reproduce the issue any more.
+
+Sorry for the noise.

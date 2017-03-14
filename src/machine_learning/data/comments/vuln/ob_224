@@ -1,0 +1,8 @@
+Due to a race condition in its command pathname handling, a user with
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=sudo&sektion=8">sudo(8)</a>
+privileges may be able to run arbitrary commands if the user's entry
+is followed by an entry that grants <tt>sudo ALL</tt> privileges to
+another user.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/018_sudo.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,26 @@
+Description of problem:
+Gnome takes ages to start: more than 25 seconds when the X server starts while it was less than 2 seconds in Fedora 21.
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Tried with Nouveau, Vesa and NVidia 340.x driver 
+Compared with a lightweight window manager to check the timing difference
+(See Bug 1232628)
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+A USB device was randomly putting the mess...
+Not a software bug

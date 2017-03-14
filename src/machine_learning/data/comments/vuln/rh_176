@@ -1,0 +1,38 @@
+Description of problem:
+Deploying on bare metals with the poodle from June 17th. Installed with the unified cli and deployed with the command:
+
+openstack overcloud deploy --plan-uuid 03e68e5a-c5c3-4706-b71c-fd8128112b8a --ceph-storage-scale 1 --control-scale 3 --compute-scale 3
+
+Many nodes failed to create:
+heat resource-list -n 5 overcloud |grep FAILED
+| Controller | 2f86fa... | OS::Heat::ResourceGroup | CREATE_FAILED | 2015-06-17T16:55:00Z |            |
+| 0          | 08c85f... | Tuskar::Controller-1    | CREATE_FAILED | 2015-06-17T16:55:18Z | Controller |
+| 2          | 7a83e8... | Tuskar::Controller-1    | CREATE_FAILED | 2015-06-17T16:55:18Z | Controller |
+| Controller | e6c54e... | OS::Nova::Server        | CREATE_FAILED | 2015-06-17T16:55:25Z | 2          |
+| Controller | b0b7c4... | OS::Nova::Server        | CREATE_FAILED | 2015-06-17T16:55:30Z | 0          |
+
+heat resource-show 2f86fa34-31d8-4fa6-a31c-c4250b3532b1 0
+| resource_status_reason | ResourceUnknownStatus: Resource failed - Unknown status FAILED due to "Resource CREATE failed: BadRequest: Expecting to find username or userId in passwordCredentials - the server could not comply with the request since it is either malformed or otherwise incorrect. The client is assumed to be in error. (HTTP 400)" |
+
+
+Version-Release number of selected component (if applicable):
+openstack-tripleo-heat-templates-0.8.6-9.el7ost.noarch
+openstack-tripleo-0.0.6-0.1.git812abe0.el7ost.noarch
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-1.el7ost.noarch
+
+
+Steps to Reproduce:
+1. openstack overcloud deploy --plan-uuid 03e68e5a-c5c3-4706-b71c-fd8128112b8a --ceph-storage-scale 1 --control-scale 3 --compute-scale 3
+
+
+Additional info:
+The images were built by Marius Cornea and they're known to be good.
+Also failed when trying to deploy with 1 compute and no ceph (only 3 controllers). Deployment with 1 controller passed, so there is a problem with HA. Marking this bug as a blocker.
+Udi, to be clear, this is not reproducible on vm environment (bare-metal only right?). I haven't tried Ceph yet but yesterday was deploying 3 controllers ok
+
+if that is the case and since i cannot reproduce can you dig a bit more to find out what went wrong (journalctl -n 1000000 | grep -ni error on any of the controllers would be nice, assuming they're running etc).
+resetting needinfo
+Works in puddle 2015-06-23.
+closing based on comment 5

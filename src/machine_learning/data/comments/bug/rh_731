@@ -1,0 +1,61 @@
+Description of problem:
+during host bootup .. might have been after a recent upgrade .. not sure, was out of town for a week, had this host powered down. When started this morning, it was real slow to start and this error was displayed.
+
+Version-Release number of selected component:
+gnome-shell-3.10.4-9.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        /usr/bin/gnome-shell
+crash_function: cso_hash_find_node
+executable:     /usr/bin/gnome-shell
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 3
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Sun 2014-08-03 03:15:59 PDT, end at Fri 2015-06-19 08:20:29 PDT. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 cso_hash_find_node at cso_cache/cso_hash.c:210
+ #1 cso_hash_find at cso_cache/cso_hash.c:282
+ #2 util_hash_table_find_item at util/u_hash_table.c:129
+ #3 util_hash_table_set at util/u_hash_table.c:156
+ #4 radeon_winsys_bo_create at radeon_drm_bo.c:829
+ #5 r600_init_resource at r600_buffer_common.c:159
+ #6 r600_texture_create_object at r600_texture.c:648
+ #7 r600_texture_create at r600_texture.c:800
+ #8 st_TexSubImage at ../../src/mesa/state_tracker/st_cb_texture.c:763
+ #9 texsubimage at ../../src/mesa/main/teximage.c:3521
+Created attachment 1040996
+File: backtrace
+Created attachment 1040997
+File: cgroup
+Created attachment 1040998
+File: core_backtrace
+Created attachment 1040999
+File: dso_list
+Created attachment 1041000
+File: environ
+Created attachment 1041001
+File: exploitable
+Created attachment 1041002
+File: limits
+Created attachment 1041003
+File: maps
+Created attachment 1041004
+File: open_fds
+Created attachment 1041005
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

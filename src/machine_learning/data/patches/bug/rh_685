@@ -1,0 +1,25 @@
+diff -ruN common.orig/xfpm-icons.h common/xfpm-icons.h
+--- common.orig/xfpm-icons.h	2015-06-21 00:00:00.000000000 +0200
++++ common/xfpm-icons.h	2015-06-21 00:00:00.000000000 +0200
+@@ -25,7 +25,7 @@
+ 
+ #define XFPM_AC_ADAPTER_ICON            "ac-adapter"
+ #define XFPM_COMPUTER_ICON              "computer"
+-#define XFPM_DISPLAY_BRIGHTNESS_ICON    "display-brightness-symbolic"
++#define XFPM_DISPLAY_BRIGHTNESS_ICON    "display-brightness"
+ #define XFPM_MOUSE_ICON                 "input-mouse"
+ #define XFPM_KBD_ICON                   "input-keyboard"
+ #define XFPM_MEDIA_PLAYER_ICON          "multimedia-player"
+diff -ruN panel-plugins.orig/power-manager-plugin/power-manager-button.c panel-plugins/power-manager-plugin/power-manager-button.c
+--- panel-plugins.orig/power-manager-plugin/power-manager-button.c	2015-06-21 00:00:00.000000000 +0200
++++ panel-plugins/power-manager-plugin/power-manager-button.c	2015-06-21 00:00:00.000000000 +0200
+@@ -46,7 +46,7 @@
+ #define SET_LEVEL_TIMEOUT (50)
+ #define SAFE_SLIDER_MIN_LEVEL (5)
+ #define PANEL_DEFAULT_ICON ("battery-full-charged")
+-#define PANEL_DEFAULT_ICON_SYMBOLIC ("battery-full-charged-symbolic")
++#define PANEL_DEFAULT_ICON_SYMBOLIC ("battery-full-charged")
+ 
+ #define POWER_MANAGER_BUTTON_GET_PRIVATE(o) \
+ (G_TYPE_INSTANCE_GET_PRIVATE ((o), POWER_MANAGER_TYPE_BUTTON, PowerManagerButtonPrivate))
+

@@ -1,0 +1,7 @@
+The
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=getcwd&sektion=3">getcwd(3)</a>
+library function contains a memory management error, which causes failure
+to retrieve the current working directory if the path is very long.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/008_getcwd.patch">
+A source code patch exists which remedies this problem.</a>

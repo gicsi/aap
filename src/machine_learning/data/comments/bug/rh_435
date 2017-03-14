@@ -1,0 +1,27 @@
+Spec URL: https://jplesnik.fedorapeople.org/perl-Dist-Metadata/perl-Dist-Metadata.spec
+SRPM URL: https://jplesnik.fedorapeople.org/perl-Dist-Metadata/perl-Dist-Metadata-0.926-1.fc23.src.rpm
+Description:
+This module provides an easy interface for getting various metadata about a
+Perl module distribution.
+
+Fedora Account System Username: jplesnik@redhat.com
+Missing build time dependency:
+ - coreutils -- called in SPEC (rm), line 60
+
+Missing runtime dependency:
+ - File::Basename -- lib/Dist/Metadata/Dist.pm:81
+
+
+The rest looks good.
+Updated files are on the same links
+Ack, approving.
+New Package SCM Request
+=======================
+Package Name: perl-Dist-Metadata
+Short Description: Information about a Perl module distribution
+Upstream URL: http://search.cpan.org/dist/Dist-Metadata/
+Owners: jplesnik ppisar psabata
+Branches:
+InitialCC: perl-sig
+Git done (by process-git-requests).
+Thank you for the review and the repository.

@@ -1,0 +1,29 @@
+Created attachment 1044792
+screenshot of rendering issue
+
+Description of problem:
+The web ui part where you can select the environment columns is rendered wrong
+
+Version-Release number of selected component (if applicable):
+Firefox 38.0.5 on Fedora 22
+Satellite 6.1.0 public beta
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+see screenshot
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+*** This bug has been marked as a duplicate of bug 1239333 ***

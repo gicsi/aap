@@ -1,0 +1,53 @@
+Description of problem:
+Happened just during startup of my KDE desktop
+
+Version-Release number of selected component:
+speech-dispatcher-0.8.3-1.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/bin/speech-dispatcher --spawn --communication-method unix_socket --socket-path /run/user/1122391/speech-dispatcher/speechd.sock
+crash_function: pthread_cancel
+executable:     /usr/bin/speech-dispatcher
+kernel:         4.0.5-200.fc21.ppc64
+runlevel:       N 5
+type:           CCpp
+uid:            1122391
+var_log_messages: [System Logs]:\n-- Logs begin at Mo 2015-03-16 09:25:06 CET, end at Do 2015-07-02 09:33:59 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 pthread_cancel at pthread_cancel.c:33
+ #1 speechd_quit at speechd.c:724
+ #3 __read_nocancel at ../sysdeps/unix/syscall-template.S:81
+ #4 _IO_file_read at fileops.c:1245
+ #5 _IO_new_file_underflow at fileops.c:612
+ #6 _IO_default_uflow at genops.c:435
+ #7 __uflow at genops.c:389
+ #8 _IO_getc at getc.c:39
+ #9 spd_getline at spd_getline.c:83
+ #10 load_output_module at module.c:264
+Created attachment 1045393
+File: backtrace
+Created attachment 1045394
+File: cgroup
+Created attachment 1045395
+File: core_backtrace
+Created attachment 1045396
+File: dso_list
+Created attachment 1045397
+File: environ
+Created attachment 1045398
+File: exploitable
+Created attachment 1045399
+File: limits
+Created attachment 1045400
+File: maps
+Created attachment 1045401
+File: open_fds
+Created attachment 1045402
+File: proc_pid_status
+I installed the proposed fix for #1235999 and the Bug-Report opened this ticket after the proposed fix crashed.
+
+*** This bug has been marked as a duplicate of bug 1235999 ***

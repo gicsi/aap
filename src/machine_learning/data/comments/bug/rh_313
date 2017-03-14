@@ -1,0 +1,34 @@
+Description of problem:
+
+02:23:24.406 ERROR: openstack ERROR: Authentication failed. Please try again with option --include-password or export HEAT_INCLUDE_PASSWORD=1
+
+Command used:
+ source /home/stack/stackrc; if [ -f "/home/stack/deploy-overcloudrc" ]; then source /home/stack/deploy-overcloudrc; fi; openstack overcloud deploy --plan-uuid 1fc3ce98-89d2-4816-ab54-5deb3649e592 --control-scale 3 --compute-scale 1 --ceph-storage-scale 1
+
+bah.. my log do not include the stackrc file.
+This probably needs further debug, opening for tracking
+hit this error again on the dell bm environment, adding logs now
+/tmp/tmpzXjOcr/puppet/ceph-cluster-config.yaml
+/tmp/tmpzXjOcr/firstboot/userdata_default.yaml
+/tmp/tmpzXjOcr/puppet/all-nodes-config.yaml
+
+
+ERROR: openstack ERROR: Authentication failed. Please try again with option --include-password or export HEAT_INCLUDE_PASSWORD=1
+Authentication required
+[stack@host15 ~]$ 
+[stack@host15 ~]$ 
+[stack@host15 ~]$ heat stack-list
++--------------------------------------+------------+---------------+----------------------+
+| id                                   | stack_name | stack_status  | creation_time        |
++--------------------------------------+------------+---------------+----------------------+
+| 479eabfa-0e89-4adf-8cc2-36bac4a3b85e | overcloud  | CREATE_FAILED | 2015-06-30T17:00:18Z |
++--------------------------------------+------------+---------------+----------------------+
+[stack@host15 ~]$ cat stackrc 
+export NOVA_VERSION=1.1
+export OS_PASSWORD=$(hiera admin_password)
+export OS_AUTH_URL=http://10.8.147.1:5000/v2.0
+export OS_USERNAME=admin
+export OS_TENANT_NAME=admin
+export COMPUTE_API_VERSION=1.1
+export OS_NO_CACHE=True
+*** This bug has been marked as a duplicate of bug 1235908 ***

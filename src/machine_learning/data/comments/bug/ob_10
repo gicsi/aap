@@ -1,0 +1,4 @@
+The readv(2) and writev(2) system calls would not accept a <em>struct iovec</em>
+with an <strong>iov_len</strong> of 0.  This causes a db test in perl to fail.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/uio.patch">
+A source code patch exists which remedies this problem.</a>

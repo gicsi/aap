@@ -1,0 +1,63 @@
+Version-Release number of selected component:
+php-fpm-5.6.10-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        'php-fpm: pool localhost' '' '' '' '' '' '' '' ''
+crash_function: zend_std_object_get_class_name
+executable:     /usr/sbin/php-fpm
+global_pid:     32288
+kernel:         4.0.7-300.fc22.x86_64+debug
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 zend_std_object_get_class_name at /usr/src/debug/php-5.6.10/Zend/zend_object_handlers.c:1539
+ #1 zend_print_zval_r_ex at /usr/src/debug/php-5.6.10/Zend/zend.c:420
+ #2 print_hash at /usr/src/debug/php-5.6.10/Zend/zend.c:184
+ #3 zend_print_zval_r_ex at /usr/src/debug/php-5.6.10/Zend/zend.c:409
+ #4 zend_print_zval_r at /usr/src/debug/php-5.6.10/Zend/zend.c:395
+ #5 zif_print_r at /usr/src/debug/php-5.6.10/ext/standard/basic_functions.c:5535
+ #6 dtrace_execute_internal at /usr/src/debug/php-5.6.10/Zend/zend_dtrace.c:97
+ #7 zend_do_fcall_common_helper_SPEC at /usr/src/debug/php-5.6.10/Zend/zend_vm_execute.h:560
+ #8 execute_ex at /usr/src/debug/php-5.6.10/Zend/zend_vm_execute.h:363
+ #9 dtrace_execute_ex at /usr/src/debug/php-5.6.10/Zend/zend_dtrace.c:73
+
+Potential duplicate: bug 1152738
+Created attachment 1045640
+File: backtrace
+Created attachment 1045641
+File: cgroup
+Created attachment 1045642
+File: core_backtrace
+Created attachment 1045643
+File: dso_list
+Created attachment 1045644
+File: environ
+Created attachment 1045645
+File: limits
+Created attachment 1045646
+File: maps
+Created attachment 1045647
+File: mountinfo
+Created attachment 1045648
+File: namespaces
+Created attachment 1045649
+File: open_fds
+Created attachment 1045650
+File: proc_pid_status
+Created attachment 1045651
+File: var_log_messages
+This bug marked as fixed here: http://xcache.lighttpd.net/ticket/342
+But seems that it is not fixed.
+Re-affecting to XCache and closing as duplicate.
+Upstream is aware of this issue, but doesn't seems they want to fix it.
+
+*** This bug has been marked as a duplicate of bug 1152738 ***
+(In reply to Remi Collet from comment #14)
+> Upstream is aware of this issue, but doesn't seems they want to fix it.
+
+Upstream said that it fixed in http://xcache.lighttpd.net/changeset/71888ba/git

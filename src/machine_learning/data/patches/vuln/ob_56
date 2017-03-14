@@ -1,0 +1,110 @@
+The following patch disables the use of a ~/.terminfo directory in
+setuid/setgid programs.  Normally, curses will use a terminal description
+in the ~/.terminfo directory in preference to the system terminfo
+database.  This change is consistent with curses' treatment of the
+TERMCAP, TERMINFO, TERMINFO_DIRS, and TERMPATH environment variables.
+The patch also prevents the contents of the TERMCAP environment variable
+from being used as a terminal description.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 027_curses.patch
+
+Then rebuild curses
+	cd lib/libcurses
+	make depend
+	make
+	make install
+
+Index: lib/libcurses/tinfo/read_termcap.c
+===================================================================
+RCS file: /cvs/src/lib/libcurses/tinfo/read_termcap.c,v
+retrieving revision 1.8
+diff -u -r1.8 read_termcap.c
+--- lib/libcurses/tinfo/read_termcap.c	2000/04/14 19:14:02	1.8
++++ lib/libcurses/tinfo/read_termcap.c	2000/10/09 14:38:16
+@@ -784,7 +784,7 @@
+     pvec = pathvec;
+     tbuf = bp;
+     p = pathbuf;
+-    cp = getenv("TERMCAP");
++    cp = issetugid() ? NULL : getenv("TERMCAP");
+ 
+     /*
+      * TERMCAP can have one of two things in it.  It can be the name of a file
+@@ -798,21 +798,23 @@
+ #define	MY_PATH_DEF	"/etc/termcap /usr/share/misc/termcap"
+     if (issetugid())
+ 	strlcpy(pathbuf, MY_PATH_DEF, PBUFSIZ);
+-    else if (!is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
+-	if ((termpath = getenv("TERMPATH")) != 0) {
+-	    strlcpy(pathbuf, termpath, PBUFSIZ);
+-	} else {
+-	    if ((home = getenv("HOME")) != 0 &&
+-		strlen(home) < PBUFSIZ) {	/* setup path */
+-		p += strlen(home);	/* path, looking in */
+-		strcpy(pathbuf, home);	/* $HOME first */
+-		*p++ = '/';
+-	    }			/* if no $HOME look in current directory */
+-	    strlcpy(p, ".termcap " MY_PATH_DEF,
+-		(size_t) (PBUFSIZ - (p - pathbuf)));
+-	}
+-    } else			/* user-defined name in TERMCAP */
+-	strlcpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
++    else {
++	if (!is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
++	    if ((termpath = getenv("TERMPATH")) != 0) {
++		strlcpy(pathbuf, termpath, PBUFSIZ);
++	    } else {
++		if ((home = getenv("HOME")) != 0 && *home != '\0' &&
++		    strlen(home) < PBUFSIZ) {	/* setup path */
++		    p += strlen(home);	/* path, looking in */
++		    strcpy(pathbuf, home);	/* $HOME first */
++		    *p++ = '/';
++		}			/* if no $HOME look in cwd */
++		strlcpy(p, ".termcap " MY_PATH_DEF,
++		    (size_t) (PBUFSIZ - (p - pathbuf)));
++	    }
++	} else			/* user-defined name in TERMCAP */
++	    strlcpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
++    }
+ 
+     *fname++ = pathbuf;		/* tokenize path into vector of names */
+     while (*++p) {
+@@ -974,7 +976,7 @@
+     char pathbuf[PATH_MAX];
+ 
+     termpaths[filecount] = 0;
+-    if ((tc = getenv("TERMCAP")) != 0 && (!issetugid() || !is_pathname(tc))) {
++    if (!issetugid() && (tc = getenv("TERMCAP"))) {
+ 	if (is_pathname(tc)) {	/* interpret as a filename */
+ 	    ADD_TC(tc, 0);
+ 	} else if (_nc_name_match(tc, tn, "|:")) {	/* treat as a capability file */
+@@ -1007,7 +1009,7 @@
+ 
+ #define PRIVATE_CAP "%s/.termcap"
+ 
+-	if (!issetugid() && (h = getenv("HOME")) != NULL
++	if (!issetugid() && (h = getenv("HOME")) != NULL && *h != '\0'
+ 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
+ 	    /* user's .termcap, if any, should override it */
+ 	    (void) strcpy(envhome, h);
+Index: lib/libcurses/tinfo/home_terminfo.c
+===================================================================
+RCS file: /cvs/src/lib/libcurses/tinfo/home_terminfo.c,v
+retrieving revision 1.2
+diff -u -r1.2 home_terminfo.c
+--- lib/libcurses/tinfo/home_terminfo.c	1999/03/02 06:23:28	1.2
++++ lib/libcurses/tinfo/home_terminfo.c	2000/10/09 14:39:11
+@@ -51,8 +51,8 @@
+ 	char *home;
+ 	static char *temp = 0;
+ 
+-	if (temp == 0) {
+-		if ((home = getenv("HOME")) != 0
++	if (temp == 0 && !issetugid()) {
++		if ((home = getenv("HOME")) != 0 && *home != '\0'
+ 		 && my_length <= PATH_MAX) {
+ 			temp = typeMalloc(char, my_length);
+ 			if (temp == 0)
+

@@ -1,0 +1,4 @@
+This is another fix for a kernel crash caused by the
+<strong>crashme</strong> program.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/i386/tss.patch">
+A source code patch exists which remedies this problem.</a>

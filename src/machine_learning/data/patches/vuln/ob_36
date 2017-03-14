@@ -1,0 +1,143 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 009_ipsec_in_use.patch
+
+And then rebuild your kernel.
+
+--- sys/net/pfkeyv2.c:1.14	1999/07/06 20:17:52
++++ sys/net/pfkeyv2.c		1999/07/06 20:54:03
+@@ -559,8 +559,10 @@
+   }
+ 
+ ret:
+-  bzero(buffer, j + sizeof(struct sadb_msg));
+-  free(buffer, M_TEMP);
++  if (buffer != NULL) {
++    bzero(buffer, j + sizeof(struct sadb_msg));
++    free(buffer, M_TEMP);
++  }
+   return rval;
+ }
+ 
+@@ -1276,7 +1278,6 @@
+ 		      0, (struct rtentry **) 0);
+ 
+ 	    delete_flow(flow, flow->flow_sa);
+-	    ipsec_in_use--;
+ 	}
+ 	else if (!replace)
+ 	{
+@@ -1294,7 +1295,6 @@
+ 		goto ret;
+ 	    }
+ 
+-	    ipsec_in_use++;
+ 	    sa2->tdb_cur_allocations++;
+ 	}
+ 	else
+@@ -1316,7 +1316,6 @@
+ 		      delete_flow(flow2, sa2);
+ 		    goto ret;
+ 		}
+-		ipsec_in_use++;
+ 	    }
+ 	    else if (rt_setgate(rt, rt_key(rt), (struct sockaddr *) &encapgw))
+ 	    {
+@@ -1344,7 +1343,6 @@
+ 			  (struct rtentry **) 0);
+ 
+ 		delete_flow(flow2, flow2->flow_sa);
+-		ipsec_in_use--;
+ 	    }
+ 	    else if (!replace)
+ 	    {
+@@ -1367,11 +1365,9 @@
+ 		
+ 		    delete_flow(flow, sa2);
+ 		    delete_flow(flow2, sa2);
+-		    ipsec_in_use--;
+ 		    goto ret;
+ 		}
+ 
+-		ipsec_in_use++;
+ 		sa2->tdb_cur_allocations++;
+ 	    }
+ 	    else
+@@ -1400,7 +1396,6 @@
+ 			delete_flow(flow2, sa2);
+ 			goto ret;
+ 		    }
+-	            ipsec_in_use++;
+ 		}
+ 		else if (rt_setgate(rt, rt_key(rt),
+ 				    (struct sockaddr *) &encapgw))
+@@ -1621,7 +1616,7 @@
+ #if 0
+   int rval = 0;
+   int i, j;
+-  void *p, *headers[SADB_EXT_MAX+1], *buffer;
++  void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
+ 
+   if (!nregistered) {
+     rval = ESRCH;
+@@ -1727,6 +1722,10 @@
+   rval = 0;
+ 
+ ret:
++  if (buffer != NULL) {
++    bzero(buffer, i);
++    free(buffer, M_TEMP);
++  }
+   return rval;
+ #endif
+   return 0;
+@@ -1738,7 +1737,7 @@
+   int rval = 0;
+   int i;
+   u_int8_t satype;
+-  void *p, *headers[SADB_EXT_MAX+1], *buffer;
++  void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
+ 
+   switch (sa->tdb_sproto) {
+     case IPPROTO_AH:
+@@ -1800,6 +1799,10 @@
+   rval = 0;
+ 
+ ret:
++  if (buffer != NULL) {
++    bzero(buffer, i);
++    free(buffer, M_TEMP);
++  }
+   return rval;
+ }
+ 
+--- sys/netinet/ip_ipsp.c:1.40	1999/07/06 20:17:52
++++ sys/netinet/ip_ipsp.c	1999/07/06 20:54:03
+@@ -417,6 +417,7 @@
+     MALLOC(flow, struct flow *, sizeof(struct flow), M_TDB, M_WAITOK);
+     bzero(flow, sizeof(struct flow));
+ 
++    ipsec_in_use++;
+     return flow;
+ }
+ 
+@@ -671,6 +672,7 @@
+ 	}
+     }
+ 
++    ipsec_in_use--;
+     FREE(flow, M_TDB);
+ }
+ 
+@@ -722,10 +724,7 @@
+       (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+ 
+     while (tdbp->tdb_flow)
+-    {
+ 	delete_flow(tdbp->tdb_flow, tdbp);
+-	ipsec_in_use--;
+-    }
+ 
+     /* Cleanup SA-Bindings */
+     for (tdbpp = TAILQ_FIRST(&tdbp->tdb_bind_in); tdbpp;
+

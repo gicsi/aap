@@ -1,0 +1,4 @@
+I have prepared updated packaging for libpeas 1.15.0 (to be included with the GNOME 3.17.3 release), which is required for gedit 3.17.1 (released at the same time).
+Created attachment 1043049
+packaging patch
+Pushed and built in Rawhide.

@@ -1,0 +1,2 @@
+git in F22 is 2.4.3, 2.4.5 is available, please update.
+Hi Jonathan, have you got some special reasons why we should do rebase? Otherwise that's not philosophy of Fedora do non-sense rebases to newest version when system is released.

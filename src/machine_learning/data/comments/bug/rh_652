@@ -1,0 +1,48 @@
+Version-Release number of selected component:
+libreoffice-core-4.3.7.2-6.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/lib64/libreoffice/program/soffice.bin --calc --splash-pipe=5
+crash_function: ubidi_getRuns_52
+executable:     /usr/lib64/libreoffice/program/soffice.bin
+kernel:         4.0.4-202.fc21.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at So 2014-05-18 19:24:43 CEST, end at Mo 2015-06-22 11:42:42 CEST. --
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 ubidi_getRuns_52 at ubidiln.c:693
+ #1 ubidi_countRuns_52 at ubidiln.c:357
+ #2 ImpEditEngine::InitWritingDirections at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit2.cxx:1893
+ #3 ImpEditEngine::InitScriptTypes at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit2.cxx:1680
+ #4 ImpEditEngine::HasScriptType at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit2.cxx:1849
+ #5 ImpEditEngine::CreateLines at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit3.cxx:636
+ #6 ImpEditEngine::FormatDoc at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit3.cxx:394
+ #7 ImpEditEngine::FormatAndUpdate at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/impedit3.cxx:4147
+ #8 EditEngine::SetUpdateMode at /usr/src/debug/libreoffice-4.3.7.2/editeng/source/editeng/editeng.cxx:1445
+ #9 ScEditEngineDefaulter::SetText at /usr/src/debug/libreoffice-4.3.7.2/sc/source/core/tool/editutil.cxx:581
+Created attachment 1041693
+File: backtrace
+Created attachment 1041694
+File: cgroup
+Created attachment 1041695
+File: core_backtrace
+Created attachment 1041696
+File: dso_list
+Created attachment 1041697
+File: environ
+Created attachment 1041698
+File: exploitable
+Created attachment 1041699
+File: limits
+Created attachment 1041700
+File: maps
+Created attachment 1041701
+File: open_fds
+Created attachment 1041702
+File: proc_pid_status
+Do you have a document, or input text that reproduces this crash ?

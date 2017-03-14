@@ -1,0 +1,414 @@
+Description of problem:
+
+068 - output mismatch (see 068.out.bad)
+1a2
+> /usr/share/pcp/lib/pmlogger: pmlogger not running
+4a6,8
+> $PCP_RC_DIR/pmlogger: Warning: Performance Co-Pilot archive logger(s) not permanently enabled.
+>     To enable pmlogger, run the following as root:
+>     # /bin/systemctl enable pmlogger.service
+
+Check local PMCD is still alive ...
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sampledso.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+Failures: 068
+Failed 1 of 1 tests
+
+This failure happens on all arches, and breaks basic "./check -g sanity" sanity test, including CI.
+
+
+Version-Release number of selected component (if applicable):
+
+pcp-3.10.5-4.el7
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. service pmcd start
+2. service pmlogger start
+3. cd /var/lib/pcp/testsuite
+4. ./check 068
+
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+
+[root@ibm-p750e-02-lp3 lib]# service pmcd start
+Redirecting to /bin/systemctl start  pmcd.service
+[root@ibm-p750e-02-lp3 lib]# service pmlogger start
+Redirecting to /bin/systemctl start  pmlogger.service
+[root@ibm-p750e-02-lp3 lib]# cd test
+-bash: cd: test: No such file or directory
+[root@ibm-p750e-02-lp3 lib]# cd tests^C
+[root@ibm-p750e-02-lp3 lib]# cd pcp/testsuite/
+[root@ibm-p750e-02-lp3 testsuite]# ./check 068
+[root@ibm-p750e-02-lp3 testsuite]# ./check 068
+Installing "localconfig"
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA sample is not responding
+FYI ... here are the PMCD logs
+:::::::::  start /var/log/pcp/pmcd/pmcd.log  ::::::::
+Log for pmcd on ibm-p750e-02-lp3.rhts.eng.bos.redhat.com started Wed Jul  8 15:52:39 2015
+
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  2307   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff812aff48]
+proc           3  2308  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  2309  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+linux         60  2310  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff8127ff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff8124ffa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+
+pmcd: PID = 2304, PDU version = 2
+pmcd request port(s):
+  sts fd   port  family address
+  === ==== ===== ====== =======
+  ok     7       unix   /var/run/pcp/pmcd.socket
+  ok     0 44321 inet   INADDR_ANY
+  ok     3 44321 ipv6   INADDR_ANY
+::::::::::  end /var/log/pcp/pmcd/pmcd.log  :::::::::
+:::::::::  start /var/log/pcp/pmcd/sample.log  ::::::::
+Log for pmdasample on ibm-p750e-02-lp3.rhts.eng.bos.redhat.com started Wed Jul  8 15:49:55 2015
+
+
+Log finished Wed Jul  8 15:51:19 2015
+::::::::::  end /var/log/pcp/pmcd/sample.log  :::::::::
+Restarting PMCD ...
+Waiting for pmcd to terminate ...
+Starting pmcd ... 
+/usr/share/pcp/lib/pmlogger: Warning: Performance Co-Pilot archive logger(s) not permanently enabled.
+    To enable pmlogger, run the following as root:
+    # /bin/systemctl enable pmlogger.service
+Starting pmlogger ... 
+Trying to re-install PMDA sample from /var/lib/pcp/pmdas/sample ...
+FYI ... here are the PMCD logs
+:::::::::  start /var/log/pcp/pmcd/pmcd.log  ::::::::
+Log for pmcd on ibm-p750e-02-lp3.rhts.eng.bos.redhat.com started Wed Jul  8 15:53:29 2015
+
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+
+pmcd: PID = 8495, PDU version = 2
+pmcd request port(s):
+  sts fd   port  family address
+  === ==== ===== ====== =======
+  ok     7       unix   /var/run/pcp/pmcd.socket
+  ok     0 44321 inet   INADDR_ANY
+  ok     3 44321 ipv6   INADDR_ANY
+::::::::::  end /var/log/pcp/pmcd/pmcd.log  :::::::::
+/var/log/pcp/pmcd/sample.log: not found
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sampledso.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+PMDA simple is not responding
+Trying to re-install PMDA simple from /var/lib/pcp/pmdas/simple ...
+FYI ... here are the PMCD logs
+:::::::::  start /var/log/pcp/pmcd/pmcd.log  ::::::::
+Log for pmcd on ibm-p750e-02-lp3.rhts.eng.bos.redhat.com started Wed Jul  8 15:53:29 2015
+
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+
+pmcd: PID = 8495, PDU version = 2
+pmcd request port(s):
+  sts fd   port  family address
+  === ==== ===== ====== =======
+  ok     7       unix   /var/run/pcp/pmcd.socket
+  ok     0 44321 inet   INADDR_ANY
+  ok     3 44321 ipv6   INADDR_ANY
+[Wed Jul  8 15:53:31] pmcd(8495) Info: 
+
+pmcd RESTARTED at Wed Jul  8 15:53:31 2015
+
+
+Current PMCD clients ...
+     fd  client connection from                    ipc ver  operations denied
+     ==  ========================================  =======  =================
+
+Configuration file '/etc/pcp/pmcd/pmcd.conf' unchanged
+Restarting any deceased agents:
+    (no agents required restarting)
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+[Wed Jul  8 15:53:31] pmcd(8495) Info: Reloading PMNS "DEFAULT"
+[Wed Jul  8 15:53:32] pmcd(8495) Info: 
+
+pmcd RESTARTED at Wed Jul  8 15:53:32 2015
+
+
+Current PMCD clients ...
+     fd  client connection from                    ipc ver  operations denied
+     ==  ========================================  =======  =================
+
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+sample        29 11270  22  23   2 bin pipe cmd=/var/lib/pcp/pmdas/sample/pmdasample -d 29
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+[Wed Jul  8 15:53:32] pmcd(8495) Info: PMNS file "DEFAULT" is unchanged
+[Wed Jul  8 15:53:33] pmcd(8495) Info: 
+
+pmcd RESTARTED at Wed Jul  8 15:53:33 2015
+
+
+Current PMCD clients ...
+     fd  client connection from                    ipc ver  operations denied
+     ==  ========================================  =======  =================
+
+Configuration file '/etc/pcp/pmcd/pmcd.conf' unchanged
+Restarting any deceased agents:
+    (no agents required restarting)
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+sample        29 11270  22  23   2 bin pipe cmd=/var/lib/pcp/pmdas/sample/pmdasample -d 29
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+[Wed Jul  8 15:53:33] pmcd(8495) Info: Reloading PMNS "DEFAULT"
+[Wed Jul  8 15:53:35] pmcd(8495) Info: 
+
+pmcd RESTARTED at Wed Jul  8 15:53:35 2015
+
+
+Current PMCD clients ...
+     fd  client connection from                    ipc ver  operations denied
+     ==  ========================================  =======  =================
+     21  /var/run/pcp/pmcd.socket                        2
+
+
+active agent dom   pid  in out ver protocol parameters
+============ === ===== === === === ======== ==========
+root           1  8498   9  10   2 bin pipe cmd=/var/lib/pcp/pmdas/root/pmdaroot
+pmcd           2                 2 dso i:6  lib=/var/lib/pcp/pmdas/pmcd/pmda_pmcd.so entry=pmcd_init [0x3fff9340ff48]
+proc           3  8499  14  15   2 bin pipe cmd=/var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs           11  8500  16  17   2 bin pipe cmd=/var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+sample        29 11270  22  23   2 bin pipe cmd=/var/lib/pcp/pmdas/sample/pmdasample -d 29
+sampledso     30                 2 dso i:6  lib=/var/lib/pcp/pmdas/sample/pmda_sample.so entry=sample_init [0x3fff9335fe50]
+linux         60  8501  18  19   2 bin pipe cmd=/var/lib/pcp/pmdas/linux/pmdalinux
+mmv           70                 2 dso i:4  lib=/var/lib/pcp/pmdas/mmv/pmda_mmv.so entry=mmv_init [0x3fff933dff98]
+jbd2         122                 2 dso i:4  lib=/var/lib/pcp/pmdas/jbd2/pmda_jbd2.so entry=jbd2_init [0x3fff933affa0]
+
+Host access list:
+00 01 Cur/MaxCons host-spec                               host-mask                               lvl host-name
+== == =========== ======================================= ======================================= === ==============
+ y  y     0     0 2620:52:0:1040:221:5eff:fea9:b7b1       ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff   0 localhost
+ y  y     0     0 10.16.67.48                             255.255.255.255                           0 localhost
+ y  y     0     0 /                                       /                                         1 unix:
+    n     0     0 0.0.0.0                                 0.0.0.0                                   4 .*
+    n     0     0 ::                                      ::                                        8 :*
+User access list empty: user-based access control turned off
+Group access list empty: group-based access control turned off
+
+[Wed Jul  8 15:53:35] pmcd(8495) Info: PMNS file "DEFAULT" is unchanged
+::::::::::  end /var/log/pcp/pmcd/pmcd.log  :::::::::
+:::::::::  start /var/log/pcp/pmcd/simple.log  ::::::::
+Log for pmdasimple on ibm-p750e-02-lp3.rhts.eng.bos.redhat.com started Wed Jul  8 15:49:55 2015
+
+
+Log finished Wed Jul  8 15:51:19 2015
+::::::::::  end /var/log/pcp/pmcd/simple.log  :::::::::
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+
+pmcd.control.traceconn
+    value 0
+PMCD event tracing not enabled!
+
+pmcd.control.tracepdu
+    value 0
+PMCD event tracing not enabled!
+fix options, and restart PMCD
+Waiting for pmcd to terminate ...
+Starting pmcd ... 
+/usr/share/pcp/lib/pmlogger: Warning: Performance Co-Pilot archive logger(s) not permanently enabled.
+    To enable pmlogger, run the following as root:
+    # /bin/systemctl enable pmlogger.service
+Starting pmlogger ... 
+200+0 records in
+400+0 records out
+204800 bytes (205 kB) copied, 0.00125969 s, 163 MB/s
+1+0 records in
+0+1 records out
+132 bytes (132 B) copied, 0.000143727 s, 918 kB/s
+sample.dodgey.control old value=5 new value=5
+sample.dodgey.control old value=5 new value=3
+sample.dodgey.control old value=3 new value=4
+sample.dodgey.control old value=4 new value=5
+sample.dodgey.control old value=5 new value=0
+sample.dodgey.control old value=0 new value=5
+sample.dodgey.control old value=5 new value=-1044
+sample.dodgey.control old value=-1044 new value=5
+sample.dodgey.control old value=5 new value=5
+sample.dodgey.control old value=5 new value=3
+sample.dodgey.control old value=3 new value=4
+sample.dodgey.control old value=4 new value=5
+sample.dodgey.control old value=5 new value=0
+sample.dodgey.control old value=0 new value=5
+sample.dodgey.control old value=5 new value=-1044
+sample.dodgey.control old value=-1044 new value=5
+sample.dodgey.control old value=5 new value=5
+sample.dodgey.control old value=5 new value=3
+sample.dodgey.control old value=3 new value=4
+sample.dodgey.control old value=4 new value=5
+sample.dodgey.control old value=5 new value=0
+sample.dodgey.control old value=0 new value=5
+sample.dodgey.control old value=5 new value=-1044
+sample.dodgey.control old value=-1044 new value=5
+068 - output mismatch (see 068.out.bad)
+1a2
+> /usr/share/pcp/lib/pmlogger: pmlogger not running
+4a6,8
+> $PCP_RC_DIR/pmlogger: Warning: Performance Co-Pilot archive logger(s) not permanently enabled.
+>     To enable pmlogger, run the following as root:
+>     # /bin/systemctl enable pmlogger.service
+
+Check local PMCD is still alive ...
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sampledso.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+Failures: 068
+Failed 1 of 1 tests
+[root@ibm-p750e-02-lp3 testsuite]#
+Hey Miloš,
+
+Is there a particular reason we can't add the `systemctl pmlogger enable` command to the CI setup steps as the output of the testcase suggests?
+(In reply to Lukas Berk from comment #1)
+> Hey Miloš,
+> 
+> Is there a particular reason we can't add the `systemctl pmlogger enable`
+> command to the CI setup steps as the output of the testcase suggests?
+
+Probably no such reason exists. If you think this is the only real problem here, Ill be glad to "fix" it, and we can close this bug as NOTABUG (and go home sooner :)
+
+There were some changes in pmlogger startup scripts in RHEL6.7, therefore I reported this to be sure I'm not overlooking some unwanted/unexpected side effect.
+(In reply to Miloš Prchlík from comment #2)
+[...]
+> Probably no such reason exists. If you think this is the only real problem
+> here, Ill be glad to "fix" it, and we can close this bug as NOTABUG (and go
+> home sooner :)
+
+In my experience with 068, that's been the case (such as on my fedora22 box).
+
+> There were some changes in pmlogger startup scripts in RHEL6.7, therefore I
+> reported this to be sure I'm not overlooking some unwanted/unexpected side
+> effect.
+
+Totally understood.  Please give enabling pmlogger before running 068 a shot.  If that works we can close this as NOTABUG, otherwise we can proceed as necessary.
+Enabling pmlogger service seems to fix this particular "bug". Since there's no visible splashdown of pmlogger startup scripts' changes I was afraid of, I added "pmlogger enable" to our QE testsuite wrapper, and it's fine to close this bug.

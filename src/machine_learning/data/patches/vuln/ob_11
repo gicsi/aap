@@ -1,0 +1,165 @@
+NOTE: this is the second version of this patch.
+
+Apply by doing:
+	cd /usr/src/usr.sbin/bootpd
+	patch < bootpd.patch
+
+make && make install
+
+Index: bootpd.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/bootpd.c,v
+retrieving revision 1.4
+diff -u -r1.4 bootpd.c
+--- bootpd.c	1998/06/07 06:04:25	1.4
++++ bootpd.c	1998/12/20 21:46:09
+@@ -609,11 +609,17 @@
+ 	int32 bootsize = 0;
+ 	unsigned hlen, hashcode;
+ 	int32 dest;
+-	char realpath[1024];
++	char realpath[MAXPATHLEN];
+ 	char *clntpath;
+ 	char *homedir, *bootfile;
+ 	int n;
+ 
++	/*
++	 * Force C strings in packet to be NUL-terminated.
++	 */
++	bp->bp_sname[BP_SNAME_LEN-1] = '\0';
++	bp->bp_file[BP_FILE_LEN-1] = '\0';
++
+ 	/* XXX - SLIP init: Set bp_ciaddr = recv_addr here? */
+ 
+ 	/*
+@@ -635,6 +641,15 @@
+ 		strcpy(bp->bp_sname, hostname);
+ 	}
+ 
++	/* If it uses an unknown network type, ignore the request.  */
++	if (bp->bp_htype >= hwinfocnt) {
++		if (debug)
++			report(LOG_INFO,
++			    "Request with unknown network type %u",
++			    bp->bp_htype);
++		return;
++	}
++
+ 	/* Convert the request into a reply. */
+ 	bp->bp_op = BOOTREPLY;
+ 	if (bp->bp_ciaddr.s_addr == 0) {
+@@ -740,11 +755,9 @@
+ 	/* Run a program, passing the client name as a parameter. */
+ 	if (hp->flags.exec_file) {
+ 		char tst[100];
+-		/* XXX - Check string lengths? -gwr */
+-		strcpy (tst, hp->exec_file->string);
+-		strcat (tst, " ");
+-		strcat (tst, hp->hostname->string);
+-		strcat (tst, " &");
++
++		snprintf(tst, sizeof(tst), "%s %s &", hp->exec_file->string,
++		    hp->hostname->string);
+ 		if (debug)
+ 			report(LOG_INFO, "executing %s", tst);
+ 		system(tst);	/* Hope this finishes soon... */
+Index: bootptest.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/bootptest.c,v
+retrieving revision 1.2
+diff -u -r1.2 bootptest.c
+--- bootptest.c	1996/08/22 10:56:14	1.2
++++ bootptest.c	1998/12/20 21:46:35
+@@ -481,7 +481,7 @@
+ 	u_char *p;
+ 
+ 	p = (u_char *) ina;
+-	sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
++	snprintf(b, sizeof(b), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+ 	return (b);
+ }
+ 
+Index: getether.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/getether.c,v
+retrieving revision 1.3
+diff -u -r1.3 getether.c
+--- getether.c	1997/02/17 09:11:15	1.3
++++ getether.c	1998/12/20 21:46:49
+@@ -185,7 +185,7 @@
+ 	char *enaddr;
+ 	int unit = -1;				/* which unit to attach */
+ 
+-	sprintf(devname, "/dev/%s", ifname);
++	snprintf(devname, sizeof(devname), "/dev/%s", ifname);
+ 	fd = open(devname, 2);
+ 	if (fd < 0) {
+ 		/* Try without the trailing digit. */
+Index: hwaddr.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/hwaddr.c,v
+retrieving revision 1.3
+diff -u -r1.3 hwaddr.c
+--- hwaddr.c	1997/07/04 21:15:44	1.3
++++ hwaddr.c	1998/12/20 21:47:29
+@@ -134,7 +134,7 @@
+ 	extern char *inet_ntoa();
+ 
+ 	a = inet_ntoa(*ia);
+-	sprintf(buf, "arp -d %s; arp -s %s %s temp",
++	snprintf(buf, sizeof(buf), "arp -d %s; arp -s %s %s temp",
+ 		a, a, haddrtoa(ha, len));
+ 	if (debug > 2)
+ 		report(LOG_INFO, buf);
+@@ -162,7 +162,8 @@
+ 
+ 	bufptr = haddrbuf;
+ 	while (hlen > 0) {
+-		sprintf(bufptr, "%02X:", (unsigned) (*haddr++ & 0xFF));
++		snprintf(bufptr, sizeof(haddrbuf) - (bufptr - haddrbuf),
++		    "%02X:", (unsigned) (*haddr++ & 0xFF));
+ 		bufptr += 3;
+ 		hlen--;
+ 	}
+Index: readfile.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/readfile.c,v
+retrieving revision 1.2
+diff -u -r1.2 readfile.c
+--- readfile.c	1996/06/23 10:22:26	1.2
++++ readfile.c	1998/12/20 21:47:43
+@@ -819,7 +819,7 @@
+ 	if ((*symbol)[0] == 'T') {	/* generic symbol */
+ 		(*symbol)++;
+ 		value = get_u_long(symbol);
+-		sprintf(current_tagname, "T%d", value);
++		snprintf(current_tagname, sizeof(current_tagname), "T%d", value);
+ 		eat_whitespace(symbol);
+ 		if ((*symbol)[0] != '=') {
+ 			return E_SYNTAX_ERROR;
+Index: report.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/bootpd/report.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 report.c
+--- report.c	1995/10/18 08:47:27	1.1.1.1
++++ report.c	1998/12/20 21:46:09
+@@ -101,7 +101,7 @@
+ #endif
+ {
+ 	va_list ap;
+-	static char buf[128];
++	static char buf[256];
+ 
+ 	if ((priority < 0) || (priority >= numlevels)) {
+ 		priority = numlevels - 1;
+@@ -111,7 +111,7 @@
+ #else
+ 	va_start(ap);
+ #endif
+-	vsprintf(buf, fmt, ap);
++	vsnprintf(buf, sizeof(buf), fmt, ap);
+ 	va_end(ap);
+ 
+ 	/*
+

@@ -1,0 +1,64 @@
+From 9e79b643a92798c666fbdf1295ad55916a9c255d Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Tue, 23 Jun 2015 16:46:35 -0400
+Subject: [PATCH] Fix manifests so jffi requires com.kenai.jffi.native and
+ native has bundle version.
+
+---
+ MANIFEST.MF        | 2 +-
+ NATIVE-MANIFEST.MF | 1 +
+ jffi.spec          | 5 ++++-
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+index d72a095..a9d77dc 100644
+--- a/MANIFEST.MF
++++ b/MANIFEST.MF
+@@ -3,7 +3,7 @@ Bundle-SymbolicName: com.kenai.jffi
+ Export-Package: com.kenai.jffi;version="@VERSION"
+ Bundle-Name: Java Foreign Function Interface
+ Bundle-Version: @VERSION
+-Bundle-ClassPath: .,jni/
++Require-Bundle: com.kenai.jffi.native
+ Bundle-ManifestVersion: 2
+ Bundle-ActivationPolicy: lazy
+ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+diff --git a/NATIVE-MANIFEST.MF b/NATIVE-MANIFEST.MF
+index 12c026a..305b273 100644
+--- a/NATIVE-MANIFEST.MF
++++ b/NATIVE-MANIFEST.MF
+@@ -2,6 +2,7 @@ Manifest-Version: 1.0
+ JavaPackages-Classifier: native
+ Archiver-Version: Plexus Archiver
+ JavaPackages-Version: @VERSION
++Bundle-Version: @VERSION
+ Fragment-Host: com.kenai.jffi
+ Bundle-ClassPath: .,jni
+ JavaPackages-ArtifactId: jffi
+diff --git a/jffi.spec b/jffi.spec
+index d0eb122..37a5b23 100644
+--- a/jffi.spec
++++ b/jffi.spec
+@@ -3,7 +3,7 @@
+ 
+ Name:           jffi
+ Version:        1.2.9
+-Release:        4%{?dist}
++Release:        5%{?dist}
+ Summary:        Java Foreign Function Interface
+ 
+ License:        LGPLv3+ or ASL 2.0
+@@ -104,6 +104,9 @@ ant -Duse.system.libffi=1 test
+ %doc COPYING.GPL COPYING.LESSER LICENSE
+ 
+ %changelog
++* Mon Jun 22 2015 Jeff Johnston <jjohnstn@redhat.com> 1.2.9-5
++- Fix manifests so jffi requires com.kenai.jffi.native and native has bundle version.
++
+ * Mon Jun 22 2015 Jeff Johnston <jjohnstn@redhat.com> 1.2.9-4
+ - Fix native MANIFEST.MF
+ 
+-- 
+1.9.3
+
+

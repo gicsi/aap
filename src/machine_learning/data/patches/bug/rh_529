@@ -1,0 +1,36 @@
+From a28b4ea93e9aadbb999a0bf687d93fadaea0a8ac Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 00:31:39 +0000
+Subject: [PATCH] Update to 0.114 (#1235087)
+
+---
+ perl-Exporter-Declare.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/perl-Exporter-Declare.spec b/perl-Exporter-Declare.spec
+index d5fe990..3c758c2 100644
+--- a/perl-Exporter-Declare.spec
++++ b/perl-Exporter-Declare.spec
+@@ -1,6 +1,6 @@
+ Name:           perl-Exporter-Declare
+-Version:        0.113
+-Release:        7%{?dist}
++Version:        0.114
++Release:        1%{?dist}
+ Summary:        Exporting done right
+ License:        GPL+ or Artistic
+ Group:          Development/Libraries
+@@ -56,6 +56,9 @@ perl Build.PL installdirs=vendor
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.114-1
++- Update to 0.114 (#1235087)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.113-7
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

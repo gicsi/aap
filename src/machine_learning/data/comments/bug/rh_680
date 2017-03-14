@@ -1,0 +1,54 @@
+Description of problem:
+SELinux is preventing /usr/sbin/cupsd from 'rename' accesses on the file printers.conf.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that cupsd should be allowed rename access on the printers.conf file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep cupsd /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:cupsd_t:s0-s0:c0.c1023
+Target Context                unconfined_u:object_r:cupsd_etc_t:s0
+Target Objects                printers.conf [ file ]
+Source                        cupsd
+Source Path                   /usr/sbin/cupsd
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           cups-2.0.2-5.fc22.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-303.fc22.x86_64 #1 SMP Thu
+                              May 28 12:37:06 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-06-15 22:15:05 EEST
+Last Seen                     2015-06-15 22:15:05 EEST
+Local ID                      9b4e8bac-d8d3-4a69-b8ed-a5978a26d1c5
+
+Raw Audit Messages
+type=AVC msg=audit(1434395705.574:14107): avc:  denied  { rename } for  pid=4392 comm="cupsd" name="printers.conf" dev="dm-1" ino=138502 scontext=system_u:system_r:cupsd_t:s0-s0:c0.c1023 tcontext=unconfined_u:object_r:cupsd_etc_t:s0 tclass=file permissive=1
+
+
+type=SYSCALL msg=audit(1434395705.574:14107): arch=x86_64 syscall=rename success=yes exit=0 a0=7ffd7f77b060 a1=7ffd7f77ac00 a2=7ffd7f77ac19 a3=7f9daa73e640 items=0 ppid=1 pid=4392 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=cupsd exe=/usr/sbin/cupsd subj=system_u:system_r:cupsd_t:s0-s0:c0.c1023 key=(null)
+
+Hash: cupsd,cupsd_t,cupsd_etc_t,file,rename
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.5.1
+hashmarkername: setroubleshoot
+kernel:         4.0.4-303.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 838234
+# /sbin/restorecon -v /etc/cups/printers.conf

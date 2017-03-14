@@ -1,0 +1,47 @@
++++ This bug was initially created as a clone of Bug #1231789 +++
+
++++ This bug was initially created as a clone of Bug #1230646 +++
+
+Description of problem:
+When geo-replcation session is created with root user, we are not able to create snapshots for the master volume.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Always
+
+
+Steps to Reproduce:
+1. Create a geo-replication session between two volumes with root user using RHGS-C. The geo-replication session status is CREATED.
+2. Try to create snapshot for master volume
+3.
+
+Actual results:
+Snippet from log file shows below error
+
+
+[2015-06-11 06:57:54.688548] E [MSGID: 106031] [glusterd-snapshot.c:5102:glusterd_do_snap_vol] 0-management: Failed to copy geo-rep config and status files for volume vol1
+[2015-06-11 06:57:54.688636] W [MSGID: 106071] [glusterd-snapshot.c:2927:glusterd_snap_volume_remove] 0-management: Failed to remove volume 361b1a1e6a8e4a2ab76f49f1dfe9a5a9 from store
+[2015-06-11 06:57:54.688691] W [MSGID: 106030] [glusterd-snapshot.c:6616:glusterd_snapshot_create_commit] 0-management: taking the snapshot of the volume vol1 failed
+[2015-06-11 06:57:54.688985] E [MSGID: 106030] [glusterd-snapshot.c:7969:glusterd_snapshot] 0-management: Failed to create snapshot
+[2015-06-11 06:57:54.689014] W [MSGID: 106123] [glusterd-mgmt.c:242:gd_mgmt_v3_commit_fn] 0-management: Snapshot Commit Failed
+[2015-06-11 06:57:54.689032] E [MSGID: 106123] [glusterd-mgmt.c:1240:glusterd_mgmt_v3_commit] 0-management: Commit failed for operation Snapshot on local node
+[2015-06-11 06:57:54.689050] E [MSGID: 106123] [glusterd-mgmt.c:2112:glusterd_mgmt_v3_initiate_snap_phases] 0-management: Commit Op Failed
+[2015-06-11 06:57:54.765903] I [MSGID: 106057] [glusterd-snapshot.c:6069:glusterd_do_snap_cleanup] 0-management: Snapshot (demo_GMT-2015.06.11-06.57.52) does not exist [Invalid argument]
+[2015-06-11 06:58:06.378298] I [glusterd-geo-rep.c:2022:glusterd_get_statefile_name] 0-: Using passed config template(/var/lib/glusterd/geo-replication/vol1_10.70.42.58_vol2/gsyncd.conf).
+[2015-06-11 06:57:54.688538] E [MSGID: 106029] [glusterd-snapshot.c:533:glusterd_copy_geo_rep_session_files] 0-management: Session files not present in /var/lib/glusterd/geo-replication/vol1_root@10.70.42.58_vol2 [No such file or directory]
+[2015-06-11 06:57:54.688544] E [MSGID: 106029] [glusterd-snapshot.c:741:glusterd_copy_geo_rep_files] 0-management: Failed to copy files related to session vol1_root@10.70.42.58_vol2
+[2015-06-11 06:58:54.688948] E [glusterd-syncop.c:1070:_gd_syncop_commit_op_cbk] 0-management: Failed to aggregate response from  node/brick
+
+
+
+Expected results:
+Snapshot creation should be successful.
+REVIEW: http://review.gluster.org/11310 (glusterd: Fix snapshot of a volume with geo-rep) posted (#1) for review on release-3.7 by Kotresh HR (khiremat@redhat.com)
+This bug is getting closed because a release has been made available that should address the reported issue. In case the problem is still not fixed with glusterfs-3.7.2, please reopen this bug report.
+
+glusterfs-3.7.2 has been announced on the Gluster Packaging mailinglist [1], packages for several distributions should become available in the near future. Keep an eye on the Gluster Users mailinglist [2] and the update infrastructure for your distribution.
+
+[1] http://www.gluster.org/pipermail/packaging/2015-June/000006.html
+[2] http://thread.gmane.org/gmane.comp.file-systems.gluster.user

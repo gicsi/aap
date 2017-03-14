@@ -1,0 +1,6 @@
+The <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=vr&sektion=4">vr(4)</a>
+driver may hand over stale ring descriptors to the hardware if the compiler decides
+to re-order stores or if the hardware does store-reordering.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.8/common/003_vr.patch">
+A source code patch exists which remedies this problem.</a>

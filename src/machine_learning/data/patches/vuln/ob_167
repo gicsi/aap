@@ -1,0 +1,93 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 011_blinding.patch
+
+And then rebuild and install OpenSSL:
+	rm -fr /usr/obj/lib/libssl
+	cd lib/libssl
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: lib/libssl/src/crypto/rsa/rsa_eay.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/rsa/rsa_eay.c,v
+retrieving revision 1.10
+retrieving revision 1.10.2.1
+diff -u -r1.10 -r1.10.2.1
+--- lib/libssl/src/crypto/rsa/rsa_eay.c	7 Jun 2002 03:45:34 -0000	1.10
++++ lib/libssl/src/crypto/rsa/rsa_eay.c	19 Mar 2003 01:18:19 -0000	1.10.2.1
+@@ -193,6 +193,25 @@
+ 	return(r);
+ 	}
+ 
++static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
++	{
++	int ret = 1;
++	CRYPTO_w_lock(CRYPTO_LOCK_RSA);
++	/* Check again inside the lock - the macro's check is racey */
++	if(rsa->blinding == NULL)
++		ret = RSA_blinding_on(rsa, ctx);
++	CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
++	return ret;
++	}
++
++#define BLINDING_HELPER(rsa, ctx, err_instr) \
++	do { \
++		if(((rsa)->flags & RSA_FLAG_BLINDING) && \
++				((rsa)->blinding == NULL) && \
++				!rsa_eay_blinding(rsa, ctx)) \
++			err_instr \
++	} while(0)
++
+ /* signing */
+ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
+ 	     unsigned char *to, RSA *rsa, int padding)
+@@ -237,8 +256,8 @@
+ 		goto err;
+ 		}
+ 
+-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
+-		RSA_blinding_on(rsa,ctx);
++	BLINDING_HELPER(rsa, ctx, goto err;);
++
+ 	if (rsa->flags & RSA_FLAG_BLINDING)
+ 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+ 
+@@ -316,8 +335,8 @@
+ 		goto err;
+ 		}
+ 
+-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
+-		RSA_blinding_on(rsa,ctx);
++	BLINDING_HELPER(rsa, ctx, goto err;);
++
+ 	if (rsa->flags & RSA_FLAG_BLINDING)
+ 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+ 
+Index: lib/libssl/src/crypto/rsa/rsa_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/rsa/rsa_lib.c,v
+retrieving revision 1.6
+retrieving revision 1.6.2.1
+diff -u -r1.6 -r1.6.2.1
+--- lib/libssl/src/crypto/rsa/rsa_lib.c	15 May 2002 02:29:16 -0000	1.6
++++ lib/libssl/src/crypto/rsa/rsa_lib.c	19 Mar 2003 01:18:19 -0000	1.6.2.1
+@@ -70,7 +70,13 @@
+ 
+ RSA *RSA_new(void)
+ 	{
+-	return(RSA_new_method(NULL));
++	RSA *r=RSA_new_method(NULL);
++
++#ifndef OPENSSL_NO_FORCE_RSA_BLINDING
++	r->flags|=RSA_FLAG_BLINDING;
++#endif
++
++	return r;
+ 	}
+ 
+ void RSA_set_default_method(const RSA_METHOD *meth)
+

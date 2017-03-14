@@ -1,0 +1,10 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=twe&amp;sektion=4&amp;format=html">twe(4)</a>
+mishandles the DMA mapping resulting in a kernel panic on unaligned data
+transfers, induced by programs such as
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=disklabel&amp;sektion=8&amp;format=html">disklabel(8)</a>
+and
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=dump&amp;sektion=8&amp;format=html">dump(8)</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/008_twe.patch">
+A source code patch exists which remedies this problem.</a>
+This is the second version of the patch.

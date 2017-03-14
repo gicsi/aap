@@ -1,0 +1,9 @@
+On very high system load, an audio interrupt may occur while the
+audio process is filling audio ring buffers. This triggers bogus
+(and useless) correction code in the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=audio&sektion=4">audio(4)</a>
+driver causing the audio application to go out of sync, and in turn causing
+continuous stuttering until the application is restarted.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.5/common/005_audio.patch">
+A source code patch exists which remedies this problem.</a>

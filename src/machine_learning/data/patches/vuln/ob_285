@@ -1,0 +1,32 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_ldso.patch
+
+And then rebuild and install ld.so:
+	cd libexec/ld.so
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+Index: libexec/ld.so/loader.c
+===================================================================
+RCS file: /cvs/src/libexec/ld.so/loader.c,v
+retrieving revision 1.103
+retrieving revision 1.103.2.1
+diff -u -p -r1.103 -r1.103.2.1
+--- libexec/ld.so/loader.c	8 May 2006 20:37:01 -0000	1.103
++++ libexec/ld.so/loader.c	15 Nov 2006 23:04:36 -0000	1.103.2.1
+@@ -850,8 +850,8 @@ _dl_unsetenv(const char *var, char **env
+ 			for (P = env;; ++P)
+ 				if (!(*P = *(P + 1)))
+ 					break;
+-		}
+-		env++;
++		} else
++			env++;
+ 	}
+ }
+ 
+

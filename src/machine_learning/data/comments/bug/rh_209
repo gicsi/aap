@@ -1,0 +1,21 @@
+Created attachment 1045875
+Crash of evolution which caused this error
+
+Version-Release number of selected component (if applicable):
+abrt-tui-2.6.0-1.fc22.x86_64
+
+Steps to Reproduce:
+1. abrt-cli report  /var/spool/abrt/ccpp-2015-07-03-17:26:25-29249
+
+Actual results:
+Server responded with an error: 'uReport data is invalid.'
+reporter-ureport failed with exit code 1
+('report_uReport' exited with 1)
+
+Expected results:
+Issue is reported.
+
+Additional info:
+I have valid bugzilla cookie. Folder attached. coredump is not attached, as far as it has more than 500M.
+Thank you for taking time to report this bug!
+It was caused by too strict validation of one of the uReport items on the server and should be fixed now.

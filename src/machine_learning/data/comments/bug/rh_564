@@ -1,0 +1,9 @@
+perl-MooseX-Types-Common-0.001013-3.fc23 fails to build in F23 because tests fail because the package does not declare build-time dependency on `perl(open)':
+
+t/04-coerce.t ........... ok
+Can't locate open.pm in @INC (you may need to install the open module) (@INC contains: /builddir/build/BUILD/MooseX-Types-Common-0.001013/blib/lib /builddir/build/BUILD/MooseX-Types-Common-0.001013/blib/arch /usr/local/lib/perl5 /usr/local/share/perl5 /usr/lib/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib/perl5 /usr/share/perl5 .) at t/05-unicode.t line 5.
+BEGIN failed--compilation aborted at t/05-unicode.t line 5.
+t/05-unicode.t .......... 
+Dubious, test returned 2 (wstat 512, 0x200)
+No subtests run
+Rebuilt for rawhide.

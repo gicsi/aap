@@ -1,0 +1,5 @@
+Access to a CD drive on the PCI ultrasparc machines results in a continuous stream
+of bogus interrupt messages, causing great user anguish.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.0/sparc64/003_sparc64cd.patch">
+A source code patch exists which remedies this problem.</a>

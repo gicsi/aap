@@ -1,0 +1,30 @@
+Description of problem:
+Plasma panel becomes frozen. Nothing can be clicked. The clock stops
+
+Version-Release number of selected component (if applicable):
+plasma-desktop-5.3.1-6.fc22.x86_64
+
+How reproducible:
+So far it has happened once to three of my users, last night.
+
+Steps to Reproduce:
+1. Unlock screen in morning
+2. 
+3. 
+
+Actual results:
+Observe panel clock has stopped.
+Unable to do anything with panel
+
+Expected results:
+Clock displays correct time.
+Normal panel operations are possible.
+
+Additional info:
+Most common cause is dri/xcb deadlocks, see also bug #1193742
+
+
+and please test,
+https://admin.fedoraproject.org/updates/FEDORA-2015-10920
+
+*** This bug has been marked as a duplicate of bug 1193742 ***

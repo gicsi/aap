@@ -1,0 +1,92 @@
+Description of problem:
+
+AVC's seen in gluster-ctdb setup in RHEL-6.7
+
+
+
+#######
+type=AVC msg=audit(1434626803.499:1176): avc:  denied  { getattr } for  pid=27114 comm="smbd" path="/var/run/ctdb/ctdbd.socket" dev=sda1 ino=653536 scontext=unconfined_u:system_r:smbd_t:s0 tcontext=unconfined_u:object_r:var_run_t:s0 tclass=sock_file
+type=SYSCALL msg=audit(1434626803.499:1176): arch=c000003e syscall=4 success=yes exit=0 a0=7fcf0f933670 a1=7ffd1336b4d0 a2=7ffd1336b4d0 a3=0 items=0 ppid=1 pid=27114 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=2 comm="smbd" exe="/usr/sbin/smbd" subj=unconfined_u:system_r:smbd_t:s0 key=(null)
+type=AVC msg=audit(1434626803.504:1177): avc:  denied  { write } for  pid=27114 comm="smbd" name="ctdbd.socket" dev=sda1 ino=653536 scontext=unconfined_u:system_r:smbd_t:s0 tcontext=unconfined_u:object_r:var_run_t:s0 tclass=sock_file
+type=SYSCALL msg=audit(1434626803.504:1177): arch=c000003e syscall=42 success=yes exit=0 a0=2d a1=7ffd1336b4e0 a2=6e a3=0 items=0 ppid=1 pid=27114 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=2 comm="smbd" exe="/usr/sbin/smbd" subj=unconfined_u:system_r:smbd_t:s0 key=(null)
+Version-Release number of selected component (if applicable):
+#########
+Created attachment 1041032
+audit.log.SmbCantWriteToCTDBSocket
+Created attachment 1041033
+audit.log.CtdbUnhealthyFUSE
+Milos, could you please take a look at this one and suggest a possible policy module?
+This is a labeling problem on the path '/var/run/ctdb/ctdbd.socket'. It should be 
+ctdbd_var_run_t 
+
+To fix
+
+ restorecon -R -v /var/run/ctdb/ctdbd.socket
+As Simon pointed out, the /var/run/ctdb/ctdbd.socket file is mislabeled. Please run following command:
+
+# restorecon -Rv /var/run
+
+I'm not sure, why it happened, but let me know if the file gets mislabeled again.
+I ran the following command
+restorecon -Rv /var/run
+
+and I don't see avc in audit.log either in enforcing mode or permissive.
+
+But I had setup done exactly as per the admin guide and would want to know why the file may have been mislabeled.
+
+I tried removing and installing the ctdb and smb packages to see if I can reproduce the error, but I could not.
+(In reply to Raghavendra Talur from comment #7)
+> I ran the following command
+> restorecon -Rv /var/run
+> 
+> and I don't see avc in audit.log either in enforcing mode or permissive.
+> 
+> But I had setup done exactly as per the admin guide and would want to know
+> why the file may have been mislabeled.
+> 
+> I tried removing and installing the ctdb and smb packages to see if I can
+> reproduce the error, but I could not.
+
+Talur,
+
+Thanks for re-testing it and providing your updates. Based on Comment 7, do you still feel it's a SELinux bug? If the issue is in ctdb and needs a fix, then I think we can move the product and component of this BZ appropriately.
+tcontext=unconfined_u:object_r:var_run_t:s0 tclass=sock_file
+
+tell us it has been created by a process with unconfined_u. So either by gluster started by hand or by a script. Any chance it is a test issue? If not we need to find out where it is created and add restorecon calling in RHEL6.
+
+I would move this bug to another component. We are not able to fix it in selinux-policy.
+I tried following on fresh setup:
+
+Install RHEL6.7
+Install latest glusterfs package 
+Install samba and ctdb packages
+
+CTDB setup according to Admin guide.start ctdb service.
+
+No AVC's logged for smb or ctdb.
+
+The issue is not seen anymore.
+
+Selinux packages:
+selinux-policy-3.7.19-278.el6.noarch
+selinux-policy-targeted-3.7.19-278.el6.noarch
+(In reply to surabhi from comment #10)
+> I tried following on fresh setup:
+> 
+> Install RHEL6.7
+> Install latest glusterfs package 
+> Install samba and ctdb packages
+> 
+> CTDB setup according to Admin guide.start ctdb service.
+> 
+> No AVC's logged for smb or ctdb.
+> 
+> The issue is not seen anymore.
+> 
+> Selinux packages:
+> selinux-policy-3.7.19-278.el6.noarch
+> selinux-policy-targeted-3.7.19-278.el6.noarch
+
+Thanks Surabhi, for testing and confirming the same.
+
+Based on the above comment, I'm taking away this BZ from the SELinux tracker. Please consider closing this BZ as well since the issue doesn't exists anymore.

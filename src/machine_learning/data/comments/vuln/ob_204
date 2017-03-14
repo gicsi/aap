@@ -1,0 +1,6 @@
+The use of certain ASN.1 encodings or malformed public keys may allow an
+attacker to mount a denial of service attack against applications linked with
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ssl&amp;sektion=3">ssl(3)</a>.
+This does not affect OpenSSH.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/002_asn1.patch">
+A source code patch exists which remedies this problem.</a>

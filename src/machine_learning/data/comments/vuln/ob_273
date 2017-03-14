@@ -1,0 +1,6 @@
+A potential denial of service problem has been found in sendmail. A message
+with really long header lines could trigger a use-after-free bug causing
+sendmail to crash.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/005_sendmail3.patch">
+A source code patch exists which remedies this problem.</a>

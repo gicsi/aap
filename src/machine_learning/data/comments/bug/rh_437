@@ -1,0 +1,49 @@
+Description of problem: Compose windows now use black text on gray background instead of black text on while background. IMHO, the old white background was easier to read.
+
+
+Version-Release number of selected component (if applicable): 3.16.3
+
+
+How reproducible: 100%
+
+
+Steps to Reproduce:
+1. compose an email
+2.
+3.
+
+Actual results: Black on gray window.
+
+
+Expected results: Blac on white was better (IMHO).
+
+
+Additional info:
+Thanks for a bug report. The composer window gets its colors from the current theme, the same as the preview panel. That means that its the color theme defining the gray background color, instead of white. For example the Adwaita theme shows a black font on a white background in the message composer.
+
+Could you change your theme to verify it, please?
+>Could you change your theme to verify it, please?
+
+Saw nothing like that in preferences for evolution itself. I had looked before so was not surprised.
+
+Ok, I found preferences->themes in the MAIN menus - available to change are
+   window borders (changed - see differences in all windows but not target)
+                          chose clearlooks classic - was zukitwo
+   icons          - can change - has options, but dubious about doing
+   controls       -  " ...
+   mouse pointer  - 1 option - left Adwaita
+   desktop        - 1 option - left cinammon
+
+So what do I change to test this for you?
+
+The only thing wrong for me is in the mail composer - that is gray while typing in new mail, all other display windows (e.g. reading mail) are white and the offender flashes white as it sends.
+Thanks for the update. It was not intentional to change the color to gray.
+
+You didn't say you run Cinnamon. I tried there and I can partially reproduce it there. Partially, as the first composer open has a white background, but the second is gray, together with the message preview (plain text message shown there).
+
+It can be related to bug #1229841. I'm testing it right now and will let you know the results.
+I built a test package [1] with the upstream fix added and it fixes this issue too, thus I'm closing this as a duplicate of the other bug report. The fix will be officially released within evolution 3.16.4.
+
+[1] koji.fedoraproject.org/koji/taskinfo?taskID=10249817
+
+*** This bug has been marked as a duplicate of bug 1229841 ***

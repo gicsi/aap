@@ -1,0 +1,70 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 022_httpd.patch
+
+And then rebuild and install httpd:
+	cd usr.sbin/httpd
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper cleandir
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: usr.sbin/httpd/src/main/http_protocol.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/httpd/src/main/http_protocol.c,v
+retrieving revision 1.9
+retrieving revision 1.9.4.1
+diff -u -r1.9 -r1.9.4.1
+--- usr.sbin/httpd/src/main/http_protocol.c	2001/03/29 10:21:43	1.9
++++ usr.sbin/httpd/src/main/http_protocol.c	2002/06/19 07:37:11	1.9.4.1
+@@ -1964,20 +1964,34 @@
+ static long get_chunk_size(char *b)
+ {
+     long chunksize = 0;
++    long chunkbits = sizeof(long) * 8;
+ 
+-    while (ap_isxdigit(*b)) {
++    /* Skip leading zeros */
++    while (*b == '0') {
++        ++b;
++    }
++
++    while (ap_isxdigit(*b) && (chunkbits > 0)) {
+         int xvalue = 0;
+ 
+-        if (*b >= '0' && *b <= '9')
++        if (*b >= '0' && *b <= '9') {
+             xvalue = *b - '0';
+-        else if (*b >= 'A' && *b <= 'F')
++        }
++        else if (*b >= 'A' && *b <= 'F') {
+             xvalue = *b - 'A' + 0xa;
+-        else if (*b >= 'a' && *b <= 'f')
++        }
++        else if (*b >= 'a' && *b <= 'f') {
+             xvalue = *b - 'a' + 0xa;
++        }
+ 
+         chunksize = (chunksize << 4) | xvalue;
++        chunkbits -= 4;
+         ++b;
+     }
++    if (ap_isxdigit(*b) && (chunkbits <= 0)) {
++        /* overflow */
++        return -1;
++    }
+ 
+     return chunksize;
+ }
+@@ -2060,6 +2074,10 @@
+                 return 0;
+             }
+             r->remaining = -1;  /* Indicate footers in-progress */
++        }
++        else if (len_to_read < 0) {
++            r->connection->keepalive = -1;
++            return -1;
+         }
+         else {
+             r->remaining = len_to_read;
+

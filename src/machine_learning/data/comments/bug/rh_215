@@ -1,0 +1,27 @@
+Description of problem:
+
+After video is started, the volume level is changed to maximum.
+
+Version-Release number of selected component (if applicable):
+
+3.16.2
+
+How reproducible:
+
+Always
+
+Steps to Reproduce:
+1. set volume level to some low level.
+2. go to youtube select some video
+3.
+
+Actual results:
+
+Video plays with full volume.
+
+
+Expected results:
+
+The volume level does not change.
+
+Additional info:

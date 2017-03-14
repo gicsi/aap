@@ -1,0 +1,11 @@
+Your package ovirt-engine-sdk-java failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10122308
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047574
+build.log
+Created attachment 1047575
+root.log
+Created attachment 1047576
+state.log

@@ -1,0 +1,14 @@
+Description of problem:
+For testing we would find very useful if ausearch could wait for backlog emptiness (backlog=0 in auditctl -s) before executing a search. This should not be a default, but should be enabled via a command line option.
+
+Version-Release number of selected component (if applicable):
+audit-2.4.2-2.fc23
+
+Additional info:
+In audit-test suite [1] we use augrok [2] for this functionality
+
+[1] http://sourceforge.net/projects/audit-test/
+[2] http://augrok.sourceforge.net/
+Not sure of the utility of this. Busy servers may never have an empty backlog. Ausearch is designed to be an offline tool that has no knowledge of the kernel's audit system. It can be used against old logs as well as piped input. Both of which may be on a system foreign to where the logs originated.
+
+To me, it makes more sense to wrap the command in shell script or python (which has audit bindings) than to change ausearch's design.

@@ -1,0 +1,27 @@
+Description of problem:
+some packages are marked weird. MPlayer, the Linux version of Media Player is FREE and open source.It CAN use libdvdcss but does not ship with it by default.Yet its thrown into RPMFusion free area as its being declared non-free.Same with all similar packages but one: kmplayer. All MPlayer/mencoder clones use the same codebase.We should either take out kmplayer or add back in the mplayer/mencoder based applications.MPlayer does not ship proprietary codecs by default either, they have to be added in by the user.Libdvdcss has to be pulled from Korora manually or added in by hand from vlc homepage.
+
+ALSO:
+Icecat should be enabled by default instead of firefox and plugins for firefox adjusted accordingly.Im not sure if they pull in firefox or not.Filezilla should be replaced by gftp.As per thunderbird, we can use claws, KMail, slypheed or the like.These are branding fixes using gnu software that we should be using by default in so called FREE distributions.The impact on the user is negligible.Debian has already made such changes with IceDove, IceApe, and IceWeasel. Of note, there is no IceApe equivalent. NVU/Kompozer is not in the repos but I think it should be.It provides a Graphical HTML interface that alternatives simply dont provide.It is as close to dreamweaver as we can get.
+
+Version-Release number of selected component (if applicable):
+21
+
+How reproducible:
+N/A
+
+Steps to Reproduce:
+Look at package repositories for fedora/RPMFusion.
+NOTE: RPMFusion Location has moved for 22.
+
+Actual results:
+only kmplayer is present in fedora repos. Branding issues detected with other apps.
+
+Expected results:
+ALL of MPlayer/Mencoder apps should be listed in fedora repos.Branding issues need to be looked at.
+
+Additional info:
+mplayerhq.hu
+http://www.kompozer.net/
+debian.org
+please see https://fedoraproject.org/wiki/Forbidden_items  we can not include some open source things due to patent licensing restrictions.

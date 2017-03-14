@@ -1,0 +1,9 @@
+The NVIDIA driver for XFree86 4.0.3 is incorrectly restoring the text
+mode palette upon exit of the X server. <a
+href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/i386/010_nvidia.patch">
+A source code patch exists which remedies this problem.</a>
+To avoid rebuilding the whole XFree86 tree, an updated binary driver
+is also available
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/i386/nv_drv.o">here</a>.
+Just grab it, copy it to /usr/X11R6/lib/modules/drivers/ and
+restart your X server.

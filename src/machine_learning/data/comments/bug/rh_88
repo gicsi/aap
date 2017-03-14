@@ -1,0 +1,165 @@
+Spec URL: http://in.waw.pl/~zbyszek/fedora/python-systemd.spec
+SRPM URL: http://in.waw.pl/~zbyszek/fedora/python-systemd-230-1.fc23.src.rpm
+Fedora Account System Username: zbyszek
+Description: 
+Python module for native access to the systemd facilities.
+Functionality includes sending of structured messages to the journal
+and reading journal files, querying machine and boot identifiers and a
+lists of message identifiers provided by systemd. Other functionality
+provided by libsystemd is also wrapped.
+
+This module was part of systemd upstream and is being split out to make systemd itself a bit leaner. python-systemd replaces systemd-python and python3-systemd replaces systemd-python3. No functional change expected.
+It may be worth to include in package systemd/docs, but that is just my wish.
+
+APPROVED
+
+
+Package Review
+==============
+
+Legend:
+[x] = Pass, [!] = Fail, [-] = Not applicable, [?] = Not evaluated
+[ ] = Manual review needed
+
+
+
+===== MUST items =====
+
+C/C++:
+[-]: Provides: bundled(gnulib) in place as required.
+     Note: Sources not installed
+[-]: Package does not contain kernel modules.
+[x]: Package contains no static executables.
+[-]: Development (unversioned) .so files in -devel subpackage, if present.
+     Note: Unversioned so-files in private %_libdir subdirectory (see
+     attachment). Verify they are not in ld path.
+[x]: Package does not contain any libtool archives (.la)
+[x]: Rpath absent or only used for internal libs.
+
+Generic:
+[x]: Package is licensed with an open-source compatible license and meets
+     other legal requirements as defined in the legal section of Packaging
+     Guidelines.
+[x]: License field in the package spec file matches the actual license.
+[x]: License file installed when any subpackage combination is installed.
+[x]: Package does not own files or directories owned by other packages.
+     Note: Dirs in package are owned also by: /usr/lib64/python3.4/site-
+     packages/systemd/__pycache__(systemd-python3), /usr/lib64/python3.4
+     /site-packages/systemd(systemd-python3), /usr/lib64/python2.7/site-
+     packages/systemd(systemd-python)
+[-]: %build honors applicable compiler flags or justifies otherwise.
+[x]: Package contains no bundled libraries without FPC exception.
+[x]: Changelog in prescribed format.
+[x]: Sources contain only permissible code or content.
+[-]: Package contains desktop file if it is a GUI application.
+[x]: Development files must be in a -devel package
+[x]: Package uses nothing in %doc for runtime.
+[x]: Package consistently uses macros (instead of hard-coded directory
+     names).
+[x]: Package is named according to the Package Naming Guidelines.
+[x]: Package does not generate any conflict.
+[x]: Package obeys FHS, except libexecdir and /usr/target.
+[x]: If the package is a rename of another package, proper Obsoletes and
+     Provides are present.
+[x]: Requires correct, justified where necessary.
+[x]: Spec file is legible and written in American English.
+[-]: Package contains systemd file(s) if in need.
+[x]: Useful -debuginfo package or justification otherwise.
+[x]: Package is not known to require an ExcludeArch tag.
+[x]: Large documentation must go in a -doc subpackage. Large could be size
+     (~1MB) or number of files.
+     Note: Documentation size is 20480 bytes in 2 files.
+[x]: Package complies to the Packaging Guidelines
+[x]: Package successfully compiles and builds into binary rpms on at least
+     one supported primary architecture.
+[x]: Package installs properly.
+[x]: Rpmlint is run on all rpms the build produces.
+     Note: There are rpmlint messages (see attachment).
+[x]: If (and only if) the source package includes the text of the
+     license(s) in its own file, then that file, containing the text of the
+     license(s) for the package is included in %license.
+[x]: Package requires other packages for directories it uses.
+[x]: Package must own all directories that it creates.
+[x]: All build dependencies are listed in BuildRequires, except for any
+     that are listed in the exceptions section of Packaging Guidelines.
+[x]: Package uses either %{buildroot} or $RPM_BUILD_ROOT
+[x]: Package does not run rm -rf %{buildroot} (or $RPM_BUILD_ROOT) at the
+     beginning of %install.
+[x]: Macros in Summary, %description expandable at SRPM build time.
+[x]: Dist tag is present.
+[x]: Package does not contain duplicates in %files.
+[x]: Permissions on files are set properly.
+[x]: Package use %makeinstall only when make install DESTDIR=... doesn't
+     work.
+[x]: Package is named using only allowed ASCII characters.
+[x]: Package does not use a name that already exists.
+[x]: Package is not relocatable.
+[x]: Sources used to build the package match the upstream source, as
+     provided in the spec URL.
+[x]: Spec file name must match the spec package %{name}, in the format
+     %{name}.spec.
+[x]: File names are valid UTF-8.
+[x]: Packages must not store files under /srv, /opt or /usr/local
+
+Python:
+[x]: Binary eggs must be removed in %prep
+     Note: Cannot find any build in BUILD directory (--prebuilt option?)
+[x]: Python eggs must not download any dependencies during the build
+     process.
+[x]: A package which is used by another package via an egg interface should
+     provide egg info.
+[x]: Package meets the Packaging Guidelines::Python
+[x]: Package contains BR: python2-devel or python3-devel
+
+===== SHOULD items =====
+
+Generic:
+[x]: If the source package does not include license text(s) as a separate
+     file from upstream, the packager SHOULD query upstream to include it.
+[x]: Final provides and requires are sane (see attachments).
+[-]: Fully versioned dependency in subpackages if applicable.
+     Note: No Requires: %{name}%{?_isa} = %{version}-%{release} in
+     python3-systemd
+[?]: Package functions as described.
+[x]: Latest version is packaged.
+[x]: Package does not include license text files separate from upstream.
+[-]: Description and summary sections in the package spec file contains
+     translations for supported Non-English languages, if available.
+[x]: Package should compile and build into binary rpms on all supported
+     architectures.
+[x]: %check is present and all tests pass.
+[x]: Packages should try to preserve timestamps of original installed
+     files.
+[x]: Packager, Vendor, PreReq, Copyright tags should not be in spec file
+[x]: Sources can be downloaded from URI in Source: tag
+[x]: Reviewer should test that the package builds in mock.
+[x]: Buildroot is not present
+[x]: Package has no %clean section with rm -rf %{buildroot} (or
+     $RPM_BUILD_ROOT)
+[x]: No file requires outside of /etc, /bin, /sbin, /usr/bin, /usr/sbin.
+[x]: SourceX is a working URL.
+[x]: Spec use %global instead of %define unless justified.
+
+===== EXTRA items =====
+
+Generic:
+[x]: Rpmlint is run on debuginfo package(s).
+     Note: There are rpmlint messages (see attachment).
+[x]: Rpmlint is run on all installed packages.
+     Note: There are rpmlint messages (see attachment).
+[x]: Large data in /usr/share should live in a noarch subpackage if package
+     is arched.
+[x]: Spec file according to URL is the same as in SRPM.
+Thanks! Docs are next on my TODO list. They will require a bit of cleaning up after the detachment from the rest of systemd.
+
+New Package SCM Request
+=======================
+Package Name: python-systemd
+Short Description: Python module wrapping systemd functionality
+Upstream URL: https://github.com/systemd/python-systemd
+Owners: zbyszek
+Branches: f22
+InitialCC: systemd-maint@redhat.com
+Git done (by process-git-requests).
+
+User "systemd-maint@redhat.com" could not be found in FAS

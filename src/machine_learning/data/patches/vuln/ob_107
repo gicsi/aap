@@ -1,0 +1,465 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 036_named.patch
+
+And then rebuild and install named:
+	cd usr.sbin/named
+	make obj depend
+	make && make install
+
+Index: usr.sbin/named/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/Makefile,v
+retrieving revision 1.11
+diff -u -r1.11 Makefile
+--- usr.sbin/named/Makefile	28 Jan 2001 02:18:13 -0000	1.11
++++ usr.sbin/named/Makefile	15 Nov 2002 00:06:02 -0000
+@@ -6,6 +6,6 @@
+ SUBDIR+= doc/bog
+ .endif
+ 
+-VER= 4.9.8-REL
++VER= 4.9.11-REL
+ 
+ .include <bsd.subdir.mk>
+Index: usr.sbin/named/libresolv/getnetnamadr.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/libresolv/getnetnamadr.c,v
+retrieving revision 1.2
+diff -u -r1.2 getnetnamadr.c
+--- usr.sbin/named/libresolv/getnetnamadr.c	22 May 1998 00:47:20 -0000	1.2
++++ usr.sbin/named/libresolv/getnetnamadr.c	15 Nov 2002 00:06:02 -0000
+@@ -105,10 +105,11 @@
+ 	register int n;
+ 	u_char *eom;
+ 	int type, class, buflen, ancount, qdcount, haveanswer, i, nchar;
+-	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
+-		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
+-static	struct netent net_entry;
+-static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
++	char aux1[30], aux2[30], *in, *st, *pauxt, *bp, **ap,
++		*paux1 = &aux1[0], *paux2 = &aux2[0];
++	static	struct netent net_entry;
++	static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
++	static	char ans[MAXDNAME];
+ 
+ 	/*
+ 	 * find first satisfactory answer
+@@ -138,8 +139,14 @@
+ 			h_errno = TRY_AGAIN;
+ 		return (NULL);
+ 	}
+-	while (qdcount-- > 0)
+-		cp += __dn_skipname(cp, eom) + QFIXEDSZ;
++	while (qdcount-- > 0) {
++		n = __dn_skipname(cp, eom);
++		if (n < 0 || (cp + n + QFIXEDSZ) > eom) {
++			h_errno = NO_RECOVERY;
++			return(NULL);
++		}
++		cp += n + QFIXEDSZ;
++	}
+ 	ap = net_aliases;
+ 	*ap = NULL;
+ 	net_entry.n_aliases = net_aliases;
+@@ -150,7 +157,7 @@
+ 			break;
+ 		cp += n;
+ 		ans[0] = '\0';
+-		(void)strcpy(&ans[0], bp);
++		(void)strcpy(ans, bp);
+ 		GETSHORT(type, cp);
+ 		GETSHORT(class, cp);
+ 		cp += INT32SZ;		/* TTL */
+@@ -162,11 +169,13 @@
+ 				return (NULL);
+ 			}
+ 			cp += n; 
+-			*ap++ = bp;
+-			bp += strlen(bp) + 1;
+-			net_entry.n_addrtype =
+-				(class == C_IN) ? AF_INET : AF_UNSPEC;
+-			haveanswer++;
++			if ((ap + 2) < &net_aliases[MAXALIASES]) {
++				*ap++ = bp;
++				bp += strlen(bp) + 1;
++				net_entry.n_addrtype =
++					(class == C_IN) ? AF_INET : AF_UNSPEC;
++				haveanswer++;
++			}
+ 		}
+ 	}
+ 	if (haveanswer) {
+@@ -177,26 +186,33 @@
+ 			net_entry.n_net = 0L;
+ 			break;
+ 		case BYNAME:
+-			in = *net_entry.n_aliases;
+-			net_entry.n_name = &ans[0];
++			ap = net_entry.n_aliases;
++		next_alias:
++			in = *ap++;
++			if (in == NULL) {
++				h_errno = HOST_NOT_FOUND;
++				return (NULL);
++			}
++			net_entry.n_name = ans;
+ 			aux2[0] = '\0';
+ 			for (i = 0; i < 4; i++) {
+ 				for (st = in, nchar = 0;
+-				     *st != '.';
++				     isdigit((unsigned char)*st);
+ 				     st++, nchar++)
+ 					;
+-				if (nchar != 1 || *in != '0' || flag) {
+-					flag = 1;
+-					(void)strncpy(paux1,
+-						      (i==0) ? in : in-1,
+-						      (i==0) ?nchar : nchar+1);
+-					paux1[(i==0) ? nchar : nchar+1] = '\0';
+-					pauxt = paux2;
+-					paux2 = strcat(paux1, paux2);
+-					paux1 = pauxt;
+-				}
++				if (*st != '.' || nchar == 0 || nchar > 3)
++					goto next_alias;
++				if (i != 0)
++					nchar++;
++				(void)strncpy(paux1, in, nchar);
++				paux1[nchar] = '\0';
++				pauxt = paux2;
++				paux2 = strcat(paux1, paux2);
++				paux1 = pauxt;
+ 				in = ++st;
+ 			}		  
++			if (strcasecmp(in, "IN-ADDR.ARPA") != 0)
++				goto next_alias;
+ 			net_entry.n_net = inet_network(paux2);
+ 			break;
+ 		}
+Index: usr.sbin/named/named/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/Makefile,v
+retrieving revision 1.3
+diff -u -r1.3 Makefile
+--- usr.sbin/named/named/Makefile	22 May 1998 00:47:29 -0000	1.3
++++ usr.sbin/named/named/Makefile	15 Nov 2002 00:06:02 -0000
+@@ -10,15 +10,15 @@
+ 	ns_init.c ns_main.c ns_maint.c ns_ncache.c ns_req.c ns_resp.c \
+ 	ns_sort.c ns_stats.c ns_udp.c ns_validate.c storage.c tree.c
+ MAN=	named.8
++CLEANFILES+= version.c
+ 
+ CFLAGS+=${INCLUDE} ${CONFIG}
+-LDADD=	${LIBRESOLV}
+ 
+-makeversionc:
++version.c: Version.c ${.CURDIR}/../Makefile
+ 	(u=root d=`pwd` h=localhost t=`date +%c`; \
+ 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
+ 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
+-	    < ${.CURDIR}/Version.c > ${.CURDIR}/version.c)
++	    < ${.CURDIR}/Version.c > version.c)
+ 
+ .include <bsd.prog.mk>
+ .include "../../Makefile.inc"
+Index: usr.sbin/named/named/db_defs.h
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/db_defs.h,v
+retrieving revision 1.3
+diff -u -r1.3 db_defs.h
+--- usr.sbin/named/named/db_defs.h	22 May 1998 00:47:31 -0000	1.3
++++ usr.sbin/named/named/db_defs.h	15 Nov 2002 00:06:02 -0000
+@@ -68,7 +68,7 @@
+ #define INVHASHSZ	919	/* size of inverse hash table */
+ 
+ 	/* max length of data in RR data field */
+-#define MAXDATA		2048
++#define MAXDATA		(3*MAXDNAME + 5*INT32SZ)
+ 
+ #define DB_ROOT_TIMBUF	3600
+ #define TIMBUF		300
+Index: usr.sbin/named/named/ns_ncache.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_ncache.c,v
+retrieving revision 1.4
+diff -u -r1.4 ns_ncache.c
+--- usr.sbin/named/named/ns_ncache.c	22 May 1998 07:09:17 -0000	1.4
++++ usr.sbin/named/named/ns_ncache.c	15 Nov 2002 00:06:02 -0000
+@@ -81,8 +81,8 @@
+ 		u_int16_t atype;
+ 		u_char *tp = cp;
+ 		u_char *cp1;
+-		u_char data[MAXDNAME*2 + INT32SZ*5];
+-		size_t len = sizeof data;
++		u_char data[MAXDATA];
++		u_char *eod = data + sizeof(data);
+ 
+ 		/* we store NXDOMAIN as T_SOA regardless of the query type */
+ 		if (hp->rcode == NXDOMAIN)
+@@ -109,7 +109,7 @@
+ 		rdatap = tp;
+ 
+ 		/* origin */
+-		n = dn_expand(msg, eom, tp, (char*)data, len);
++		n = dn_expand(msg, eom, tp, (char*)data, eod - data);
+ 		if (n < 0) {
+ 			dprintf(3, (ddt, "ncache: form error 2\n"));
+ 			return;
+@@ -117,9 +117,8 @@
+ 		tp += n;
+ 		n = strlen((char*)data) + 1;
+ 		cp1 = data + n;
+-		len -= n;
+ 		/* mail */
+-		n = dn_expand(msg, msg + msglen, tp, (char*)cp1, len);
++		n = dn_expand(msg, msg + msglen, tp, (char*)cp1, eod - cp1);
+ 		if (n < 0) {
+ 			dprintf(3, (ddt, "ncache: form error 2\n"));
+ 			return;
+@@ -127,20 +126,20 @@
+ 		tp += n;
+ 		n = strlen((char*)cp1) + 1;
+ 		cp1 += n;
+-		len -= n;
+ 		n = 5 * INT32SZ;
++		if (n > (eod - cp1))	/* Can't happen. See MAXDATA. */
++			return;
+ 		BOUNDS_CHECK(tp, n);
+ 		bcopy(tp, cp1, n);
+ 		/* serial, refresh, retry, expire, min */
+ 		cp1 += n;
+-		len -= n;
+ 		tp += n;
+ 		if (tp != rdatap + dlen) {
+ 			dprintf(3, (ddt, "ncache: form error 2\n"));
+ 			return;
+ 		}
+ 		/* store the zone of the soa record */
+-		n = dn_expand(msg, msg + msglen, cp, (char*)cp1, len);
++		n = dn_expand(msg, msg + msglen, cp, (char*)cp1, eod - cp1);
+ 		if (n < 0) {
+ 			dprintf(3, (ddt, "ncache: form error 2\n"));
+ 			return;
+Index: usr.sbin/named/named/ns_req.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_req.c,v
+retrieving revision 1.7
+diff -u -r1.7 ns_req.c
+--- usr.sbin/named/named/ns_req.c	28 Jan 2001 02:12:50 -0000	1.7
++++ usr.sbin/named/named/ns_req.c	15 Nov 2002 00:06:03 -0000
+@@ -1526,7 +1526,7 @@
+ 
+ 		/* first just copy over the type_covered, algorithm, */
+ 		/* labels, orig ttl, two timestamps, and the footprint */
+-		if ((dp->d_size - 18) > buflen)
++		if (buflen < 18)
+ 			goto cleanup;
+ 		bcopy( cp1, cp, 18 );
+ 		cp  += 18;
+Index: usr.sbin/named/named/ns_resp.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_resp.c,v
+retrieving revision 1.5
+diff -u -r1.5 ns_resp.c
+--- usr.sbin/named/named/ns_resp.c	22 May 1998 07:09:19 -0000	1.5
++++ usr.sbin/named/named/ns_resp.c	15 Nov 2002 00:06:03 -0000
+@@ -1678,7 +1678,7 @@
+ 		 * to BOUNDS_CHECK() here.
+ 		 */
+ 		cp1 += (n = strlen((char *)cp1) + 1);
+-		n1 = sizeof(data) - n;
++		n1 = sizeof(data) - n - INT16SZ;
+ 		n = dn_expand(msg, eom, cp, (char *)cp1, n1);
+ 		if (n < 0) {
+ 			hp->rcode = FORMERR;
+@@ -1696,7 +1696,7 @@
+ 		break;
+ 
+ 	case T_SIG: {
+-		u_long origTTL, exptime, signtime, timetilexp, now;
++		u_int32_t origTTL, exptime, signtime, timetilexp, now;
+ 
+ 		/* Check signature time, expiration, and adjust TTL.  */
+ 		/* This code is similar to that in db_load.c.  */
+@@ -1717,8 +1717,18 @@
+ 			ttl = origTTL;
+ 		}
+ 
++		/*
++		 * Check that expire and signature times are internally
++		 * consistant.
++		 */
++		if (!SEQ_GT(exptime, signtime) && exptime != signtime) {
++			dprintf(3, (ddt,
++		       "ignoring SIG: signature expires before it was signed"));
++			return ((cp - rrp) + dlen);
++		}
++
+ 		/* Don't let bogus signers "sign" in the future.  */
+-		if (signtime > now) {
++		if (SEQ_GT(signtime, now)) {
+ 			dprintf(3, (ddt,
+ 			  "ignoring SIG: signature date %s is in the future\n",
+ 				    p_secstodate (signtime)));
+@@ -1726,7 +1736,7 @@
+ 		}
+ 		
+ 		/* Ignore received SIG RR's that are already expired.  */
+-		if (exptime <= now) {
++		if (SEQ_GT(exptime, now)) {
+ 			dprintf(3, (ddt,
+ 				 "ignoring SIG: expiration %s is in the past\n",
+ 				    p_secstodate (exptime)));
+Index: usr.sbin/named/named/ns_udp.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named/ns_udp.c,v
+retrieving revision 1.1
+diff -u -r1.1 ns_udp.c
+--- usr.sbin/named/named/ns_udp.c	12 Mar 1997 10:42:36 -0000	1.1
++++ usr.sbin/named/named/ns_udp.c	15 Nov 2002 00:06:03 -0000
+@@ -81,7 +81,7 @@
+ 
+ 	res = lseek(fd, offset, SEEK_SET);
+ 	if (res != offset) {
+-		dprintf(1, (ddt, "ns_udp: lseek %ul failed %lu %d\n",
++		dprintf(1, (ddt, "ns_udp: lseek %lu failed %lu %d\n",
+ 			    offset, res, errno));
+ 		goto cleanup;
+ 	}
+@@ -97,7 +97,7 @@
+ 		sum = 1;
+ 		lseek(fd, offset, SEEK_SET);
+ 		if (res != offset) {
+-			dprintf(1, (ddt, "ns_udp: lseek %ul failed %lu %d\n",
++			dprintf(1, (ddt, "ns_udp: lseek %lu failed %lu %d\n",
+ 				    offset, res, errno));
+ 			goto cleanup;
+ 		}
+Index: usr.sbin/named/named/version.c
+===================================================================
+RCS file: usr.sbin/named/named/version.c
+diff -N usr.sbin/named/named/version.c
+--- usr.sbin/named/named/version.c	30 Jan 2001 20:56:10 -0000	1.5
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,95 +0,0 @@
+-/*	$OpenBSD: version.c,v 1.5 2001/01/30 20:56:10 niklas Exp $	*/
+-
+-/*
+- *	@(#)Version.c	4.9 (Berkeley) 7/21/90
+- *	$From: Version.c,v 8.2 1997/06/01 20:34:34 vixie Exp $
+- */
+-
+-#ifndef lint
+-#if 0
+-char sccsid[] = "@(#)named 4.9.8-REL Tue Jan 30 21:50:03 2001 root@localhost:/usr/src/usr.sbin/named/named/obj";
+-char rcsid[] = "$From: Version.c,v 8.2 1997/06/01 20:34:34 vixie Exp $";
+-#else
+-char rcsid[] = "$OpenBSD: version.c,v 1.5 2001/01/30 20:56:10 niklas Exp $";
+-#endif
+-#endif /* not lint */
+-
+-char Version[] = "named 4.9.8-REL Tue Jan 30 21:50:03 2001\n\troot@localhost:/usr/src/usr.sbin/named/named/obj";
+-char ShortVersion[] = "4.9.8-REL";
+-
+-#ifdef COMMENT
+-
+-SCCS/s.Version.c:
+-
+-D 4.8.3	90/06/27 17:05:21	bloom	37	35	00031/00028/00079
+-Version distributed with 4.3 Reno tape (June 1990)
+-
+-D 4.8.2	89/09/18 13:57:11	bloom	35	34	00020/00014/00087
+-Interim fixes release
+-
+-D 4.8.1	89/02/08 17:12:15	karels	34	33	00026/00017/00075
+-branch for 4.8.1
+-
+-D 4.8	88/07/09 14:27:00       karels  33      28      00043/00031/00049
+-4.8 is here!
+-
+-D 4.7	87/11/20 13:15:52	karels	25	24	00000/00000/00062
+-4.7.3 beta
+-
+-D 4.6	87/07/21 12:15:52	karels	25	24	00000/00000/00062
+-4.6 declared stillborn
+-
+-D 4.5	87/02/10 12:33:25	kjd	24	18	00000/00000/00062
+-February 1987, Network Release. Child (bind) grows up, parent (kevin) leaves home.
+-
+-D 4.4	86/10/01 10:06:26	kjd	18	12	00020/00017/00042
+-October 1, 1986 Network Distribution
+-
+-D 4.3	86/06/04 12:12:18	kjd	12	7	00015/00028/00044
+-Version distributed with 4.3BSD
+-
+-D 4.2	86/04/30 20:57:16	kjd	7	1	00056/00000/00016
+-Network distribution Freeze and one more version until 4.3BSD
+-
+-D 1.1	86/04/30 19:30:00	kjd	1	0	00016/00000/00000
+-date and time created 86/04/30 19:30:00 by kjd
+-
+-code versions:
+-
+-Makefile
+-	Makefile	4.14 (Berkeley) 2/28/88
+-db.h
+-	db.h	4.13 (Berkeley) 2/17/88
+-db_dump.c
+-	db_dump.c	4.20 (Berkeley) 2/17/88
+-db_load.c
+-	db_load.c	4.26 (Berkeley) 2/28/88
+-db_lookup.c
+-	db_lookup.c	4.14 (Berkeley) 2/17/88
+-db_reload.c
+-	db_reload.c	4.15 (Berkeley) 2/28/88
+-db_save.c
+-	db_save.c	4.13 (Berkeley) 2/17/88
+-db_update.c
+-	db_update.c	4.16 (Berkeley) 2/28/88
+-ns_forw.c
+-	ns_forw.c	4.26 (Berkeley) 3/28/88
+-ns_init.c
+-	ns_init.c	4.23 (Berkeley) 2/28/88
+-ns_main.c
+-	 Copyright (c) 1986 Regents of the University of California.\n\
+-	ns_main.c	4.30 (Berkeley) 3/7/88
+-ns_maint.c
+-	ns_maint.c	4.23 (Berkeley) 2/28/88
+-ns_req.c
+-	ns_req.c	4.32 (Berkeley) 3/31/88
+-ns_resp.c
+-	ns_resp.c	4.50 (Berkeley) 4/7/88
+-ns_sort.c
+-	ns_sort.c	4.3 (Berkeley) 2/17/88
+-ns_stats.c
+-	ns_stats.c	4.3 (Berkeley) 2/17/88
+-newvers.sh
+-	newvers.sh	4.4 (Berkeley) 3/28/88
+-
+-#endif /* COMMENT */
+Index: usr.sbin/named/named-xfer/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/named/named-xfer/Makefile,v
+retrieving revision 1.3
+diff -u -r1.3 Makefile
+--- usr.sbin/named/named-xfer/Makefile	23 May 1998 19:24:54 -0000	1.3
++++ usr.sbin/named/named-xfer/Makefile	15 Nov 2002 00:06:03 -0000
+@@ -8,10 +8,15 @@
+ PROG=	named-xfer
+ SRCS=	named-xfer.c db_glue.c storage.c version.c
+ CFLAGS+= ${INCLUDE} -I${.CURDIR}/../named ${CONFIG}
+-LDADD=	${LIBRESOLV}
+ MAN=	named-xfer.8
+ BINDIR=	/var/named
+ LDSTATIC= ${STATIC}
++
++version.c: Version.c ${.CURDIR}/../Makefile
++	(u=root d=`pwd` h=localhost t=`date +%c`; \
++	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
++	-e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
++	< ${.CURDIR}/../named/Version.c > version.c)
+ 
+ .include <bsd.prog.mk>
+ .include "../../Makefile.inc"
+

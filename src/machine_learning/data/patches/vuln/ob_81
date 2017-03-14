@@ -1,0 +1,32 @@
+Apply by doing
+	cd /usr/src
+	patch -p0 <022_userltd.patch
+And then rebuild your kernel.
+
+Index: sys/arch/i386/i386/sys_machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/sys_machdep.c,v
+retrieving revision 1.8
+retrieving revision 1.9
+diff -u -r1.8 -r1.9
+--- sys/arch/i386/i386/sys_machdep.c	2000/06/23 02:14:36	1.8
++++ sys/arch/i386/i386/sys_machdep.c	2001/01/19 18:31:30	1.9
+@@ -240,6 +240,17 @@
+ 			break;
+ 		case SDT_SYS286CGT:
+ 		case SDT_SYS386CGT:
++			/*
++			 * Only allow call gates targeting a segment
++			 * in the LDT or a user segment in the fixed
++			 * part of the gdt.  Segments in the LDT are
++			 * constrained (below) to be user segments.
++			 */
++			if (desc.gd.gd_p != 0 && !ISLDT(desc.gd.gd_selector) &&
++			    ((IDXSEL(desc.gd.gd_selector) >= NGDT) ||
++			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
++				 SEL_UPL)))
++				return (EACCES);
+ 			/* Can't replace in use descriptor with gate. */
+ 			if (n == fsslot || n == gsslot)
+ 				return (EBUSY);
+

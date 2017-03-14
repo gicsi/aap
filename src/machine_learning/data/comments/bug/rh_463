@@ -1,0 +1,165 @@
+Description of problem:
+# systemctl disable systemd-sysctl.service
+
+It still runs on boot.
+
+# systemctl mask systemd-sysctl.service
+
+It still runs on boot.
+
+Also it seems it is not possible to schedule any service to run after it, e.g. tuned.service
+
+---
+[Unit]
+Description=Dynamic System Tuning Daemon
+After=syslog.target systemd-sysctl.service
+Conflicts=cpupower.service
+
+[Service]
+Type=dbus
+PIDFile=/run/tuned/tuned.pid
+BusName=com.redhat.tuned
+ExecStart=/usr/sbin/tuned -l -P
+
+[Install]
+WantedBy=multi-user.target
+---
+
+Tuned service still runs before systemd-sysctl.
+
+Version-Release number of selected component (if applicable):
+systemd-208-20.el7
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Schedule service after systemd-sysctl or disable it
+
+Actual results:
+systemd-sysctl still runs after other service
+
+Expected results:
+systemd-sysctl service doesn't run and if it runs it runs before the service
+
+Additional info:
+This works for me even with 208. Can you please add debug to kernel command-line and attach output of journalctl -b?
+Also note that systemd-sysctl actually runs twice during the boot (in dracut and then in normal system). Maybe you were able to mask it and you have just saw the dracut one in logs?
+I will provide requested debuginfo in next comment.
+
+I am still able to reproduce on cleanly provisioned RHEL-7.2-20150625.n.0,  x86_64, reproducer:
+
+# yum install "https://fedorapeople.org/~jskarvad/tuned/devel/repo/tuned-2.4.1-1.20150626gitaa0644f0.el7.noarch.rpm"
+# tuned-adm profile oracle
+# sysctl kernel.shmmax
+kernel.shmmax = 4398046511104
+# echo 'kernel.shmmax = 1236511104' >> /usr/lib/sysctl.d/00-system.conf
+# systemctl stop systemd-sysctl
+# systemctl disable systemd-sysctl
+# systemctl mask systemd-sysctl
+# reboot
+
+# sysctl kernel.shmmax
+kernel.shmmax = 1236511104
+
+You can see there is '1236511104', not '4398046511104' as it should be.
+
+# mv /usr/lib/sysctl.d/00-system.conf /var/tmp
+# reboot
+# sysctl kernel.shmmax
+kernel.shmmax = 4398046511104
+
+This is proof that tuned works.
+
+tuned.service seems correct and systemd-sysctl is even disabled
+# head /usr/lib/systemd/system/tuned.service 
+[Unit]
+Description=Dynamic System Tuning Daemon
+After=syslog.target systemd-sysctl.service
+Conflicts=cpupower.service
+
+[Service]
+Type=dbus
+PIDFile=/run/tuned/tuned.pid
+BusName=com.redhat.tuned
+ExecStart=/usr/sbin/tuned -l -P
+
+I verified by systemtap that kernel.shmmax is rewritten by systemd-sysctl process twice after tuned is started.
+Created attachment 1043454
+Journal with debug
+Well, the problem is this commit https://git.fedorahosted.org/cgit/initscripts.git/commit/?id=3f296db591da779000a301b2b29560ee6df413f3
+
+network initscript is supposed to reload settings from sysctl file on start.
+(In reply to Lukáš Nykrýn from comment #6)
+> Well, the problem is this commit
+> https://git.fedorahosted.org/cgit/initscripts.git/commit/
+> ?id=3f296db591da779000a301b2b29560ee6df413f3
+> 
+> network initscript is supposed to reload settings from sysctl file on start.
+
+I cannot see how this commit can cause the problem, as the settings is in /usr/lib/sysctl.d and not /etc/sysctl.d. I also clearly saw in systemtap that it's rewritten by systemd-sysctl process.
+Yep because https://git.fedorahosted.org/cgit/initscripts.git/tree/rc.d/init.d/functions#n561
+This is clearly a bug in the initscripts. Reassigning.
+This is not a bug. It is "It has always worked like this" thing and I don't think we should changes this in rhel. In fedora this is not an issue because network is disabled by default and hopefully will be gone soon.
+
+Btw why tuned simply does not drop files to /run/sysctl.d?
+(In reply to Lukáš Nykrýn from comment #10)
+> This is not a bug. It is "It has always worked like this" thing 
+
+This doesn't mean that it is not bug.
+
+> and I don't think we should changes this in rhel.
+
+Why not? Why it needs to work this non-logical way? Why it needs to be run multiple times? Why single run in right time is not enough? This means that some runs are useless and uselessly loads CPU. Why it cannot be disabled?
+
+Also in comment 6 you showed comment causing this problem. Does it mean it is regression?
+
+> Btw why tuned simply does not drop files to /run/sysctl.d?
+
+Unfortunately it is not possible, it tracks what is changed and why to be able to roll-back things. It can retune many settings on the fly without reboot.
+> Why not? Why it needs to work this non-logical way? Why it needs to be run
+> multiple times? Why single run in right time is not enough? 
+
+Because before network setup you want to have sysctl.conf apply, but network can mount kernel modules, create new devices,... so you need to apply those setting also after it was run. 
+
+> Also in comment 6 you showed comment causing this problem. Does it mean it
+> is regression?
+
+Nope, it have used regular sysctl before https://git.fedorahosted.org/cgit/initscripts.git/tree/rc.d/init.d/network?h=rhel5-branch
+
+
+> Unfortunately it is not possible, it tracks what is changed and why to be
+> able to roll-back things. It can retune many settings on the fly without
+> reboot.
+
+And why is that a problem? You can dump those settings to to /run/sysctl.d/10-tuned.conf and call /usr/lib/systemd/systemd-sysctl /run/sysctl.d/10-tuned.conf multiple times.
+(In reply to Lukáš Nykrýn from comment #12)
+> > Why not? Why it needs to work this non-logical way? Why it needs to be run
+> > multiple times? Why single run in right time is not enough? 
+> 
+> Because before network setup you want to have sysctl.conf apply, but network
+> can mount kernel modules, create new devices,... so you need to apply those
+> setting also after it was run. 
+> 
+Is it possible to schedule the service to run after the second run of systemd-sysctl?
+(In reply to Jaroslav Škarvada from comment #13)
+> (In reply to Lukáš Nykrýn from comment #12)
+> > > Why not? Why it needs to work this non-logical way? Why it needs to be run
+> > > multiple times? Why single run in right time is not enough? 
+> > 
+> > Because before network setup you want to have sysctl.conf apply, but network
+> > can mount kernel modules, create new devices,... so you need to apply those
+> > setting also after it was run. 
+> > 
+> Is it possible to schedule the service to run after the second run of
+> systemd-sysctl?
+
+The following seems to workaround the problem:
+After=syslog.target systemd-sysctl.service network.target
+
+But I still think the current state is broken and the implementation is poor.
+(In reply to Jaroslav Škarvada from comment #14)
+
+> But I still think the current state is broken and the implementation is poor.
+
+I think everyone agrees with that. In initscripts there is a lot of hacks piled on top of each other to patch a poor design. However there is no point in investing time to rework things now when it is very clear we will ditch the entire thing eventually. Especially, in cases where relatively simple workaround exists.

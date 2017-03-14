@@ -1,0 +1,11 @@
+NetworkManager 1:1.0.4-0.1.git20150618.8cffaf3bf5.fc22
+selinux-policy-targeted 3.13.1-128.2.fc22
+
+We get these messages during our tests:
+
+audit: type=1400 audit(1435143211.526:554): avc:  denied  { write } for  pid=383 comm="NetworkManager" name="/" dev="sysfs" ino=1 scontext=system_u:system_r:NetworkManager_t:s0 tcontext=system_u:object_r:sysfs_t:s0 tclass=dir permissive=0
+audit: type=1400 audit(1435143218.826:649): avc:  denied  { write } for  pid=383 comm="NetworkManager" name="/" dev="sysfs" ino=1 scontext=system_u:system_r:NetworkManager_t:s0 tcontext=system_u:object_r:sysfs_t:s0 tclass=dir permissive=0
+
+The tests still pass.
+I already filed a RHEL 7 bug for selinux-policy for it - bug 1234954. Lets see what it means.
+*** This bug has been marked as a duplicate of bug 1235549 ***

@@ -1,0 +1,6 @@
+Cause groff(1) to be invoked with the -S flag, when called by nroff(1),
+to avoid various groff features which may be security issues.  On the
+whole, this is not really a security issue, but it was discussed on
+BUGTRAQ as if it is.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/006_nroff.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,12 @@
+Description of problem:
+
+The "dialog_" prefix for generic dialog attributes was removed in a prior PR.
+
+Change caused the issue described below:  
+https://bugzilla.redhat.com/show_bug.cgi?id=1235975
+
+Fix to put back the "dialog_": 
+https://github.com/ManageIQ/manageiq/pull/3312
+
+The catalogiteminitialization/catalogbundleinitialization methods need to be modified to look for the dialog prefixed attributes to override the service_name, service_description, and vm_name.
+Modified dialog_parsing code, so this is not an issue.

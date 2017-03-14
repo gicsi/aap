@@ -1,0 +1,35 @@
+Created attachment 1043402
+katello-service status
+
+When qpidd is started the following error is generated:
+
+You tried to stop/start qpidd and noticed that qpid is starting in Read Only Mode
+
+2015-04-24 22:14:01 [Store] debug Linear Store: Journal "pulp.agent.5b57fcb2-f7d3-4b3f-a4fe-1585eac74669":Recover phase 1 complete; highest rid found = 0x4b0a8; emap.size=1; tmap.size=0; journal now read-only. < ------------------Read Only 
+2015-04-24 22:14:01 [Broker] debug Recovering, checking for 1.0 message format indicator...
+
+Have tried 
+- reboot
+- katello-service restart
+- stop/start qpid
+
+There are over 30,000 jrnl entries
+ls -lah /var/lib/qpidd/.qpidd/qls/jrnl/ | wc -l
+33411
+
+Where as on my sat6, there is only 21 entries.
+
+In addition to that qpid is not started.
+[root@rhnsatdal0501 qpid]# qpid-stat -q 
+Failed: ConnectError - [Errno 111] Connection refused
+
+
+<hammer ping not returning>
+Attached katello-service status
+
+rpm -qa| grep qpidd
+qpid-cpp-client-0.22-42.el7.x86_64
+qpid-cpp-server-0.22-42.el7.x86_64
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+It's scalability tuning problem - see https://access.redhat.com/solutions/1355703 for details.

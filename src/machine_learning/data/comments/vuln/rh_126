@@ -1,0 +1,55 @@
+Created attachment 1042015
+neutron logs
+
+Description of problem:
+Neutron server fails to start on 2 out of 3 controllers on HA deployment.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Deploy 3 controller + 1 compute overcloud 
+2. Check pcs status
+3.
+
+Actual results:
+Failed actions:
+    neutron-openvswitch-agent_monitor_60000 on overcloud-controller-1 'not running' (7): call=243, status=complete, exit-reason='none', last-rc-change='Mon Jun 22 16:59:39 2015', queued=0ms, exec=0ms
+    neutron-server_start_0 on overcloud-controller-1 'not running' (7): call=251, status=complete, exit-reason='none', last-rc-change='Mon Jun 22 16:58:51 2015', queued=2001ms, exec=3ms
+    neutron-server_start_0 on overcloud-controller-2 'not running' (7): call=250, status=complete, exit-reason='none', last-rc-change='Mon Jun 22 16:58:50 2015', queued=2001ms, exec=2ms
+    neutron-openvswitch-agent_monitor_60000 on overcloud-controller-0 'OCF_PENDING' (196): call=243, status=complete, exit-reason='none', last-rc-change='Mon Jun 22 16:59:38 2015', queued=0ms, exec=0ms
+
+
+Expected results:
+Neutron server starts on all 3 controllers.
+
+Additional info:
+Attaching neutron logs and pcs status output from all 3 controllers.
+Version-Release number of selected component (if applicable):
+openstack-tripleo-heat-templates-0.8.6-13.el7ost.noarch
+
+Got the same /var/log/neutron/server.log erros as in
+https://bugzilla.redhat.com/show_bug.cgi?id=1233061
+Reproduced on my setup.
+Reproduce with the puddle :RHEL-OSP director puddle 7.0 RC - 2015-06-22.1
+
+
+pcs status:
+------------
+Clone Set: neutron-openvswitch-agent-clone [neutron-openvswitch-agent]
+     neutron-openvswitch-agent  (systemd:neutron-openvswitch-agent):    FAILED overcloud-controller-0 (unmanaged) 
+     Started: [ overcloud-controller-2 ]
+     Stopped: [ overcloud-controller-1 ]
+
+
+
+Neutron server.log : 
+---------------------
+2015-06-22 18:40:40.502 48360 TRACE oslo_messaging.rpc.dispatcher AgentNotFoundByTypeHost: Agent with agent_type=L3 agent and host=overcloud-controller-0.localdomain could not be found
+2015-06-22 18:40:40.502 48360 TRACE oslo_messaging.rpc.dispatcher 
+2015-06-22 18:40:40.525 48360 ERROR oslo_messaging._drivers.common [req-80b2ebe8-b6e3-46c5-a63f-6e863ef7bf35 ] Returning exception Agent with agent_type=L3 agent and host=overcloud-controller-0.localdomain could not be found to caller
+2015-06-22 18:40:40.525 48360 ERROR oslo_messaging._drivers.common [req-80b2ebe8-b6e3-46c5-a63f-6e863ef7bf35 ] ['Traceback (most recent call last):\n', '  File "/usr/lib/python2.7/site-packages/oslo_messaging/rpc/dispatcher.py", line 142, in _dispatch_and_reply\n    executor_callback))\n', '  File "/usr/lib/python2.7/site-packages/oslo_messaging/rpc/dispatcher.py", line 186, in _dispatch\n    executor_callback)\n', '  File "/usr/lib/python2.7/site-packages/oslo_messaging/rpc/dispatcher.py", line 130, in _do_dispatch\n    result = func(ctxt, **new_args)\n', '  File "/usr/lib/python2.7/site-packages/neutron/api/rpc/handlers/l3_rpc.py", line 81, in sync_routers\n    context, host, router_ids))\n', '  File "/usr/lib/python2.7/site-packages/neutron/db/l3_agentschedulers_db.py", line 290, in list_active_sync_routers_on_active_l3_agent\n    context, constants.AGENT_TYPE_L3, host)\n', '  File "/usr/lib/python2.7/site-packages/neutron/db/agents_db.py", line 197, in _get_agent_by_type_and_host\n    host=host)\n', 'AgentNotFoundByTypeHost: Agent with agent_type=L3 agent and host=overcloud-controller-0.localdomain could not be found\n']
+*** This bug has been marked as a duplicate of bug 1233061 ***

@@ -1,0 +1,54 @@
+Version-Release number of selected component:
+wpa_supplicant-2.4-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/sbin/wpa_supplicant -c /etc/wpa_supplicant/wpa_supplicant.conf -u -f /var/log/wpa_supplicant.log -P /var/run/wpa_supplicant.pid
+crash_function: _dbus_abort
+executable:     /usr/sbin/wpa_supplicant
+global_pid:     5506
+kernel:         4.1.0-0.rc7.git0.1.fc23.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            0
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #2 _dbus_abort at dbus-sysdeps.c:91
+ #3 _dbus_warn_check_failed at dbus-internals.c:275
+ #4 dbus_message_iter_append_basic at dbus-message.c:2665
+ #5 wpas_dbus_simple_array_property_getter at dbus/dbus_new_handlers.c:436
+ #6 wpas_dbus_getter_interfaces at dbus/dbus_new_handlers.c:891
+ #7 fill_dict_with_properties at dbus/dbus_new_helpers.c:49
+ #8 get_all_properties at dbus/dbus_new_helpers.c:94
+ #9 properties_get_all at dbus/dbus_new_helpers.c:148
+ #10 properties_handler at dbus/dbus_new_helpers.c:304
+ #11 message_handler at dbus/dbus_new_helpers.c:403
+
+Potential duplicate: bug 1228565
+Created attachment 1041210
+File: backtrace
+Created attachment 1041211
+File: cgroup
+Created attachment 1041212
+File: core_backtrace
+Created attachment 1041213
+File: dso_list
+Created attachment 1041214
+File: environ
+Created attachment 1041215
+File: limits
+Created attachment 1041216
+File: maps
+Created attachment 1041217
+File: mountinfo
+Created attachment 1041218
+File: namespaces
+Created attachment 1041219
+File: open_fds
+Created attachment 1041220
+File: proc_pid_status
+Created attachment 1041221
+File: var_log_messages
+*** This bug has been marked as a duplicate of bug 1228565 ***

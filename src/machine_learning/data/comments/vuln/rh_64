@@ -1,0 +1,21 @@
+Security researcher Looben Yan used the Address Sanitizer tool to discover two related use-after-free vulnerabilities that occur when using XMLHttpRequest in concert with either shared or dedicated workers. These errors occur when the XMLHttpRequest object is attached to a worker but that object is incorrectly deleted while still in use. This results in exploitable crashes.
+
+
+External Reference:
+
+http://www.mozilla.org/security/announce/2015/mfsa2015-65.html
+
+
+Acknowledgements:
+
+Red Hat would like to thank the Mozilla project for reporting this issue. Upstream acknowledges Looben Yan as the original reporter.
+This issue has been addressed in the following products:
+
+  Red Hat Enterprise Linux 7
+  Red Hat Enterprise Linux 6
+  Red Hat Enterprise Linux 5
+
+Via RHSA-2015:1207 https://rhn.redhat.com/errata/RHSA-2015-1207.html
+Statement:
+
+This issue does not affect the version of thunderbird package, as shipped with Red Hat Enterprise Linux 5, 6 and 7.

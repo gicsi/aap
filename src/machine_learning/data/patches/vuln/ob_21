@@ -1,0 +1,34 @@
+Apply by doing:
+	cd /usr/src/sys/kern
+	patch < poll.patch
+
+And then rebuild your kernel.
+
+===================================================================
+RCS file: /usr/OpenBSD/cvs/src/sys/kern/sys_generic.c,v
+retrieving revision 1.17
+retrieving revision 1.18
+diff -u -r1.17 -r1.18
+--- src/sys/kern/sys_generic.c	1999/02/14 21:11:01	1.17
++++ src/sys/kern/sys_generic.c	1999/03/22 02:22:15	1.18
+@@ -807,13 +807,18 @@
+ 	register_t *retval;
+ {
+ 	struct sys_poll_args *uap = v;
+-	size_t sz = sizeof(struct pollfd) * SCARG(uap, nfds);
++	size_t sz;
+ 	struct pollfd *pl;
+ 	int msec = SCARG(uap, timeout);
+ 	struct timeval atv;
+ 	int timo, ncoll, i, s, error, error2;
+ 	extern int nselcoll, selwait;
+ 
++	/* XXX constrain; This may not match standards */
++	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles)
++		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
++	sz = sizeof(struct pollfd) * SCARG(uap, nfds);
++	
+ 	pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
+ 
+ 	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
+

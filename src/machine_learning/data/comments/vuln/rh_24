@@ -1,0 +1,159 @@
+Description of problem:
+I was having iozone over nfs-ganesha process, with volume being mounted as vers=4. Meantime a failover of nfs-ganesha process was triggered successfully and I/O resumed post failover but later I find that quotad has crashed and coredumped 
+
+
+Version-Release number of selected component (if applicable):
+glusterfs-3.7.1-7.el6rhs.x86_64
+nfs-ganesha-2.2.0-3.el6rhs.x86_64
+
+How reproducible:
+seen for first time
+
+Steps to Reproduce:
+1. create a volume of 6x2 type.
+2. nfs-ganesha configuration
+3. mount the volume with vers=4
+4. trigger a failover by killing a nfs-ganesha process on the node from where mount is done in step 3
+5. wait for I/O resume and check the status of things.
+
+Actual results:
+A bz 1239317 is already with the same testcase,
+this separate bz as coredump are different and crashes seen on different nodes of rhgs cluster
+
+#0  0x00007f540392406a in vfprintf () from /lib64/libc.so.6
+#1  0x00007f5403949609 in vsprintf () from /lib64/libc.so.6
+#2  0x00007f540392f2b8 in sprintf () from /lib64/libc.so.6
+#3  0x00007f54039dec07 in backtrace_symbols () from /lib64/libc.so.6
+#4  0x00007f5404f73681 in _gf_msg_backtrace (stacksize=<value optimized out>, callstr=0x7f53ef601100 "", strsize=5) at logging.c:1137
+#5  0x00007f5404f75250 in _gf_msg (domain=0x7f5404fec1f1 "", file=0x7f5404ff1a8f "mem-pool.c", function=0x7f5404ff1da0 "gf_mem_set_acct_info", 
+    line=<value optimized out>, level=GF_LOG_ERROR, errnum=<value optimized out>, trace=1, msgid=101150, 
+    fmt=0x7f5404ff1c70 "Assertion failed: xl->mem_acct != NULL") at logging.c:2047
+#6  0x00007f5404faa57e in gf_mem_set_acct_info (xl=0x7f53f0015610, alloc_ptr=0x7f53ef602278, size=78, type=39, 
+    typestr=0x7f5404ff1b25 "gf_common_mt_asprintf") at mem-pool.c:63
+#7  0x00007f5404faa646 in __gf_malloc (size=78, type=39, typestr=0x7f5404ff1b25 "gf_common_mt_asprintf") at mem-pool.c:147
+#8  0x00007f5404faa754 in gf_vasprintf (string_ptr=0x7f53ef602488, format=0x7f5404fec2cb "[%s] %s [%s:%d:%s] %s %d-%s: ", arg=<value optimized out>)
+    at mem-pool.c:221
+#9  0x00007f5404faa818 in gf_asprintf (string_ptr=<value optimized out>, format=<value optimized out>) at mem-pool.c:239
+#10 0x00007f5404f76149 in gf_log_glusterlog (ctx=0x7f5405979010, domain=0x7f5404fec1f1 "", file=0x7f5404ff1a8f "mem-pool.c", 
+    function=0x7f5404ff1da0 "gf_mem_set_acct_info", line=63, level=GF_LOG_ERROR, errnum=0, msgid=101150, appmsgstr=0x7f53ef6026c8, 
+    callstr=0x7f53ef6026d0 "(-->", tv=..., graph_id=0, fmt=gf_logformat_traditional) at logging.c:1377
+#11 0x00007f5404f75227 in _gf_msg_internal (domain=<value optimized out>, file=<value optimized out>, function=<value optimized out>, 
+    line=<value optimized out>, level=<value optimized out>, errnum=<value optimized out>, trace=1, msgid=101150, 
+    fmt=0x7f5404ff1c70 "Assertion failed: xl->mem_acct != NULL") at logging.c:1994
+#12 _gf_msg (domain=<value optimized out>, file=<value optimized out>, function=<value optimized out>, line=<value optimized out>, 
+    level=<value optimized out>, errnum=<value optimized out>, trace=1, msgid=101150, fmt=0x7f5404ff1c70 "Assertion failed: xl->mem_acct != NULL")
+    at logging.c:2077
+#13 0x00007f5404faa57e in gf_mem_set_acct_info (xl=0x7f53f0015610, alloc_ptr=0x7f53ef603848, size=78, type=39, 
+    typestr=0x7f5404ff1b25 "gf_common_mt_asprintf") at mem-pool.c:63
+#14 0x00007f5404faa646 in __gf_malloc (size=78, type=39, typestr=0x7f5404ff1b25 "gf_common_mt_asprintf") at mem-pool.c:147
+#15 0x00007f5404faa754 in gf_vasprintf (string_ptr=0x7f53ef603a58, format=0x7f5404fec2cb "[%s] %s [%s:%d:%s] %s %d-%s: ", arg=<value optimized out>)
+    at mem-pool.c:221
+#16 0x00007f5404faa818 in gf_asprintf (string_ptr=<value optimized out>, format=<value optimized out>) at mem-pool.c:239
+#17 0x00007f5404f76149 in gf_log_glusterlog (ctx=0x7f5405979010, domain=0x7f5404fec1f1 "", file=0x7f5404ff1a8f "mem-pool.c", 
+    function=0x7f5404ff1da0 "gf_mem_set_acct_info", line=63, level=GF_LOG_ERROR, errnum=0, msgid=101150, appmsgstr=0x7f53ef603c98, 
+    callstr=0x7f53ef603ca0 "(-->", tv=..., graph_id=0, fmt=gf_logformat_traditional) at logging.c:1377
+#18 0x00007f5404f75227 in _gf_msg_internal (domain=<value optimized out>, file=<value optimized out>, function=<value optimized out>, 
+    line=<value optimized out>, level=<value optimized out>, errnum=<value optimized out>, trace=1, msgid=101150, 
+---Type <return> to continue, or q <return> to quit---
+
+
+[root@nfs11 ~]# gluster volume status vol2
+Status of volume: vol2
+Gluster process                             TCP Port  RDMA Port  Online  Pid
+------------------------------------------------------------------------------
+Brick 10.70.46.8:/rhs/brick1/d1r12          49156     0          Y       2665 
+Brick 10.70.46.27:/rhs/brick1/d1r22         49156     0          Y       20958
+Brick 10.70.46.25:/rhs/brick1/d2r12         49156     0          Y       17883
+Brick 10.70.46.29:/rhs/brick1/d2r22         49155     0          Y       20935
+Brick 10.70.46.8:/rhs/brick1/d3r12          49157     0          Y       2684 
+Brick 10.70.46.27:/rhs/brick1/d3r22         49157     0          Y       20977
+Brick 10.70.46.25:/rhs/brick1/d4r12         49157     0          Y       17902
+Brick 10.70.46.29:/rhs/brick1/d4r22         49156     0          Y       20954
+Brick 10.70.46.8:/rhs/brick1/d5r12          49158     0          Y       2703 
+Brick 10.70.46.27:/rhs/brick1/d5r22         49158     0          Y       20996
+Brick 10.70.46.25:/rhs/brick1/d6r12         49158     0          Y       17921
+Brick 10.70.46.29:/rhs/brick1/d6r22         49157     0          Y       20973
+Self-heal Daemon on localhost               N/A       N/A        Y       2341 
+Quota Daemon on localhost                   N/A       N/A        Y       2352 
+Self-heal Daemon on 10.70.46.27             N/A       N/A        Y       10010
+Quota Daemon on 10.70.46.27                 N/A       N/A        N       N/A  
+Self-heal Daemon on 10.70.46.22             N/A       N/A        Y       7660 
+Quota Daemon on 10.70.46.22                 N/A       N/A        Y       7668 
+Self-heal Daemon on 10.70.46.25             N/A       N/A        Y       7479 
+Quota Daemon on 10.70.46.25                 N/A       N/A        Y       7484 
+Self-heal Daemon on 10.70.46.29             N/A       N/A        Y       9905 
+Quota Daemon on 10.70.46.29                 N/A       N/A        N       N/A  
+ 
+Task Status of Volume vol2
+------------------------------------------------------------------------------
+There are no active volume tasks
+
+[root@nfs11 ~]# gluster volume info vol2
+ 
+Volume Name: vol2
+Type: Distributed-Replicate
+Volume ID: 30ab7484-1480-46d5-8f83-4ab27199640d
+Status: Started
+Number of Bricks: 6 x 2 = 12
+Transport-type: tcp
+Bricks:
+Brick1: 10.70.46.8:/rhs/brick1/d1r12
+Brick2: 10.70.46.27:/rhs/brick1/d1r22
+Brick3: 10.70.46.25:/rhs/brick1/d2r12
+Brick4: 10.70.46.29:/rhs/brick1/d2r22
+Brick5: 10.70.46.8:/rhs/brick1/d3r12
+Brick6: 10.70.46.27:/rhs/brick1/d3r22
+Brick7: 10.70.46.25:/rhs/brick1/d4r12
+Brick8: 10.70.46.29:/rhs/brick1/d4r22
+Brick9: 10.70.46.8:/rhs/brick1/d5r12
+Brick10: 10.70.46.27:/rhs/brick1/d5r22
+Brick11: 10.70.46.25:/rhs/brick1/d6r12
+Brick12: 10.70.46.29:/rhs/brick1/d6r22
+Options Reconfigured:
+performance.readdir-ahead: on
+features.cache-invalidation: on
+ganesha.enable: on
+nfs.disable: on
+features.quota: on
+features.inode-quota: on
+features.quota-deem-statfs: on
+nfs-ganesha: enable
+
+
+----------------------
+pcs status at the time of filing the bz
+
+Online: [ nfs11 nfs12 nfs13 nfs14 nfs16 ]
+
+Full list of resources:
+
+ Clone Set: nfs-mon-clone [nfs-mon]
+     Started: [ nfs11 nfs12 nfs13 nfs14 nfs16 ]
+ Clone Set: nfs-grace-clone [nfs-grace]
+     Started: [ nfs11 nfs12 nfs13 nfs14 nfs16 ]
+ nfs11-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs11 
+ nfs11-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs11 
+ nfs12-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs12 
+ nfs12-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs12 
+ nfs13-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs12 
+ nfs13-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs12 
+ nfs14-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs12 
+ nfs14-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs12 
+ nfs16-cluster_ip-1	(ocf::heartbeat:IPaddr):	Started nfs12 
+ nfs16-trigger_ip-1	(ocf::heartbeat:Dummy):	Started nfs12 
+ nfs16-dead_ip-1	(ocf::heartbeat:Dummy):	Started nfs16 
+ nfs14-dead_ip-1	(ocf::heartbeat:Dummy):	Started nfs14 
+ nfs13-dead_ip-1	(ocf::heartbeat:Dummy):	Started nfs13 
+
+
+Expected results:
+quotad crash not expected.
+
+Additional info:
+Created attachment 1046306
+sosreport of nfs12
+Created attachment 1046309
+coredump of quotad on nfs12
+After looking at the core-dump stack, issue looks same as bug# 1239317
+
+*** This bug has been marked as a duplicate of bug 1239317 ***

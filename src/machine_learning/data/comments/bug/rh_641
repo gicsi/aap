@@ -1,0 +1,23 @@
+perl-DBD-SQLite-1.48-2.fc23 fails to build in F23 because tests fail:
+
+t/virtual_table/10_filecontent.t ...................... ok
+#   Failed test 'search '"use strict" AND "use warnings"''
+#   at t/virtual_table/11_filecontent_fulltext.t line 79.
+#     Structures begin differing at:
+#          $got->[1] = 'lib/DBD/SQLite/VirtualTable.pm'
+#     $expected->[1] = 'lib/DBD/SQLite/Constants.pm'
+#   Failed test 'search '"use strict" AND "use warnings"' -- no lib/DBD/SQLite/VirtualTable.pm'
+#   at t/virtual_table/11_filecontent_fulltext.t line 92.
+#     Structures begin differing at:
+#          $got->[1] = 'lib/DBD/SQLite/VirtualTable/FileContent.pm'
+#     $expected->[1] = 'lib/DBD/SQLite/Constants.pm'
+#   Failed test 'search '"use strict" AND "use warnings"' -- after reconnect'
+#   at t/virtual_table/11_filecontent_fulltext.t line 105.
+#     Structures begin differing at:
+#          $got->[1] = 'lib/DBD/SQLite/VirtualTable/FileContent.pm'
+#     $expected->[1] = 'lib/DBD/SQLite/Constants.pm'
+# Looks like you failed 3 tests of 15.
+t/virtual_table/11_filecontent_fulltext.t ............. 
+Dubious, test returned 3 (wstat 768, 0x300)
+Failed 3/15 subtests
+The failure was fixed by newer sqlite-3.8.10.2-3.fc23 (more info BZ#1232301)

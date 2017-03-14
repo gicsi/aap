@@ -1,0 +1,8 @@
+Eilko Bos reported that radius authentication, as implemented by
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=login_radius&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">login_radius(8)</a>,
+was not checking the shared secret used for replies sent by the radius server.
+This could allow an attacker to spoof a reply granting access to the
+attacker.  Note that OpenBSD does not ship with radius authentication enabled.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/020_radius.patch">
+A source code patch exists which remedies this problem.</a>

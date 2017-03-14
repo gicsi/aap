@@ -1,0 +1,36 @@
+From 350f701c9e09fc68afc413fb32001484df2b7aae Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 20 Jun 2015 13:06:04 +0000
+Subject: [PATCH] Update to 0.8 (#1234040)
+
+---
+ maven-shared-utils.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/maven-shared-utils.spec b/maven-shared-utils.spec
+index b030321..9f47cad 100644
+--- a/maven-shared-utils.spec
++++ b/maven-shared-utils.spec
+@@ -1,6 +1,6 @@
+ Name:           maven-shared-utils
+-Version:        0.7
+-Release:        2%{?dist}
++Version:        0.8
++Release:        1%{?dist}
+ Summary:        Maven shared utility classes
+ License:        ASL 2.0
+ URL:            http://maven.apache.org/shared/maven-shared-utils
+@@ -46,6 +46,9 @@ API documentation for %{name}.
+ %doc LICENSE NOTICE
+ 
+ %changelog
++* Sat Jun 20 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.8-1
++- Update to 0.8 (#1234040)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.7-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

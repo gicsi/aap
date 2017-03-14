@@ -1,0 +1,30 @@
+Created attachment 1043204
+paused vm
+
+Description of problem:
+It is not possible to obtain a *.vv file for paused VM in webadmin. 
+(It is necessary to control the boot procedure, e.g. during installation of operating system.)
+
+Version-Release number of selected component (if applicable):
+3.6 master, commit a2f12d7
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. WebAdmin
+2. Create Vm and set "Start in Pause mode" in general tab
+3. Start the vm
+4. Wait for status "Paused"
+
+Actual results:
+Both console toolbar icon and context menu option are grey.
+
+Expected results:
+Console button allows user to get *.vv file
+
+Additional info:
+It works in ovirt 3.5.
+actually....
+
+*** This bug has been marked as a duplicate of bug 1234932 ***

@@ -1,0 +1,9 @@
+On systems running
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=isakmpd&amp;apropos=0&amp;sektion=8&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">isakmpd(8)</a>
+it is possible for a local user to cause kernel memory corruption
+and system panic by setting
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ipsec&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;format=html">ipsec(4)</a>
+credentials on a socket.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/024_pfkey.patch">
+A source code patch exists which remedies this problem.</a>

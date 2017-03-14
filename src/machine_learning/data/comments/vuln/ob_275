@@ -1,0 +1,9 @@
+A potential denial of service problem has been found in sendmail. A malformed MIME
+message could trigger excessive recursion which will lead to stack exhaustion.
+This denial of service attack only affects delivery of mail from the queue and
+delivery of a malformed message. Other incoming mail is still accepted and
+delivered. However, mail messages in the queue may not be reattempted if a
+malformed MIME message exists.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/003_sendmail2.patch">
+A source code patch exists which remedies this problem.</a>

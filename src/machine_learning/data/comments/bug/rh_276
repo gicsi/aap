@@ -1,0 +1,31 @@
+Created attachment 1045259
+startx file
+
+I have over 60+ .serverauth.XXXX files in my home folder, as far I know, startx should remove those files.
+
+this is my bashrc script to login
+
+[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec /usr/bin/startx
+
+and .xinitrc
+
+exec 	cinnamon-session
+Hi,
+
+I just checked and the startx script has this:
+
+    trap "rm -f '$xserverauthfile'" HUP INT QUIT ILL TRAP KILL BUS TERM
+
+And after running xinit it does:
+
+    if [ x"$xserverauthfile" != x ]; then
+        rm -f "$xserverauthfile"
+    fi
+
+So it should always cleanup after itself, and I've just run "startx" and then exited my desktop normally and it did indeed cleanup after itself.
+
+The only scenario where it will leave a .serverauth around is when you kill -9 it, and there is nothing we can do about this.
+
+Regards,
+
+Hans

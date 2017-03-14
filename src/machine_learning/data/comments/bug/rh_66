@@ -1,0 +1,538 @@
+Connecting to Programmatically deployed websockets not successful:
+
+Google Chrome Network Panel:
+
+Request URL:ws://iris2-irisproject.rhcloud.com:8000/5F5B0D5DCF98A047154B28520331A1B1
+Request Method:GET
+Status Code:101 Switching Protocols
+
+Response Headers
+
+Connection:Upgrade
+Sec-WebSocket-Accept:Oew0pt5ZF9muiKJaoQEt59j1vLQ=
+Upgrade:websocket
+
+Request Headers
+
+Accept-Encoding:gzip, deflate, sdch
+Accept-Language:ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4,uk;q=0.2
+Cache-Control:no-cache
+Connection:Upgrade
+Cookie:JSESSIONID=5F5B0D5DCF98A047154B28520331A1B1
+Host:iris2-irisproject.rhcloud.com:8000
+Origin:http://iris2-irisproject.rhcloud.com
+Pragma:no-cache
+Sec-WebSocket-Extensions:permessage-deflate; client_max_window_bits
+Sec-WebSocket-Key:oZwHD7xFX9kpZUJBm1egAg==
+Sec-WebSocket-Version:13
+Upgrade:websocket
+User-Agent:Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36
+
+Chrome net-events:
+
+32574: SOCKET
+Start Time: 2015-07-06 23:46:06.832
+
+t=44504 [st=0]  SOCKET_BYTES_RECEIVED
+                --> byte_count = 55
+t=44505 [st=1]  SSL_SOCKET_BYTES_RECEIVED
+                --> byte_count = 34
+t=44505 [st=1]  SOCKET_BYTES_RECEIVED
+                --> byte_count = 0
+t=44505 [st=1]  SOCKET_CLOSED
+t=44505 [st=1] -SOCKET_IN_USE
+t=44505 [st=1] -SOCKET_IN_USE
+t=44505 [st=1] -SOCKET_ALIVE
+32575: HTTP2_SESSION
+Start Time: 2015-07-06 23:46:06.833
+
+t=44505 [st=0]  HTTP2_SESSION_GOAWAY
+                --> active_streams = 0
+                --> last_accepted_stream_id = 3
+                --> status = 0
+                --> unclaimed_streams = 0
+t=44505 [st=0]  HTTP2_SESSION_CLOSE
+                --> description = "Finished going away"
+                --> net_error = 0 (?)
+t=44505 [st=0]  HTTP2_SESSION_POOL_REMOVE_SESSION
+                --> source_dependency = 32575 (HTTP2_SESSION)
+t=44505 [st=0] -HTTP2_SESSION
+32708: URL_REQUEST
+ws://iris2-irisproject.rhcloud.com:8080/5F5B0D5DCF98A047154B28520331A1B1
+Start Time: 2015-07-06 23:45:18.697
+
+t=-3631 [st=    0] +REQUEST_ALIVE  [dt=21013]
+                    --> has_upload = false
+                    --> is_pending = true
+                    --> load_flags = 34 (BYPASS_CACHE | DISABLE_CACHE)
+                    --> load_state = 11 (CONNECTING)
+                    --> method = "GET"
+                    --> status = "IO_PENDING"
+                    --> url = "ws://iris2-irisproject.rhcloud.com:8080/5F5B0D5DCF98A047154B28520331A1B1"
+t=17382 [st=21013]   -HTTP_STREAM_REQUEST
+t=17382 [st=21013]   -URL_REQUEST_START_JOB
+                      --> net_error = -118 (ERR_CONNECTION_TIMED_OUT)
+t=17382 [st=21013]    URL_REQUEST_DELEGATE  [dt=0]
+t=17382 [st=21013] -REQUEST_ALIVE
+                    --> net_error = -118 (ERR_CONNECTION_TIMED_OUT)
+32710: HTTP_STREAM_JOB
+Start Time: 2015-07-06 23:45:39.710
+
+t=17382 [st=0] -SOCKET_POOL
+                --> net_error = -118 (ERR_CONNECTION_TIMED_OUT)
+t=17382 [st=0] -HTTP_STREAM_JOB
+32712: CONNECT_JOB
+Start Time: 2015-07-06 23:45:39.710
+
+t=17382 [st=0] -SOCKET_POOL_CONNECT_JOB_CONNECT
+                --> net_error = -118 (ERR_CONNECTION_TIMED_OUT)
+t=17382 [st=0] -SOCKET_POOL_CONNECT_JOB
+32714: SOCKET
+Start Time: 2015-07-06 23:45:39.710
+
+t=17382 [st=0] -TCP_CONNECT_ATTEMPT
+                --> os_error = 10060
+t=17382 [st=0]  SOCKET_CLOSED
+t=17382 [st=0] -TCP_CONNECT
+                --> net_error = -118 (ERR_CONNECTION_TIMED_OUT)
+t=17382 [st=0] -SOCKET_ALIVE
+
+
+console:
+
+Connection opened
+Connection closed 
+
+CloseEvent {}
+.. falsecode: 1011 ..
+
+
+I used port 8000 to connect. I lots of posts, for example:
+ - https://help.openshift.com/hc/en-us/articles/203263674-What-external-ports-are-available-on-OpenShift-
+- https://blog.openshift.com/paas-websockets/
+
+But nothing of these helped me. I even tried to add additional connector to tomcat on port 8000. 
+
+Tomcat-8 diy starts using startup.sh. Application is placed at webapps folder of tomcat and packed to ROOT.war
+
+Using same deployment method locally everything works fine.
+
+I'm going to try to deploy the app to wildfly, as suggested here:
+https://blog.openshift.com/deploy-websocket-web-applications-with-jboss-wildfly/
+
+Also want to try annotated simple echo endpoint. 
+
+Maybe you can suggest something?
+Server log shows nothing. It should log a message if connection is opened. Seems like connection doesn't open. I read some issues about tconnection timeout and it is set to 20 secs.
+
+here is my server.xml:
+
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- Note:  A "Server" is not itself a "Container", so you may not
+     define subcomponents such as "Valves" at this level.
+     Documentation at /docs/config/server.html
+ -->
+<Server port="18005" shutdown="SHUTDOWN" address="127.5.118.1">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <!-- Security listener. Documentation at /docs/config/listeners.html
+  <Listener className="org.apache.catalina.security.SecurityListener" />
+  -->
+  <!--APR library loader. Documentation at /docs/apr.html -->
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <!-- Prevent memory leaks due to use of particular java/javax APIs-->
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <!-- Global JNDI resources
+       Documentation at /docs/jndi-resources-howto.html
+  -->
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+
+    <Resource name="jdbc/mysql" auth="Container" type="javax.sql.DataSource"
+			  username="adminG5zPjiQ" password="62yfxzVvMlS-"
+			  url="jdbc:mysql://127.5.118.2:3306/iris2"
+			  driverClassName="com.mysql.jdbc.Driver" initialSize="5" maxWait="5000"
+			  maxActive="120" maxIdle="5" validationQuery="select 1"
+			  poolPreparedStatements="true">
+	</Resource>
+  </GlobalNamingResources>
+
+  <!-- A "Service" is a collection of one or more "Connectors" that share
+       a single "Container" Note:  A "Service" is not itself a "Container",
+       so you may not define subcomponents such as "Valves" at this level.
+       Documentation at /docs/config/service.html
+   -->
+  <Service name="Catalina">
+
+    <!--The connectors can use a shared executor, you can define one or more named thread pools-->
+    <!--
+    <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+        maxThreads="150" minSpareThreads="4"/>
+    -->
+
+
+    <!-- A "Connector" represents an endpoint by which requests are received
+         and responses are returned. Documentation at :
+         Java HTTP Connector: /docs/config/http.html (blocking & non-blocking)
+         Java AJP  Connector: /docs/config/ajp.html
+         APR (HTTP/AJP) Connector: /docs/apr.html
+         Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
+    -->
+    <Connector port="8080" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               connectionTimeout="20000"
+               address="127.5.118.1"
+               redirectPort="8443" />
+    <!-- A "Connector" using the shared thread pool-->
+    <!--
+    <Connector executor="tomcatThreadPool"
+               port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+    -->
+    <!-- Define a SSL/TLS HTTP/1.1 Connector on port 8443
+         This connector uses the NIO implementation that requires the JSSE
+         style configuration. When using the APR/native implementation, the
+         OpenSSL style configuration is required as described in the APR/native
+         documentation -->
+    <!--
+    <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+               clientAuth="false" sslProtocol="TLS" />
+    -->
+
+    <!-- Define an AJP 1.3 Connector on port 8009 -->
+    <Connector port="18009" protocol="AJP/1.3" redirectPort="8443" address="127.5.118.1" />
+
+
+    <!-- An Engine represents the entry point (within Catalina) that processes
+         every request.  The Engine implementation for Tomcat stand alone
+         analyzes the HTTP headers included with the request, and passes them
+         on to the appropriate Host (virtual host).
+         Documentation at /docs/config/engine.html -->
+
+    <!-- You should set jvmRoute to support load-balancing via AJP ie :
+    <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+    -->
+    <Engine name="Catalina" defaultHost="127.5.118.1">
+
+      <!--For clustering, please take a look at documentation at:
+          /docs/cluster-howto.html  (simple how to)
+          /docs/config/cluster.html (reference documentation) -->
+      <!--
+      <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+      -->
+
+      <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+           via a brute-force attack -->
+
+      <Host name="iris2-irisproject.rhcloud.com"  appBase="webapps"
+            unpackWARs="true" autoDeploy="true" deployOnStartup="true">
+        <!-- SingleSignOn valve, share authentication between web applications
+             Documentation at: /docs/config/valve.html -->
+        <!--
+        <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
+        -->
+
+        <!-- Access log processes all example.
+             Documentation at: /docs/config/valve.html
+             Note: The pattern used is equivalent to using pattern="common" -->
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+			   
+		<Valve
+          className="org.apache.catalina.valves.RemoteIpValve"
+          remoteIpHeader="x-forwarded-for"
+		  proxiesHeader="x-forwarded-by"
+		  protocolHeader="x-forwarded-proto"
+        />
+
+      </Host>
+    </Engine>
+  </Service>
+</Server>
+
+
+As I said, I tried to add Additional Connector on port 8000 redirecting to 8080
+I also tried to connect to wss://....8443
+
+Valve org.apache.catalina.valves.RemoteIpValve was added last and it should influence only https as far as I know.
+
+Context.xml:
+
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- The contents of this file will be loaded for each web application -->
+<Context>
+
+    <!-- Default set of monitored resources. If one of these changes, the    -->
+    <!-- web application will be reloaded.                                   -->
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+    <WatchedResource>${catalina.base}/conf/web.xml</WatchedResource>
+
+    <!-- Uncomment this to disable session persistence across Tomcat restarts -->
+    <!--
+    <Manager pathname="" />
+    -->
+
+    <ResourceLink name="jdbc/mysql" global="jdbc/mysql" type="javax.sql.DataSource"/>
+    <!--
+    <Valve className="org.apache.catalina.valves.CometConnectionManagerValve" />
+    -->
+</Context>
+<Connector port="8080" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               connectionTimeout="20000"
+               address="127.5.118.1"
+               redirectPort="8443" /> 
+
+protocol was previously just HTTP/1.1, but tomcat in this case uses BIO connector, and tomcat page says:
+
+Although the WebSocket implementation does work with any of the HTTP connectors, it is not recommended to the WebSocket with the BIO HTTP connector as the typical uses of WebSocket (large numbers of mostly idle connections) is not a good fit for the HTTP BIO connector which requires that one thread is allocated per connection regardless of whether or not the connection is idle.
+39271: SOCKET
+Start Time: 2015-07-07 00:54:11.182
+
+t=10000 [st=0]  SOCKET_CLOSED
+t=10001 [st=1] -SOCKET_ALIVE
+39274: SOCKET
+Start Time: 2015-07-07 00:54:11.183
+
+t=10001 [st=0]  SOCKET_CLOSED
+t=10001 [st=0] -SOCKET_ALIVE
+39294: SOCKET
+Start Time: 2015-07-07 00:54:11.183
+
+t=10001 [st=0]  SOCKET_CLOSED
+t=10001 [st=0] -SOCKET_ALIVE
+39297: SOCKET
+Start Time: 2015-07-07 00:54:11.183
+
+t=10001 [st=0]  SOCKET_CLOSED
+t=10001 [st=0] -SOCKET_ALIVE
+39300: SOCKET
+Start Time: 2015-07-07 00:54:11.183
+
+t=10001 [st=0]  SOCKET_CLOSED
+t=10001 [st=0] -SOCKET_ALIVE
+39306: SOCKET
+Start Time: 2015-07-07 00:54:01.182
+
+t=0 [st=0]  SOCKET_CLOSED
+t=0 [st=0] -SOCKET_ALIVE
+39311: URL_REQUEST
+ws://iris2-irisproject.rhcloud.com:8000/5F5B0D5DCF98A047154B28520331A1B1
+Start Time: 2015-07-07 00:54:09.869
+
+t=8687 [st=  0] +REQUEST_ALIVE  [dt=333]
+t=8687 [st=  0]    URL_REQUEST_DELEGATE  [dt=0]
+t=8687 [st=  0]   +URL_REQUEST_START_JOB  [dt=333]
+                   --> load_flags = 34 (BYPASS_CACHE | DISABLE_CACHE)
+                   --> method = "GET"
+                   --> priority = "LOWEST"
+                   --> url = "ws://iris2-irisproject.rhcloud.com:8000/5F5B0D5DCF98A047154B28520331A1B1"
+t=8688 [st=  1]      URL_REQUEST_DELEGATE  [dt=0]
+t=8688 [st=  1]      HTTP_CACHE_GET_BACKEND  [dt=0]
+t=8688 [st=  1]      URL_REQUEST_DELEGATE  [dt=0]
+t=8688 [st=  1]     +HTTP_STREAM_REQUEST  [dt=174]
+t=8862 [st=175]        HTTP_STREAM_REQUEST_BOUND_TO_JOB
+                       --> source_dependency = 39313 (HTTP_STREAM_JOB)
+t=8862 [st=175]     -HTTP_STREAM_REQUEST
+t=8862 [st=175]     +HTTP_TRANSACTION_SEND_REQUEST  [dt=0]
+t=8862 [st=175]        HTTP_TRANSACTION_SEND_REQUEST_HEADERS
+                       --> GET /5F5B0D5DCF98A047154B28520331A1B1 HTTP/1.1
+                           Host: iris2-irisproject.rhcloud.com:8000
+                           Connection: Upgrade
+                           Pragma: no-cache
+                           Cache-Control: no-cache
+                           Upgrade: websocket
+                           Origin: http://iris2-irisproject.rhcloud.com
+                           Sec-WebSocket-Version: 13
+                           User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.130 Safari/537.36
+                           Accept-Encoding: gzip, deflate, sdch
+                           Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4,uk;q=0.2
+                           Cookie: [43 bytes were stripped]
+                           Sec-WebSocket-Key: Q7xd6jXt2AGN52zH27UVhQ==
+                           Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+t=8862 [st=175]     -HTTP_TRANSACTION_SEND_REQUEST
+t=8862 [st=175]     +HTTP_TRANSACTION_READ_HEADERS  [dt=158]
+t=8862 [st=175]        HTTP_STREAM_PARSER_READ_HEADERS  [dt=157]
+t=9019 [st=332]        HTTP_TRANSACTION_READ_RESPONSE_HEADERS
+                       --> HTTP/1.1 101 Switching Protocols
+                           Upgrade: websocket
+                           Connection: Upgrade
+                           Sec-WebSocket-Accept: 9XAjbgFBZe6fcfm94GM+wI24IgM=
+t=9020 [st=333]     -HTTP_TRANSACTION_READ_HEADERS
+t=9020 [st=333]      URL_REQUEST_DELEGATE  [dt=0]
+t=9020 [st=333]   -URL_REQUEST_START_JOB
+t=9020 [st=333]    URL_REQUEST_DELEGATE  [dt=0]
+t=9020 [st=333]    CANCELLED
+t=9020 [st=333] -REQUEST_ALIVE
+39313: HTTP_STREAM_JOB
+ws://iris2-irisproject.rhcloud.com:8000/
+Start Time: 2015-07-07 00:54:09.870
+
+t=8688 [st=  0] +HTTP_STREAM_JOB  [dt=174]
+                 --> alternate_service_url = "ws://iris2-irisproject.rhcloud.com:8000/"
+                 --> original_url = "ws://iris2-irisproject.rhcloud.com:8000/"
+                 --> priority = "LOWEST"
+                 --> url = "ws://iris2-irisproject.rhcloud.com:8000/"
+t=8688 [st=  0]   +PROXY_SERVICE  [dt=2]
+t=8690 [st=  2]      PROXY_SERVICE_RESOLVED_PROXY_LIST
+                     --> pac_string = "DIRECT"
+t=8690 [st=  2]   -PROXY_SERVICE
+t=8690 [st=  2]   +HOST_RESOLVER_IMPL_REQUEST  [dt=0]
+                   --> address_family = 0
+                   --> allow_cached_response = true
+                   --> host = "iris2-irisproject.rhcloud.com:8000"
+                   --> is_speculative = false
+t=8690 [st=  2]      IPV6_REACHABILITY_CHECK
+                     --> cached = false
+                     --> ipv6_available = false
+t=8690 [st=  2]      HOST_RESOLVER_IMPL_CACHE_HIT
+t=8690 [st=  2]   -HOST_RESOLVER_IMPL_REQUEST
+t=8690 [st=  2]    TCP_CLIENT_SOCKET_POOL_REQUESTED_SOCKET
+                   --> host_and_port = "iris2-irisproject.rhcloud.com:8000"
+t=8690 [st=  2]   +SOCKET_POOL  [dt=171]
+t=8691 [st=  3]      SOCKET_POOL_BOUND_TO_CONNECT_JOB
+                     --> source_dependency = 39315 (CONNECT_JOB)
+t=8861 [st=173]      SOCKET_POOL_BOUND_TO_SOCKET
+                     --> source_dependency = 39317 (SOCKET)
+t=8861 [st=173]   -SOCKET_POOL
+t=8862 [st=174]    HTTP_STREAM_JOB_BOUND_TO_REQUEST
+                   --> source_dependency = 39311 (URL_REQUEST)
+t=8862 [st=174] -HTTP_STREAM_JOB
+39314: UDP_SOCKET
+[2001:4860:4860::8888]:53
+Start Time: 2015-07-07 00:54:09.872
+
+t=8690 [st=0] +SOCKET_ALIVE  [dt=0]
+               --> source_dependency = 39313 (HTTP_STREAM_JOB)
+t=8690 [st=0]   +UDP_CONNECT  [dt=0]
+                 --> address = "[2001:4860:4860::8888]:53"
+t=8690 [st=0]   -UDP_CONNECT
+                 --> net_error = -109 (ERR_ADDRESS_UNREACHABLE)
+t=8690 [st=0] -SOCKET_ALIVE
+39315: CONNECT_JOB
+iris2-irisproject.rhcloud.com:8000
+Start Time: 2015-07-07 00:54:09.872
+
+t=8690 [st=  0] +SOCKET_POOL_CONNECT_JOB  [dt=172]
+                 --> group_name = "iris2-irisproject.rhcloud.com:8000"
+t=8690 [st=  0]   +SOCKET_POOL_CONNECT_JOB_CONNECT  [dt=171]
+t=8690 [st=  0]     +HOST_RESOLVER_IMPL_REQUEST  [dt=10]
+                     --> address_family = 0
+                     --> allow_cached_response = false
+                     --> host = "iris2-irisproject.rhcloud.com:8000"
+                     --> is_speculative = false
+t=8690 [st=  0]        IPV6_REACHABILITY_CHECK
+                       --> cached = true
+                       --> ipv6_available = false
+t=8690 [st=  0]        HOST_RESOLVER_IMPL_CREATE_JOB
+t=8691 [st=  1]        HOST_RESOLVER_IMPL_JOB_ATTACH
+                       --> source_dependency = 39316 (HOST_RESOLVER_IMPL_JOB)
+t=8700 [st= 10]     -HOST_RESOLVER_IMPL_REQUEST
+t=8861 [st=171]      CONNECT_JOB_SET_SOCKET
+                     --> source_dependency = 39317 (SOCKET)
+t=8861 [st=171]   -SOCKET_POOL_CONNECT_JOB_CONNECT
+t=8862 [st=172] -SOCKET_POOL_CONNECT_JOB
+39316: HOST_RESOLVER_IMPL_JOB
+iris2-irisproject.rhcloud.com
+Start Time: 2015-07-07 00:54:09.872
+
+t=8690 [st= 0] +HOST_RESOLVER_IMPL_JOB  [dt=10]
+                --> host = "iris2-irisproject.rhcloud.com"
+                --> source_dependency = 39315 (CONNECT_JOB)
+t=8690 [st= 0]    HOST_RESOLVER_IMPL_JOB_STARTED
+t=8691 [st= 1]   +HOST_RESOLVER_IMPL_PROC_TASK  [dt=9]
+t=8691 [st= 1]      HOST_RESOLVER_IMPL_ATTEMPT_STARTED
+                    --> attempt_number = 1
+t=8691 [st= 1]      HOST_RESOLVER_IMPL_JOB_REQUEST_ATTACH
+                    --> priority = "LOWEST"
+                    --> source_dependency = 39315 (CONNECT_JOB)
+t=8700 [st=10]      HOST_RESOLVER_IMPL_ATTEMPT_FINISHED
+                    --> attempt_number = 1
+t=8700 [st=10]   -HOST_RESOLVER_IMPL_PROC_TASK
+                  --> address_list = ["54.162.140.24:0"]
+t=8700 [st=10] -HOST_RESOLVER_IMPL_JOB
+39317: SOCKET
+iris2-irisproject.rhcloud.com:8000
+Start Time: 2015-07-07 00:54:09.882
+
+t=8700 [st=  0] +SOCKET_ALIVE  [dt=324]
+                 --> source_dependency = 39315 (CONNECT_JOB)
+t=8700 [st=  0]   +TCP_CONNECT  [dt=161]
+                   --> address_list = ["54.162.140.24:8000"]
+t=8700 [st=  0]      TCP_CONNECT_ATTEMPT  [dt=161]
+                     --> address = "54.162.140.24:8000"
+t=8861 [st=161]   -TCP_CONNECT
+                   --> source_address = "192.168.1.102:55403"
+t=8862 [st=162]   +SOCKET_IN_USE  [dt=162]
+                   --> source_dependency = 39313 (HTTP_STREAM_JOB)
+t=8862 [st=162]      SOCKET_BYTES_SENT
+                     --> byte_count = 641
+t=9019 [st=319]      SOCKET_BYTES_RECEIVED
+                     --> byte_count = 129
+t=9023 [st=323]      SOCKET_BYTES_RECEIVED
+                     --> byte_count = 4
+t=9024 [st=324]      SOCKET_BYTES_SENT
+                     --> byte_count = 8
+t=9024 [st=324]      SOCKET_BYTES_RECEIVED
+                     --> byte_count = 0
+t=9024 [st=324]      SOCKET_CLOSED
+t=9024 [st=324]   -SOCKET_IN_USE
+t=9024 [st=324] -SOCKET_ALIVE
+Simple annotated echo endpoint - same problem, but locally it works!
+Example application from https://blog.openshift.com/deploy-websocket-web-applications-with-jboss-wildfly/ works. Later I will try to deploy my app on wildfly.
+Sorry i'm not exactly clear on the current state of this.  It sounds like you've at least gotten the example application working on wildfly using websockets?
+Example application works on wildfly. Now I'm trying to launch my app on wildfly, but I get OutOfMemory Exeception during startup (I use Openshift wildly 8.2 cartridge), and this is some problem of standalone.xml config that I will try to fix myself. 
+
+I'm wondering, why I can't connect ro websocket using tomcat 7 (jbossews-2.0) or tomcat 8 (diy). Maybe there is any config for server.xml to make it work with node.js proxy used for websockets? 
+
+As far as I see, websockets work on wildfly. Is there a way to make them work on tomcat? I don't think there is some mistake of mine, because locally everything works. Even simle echo websocket on tomcat not working.
+Looks like it should work for tomcat from what I see, the cartridge is configured to handle websocket traffic (from the nodejs proxy) on 8080.  Is that where you've configured tomcat to listen for websocket traffic?
+I didn't do it. I tried to add a connector on port 8000 just for a test. Looks like websocket traffic never reaches websocket endpoint. 
+I'll check request listener logs on server side.
+Problem fixed on tomcat 7 cartridge. 
+
+In server.xml connectionTimeout set to 9999999 and org.apache.catalina.valves.RemoteIpValve configured as below:
+
+protocolHeader="x-forwarded-proto"
+remoteIpHeader="x-forwarded-for"
+proxiesHeader="x-forwarded-by"
+httpServerPort="8080" -- this value added as it is not default and I think this was the main problem.
+
+I think I'm not the first person, who had such problems, so, maybe, you should add these config parameters to the manual.

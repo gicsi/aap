@@ -1,0 +1,227 @@
+Apply by doing:
+	cd /usr/xenocara     # Assuming Xenocara is in /usr/xenocara
+	patch -p0 < 003_xorg.patch
+
+And then rebuild and install the X server:
+	cd xserver
+	make -f Makefile.bsd-wrapper build
+
+Index: xserver/Xext/security.c
+===================================================================
+RCS file: /cvs/xenocara/xserver/Xext/security.c,v
+retrieving revision 1.3
+diff -u -p -r1.3 security.c
+--- xserver/Xext/security.c	20 Feb 2008 21:29:42 -0000	1.3
++++ xserver/Xext/security.c	7 Jul 2008 02:03:07 -0000
+@@ -651,15 +651,19 @@ SProcSecurityGenerateAuthorization(
+     register char 	n;
+     CARD32 *values;
+     unsigned long nvalues;
++    int values_offset;
+ 
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xSecurityGenerateAuthorizationReq);
+     swaps(&stuff->nbytesAuthProto, n);
+     swaps(&stuff->nbytesAuthData, n);
+     swapl(&stuff->valueMask, n);
+-    values = (CARD32 *)(&stuff[1]) +
+-	((stuff->nbytesAuthProto + (unsigned)3) >> 2) +
+-	((stuff->nbytesAuthData + (unsigned)3) >> 2);
++    values_offset = ((stuff->nbytesAuthProto + (unsigned)3) >> 2) +
++		    ((stuff->nbytesAuthData + (unsigned)3) >> 2);
++    if (values_offset > 
++	stuff->length - (sz_xSecurityGenerateAuthorizationReq >> 2))
++	return BadLength;
++    values = (CARD32 *)(&stuff[1]) + values_offset;
+     nvalues = (((CARD32 *)stuff) + stuff->length) - values;
+     SwapLongs(values, nvalues);
+     return ProcSecurityGenerateAuthorization(client);
+Index: xserver/Xext/shm.c
+===================================================================
+RCS file: /cvs/xenocara/xserver/Xext/shm.c,v
+retrieving revision 1.7
+diff -u -p -r1.7 shm.c
+--- xserver/Xext/shm.c	21 Jan 2008 21:38:22 -0000	1.7
++++ xserver/Xext/shm.c	7 Jul 2008 02:03:07 -0000
+@@ -848,8 +848,17 @@ ProcShmPutImage(client)
+         return BadValue;
+     }
+ 
+-    VERIFY_SHMSIZE(shmdesc, stuff->offset, length * stuff->totalHeight,
+-		   client);
++    /* 
++     * There's a potential integer overflow in this check:
++     * VERIFY_SHMSIZE(shmdesc, stuff->offset, length * stuff->totalHeight,
++     *                client);
++     * the version below ought to avoid it
++     */
++    if (stuff->totalHeight != 0 && 
++	length > (shmdesc->size - stuff->offset)/stuff->totalHeight) {
++	client->errorValue = stuff->totalWidth;
++	return BadValue;
++    }
+     if (stuff->srcX > stuff->totalWidth)
+     {
+ 	client->errorValue = stuff->srcX;
+Index: xserver/record/record.c
+===================================================================
+RCS file: /cvs/xenocara/xserver/record/record.c,v
+retrieving revision 1.1.1.1
+diff -u -p -r1.1.1.1 record.c
+--- xserver/record/record.c	26 Nov 2006 18:15:18 -0000	1.1.1.1
++++ xserver/record/record.c	7 Jul 2008 02:03:07 -0000
+@@ -2656,7 +2656,7 @@ SProcRecordQueryVersion(ClientPtr client
+ } /* SProcRecordQueryVersion */
+ 
+ 
+-static void
++static int
+ SwapCreateRegister(xRecordRegisterClientsReq *stuff)
+ {
+     register char n;
+@@ -2667,11 +2667,17 @@ SwapCreateRegister(xRecordRegisterClient
+     swapl(&stuff->nClients, n);
+     swapl(&stuff->nRanges, n);
+     pClientID = (XID *)&stuff[1];
++    if (stuff->nClients > stuff->length - (sz_xRecordRegisterClientsReq >> 2))
++	return BadLength;
+     for (i = 0; i < stuff->nClients; i++, pClientID++)
+     {
+ 	swapl(pClientID, n);
+     }
++    if (stuff->nRanges > stuff->length - (sz_xRecordRegisterClientsReq >> 2)
++	- stuff->nClients)
++	return BadLength;
+     RecordSwapRanges((xRecordRange *)pClientID, stuff->nRanges);
++    return Success;
+ } /* SwapCreateRegister */
+ 
+ 
+@@ -2679,11 +2685,13 @@ static int
+ SProcRecordCreateContext(ClientPtr client)
+ {
+     REQUEST(xRecordCreateContextReq);
++    int			status;
+     register char 	n;
+ 
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xRecordCreateContextReq);
+-    SwapCreateRegister((pointer)stuff);
++    if ((status = SwapCreateRegister((pointer)stuff)) != Success)
++	return status;
+     return ProcRecordCreateContext(client);
+ } /* SProcRecordCreateContext */
+ 
+@@ -2692,11 +2700,13 @@ static int
+ SProcRecordRegisterClients(ClientPtr client)
+ {
+     REQUEST(xRecordRegisterClientsReq);
++    int			status;
+     register char 	n;
+ 
+     swaps(&stuff->length, n);
+     REQUEST_AT_LEAST_SIZE(xRecordRegisterClientsReq);
+-    SwapCreateRegister((pointer)stuff);
++    if ((status = SwapCreateRegister((pointer)stuff)) != Success)
++	return status;
+     return ProcRecordRegisterClients(client);
+ } /* SProcRecordRegisterClients */
+ 
+Index: xserver/render/glyph.c
+===================================================================
+RCS file: /cvs/xenocara/xserver/render/glyph.c,v
+retrieving revision 1.1.1.2
+diff -u -p -r1.1.1.2 glyph.c
+--- xserver/render/glyph.c	24 Nov 2007 18:05:16 -0000	1.1.1.2
++++ xserver/render/glyph.c	7 Jul 2008 02:03:07 -0000
+@@ -626,8 +626,12 @@ AllocateGlyph (xGlyphInfo *gi, int fdept
+     int		     size;
+     GlyphPtr	     glyph;
+     int		     i;
+-
+-    size = gi->height * PixmapBytePad (gi->width, glyphDepths[fdepth]);
++    size_t	     padded_width;
++    
++    padded_width = PixmapBytePad (gi->width, glyphDepths[fdepth]);
++    if (gi->height && padded_width > (UINT32_MAX - sizeof(GlyphRec))/gi->height)
++	return 0;
++    size = gi->height * padded_width;
+     glyph = (GlyphPtr) xalloc (size + sizeof (GlyphRec));
+     if (!glyph)
+ 	return 0;
+Index: xserver/render/render.c
+===================================================================
+RCS file: /cvs/xenocara/xserver/render/render.c,v
+retrieving revision 1.5
+diff -u -p -r1.5 render.c
+--- xserver/render/render.c	24 Nov 2007 19:04:07 -0000	1.5
++++ xserver/render/render.c	7 Jul 2008 02:03:07 -0000
+@@ -1504,6 +1504,8 @@ ProcRenderCreateCursor (ClientPtr client
+     pScreen = pSrc->pDrawable->pScreen;
+     width = pSrc->pDrawable->width;
+     height = pSrc->pDrawable->height;
++    if (height && width > UINT32_MAX/(height*sizeof(CARD32)))
++	return BadAlloc;
+     if ( stuff->x > width 
+       || stuff->y > height )
+ 	return (BadMatch);
+@@ -1918,6 +1920,8 @@ static int ProcRenderCreateLinearGradien
+     LEGAL_NEW_RESOURCE(stuff->pid, client);
+ 
+     len = (client->req_len << 2) - sizeof(xRenderCreateLinearGradientReq);
++    if (stuff->nStops > UINT32_MAX/(sizeof(xFixed) + sizeof(xRenderColor)))
++	return BadLength;
+     if (len != stuff->nStops*(sizeof(xFixed) + sizeof(xRenderColor)))
+         return BadLength;
+ 
+@@ -2491,18 +2495,18 @@ SProcRenderCreateSolidFill(ClientPtr cli
+     return (*ProcRenderVector[stuff->renderReqType]) (client);
+ }
+ 
+-static void swapStops(void *stuff, int n)
++static void swapStops(void *stuff, int num)
+ {
+-    int i;
++    int i, n;
+     CARD32 *stops;
+     CARD16 *colors;
+     stops = (CARD32 *)(stuff);
+-    for (i = 0; i < n; ++i) {
++    for (i = 0; i < num; ++i) {
+         swapl(stops, n);
+         ++stops;
+     }
+     colors = (CARD16 *)(stops);
+-    for (i = 0; i < 4*n; ++i) {
++    for (i = 0; i < 4*num; ++i) {
+         swaps(stops, n);
+         ++stops;
+     }
+@@ -2525,6 +2529,8 @@ SProcRenderCreateLinearGradient (ClientP
+     swapl(&stuff->nStops, n);
+ 
+     len = (client->req_len << 2) - sizeof(xRenderCreateLinearGradientReq);
++    if (stuff->nStops > UINT32_MAX/(sizeof(xFixed) + sizeof(xRenderColor)))
++	return BadLength;
+     if (len != stuff->nStops*(sizeof(xFixed) + sizeof(xRenderColor)))
+         return BadLength;
+ 
+@@ -2552,6 +2558,8 @@ SProcRenderCreateRadialGradient (ClientP
+     swapl(&stuff->nStops, n);
+ 
+     len = (client->req_len << 2) - sizeof(xRenderCreateRadialGradientReq);
++    if (stuff->nStops > UINT32_MAX/(sizeof(xFixed) + sizeof(xRenderColor)))
++	return BadLength;
+     if (len != stuff->nStops*(sizeof(xFixed) + sizeof(xRenderColor)))
+         return BadLength;
+ 
+@@ -2576,6 +2584,8 @@ SProcRenderCreateConicalGradient (Client
+     swapl(&stuff->nStops, n);
+ 
+     len = (client->req_len << 2) - sizeof(xRenderCreateConicalGradientReq);
++    if (stuff->nStops > UINT32_MAX/(sizeof(xFixed) + sizeof(xRenderColor)))
++	return BadLength;
+     if (len != stuff->nStops*(sizeof(xFixed) + sizeof(xRenderColor)))
+         return BadLength;
+ 
+

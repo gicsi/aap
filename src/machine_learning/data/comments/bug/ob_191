@@ -1,0 +1,5 @@
+A software bug could cause memory allocation to cause a kernel panic
+accessing an array out of its bounds, when physical memory is exhausted.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.4/common/005_pglistalloc.patch">
+A source code patch exists which remedies this problem.</a>

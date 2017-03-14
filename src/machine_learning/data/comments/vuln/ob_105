@@ -1,0 +1,10 @@
+Programs using the <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=fts&amp;sektion=3&amp;format=html">fts(3)</a>
+routines (such as rm, find, and most programs that take a <b>-R</b>
+flag) can be tricked into changing into the wrong directory if the
+parent dir is changed out from underneath it.  This is similar to
+the old fts bug but happens when popping out of directories, as
+opposed to descending into them.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/002_fts.patch">
+A source code patch exists which remedies this problem.</a>
+This is the second version of the patch.

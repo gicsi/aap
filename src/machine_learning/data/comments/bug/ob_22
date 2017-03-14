@@ -1,0 +1,4 @@
+Sequence numbers could wrap with TCP_SACK and TCP_NEWRENO, resulting in
+failure to retransmit correctly.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/004_tcpsack.patch">
+A source code patch exists which remedies this problem.</a>

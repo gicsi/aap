@@ -1,0 +1,23 @@
+Description of problem:
+The ControllerNodesPostDeployment is failing because ntpd.service is missing.
+
+Version-Release number of selected component (if applicable):
+puddle 2015-06-26.3
+
+How reproducible:
+Unknown
+
+Steps to Reproduce:
+1. Deploy with --ntp-server clock.redhat.com
+2.
+3.
+
+Actual results:
+Jun 27 15:14:11 localhost os-collect-config: Error: Could not start Service[ntp]: Execution of '/usr/bin/systemctl start ntpd' returned 6: Failed to issue method call: Unit ntpd.service failed to load: No such file or directory.
+Jun 27 15:14:11 localhost os-collect-config: Error: /Stage[main]/Ntp::Service/Service[ntp]/ensure: change from stopped to running failed: Could not start Service[ntp]: Execution of '/usr/bin/systemctl start ntpd' returned 6: Failed to issue method call: Unit ntpd.service failed to load: No such file or directory.
+
+Expected results:
+NTP should start and the deployment should complete.
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1233916 ***

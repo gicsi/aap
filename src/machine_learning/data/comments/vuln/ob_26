@@ -1,0 +1,3 @@
+IP fragment assembly can bog the machine excessively and cause problems.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/maxqueue.patch">
+A source code patch exists which remedies this problem.</a>

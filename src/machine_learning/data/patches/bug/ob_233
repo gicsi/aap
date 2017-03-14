@@ -1,0 +1,494 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_i386machdep.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/i386/i386/sys_machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/sys_machdep.c,v
+retrieving revision 1.23
+retrieving revision 1.23.8.1
+diff -u -p -r1.23 -r1.23.8.1
+--- sys/arch/i386/i386/sys_machdep.c	1 Feb 2004 12:26:45 -0000	1.23
++++ sys/arch/i386/i386/sys_machdep.c	13 Jan 2006 04:42:10 -0000	1.23.8.1
+@@ -394,6 +394,13 @@ i386_set_ioperm(p, args, retval)
+ 	if ((error = suser(p, 0)) != 0)
+ 		return error;
+ 
++#ifdef APERTURE
++	if (!allowaperture && securelevel > 0)
++		return EPERM;
++#else
++	if (securelevel > 0)
++		return EPERM;
++#endif
+ 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+ 		return (error);
+ 
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 009_i386pmap.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/i386/i386/cpu.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/cpu.c,v
+retrieving revision 1.12
+retrieving revision 1.12.4.1
+diff -u -p -r1.12 -r1.12.4.1
+--- sys/arch/i386/i386/cpu.c	9 Sep 2004 09:29:52 -0000	1.12
++++ sys/arch/i386/i386/cpu.c	13 Jan 2006 00:49:20 -0000	1.12.4.1
+@@ -255,6 +255,8 @@ cpu_attach(parent, self, aux)
+ 	pcb->pcb_pmap = pmap_kernel();
+ 	pcb->pcb_cr3 = vtophys(pcb->pcb_pmap->pm_pdir);
+ 	/* pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdir - KERNBASE; XXX ??? */
++
++	cpu_default_ldt(ci);	/* Use the `global' ldt until one alloc'd */
+ #endif
+ 
+ 	/* further PCB init done later. */
+@@ -297,6 +299,7 @@ cpu_attach(parent, self, aux)
+ 
+ #ifdef MULTIPROCESSOR
+ 		gdt_alloc_cpu(ci);
++		cpu_alloc_ldt(ci);
+ 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
+ 		identifycpu(ci);
+ 		ci->ci_next = cpu_info_list->ci_next;
+@@ -446,6 +449,7 @@ cpu_hatch(void *v)
+ 	lapic_initclocks();
+ 	lapic_set_lvt();
+ 	gdt_init_cpu(ci);
++	cpu_init_ldt(ci);
+ 	npxinit(ci);
+ 
+ 	lldt(GSEL(GLDT_SEL, SEL_KPL));
+Index: sys/arch/i386/i386/freebsd_machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/freebsd_machdep.c,v
+retrieving revision 1.17
+retrieving revision 1.17.8.1
+diff -u -p -r1.17 -r1.17.8.1
+--- sys/arch/i386/i386/freebsd_machdep.c	2 Jun 2003 23:27:47 -0000	1.17
++++ sys/arch/i386/i386/freebsd_machdep.c	13 Jan 2006 00:49:21 -0000	1.17.8.1
+@@ -81,7 +81,6 @@ freebsd_sendsig(catcher, sig, mask, code
+ 	union sigval val;
+ {
+ 	register struct proc *p = curproc;
+-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+ 	register struct trapframe *tf;
+ 	struct freebsd_sigframe *fp, frame;
+ 	struct sigacts *psp = p->p_sigacts;
+@@ -157,8 +156,7 @@ freebsd_sendsig(catcher, sig, mask, code
+ 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_eip = p->p_sigcode;
+-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
+-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
++	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+ 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+ 	tf->tf_esp = (int)fp;
+ 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+Index: sys/arch/i386/i386/genassym.cf
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/genassym.cf,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- sys/arch/i386/i386/genassym.cf	24 Dec 2004 21:22:00 -0000	1.19
++++ sys/arch/i386/i386/genassym.cf	13 Jan 2006 00:49:21 -0000	1.19.2.1
+@@ -105,6 +105,7 @@ member	pcb_cr3
+ member	pcb_ebp
+ member	pcb_esp
+ member	pcb_cr0
++member	pcb_ldt
+ member	pcb_ldt_sel
+ member	pcb_onfault
+ member	pcb_fpcpu
+Index: sys/arch/i386/i386/linux_machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/linux_machdep.c,v
+retrieving revision 1.30
+retrieving revision 1.30.4.1
+diff -u -p -r1.30 -r1.30.4.1
+--- sys/arch/i386/i386/linux_machdep.c	2 Jul 2004 16:29:55 -0000	1.30
++++ sys/arch/i386/i386/linux_machdep.c	13 Jan 2006 00:49:21 -0000	1.30.4.1
+@@ -112,7 +112,6 @@ linux_sendsig(catcher, sig, mask, code, 
+ 	union sigval val;
+ {
+ 	struct proc *p = curproc;
+-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+ 	struct trapframe *tf;
+ 	struct linux_sigframe *fp, frame;
+ 	struct sigacts *psp = p->p_sigacts;
+@@ -185,8 +184,7 @@ linux_sendsig(catcher, sig, mask, code, 
+ 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_eip = p->p_sigcode;
+-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
+-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
++	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+ 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+ 	tf->tf_esp = (int)fp;
+ 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+Index: sys/arch/i386/i386/machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/machdep.c,v
+retrieving revision 1.316
+retrieving revision 1.316.2.1
+diff -u -p -r1.316 -r1.316.2.1
+--- sys/arch/i386/i386/machdep.c	24 Feb 2005 21:14:11 -0000	1.316
++++ sys/arch/i386/i386/machdep.c	13 Jan 2006 00:49:21 -0000	1.316.2.1
+@@ -484,6 +484,7 @@ i386_proc0_tss_ldt_init()
+ 	pcb->pcb_iomap_pad = 0xff;
+ 
+ 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
++	pcb->pcb_ldt = ldt;
+ 	pcb->pcb_cr0 = rcr0();
+ 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+ 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+@@ -508,6 +509,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *c
+ 	pcb->pcb_iomap_pad = 0xff;
+ 
+ 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
++	pcb->pcb_ldt = ci->ci_ldt;
+ 	pcb->pcb_cr0 = rcr0();
+ 	ci->ci_idle_tss_sel = tss_alloc(pcb);
+ }
+@@ -2014,7 +2016,6 @@ sendsig(catcher, sig, mask, code, type, 
+ 	union sigval val;
+ {
+ 	struct proc *p = curproc;
+-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+ 	struct trapframe *tf = p->p_md.md_regs;
+ 	struct sigframe *fp, frame;
+ 	struct sigacts *psp = p->p_sigacts;
+@@ -2103,8 +2104,7 @@ sendsig(catcher, sig, mask, code, type, 
+ 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_eip = p->p_sigcode;
+-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
++	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+ 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+ 	tf->tf_esp = (int)fp;
+ 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+@@ -2502,6 +2502,30 @@ setregs(p, pack, stack, retval)
+ 	pmap_ldt_cleanup(p);
+ #endif
+ 
++	/*
++	 * Reset the code segment limit to I386_MAX_EXE_ADDR in the pmap;
++	 * this gets copied into the GDT and LDT for {G,L}UCODE_SEL by
++	 * pmap_activate().
++	 */
++	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
++	    SDT_MEMERA, SEL_UPL, 1, 1);
++
++	/*
++	 * And update the GDT and LDT since we return to the user process
++	 * by leaving the syscall (we don't do another pmap_activate()).
++	 */
++#ifdef MULTIPROCESSOR
++	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
++	    pmap->pm_codeseg;
++#else
++	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pmap->pm_codeseg;
++#endif
++
++	/*
++	 * And reset the hiexec marker in the pmap.
++	 */
++	pmap->pm_hiexec = 0;
++
+ 	p->p_md.md_flags &= ~MDP_USEDFPU;
+ 	if (i386_use_fxsave) {
+ 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __OpenBSD_NPXCW__;
+@@ -2516,8 +2540,7 @@ setregs(p, pack, stack, retval)
+ 	tf->tf_ebp = 0;
+ 	tf->tf_ebx = (int)PS_STRINGS;
+ 	tf->tf_eip = pack->ep_entry;
+-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+-	    LSEL(LUCODE1_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
++	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+ 	tf->tf_eflags = PSL_USERSET;
+ 	tf->tf_esp = stack;
+ 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+@@ -2650,6 +2673,32 @@ cpu_init_idt()
+ 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+ 	lidt(&region);
+ }
++
++void
++cpu_default_ldt(struct cpu_info *ci)
++{
++	ci->ci_ldt = ldt;
++	ci->ci_ldt_len = sizeof(ldt);
++}
++
++void
++cpu_alloc_ldt(struct cpu_info *ci)
++{
++	union descriptor *cpu_ldt;
++	size_t len = sizeof(ldt);
++
++	cpu_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
++	bcopy(ldt, cpu_ldt, len);
++	ci->ci_ldt = cpu_ldt;
++	ci->ci_ldt_len = len;
++}
++
++void
++cpu_init_ldt(struct cpu_info *ci)
++{
++	setsegment(&ci->ci_gdt[GLDT_SEL].sd, ci->ci_ldt, ci->ci_ldt_len - 1,
++	    SDT_SYSLDT, SEL_KPL, 0, 0);
++}
+ #endif	/* MULTIPROCESSOR */
+ 
+ void
+@@ -2686,8 +2735,6 @@ init386(paddr_t first_avail)
+ 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+ 	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT,
+ 	    SEL_KPL, 0, 0);
+-	setsegment(&gdt[GUCODE1_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+-	    SDT_MEMERA, SEL_UPL, 1, 1);
+ 	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(I386_MAX_EXE_ADDR) - 1,
+ 	    SDT_MEMERA, SEL_UPL, 1, 1);
+ 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+@@ -2698,7 +2745,6 @@ init386(paddr_t first_avail)
+ 	/* make ldt gates and memory segments */
+ 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
+ 	    SEL_UPL, GCODE_SEL);
+-	ldt[LUCODE1_SEL] = gdt[GUCODE1_SEL];
+ 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
+ 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
+ 	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+Index: sys/arch/i386/i386/pmap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/pmap.c,v
+retrieving revision 1.80
+retrieving revision 1.80.2.1
+diff -u -p -r1.80 -r1.80.2.1
+--- sys/arch/i386/i386/pmap.c	25 Dec 2004 23:02:24 -0000	1.80
++++ sys/arch/i386/i386/pmap.c	13 Jan 2006 00:49:21 -0000	1.80.2.1
+@@ -465,6 +465,8 @@ void			pmap_release(pmap_t);
+ 
+ void			pmap_zero_phys(paddr_t);
+ 
++void	setcslimit(struct pmap *, struct trapframe *, struct pcb *, vaddr_t);
++
+ /*
+  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
+  */
+@@ -710,13 +712,14 @@ pmap_exec_account(struct pmap *pm, vaddr
+ 		struct trapframe *tf = curproc->p_md.md_regs;
+ 		struct pcb *pcb = &curproc->p_addr->u_pcb;
+ 
+-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+ 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
++		setcslimit(pm, tf, pcb, I386_MAX_EXE_ADDR);
+ 	}
+ }
+ 
+ /*
+  * Fixup the code segment to cover all potential executable mappings.
++ * Called by kernel SEGV trap handler.
+  * returns 0 if no changes to the code segment were made.
+  */
+ int
+@@ -733,24 +736,62 @@ pmap_exec_fixup(struct vm_map *map, stru
+ 		 * We need to make it point to the last page, not past it.
+ 		 */
+ 		if (ent->protection & VM_PROT_EXECUTE)
+-			va = trunc_page(ent->end) - PAGE_SIZE;
++			va = trunc_page(ent->end - 1);
+ 	}
+ 	vm_map_unlock(map);
+ 
+-	if (va == pm->pm_hiexec)
++	if (va <= pm->pm_hiexec) {
+ 		return (0);
++	}
+ 
+ 	pm->pm_hiexec = va;
+ 
+-	if (pm->pm_hiexec > (vaddr_t)I386_MAX_EXE_ADDR) {
+-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE1_SEL, SEL_UPL);
+-	} else {
+-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+-	}
+-	
++	/*
++	 * We have a new 'highest executable' va, so we need to update
++	 * the value for the code segment limit, which is stored in the
++	 * PCB.
++	 */
++	setcslimit(pm, tf, pcb, va);
++
+ 	return (1);
+ }
+ 
++void
++setcslimit(struct pmap *pm, struct trapframe *tf, struct pcb *pcb,
++    vaddr_t limit)
++{
++	/*
++	 * Called when we have a new 'highest executable' va, so we need
++	 * to update the value for the code segment limit, which is stored
++	 * in the PCB.
++	 *
++	 * There are no caching issues to be concerned with: the
++	 * processor reads the whole descriptor from the GDT when the
++	 * appropriate selector is loaded into a segment register, and
++	 * this only happens on the return to userland.
++	 *
++	 * This also works in the MP case, since whichever CPU gets to
++	 * run the process will pick up the right descriptor value from
++	 * the PCB.
++	 */
++	limit = min(limit, VM_MAXUSER_ADDRESS - 1);
++
++	setsegment(&pm->pm_codeseg, 0, atop(limit),
++	    SDT_MEMERA, SEL_UPL, 1, 1);
++
++	/* And update the GDT and LDT since we may be called by the
++	 * trap handler (cpu_switch won't get a chance).
++	 */
++#ifdef MULTIPROCESSOR
++	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
++	    pm->pm_codeseg;
++#else
++	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pm->pm_codeseg;
++#endif
++
++	pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
++}
++
+ /*
+  * p m a p   k e n t e r   f u n c t i o n s
+  *
+@@ -1946,6 +1987,9 @@ pmap_pinit(pmap)
+ 	pmap->pm_hiexec = 0;
+ 	pmap->pm_flags = 0;
+ 
++	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
++	    SDT_MEMERA, SEL_UPL, 1, 1);
++
+ 	/* allocate PDP */
+ 	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
+ 	if (pmap->pm_pdir == NULL)
+@@ -2171,11 +2215,32 @@ pmap_activate(p)
+ {
+ 	struct pcb *pcb = &p->p_addr->u_pcb;
+ 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
++#ifdef MULTIPROCESSOR
++	struct cpu_info *self = curcpu();
++#endif
+ 
+ 	pcb->pcb_pmap = pmap;
++	/* Get the LDT that this process will actually use */
++#ifdef MULTIPROCESSOR
++	pcb->pcb_ldt = pmap->pm_ldt == NULL ? self->ci_ldt : pmap->pm_ldt;
++#else
++	pcb->pcb_ldt = pmap->pm_ldt == NULL ? ldt : pmap->pm_ldt;
++#endif
+ 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+ 	pcb->pcb_cr3 = pmap->pm_pdirpa;
+ 	if (p == curproc) {
++		/*
++		 * Set the correct descriptor value (i.e. with the
++		 * correct code segment X limit) in the GDT and the LDT.
++		 */
++#ifdef MULTIPROCESSOR
++		self->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
++		    pmap->pm_codeseg;
++#else
++		gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
++		    pmap->pm_codeseg;
++#endif
++
+ 		lcr3(pcb->pcb_cr3);
+ 		lldt(pcb->pcb_ldt_sel);
+ 
+Index: sys/arch/i386/i386/svr4_machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/i386/svr4_machdep.c,v
+retrieving revision 1.21
+retrieving revision 1.21.4.1
+diff -u -p -r1.21 -r1.21.4.1
+--- sys/arch/i386/i386/svr4_machdep.c	2 Jul 2004 16:29:55 -0000	1.21
++++ sys/arch/i386/i386/svr4_machdep.c	13 Jan 2006 00:49:21 -0000	1.21.4.1
+@@ -322,7 +322,6 @@ svr4_sendsig(catcher, sig, mask, code, t
+ 	union sigval val;
+ {
+ 	register struct proc *p = curproc;
+-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+ 	register struct trapframe *tf;
+ 	struct svr4_sigframe *fp, frame;
+ 	struct sigacts *psp = p->p_sigacts;
+@@ -380,8 +379,7 @@ svr4_sendsig(catcher, sig, mask, code, t
+ 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+ 	tf->tf_eip = p->p_sigcode;
+-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
+-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
++	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+ 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+ 	tf->tf_esp = (int)fp;
+ 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+Index: sys/arch/i386/include/cpu.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/cpu.h,v
+retrieving revision 1.67
+retrieving revision 1.67.4.1
+diff -u -p -r1.67 -r1.67.4.1
+--- sys/arch/i386/include/cpu.h	5 Aug 2004 03:07:47 -0000	1.67
++++ sys/arch/i386/include/cpu.h	13 Jan 2006 00:49:21 -0000	1.67.4.1
+@@ -132,6 +132,8 @@ struct cpu_info {
+ 	int		ci_astpending;
+ 
+ 	union descriptor *ci_gdt;
++	union descriptor *ci_ldt;	/* per-cpu default LDT */
++	int		ci_ldt_len;	/* in bytes */
+ 
+ 	volatile int ci_ddb_paused;	/* paused due to other proc in ddb */
+ #define CI_DDB_RUNNING		0
+Index: sys/arch/i386/include/pmap.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/pmap.h,v
+retrieving revision 1.37
+retrieving revision 1.37.2.1
+diff -u -p -r1.37 -r1.37.2.1
+--- sys/arch/i386/include/pmap.h	14 Dec 2004 16:57:22 -0000	1.37
++++ sys/arch/i386/include/pmap.h	13 Jan 2006 00:49:21 -0000	1.37.2.1
+@@ -275,6 +275,7 @@ struct pmap {
+ 	vaddr_t pm_hiexec;		/* highest executable mapping */
+ 	int pm_flags;			/* see below */
+ 
++	struct	segment_descriptor pm_codeseg;	/* cs descriptor for process */
+ 	union descriptor *pm_ldt;	/* user-set LDT */
+ 	int pm_ldt_len;			/* number of LDT entries */
+ 	int pm_ldt_sel;			/* LDT selector */
+Index: sys/arch/i386/include/segments.h
+===================================================================
+RCS file: /cvs/src/sys/arch/i386/include/segments.h,v
+retrieving revision 1.13
+retrieving revision 1.13.4.1
+diff -u -p -r1.13 -r1.13.4.1
+--- sys/arch/i386/include/segments.h	13 Jun 2004 21:49:16 -0000	1.13
++++ sys/arch/i386/include/segments.h	13 Jan 2006 00:49:21 -0000	1.13.4.1
+@@ -134,6 +134,9 @@ void setsegment(struct segment_descripto
+     int, int);
+ void unsetgate(struct gate_descriptor *);
+ void cpu_init_idt(void);
++void cpu_default_ldt(struct cpu_info *);
++void cpu_alloc_ldt(struct cpu_info *);
++void cpu_init_ldt(struct cpu_info *);
+ 
+ int idt_vec_alloc(int, int);
+ void idt_vec_set(int, void (*)(void));
+

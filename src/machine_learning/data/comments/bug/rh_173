@@ -1,0 +1,12 @@
+Your package autoconf failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10079245
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046455
+build.log
+Created attachment 1046456
+root.log
+Created attachment 1046457
+state.log
+*** This bug has been marked as a duplicate of bug 1236072 ***

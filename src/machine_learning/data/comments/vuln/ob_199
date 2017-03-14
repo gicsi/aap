@@ -1,0 +1,7 @@
+Due to a bug in the parsing of Allow/Deny rules for
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&amp;sektion=8">httpd(8)'s</a>
+access module, using IP addresses without a netmask on big endian 64-bit
+platforms causes the rules to fail to match. This only affects sparc64.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.4/common/014_httpd2.patch">
+A source code patch exists which remedies this problem.</a>

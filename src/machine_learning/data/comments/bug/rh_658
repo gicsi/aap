@@ -1,0 +1,15 @@
+I did a "dnf update" this morning and now I'm seeing 
+
+]777;notify;Command completed; PREV-CMD
+
+prepended to my bash prompt, where PREV-CMD is the previous command line.
+
+
+This seems to originate from /etc/profile.d/vte.sh ?
+
+BZ#1229714 seems to suggest that this is related to the new shell notification system in GNOME3
+
+Noting that I'm not seeing the GNOME3 notifications anymore.
+My apologies I think this is related to my installation of the app Birdie.  Their repo contains what appears to be an old version of gnome-terminal which replaces the F22 one.
+
+Removing that package and re-installing gnome-terminal seems to have resolved this.

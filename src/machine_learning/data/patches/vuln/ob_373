@@ -1,0 +1,540 @@
+untrusted comment: signature from openbsd 5.6 base private key
+RWR0EANmo9nqhq/4etWGvO75lU/CZYKp3xF2UWEd6LyJ38TnTbZ/Kcwaw4OBrSlV7wjVCwt3sb8KOhT03WpZqsdt1iGkMwrS0QA=
+
+OpenBSD 5.6 errata 20, March 19, 2015
+
+Fix several crash causing defects from OpenSSL.
+These include:
+CVE-2015-0209 - Use After Free following d2i_ECPrivatekey error
+CVE-2015-0286 - Segmentation fault in ASN1_TYPE_cmp
+CVE-2015-0287 - ASN.1 structure reuse memory corruption
+CVE-2015-0288 - X509_to_X509_REQ NULL pointer deref
+CVE-2015-0289 - PKCS7 NULL pointer dereferences
+
+Several other issues did not apply or were already fixed.
+Refer to https://www.openssl.org/news/secadv_20150319.txt
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-56-base.pub -x 020_openssl.patch.sig \
+	-m - | (cd /usr/src && patch -p0)
+
+Then build and install libcrypto and libssl
+
+    cd /usr/src/lib/libcrypto/crypto
+    make obj
+    make
+    make install
+    cd /usr/src/lib/libssl/ssl
+    make obj
+    make
+    make install
+
+
+Index: lib/libssl/src/crypto/asn1/a_int.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/a_int.c,v
+retrieving revision 1.24
+diff -u -p -r1.24 a_int.c
+--- lib/libssl/src/crypto/asn1/a_int.c	11 Jul 2014 08:44:47 -0000	1.24
++++ lib/libssl/src/crypto/asn1/a_int.c	18 Mar 2015 06:01:34 -0000
+@@ -268,7 +268,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const
+ 
+ err:
+ 	ASN1err(ASN1_F_C2I_ASN1_INTEGER, i);
+-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
++	if (a == NULL || *a != ret)
+ 		M_ASN1_INTEGER_free(ret);
+ 	return (NULL);
+ }
+@@ -335,7 +335,7 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, cons
+ 
+ err:
+ 	ASN1err(ASN1_F_D2I_ASN1_UINTEGER, i);
+-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
++	if (a == NULL || *a != ret)
+ 		M_ASN1_INTEGER_free(ret);
+ 	return (NULL);
+ }
+Index: lib/libssl/src/crypto/asn1/a_set.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/a_set.c,v
+retrieving revision 1.16
+diff -u -p -r1.16 a_set.c
+--- lib/libssl/src/crypto/asn1/a_set.c	11 Jul 2014 08:44:47 -0000	1.16
++++ lib/libssl/src/crypto/asn1/a_set.c	18 Mar 2015 06:01:34 -0000
+@@ -225,7 +225,7 @@ d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a
+ 	return ret;
+ 
+ err:
+-	if (ret != NULL && (a == NULL || *a != ret)) {
++	if (a == NULL || *a != ret) {
+ 		if (free_func != NULL)
+ 			sk_OPENSSL_BLOCK_pop_free(ret, free_func);
+ 		else
+Index: lib/libssl/src/crypto/asn1/a_type.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/a_type.c,v
+retrieving revision 1.14
+diff -u -p -r1.14 a_type.c
+--- lib/libssl/src/crypto/asn1/a_type.c	11 Jul 2014 08:44:47 -0000	1.14
++++ lib/libssl/src/crypto/asn1/a_type.c	18 Mar 2015 06:01:34 -0000
+@@ -122,7 +122,9 @@ ASN1_TYPE_cmp(ASN1_TYPE *a, ASN1_TYPE *b
+ 	case V_ASN1_OBJECT:
+ 		result = OBJ_cmp(a->value.object, b->value.object);
+ 		break;
+-
++	case V_ASN1_BOOLEAN:
++		result = a->value.boolean - b->value.boolean;
++		break;
+ 	case V_ASN1_NULL:
+ 		result = 0;	/* They do not have content. */
+ 		break;
+Index: lib/libssl/src/crypto/asn1/d2i_pr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/d2i_pr.c,v
+retrieving revision 1.12
+diff -u -p -r1.12 d2i_pr.c
+--- lib/libssl/src/crypto/asn1/d2i_pr.c	11 Jul 2014 08:44:47 -0000	1.12
++++ lib/libssl/src/crypto/asn1/d2i_pr.c	18 Mar 2015 06:01:34 -0000
+@@ -117,7 +117,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, c
+ 	return (ret);
+ 
+ err:
+-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
++	if (a == NULL || *a != ret)
+ 		EVP_PKEY_free(ret);
+ 	return (NULL);
+ }
+Index: lib/libssl/src/crypto/asn1/d2i_pu.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/d2i_pu.c,v
+retrieving revision 1.12
+diff -u -p -r1.12 d2i_pu.c
+--- lib/libssl/src/crypto/asn1/d2i_pu.c	11 Jul 2014 08:44:47 -0000	1.12
++++ lib/libssl/src/crypto/asn1/d2i_pu.c	18 Mar 2015 06:01:34 -0000
+@@ -130,7 +130,7 @@ d2i_PublicKey(int type, EVP_PKEY **a, co
+ 	return (ret);
+ 
+ err:
+-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
++	if (a == NULL || *a != ret)
+ 		EVP_PKEY_free(ret);
+ 	return (NULL);
+ }
+Index: lib/libssl/src/crypto/asn1/n_pkey.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/n_pkey.c,v
+retrieving revision 1.22
+diff -u -p -r1.22 n_pkey.c
+--- lib/libssl/src/crypto/asn1/n_pkey.c	12 Jul 2014 22:26:01 -0000	1.22
++++ lib/libssl/src/crypto/asn1/n_pkey.c	18 Mar 2015 06:01:34 -0000
+@@ -250,11 +250,11 @@ d2i_RSA_NET(RSA **a, const unsigned char
+ 		return NULL;
+ 	}
+ 
+-	if ((enckey->os->length != 11) || (strncmp("private-key",
+-	(char *)enckey->os->data, 11) != 0)) {
++	/* XXX 11 == strlen("private-key") */
++	if (enckey->os->length != 11 ||
++	    memcmp("private-key", enckey->os->data, 11) != 0) {
+ 		ASN1err(ASN1_F_D2I_RSA_NET, ASN1_R_PRIVATE_KEY_HEADER_MISSING);
+-		NETSCAPE_ENCRYPTED_PKEY_free(enckey);
+-		return NULL;
++		goto err;
+ 	}
+ 	if (OBJ_obj2nid(enckey->enckey->algor->algorithm) != NID_rc4) {
+ 		ASN1err(ASN1_F_D2I_RSA_NET,
+Index: lib/libssl/src/crypto/asn1/tasn_dec.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/tasn_dec.c,v
+retrieving revision 1.24
+diff -u -p -r1.24 tasn_dec.c
+--- lib/libssl/src/crypto/asn1/tasn_dec.c	12 Jun 2014 15:49:27 -0000	1.24
++++ lib/libssl/src/crypto/asn1/tasn_dec.c	19 Mar 2015 10:05:50 -0000
+@@ -304,8 +304,16 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, cons
+ 		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+ 			goto auxerr;
+ 
+-		/* Allocate structure */
+-		if (!*pval && !ASN1_item_ex_new(pval, it)) {
++		if (*pval) {
++			/* Free up and zero CHOICE value if initialised */
++			i = asn1_get_choice_selector(pval, it);
++			if ((i >= 0) && (i < it->tcount)) {
++				tt = it->templates + i;
++				pchptr = asn1_get_field_ptr(pval, tt);
++				ASN1_template_free(pchptr, tt);
++				asn1_set_choice_selector(pval, -1, it);
++			}
++		} else if (!ASN1_item_ex_new(pval, it)) {
+ 			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+ 			    ERR_R_NESTED_ASN1_ERROR);
+ 			goto err;
+@@ -390,6 +398,19 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, cons
+ 
+ 		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+ 			goto auxerr;
++
++		/* Free up and zero any ADB found */
++		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
++			if (tt->flags & ASN1_TFLG_ADB_MASK) {
++				const ASN1_TEMPLATE *seqtt;
++				ASN1_VALUE **pseqval;
++				seqtt = asn1_do_adb(pval, tt, 1);
++				if (!seqtt)
++					goto err;
++				pseqval = asn1_get_field_ptr(pval, seqtt);
++				ASN1_template_free(pseqval, seqtt);
++			}
++		}
+ 
+ 		/* Get each field entry */
+ 		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+Index: lib/libssl/src/crypto/asn1/x_x509.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/asn1/x_x509.c,v
+retrieving revision 1.17
+diff -u -p -r1.17 x_x509.c
+--- lib/libssl/src/crypto/asn1/x_x509.c	11 Jul 2014 08:44:47 -0000	1.17
++++ lib/libssl/src/crypto/asn1/x_x509.c	18 Mar 2015 06:01:34 -0000
+@@ -177,16 +177,20 @@ d2i_X509_AUX(X509 **a, const unsigned ch
+ 
+ 	/* Save start position */
+ 	q = *pp;
+-	ret = d2i_X509(a, pp, length);
++	ret = d2i_X509(NULL, pp, length);
+ 	/* If certificate unreadable then forget it */
+ 	if (!ret)
+ 		return NULL;
+ 	/* update length */
+ 	length -= *pp - q;
+-	if (!length)
+-		return ret;
+-	if (!d2i_X509_CERT_AUX(&ret->aux, pp, length))
+-		goto err;
++	if (length > 0) {
++		if (!d2i_X509_CERT_AUX(&ret->aux, pp, length))
++			goto err;
++	}
++	if (a != NULL) {
++		X509_free(*a);
++		*a = ret;
++	}
+ 	return ret;
+ 
+ err:
+Index: lib/libssl/src/crypto/ec/ec_asn1.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/ec/ec_asn1.c,v
+retrieving revision 1.10
+diff -u -p -r1.10 ec_asn1.c
+--- lib/libssl/src/crypto/ec/ec_asn1.c	12 Jul 2014 16:03:37 -0000	1.10
++++ lib/libssl/src/crypto/ec/ec_asn1.c	18 Mar 2015 06:01:34 -0000
+@@ -918,19 +918,19 @@ d2i_ECPKParameters(EC_GROUP ** a, const 
+ 
+ 	if ((params = d2i_ECPKPARAMETERS(NULL, in, len)) == NULL) {
+ 		ECerr(EC_F_D2I_ECPKPARAMETERS, EC_R_D2I_ECPKPARAMETERS_FAILURE);
+-		ECPKPARAMETERS_free(params);
+-		return NULL;
++		goto err;
+ 	}
+ 	if ((group = ec_asn1_pkparameters2group(params)) == NULL) {
+ 		ECerr(EC_F_D2I_ECPKPARAMETERS, EC_R_PKPARAMETERS2GROUP_FAILURE);
+-		ECPKPARAMETERS_free(params);
+-		return NULL;
++		goto err;
+ 	}
+-	if (a && *a)
++
++	if (a != NULL) {
+ 		EC_GROUP_clear_free(*a);
+-	if (a)
+ 		*a = group;
++	}
+ 
++err:
+ 	ECPKPARAMETERS_free(params);
+ 	return (group);
+ }
+@@ -958,7 +958,6 @@ i2d_ECPKParameters(const EC_GROUP * a, u
+ EC_KEY *
+ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
+ {
+-	int ok = 0;
+ 	EC_KEY *ret = NULL;
+ 	EC_PRIVATEKEY *priv_key = NULL;
+ 
+@@ -973,12 +972,9 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsi
+ 	}
+ 	if (a == NULL || *a == NULL) {
+ 		if ((ret = EC_KEY_new()) == NULL) {
+-			ECerr(EC_F_D2I_ECPRIVATEKEY,
+-			    ERR_R_MALLOC_FAILURE);
++			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+ 			goto err;
+ 		}
+-		if (a)
+-			*a = ret;
+ 	} else
+ 		ret = *a;
+ 
+@@ -1028,17 +1024,19 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsi
+ 			goto err;
+ 		}
+ 	}
+-	ok = 1;
++
++	EC_PRIVATEKEY_free(priv_key);
++	if (a != NULL)
++		*a = ret;
++	return (ret);
++
+ err:
+-	if (!ok) {
+-		if (ret)
+-			EC_KEY_free(ret);
+-		ret = NULL;
+-	}
++	if (a == NULL || *a != ret)
++		EC_KEY_free(ret);
+ 	if (priv_key)
+ 		EC_PRIVATEKEY_free(priv_key);
+ 
+-	return (ret);
++	return (NULL);
+ }
+ 
+ int 
+@@ -1151,8 +1149,6 @@ d2i_ECParameters(EC_KEY ** a, const unsi
+ 			ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
+ 			return NULL;
+ 		}
+-		if (a)
+-			*a = ret;
+ 	} else
+ 		ret = *a;
+ 
+@@ -1160,6 +1156,9 @@ d2i_ECParameters(EC_KEY ** a, const unsi
+ 		ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
+ 		return NULL;
+ 	}
++
++	if (a != NULL)
++		*a = ret;
+ 	return ret;
+ }
+ 
+Index: lib/libssl/src/crypto/pkcs7/pk7_doit.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/pkcs7/pk7_doit.c,v
+retrieving revision 1.29
+diff -u -p -r1.29 pk7_doit.c
+--- lib/libssl/src/crypto/pkcs7/pk7_doit.c	25 Jul 2014 06:05:32 -0000	1.29
++++ lib/libssl/src/crypto/pkcs7/pk7_doit.c	18 Mar 2015 06:11:27 -0000
+@@ -261,6 +261,28 @@ PKCS7_dataInit(PKCS7 *p7, BIO *bio)
+ 	PKCS7_RECIP_INFO *ri = NULL;
+ 	ASN1_OCTET_STRING *os = NULL;
+ 
++	if (p7 == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAINIT, PKCS7_R_INVALID_NULL_POINTER);
++		return NULL;
++	}
++
++	/*
++	 * The content field in the PKCS7 ContentInfo is optional,
++	 * but that really only applies to inner content (precisely,
++	 * detached signatures).
++	 *
++	 * When reading content, missing outer content is therefore
++	 * treated as an error.
++	 *
++	 * When creating content, PKCS7_content_new() must be called
++	 * before calling this method, so a NULL p7->d is always
++	 * an error.
++	 */
++	if (p7->d.ptr == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAINIT, PKCS7_R_NO_CONTENT);
++		return NULL;
++	}
++
+ 	i = OBJ_obj2nid(p7->type);
+ 	p7->state = PKCS7_S_HEADER;
+ 
+@@ -418,6 +440,17 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pk
+ 	unsigned char *ek = NULL, *tkey = NULL;
+ 	int eklen = 0, tkeylen = 0;
+ 
++	if (p7 == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATADECODE,
++		    PKCS7_R_INVALID_NULL_POINTER);
++		return NULL;
++	}
++
++	if (p7->d.ptr == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATADECODE, PKCS7_R_NO_CONTENT);
++		return NULL;
++	}
++
+ 	i = OBJ_obj2nid(p7->type);
+ 	p7->state = PKCS7_S_HEADER;
+ 
+@@ -713,6 +746,17 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
+ 	STACK_OF(PKCS7_SIGNER_INFO) *si_sk = NULL;
+ 	ASN1_OCTET_STRING *os = NULL;
+ 
++	if (p7 == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
++		    PKCS7_R_INVALID_NULL_POINTER);
++		return 0;
++	}
++
++	if (p7->d.ptr == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_NO_CONTENT);
++		return 0;
++	}
++
+ 	EVP_MD_CTX_init(&ctx_tmp);
+ 	i = OBJ_obj2nid(p7->type);
+ 	p7->state = PKCS7_S_HEADER;
+@@ -758,6 +802,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
+ 		/* If detached data then the content is excluded */
+ 		if (PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
+ 			M_ASN1_OCTET_STRING_free(os);
++			os = NULL;
+ 			p7->d.sign->contents->d.data = NULL;
+ 		}
+ 		break;
+@@ -772,6 +817,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
+ 		if (PKCS7_type_is_data(p7->d.digest->contents) &&
+ 		    p7->detached) {
+ 			M_ASN1_OCTET_STRING_free(os);
++			os = NULL;
+ 			p7->d.digest->contents->d.data = NULL;
+ 		}
+ 		break;
+@@ -837,22 +883,32 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
+ 		M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
+ 	}
+ 
+-	if (!PKCS7_is_detached(p7) && !(os->flags & ASN1_STRING_FLAG_NDEF)) {
+-		char *cont;
+-		long contlen;
+-		btmp = BIO_find_type(bio, BIO_TYPE_MEM);
+-		if (btmp == NULL) {
+-			PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
+-			    PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
++	if (!PKCS7_is_detached(p7)) {
++		/*
++		 * NOTE: only reach os == NULL here because detached
++		 * digested data support is broken?
++		 */
++		if (os == NULL)
+ 			goto err;
++		if (!(os->flags & ASN1_STRING_FLAG_NDEF)) {
++			char *cont;
++			long contlen;
++
++			btmp = BIO_find_type(bio, BIO_TYPE_MEM);
++			if (btmp == NULL) {
++				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
++				    PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
++				goto err;
++			}
++			contlen = BIO_get_mem_data(btmp, &cont);
++			/*
++			 * Mark the BIO read only then we can use its copy
++			 * of the data instead of making an extra copy.
++			 */
++			BIO_set_flags(btmp, BIO_FLAGS_MEM_RDONLY);
++			BIO_set_mem_eof_return(btmp, 0);
++			ASN1_STRING_set0(os, (unsigned char *)cont, contlen);
+ 		}
+-		contlen = BIO_get_mem_data(btmp, &cont);
+-		/* Mark the BIO read only then we can use its copy of the data
+-		 * instead of making an extra copy.
+-		 */
+-		BIO_set_flags(btmp, BIO_FLAGS_MEM_RDONLY);
+-		BIO_set_mem_eof_return(btmp, 0);
+-		ASN1_STRING_set0(os, (unsigned char *)cont, contlen);
+ 	}
+ 	ret = 1;
+ err:
+@@ -927,6 +983,17 @@ PKCS7_dataVerify(X509_STORE *cert_store,
+ 	STACK_OF(X509) *cert;
+ 	X509 *x509;
+ 
++	if (p7 == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,
++		    PKCS7_R_INVALID_NULL_POINTER);
++		return 0;
++	}
++
++	if (p7->d.ptr == NULL) {
++		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, PKCS7_R_NO_CONTENT);
++		return 0;
++	}
++
+ 	if (PKCS7_type_is_signed(p7)) {
+ 		cert = p7->d.sign->cert;
+ 	} else if (PKCS7_type_is_signedAndEnveloped(p7)) {
+@@ -963,6 +1030,7 @@ PKCS7_dataVerify(X509_STORE *cert_store,
+ 
+ 	return PKCS7_signatureVerify(bio, p7, si, x509);
+ err:
++	
+ 	return ret;
+ }
+ 
+Index: lib/libssl/src/crypto/pkcs7/pk7_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/pkcs7/pk7_lib.c,v
+retrieving revision 1.14
+diff -u -p -r1.14 pk7_lib.c
+--- lib/libssl/src/crypto/pkcs7/pk7_lib.c	12 Jul 2014 16:03:37 -0000	1.14
++++ lib/libssl/src/crypto/pkcs7/pk7_lib.c	18 Mar 2015 06:01:34 -0000
+@@ -460,6 +460,8 @@ PKCS7_set_digest(PKCS7 *p7, const EVP_MD
+ STACK_OF(PKCS7_SIGNER_INFO) *
+ PKCS7_get_signer_info(PKCS7 *p7)
+ {
++	if (p7 == NULL || p7->d.ptr == NULL)
++		return (NULL);
+ 	if (PKCS7_type_is_signed(p7)) {
+ 		return (p7->d.sign->signer_info);
+ 	} else if (PKCS7_type_is_signedAndEnveloped(p7)) {
+Index: lib/libssl/src/crypto/x509/x509_req.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/x509/x509_req.c,v
+retrieving revision 1.15
+diff -u -p -r1.15 x509_req.c
+--- lib/libssl/src/crypto/x509/x509_req.c	11 Jul 2014 08:44:49 -0000	1.15
++++ lib/libssl/src/crypto/x509/x509_req.c	18 Mar 2015 06:01:34 -0000
+@@ -95,7 +95,9 @@ X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey
+ 	if (!X509_REQ_set_subject_name(ret, X509_get_subject_name(x)))
+ 		goto err;
+ 
+-	pktmp = X509_get_pubkey(x);
++	if ((pktmp = X509_get_pubkey(x)) == NULL)
++		goto err;
++
+ 	i = X509_REQ_set_pubkey(ret, pktmp);
+ 	EVP_PKEY_free(pktmp);
+ 	if (!i)
+Index: lib/libssl/src/ssl/d1_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/d1_lib.c,v
+retrieving revision 1.24
+diff -u -p -r1.24 d1_lib.c
+--- lib/libssl/src/ssl/d1_lib.c	17 Jul 2014 23:48:24 -0000	1.24
++++ lib/libssl/src/ssl/d1_lib.c	18 Mar 2015 06:01:34 -0000
+@@ -449,6 +449,9 @@ dtls1_listen(SSL *s, struct sockaddr *cl
+ {
+ 	int ret;
+ 
++	/* Ensure there is no state left over from a previous invocation */
++	SSL_clear(s);
++
+ 	SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
+ 	s->d1->listen = 1;
+ 
+

@@ -1,0 +1,53 @@
+Version-Release number of selected component:
+epiphany-runtime-3.17.1-1.fc23
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        epiphany
+crash_function: XQueryExtension
+executable:     /usr/bin/epiphany
+global_pid:     3734
+kernel:         4.1.0-1.fc23.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            10001
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 XQueryExtension at QuExt.c:43
+ #1 XInitExtension at InitExt.c:47
+ #2 XDamageExtAddDisplay at Xdamage.c:58
+ #3 XDamageFindDisplay at Xdamage.c:202
+ #4 XDamageQueryExtension at Xdamage.c:288
+ #5 WebKit::supportsXDamageAndXComposite at /usr/src/debug/webkitgtk-2.9.3/Source/WebKit2/UIProcess/gtk/RedirectedXCompositeWindow.cpp:115
+ #6 WebKit::RedirectedXCompositeWindow::create(_GdkWindow*, std::function<void ()>) at /usr/src/debug/webkitgtk-2.9.3/Source/WebKit2/UIProcess/gtk/RedirectedXCompositeWindow.cpp:135
+ #7 webkitWebViewBaseRealize at /usr/src/debug/webkitgtk-2.9.3/Source/WebKit2/UIProcess/API/gtk/WebKitWebViewBase.cpp:332
+ #12 gtk_widget_realize at gtkwidget.c:5551
+ #13 gtk_widget_map at gtkwidget.c:5066
+Created attachment 1043539
+File: backtrace
+Created attachment 1043540
+File: cgroup
+Created attachment 1043541
+File: core_backtrace
+Created attachment 1043542
+File: dso_list
+Created attachment 1043543
+File: environ
+Created attachment 1043544
+File: limits
+Created attachment 1043545
+File: maps
+Created attachment 1043546
+File: mountinfo
+Created attachment 1043547
+File: namespaces
+Created attachment 1043548
+File: open_fds
+Created attachment 1043549
+File: proc_pid_status
+Created attachment 1043550
+File: var_log_messages
+Created attachment 1043551
+File: core.4535

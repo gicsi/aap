@@ -1,0 +1,6 @@
+A race condition has been reported to exist in the handling by sendmail of
+asynchronous signals. A remote attacker may be able to execute arbitrary code with the
+privileges of the user running sendmail, typically root.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.7/common/012_sendmail.patch">
+A source code patch exists which remedies this problem.</a>

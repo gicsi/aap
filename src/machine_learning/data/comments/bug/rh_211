@@ -1,0 +1,54 @@
+Description of problem:
+
+python-rdomanager-oscplugin is failing as root after a long wait.
+The documentation contains a sudo to stack command before this step,
+but it's behavior when I try to run it as root is harsh.
+
+The command does almost all step (very long time) and at the close to the end it just stop working.
+
+The usual practice around openstack, is all script which does not meant to be run as root refuses to start at the beginning.
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-18.el7ost.noarch
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. Login as root
+2. openstack undercloud install
+ 
+
+Actual results:
+--------------------- END PROFILING ---------------------
+[2015-07-03 08:33:18,241] (os-refresh-config) [INFO] Completed phase post-configure
+os-refresh-config completed successfully
+Copy stackrc failed: cp: ‘/root/stackrc’ and ‘/root/stackrc’ are the same file
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 510, in install
+    _configure_ssh_keys()
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 476, in _configure_ssh_keys
+    _run_command(args, name='Copy stackrc')
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 259, in _run_command
+    env=env)
+  File "/usr/lib64/python2.7/subprocess.py", line 575, in check_output
+    raise CalledProcessError(retcode, cmd, output=output)
+subprocess.CalledProcessError: Command '['sudo', 'cp', '/root/stackrc', '/root']' returned non-zero exit status 1
+ERROR: openstack Command 'instack-install-undercloud' returned non-zero exit status 1
+[root@instack ~]# openstack undercloud install
+
+Expected results:
+The command refuses to even start as root.
+
+Additional info:
+Example behavior of another os command.:
+
+# instack-virt-setup 
+This script cannot be run as root.
+
+The osc plugin actually calling the.:
+/usr/bin/instack-install-undercloud
+*** This bug has been marked as a duplicate of bug 1239088 ***

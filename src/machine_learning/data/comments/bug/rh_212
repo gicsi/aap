@@ -1,0 +1,24 @@
+Description of problem:
+From logs in nova-scheduler it seems that we don't filter nodes based on DiskFilter. Therefore it happened multiple times that we miss-match required HW for storage or other roles.
+
+Version-Release number of selected component (if applicable):
+2015-07-02.1 Puddle
+
+Steps to Reproduce:
+1. deploy overcloud
+2. check nova-scheduler log for filters
+
+Actual results:
+DiskFiler is missing from the list
+
+Expected results:
+We filter hosts based on Disk attribute as well
+
+Additional info:
+Flavor: http://paste.openstack.org/show/338519/
+Miss-match: http://paste.openstack.org/show/338521/
+Scheduler: http://pastebin.test.redhat.com/294742
+The advanced matching is handled with ahc-tools.  Profiles are created and matched to flavors using ahc-tools
+This is definitely a bug. AHC is advanced filtering -- not installed by default. And I already was debugging two issues, where people were complaining that their compute nodes ended up on storage dedicated nodes and that our filtering doesn't work.
+
+Furthermore in basic flow we instruct people to create nova flavors with certain disk size and then we are not filtering on them.

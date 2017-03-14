@@ -1,0 +1,70 @@
+Description of problem:
+I'm using RHOSP7 beta2 and following link to install undercloud.
+ftp://partners.redhat.com/9be6fa88fb85ba9c78c8f3fe47e038c5/OpenStack/Documents/director-01jul-html/installation/installing.html
+
+However, I ran into following error.
+
+[stack@manager ~]$ ls /etc/yum.repos.d/
+rdo-management-trunk.repo  rdo-release.repo  rdo-testing.repo  redhat.repo  RH7-RHOS-7.0-director.repo  RH7-RHOS-7.0.repo
+
+[stack@manager ~]$ openstack undercloud install -v
+...
+
+Transaction check error:
+  file /usr/lib/python2.7/site-packages/tripleo_common/__init__.pyc from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/__init__.pyo from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/libutils.pyc from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/libutils.pyo from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/scale.pyc from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/scale.pyo from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/stack_update.pyc from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/stack_update.pyo from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/update.pyc from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+  file /usr/lib/python2.7/site-packages/tripleo_common/update.pyo from install of tripleo-common-0.0.1-dev5.el7.centos.noarch conflicts with file from package openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+
+Error Summary
+-------------
+
+INFO: 2015-07-01 12:08:25,886 -- ############### End stdout/stderr logging ###############
+ERROR: 2015-07-01 12:08:25,886 --     Hook FAILED.
+ERROR: 2015-07-01 12:08:25,886 -- Failed running command ['dib-run-parts', u'/tmp/tmpfoJNp2/install.d']
+  File "/usr/lib/python2.7/site-packages/instack/main.py", line 163, in main
+    em.run()
+  File "/usr/lib/python2.7/site-packages/instack/runner.py", line 79, in run
+    self.run_hook(hook)
+  File "/usr/lib/python2.7/site-packages/instack/runner.py", line 174, in run_hook
+    raise Exception("Failed running command %s" % command)
+ERROR: 2015-07-01 12:08:25,886 -- None
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 499, in install
+    _run_instack(instack_env)
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 436, in _run_instack
+    _run_live_command(args, instack_env, 'instack')
+  File "/usr/lib/python2.7/site-packages/instack_undercloud/undercloud.py", line 279, in _run_live_command
+    raise RuntimeError('%s failed. See log for details.', name)
+RuntimeError: ('%s failed. See log for details.', 'instack')
+ERROR: openstack Command 'instack-install-undercloud' returned non-zero exit status 1
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Please read the release notes.  You have RDO and upstream repos enabled.  The release notes tell you the repos you should enable and to ignore the the repos in the docs.
+
+<ftp-site>/Documents/osp-7-beta-issues3.txt
+cool, by removing all centos related repos, this problem solved. However, I ran into something else. Will track it in another bugzilla

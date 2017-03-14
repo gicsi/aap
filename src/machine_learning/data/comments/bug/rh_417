@@ -1,0 +1,200 @@
+Spec URL: https://raw.githubusercontent.com/mizdebsk/newpkg/2a5ec417eff6acd0f24e2901710ee798869e98ea/jenkins-openid-plugin.spec
+SRPM URL: https://copr-be.cloud.fedoraproject.org/results/mizdebsk/newpkg/fedora-rawhide-x86_64/jenkins-openid-plugin-2.1.1-1.fc23/jenkins-openid-plugin-2.1.1-1.fc23.src.rpm
+Description: This package provides OpenID plugin for Jenkins.
+Fedora Account System Username: mizdebsk
+Package Review
+==============
+
+Legend:
+[x] = Pass, [!] = Fail, [-] = Not applicable
+
+===== MUST items =====
+Generic:
+[x]: Package is licensed with an open-source compatible license and meets
+     other legal requirements as defined in the legal section of Packaging
+     Guidelines.
+[x]: License field in the package spec file matches the actual license.
+[x]: License file installed when any subpackage combination is installed.
+[!]: Package must own all directories that it creates.
+     Note: Directories without known owners: /usr/share/jenkins/webroot
+     /WEB-INF, /usr/share/jenkins/webroot, /usr/share/jenkins,
+     /usr/share/jenkins/plugins
+--> This issue currently affects all packaged Jenkins plugins.
+It will be fixed in future by adding R on jenkins-filesystem package.
+(it doesn't exist yet) = non-blocking issue for me
+[x]: Package does not own files or directories owned by other packages.
+[x]: Package contains no bundled libraries without FPC exception.
+[x]: Changelog in prescribed format.
+[x]: Sources contain only permissible code or content.
+[-]: Package contains desktop file if it is a GUI application.
+[-]: Development files must be in a -devel package
+[x]: Package uses nothing in %doc for runtime.
+[x]: Package consistently uses macros (instead of hard-coded directory
+     names).
+[x]: Package is named according to the Package Naming Guidelines.
+[x]: Package does not generate any conflict.
+[x]: Package obeys FHS, except libexecdir and /usr/target.
+[x]: If the package is a rename of another package, proper Obsoletes and
+     Provides are present.
+[x]: Requires correct, justified where necessary.
+[x]: Spec file is legible and written in American English.
+[x]: Package contains systemd file(s) if in need.
+[x]: Package is not known to require an ExcludeArch tag.
+[x]: Package complies to the Packaging Guidelines
+[x]: Package successfully compiles and builds into binary rpms on at least
+     one supported primary architecture.
+[x]: Package installs properly.
+[x]: Rpmlint is run on all rpms the build produces.
+[x]: If (and only if) the source package includes the text of the
+     license(s) in its own file, then that file, containing the text of the
+     license(s) for the package is included in %license.
+[x]: Package requires other packages for directories it uses.
+[x]: All build dependencies are listed in BuildRequires, except for any
+     that are listed in the exceptions section of Packaging Guidelines.
+[x]: Package uses either %{buildroot} or $RPM_BUILD_ROOT
+[x]: Package does not run rm -rf %{buildroot} (or $RPM_BUILD_ROOT) at the
+     beginning of %install.
+[x]: Macros in Summary, %description expandable at SRPM build time.
+[x]: Dist tag is present.
+[x]: Package does not contain duplicates in %files.
+[x]: Permissions on files are set properly.
+[x]: Package use %makeinstall only when make install DESTDIR=... doesn't
+     work.
+[x]: Package is named using only allowed ASCII characters.
+[x]: Package does not use a name that already exists.
+[x]: Package is not relocatable.
+[x]: Sources used to build the package match the upstream source, as
+     provided in the spec URL.
+[x]: Spec file name must match the spec package %{name}, in the format
+     %{name}.spec.
+[x]: File names are valid UTF-8.
+[x]: Large documentation must go in a -doc subpackage. Large could be size
+     (~1MB) or number of files.
+[x]: Packages must not store files under /srv, /opt or /usr/local
+
+Java:
+[x]: Bundled jar/class files should be removed before build
+[x]: Packages have proper BuildRequires/Requires on jpackage-utils
+[x]: Javadoc documentation files are generated and included in -javadoc
+     subpackage
+[x]: Javadoc subpackages should not have Requires: jpackage-utils
+[x]: Javadocs are placed in %{_javadocdir}/%{name} (no -%{version} symlink)
+
+Maven:
+[x]: If package contains pom.xml files install it (including metadata) even
+     when building with ant
+[x]: POM files have correct Maven mapping
+[x]: Maven packages should use new style packaging
+[x]: Old add_to_maven_depmap macro is not being used
+[x]: Packages DO NOT have Requires(post) and Requires(postun) on jpackage-
+     utils for %update_maven_depmap macro
+[x]: Package DOES NOT use %update_maven_depmap in %post/%postun
+[x]: Packages use .mfiles file list instead of %{_datadir}/maven2/poms
+
+===== SHOULD items =====
+
+Generic:
+[x]: If the source package does not include license text(s) as a separate
+     file from upstream, the packager SHOULD query upstream to include it.
+[x]: Final provides and requires are sane (see attachments).
+[x]: Fully versioned dependency in subpackages if applicable.
+[x]: Package functions as described.
+[x]: Latest version is packaged.
+[x]: Package does not include license text files separate from upstream.
+[x]: Description and summary sections in the package spec file contains
+     translations for supported Non-English languages, if available.
+[x]: Package should compile and build into binary rpms on all supported
+     architectures.
+[x]: %check is present and all tests pass.
+[x]: Packages should try to preserve timestamps of original installed
+     files.
+[x]: Packager, Vendor, PreReq, Copyright tags should not be in spec file
+[x]: Sources can be downloaded from URI in Source: tag
+[x]: Reviewer should test that the package builds in mock.
+[x]: Buildroot is not present
+[x]: Package has no %clean section with rm -rf %{buildroot} (or
+     $RPM_BUILD_ROOT)
+[x]: No file requires outside of /etc, /bin, /sbin, /usr/bin, /usr/sbin.
+[x]: SourceX is a working URL.
+[x]: Spec use %global instead of %define unless justified.
+
+Java:
+[x]: Package uses upstream build method (ant/maven/etc.)
+[x]: Packages are noarch unless they use JNI
+
+===== EXTRA items =====
+
+Generic:
+[x]: Rpmlint is run on all installed packages.
+[x]: Spec file according to URL is the same as in SRPM.
+
+
+Rpmlint
+-------
+Checking: jenkins-openid-plugin-2.1.1-1.fc23.noarch.rpm
+          jenkins-openid-plugin-javadoc-2.1.1-1.fc23.noarch.rpm
+          jenkins-openid-plugin-2.1.1-1.fc23.src.rpm
+jenkins-openid-plugin.noarch: W: no-documentation
+3 packages and 0 specfiles checked; 0 errors, 1 warnings.
+
+
+
+
+Rpmlint (installed packages)
+----------------------------
+jenkins-openid-plugin.noarch: W: no-documentation
+2 packages and 0 specfiles checked; 0 errors, 1 warnings.
+
+
+
+Requires
+--------
+jenkins-openid-plugin-javadoc (rpmlib, GLIBC filtered):
+    jpackage-utils
+
+jenkins-openid-plugin (rpmlib, GLIBC filtered):
+    java-headless
+    jpackage-utils
+    mvn(com.cloudbees:openid4java-team-extension)
+    mvn(org.jenkins-ci.plugins:mailer)
+    mvn(org.openid4java:openid4java)
+
+
+
+Provides
+--------
+jenkins-openid-plugin-javadoc:
+    jenkins-openid-plugin-javadoc
+
+jenkins-openid-plugin:
+    jenkins-openid-plugin
+    mvn(org.jenkins-ci.plugins:openid)
+    mvn(org.jenkins-ci.plugins:openid:hpi:)
+    mvn(org.jenkins-ci.plugins:openid:pom:)
+
+
+
+Source checksums
+----------------
+https://github.com/jenkinsci/openid-plugin/archive/openid-2.1.1.tar.gz :
+  CHECKSUM(SHA256) this package     : a249633725d3d05f71b787695d05d0b038012b48f825cf2cf4c63027c346467a
+  CHECKSUM(SHA256) upstream package : a249633725d3d05f71b787695d05d0b038012b48f825cf2cf4c63027c346467a
+
+
+Generated by fedora-review 0.6.0 (3c5c9d7) last change: 2015-05-20
+Command line :/usr/bin/fedora-review -b 1236225
+Buildroot used: fedora-rawhide-x86_64
+Active plugins: Generic, Shell-api, Java
+Disabled plugins: C/C++, Python, fonts, SugarActivity, Ocaml, Perl, Haskell, R, PHP, Ruby
+Disabled flags: EXARCH, DISTTAG, EPEL5, BATCH, EPEL6
+
+Approved.
+New Package SCM Request
+=======================
+Package Name: jenkins-openid-plugin
+Short Description: Jenkins OpenID Plugin
+Owners: mizdebsk msimacek msrb
+Branches: f22
+InitialCC: java-sig
+Git done (by process-git-requests).
+Built for rawhdide: http://koji.fedoraproject.org/koji/buildinfo?buildID=666666

@@ -1,0 +1,5 @@
+The sparc hme(4) and be(4) drivers work poorly on some types of SS-20
+machines.  This is because those machines lie, saying they support 64-bit DMA
+bursting.  No sun4m machines support that.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/sparc/hme.patch">
+A source code patch exists which remedies this problem.</a>

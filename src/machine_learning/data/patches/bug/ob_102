@@ -1,0 +1,361 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 011_pkg.patch
+
+And then reinstall pkg:
+	cd /usr/src/usr.sbin/pkg && make obj && make depend && make && make install
+
+Index: usr.sbin/pkg/pkg.pl
+===================================================================
+RCS file: /cvs/src/usr.sbin/pkg/pkg.pl,v
+retrieving revision 1.3
+retrieving revision 1.4
+diff -u -r1.3 -r1.4
+--- usr.sbin/pkg/pkg.pl	2001/04/24 22:14:10	1.3
++++ usr.sbin/pkg/pkg.pl	2001/07/14 14:20:11	1.4
+@@ -113,7 +113,10 @@
+ 		return 1 if $v =~ /^$_$/;
+ 		return 1 if $v =~ /^${_}p\d+$/; # allows for recent patches
+ 	}
+-	for (grep !/^\d/, @specs) { 		# dewey match, all of them
++
++	# Last chance: dewey specs ?
++	my @deweys = grep !/^\d/, @specs;		
++	for (@deweys) {
+ 		if (m/^\<\=|\>\=|\<|\>/) {
+ 			my ($op, $dewey) = ($&, $');
+ 			my $compare = dewey_compare($v, $dewey);
+@@ -121,9 +124,11 @@
+ 			return 0 if $op eq '<=' && $compare > 0;
+ 			return 0 if $op eq '>' && $compare <= 0;
+ 			return 0 if $op eq '>=' && $compare < 0;
++		} else {
++			return 0;	# unknown spec type
+ 		}
+ 	}
+-	return 1;
++	return @deweys == 0 ? 0 : 1;
+ }
+ 
+ sub check_1flavor
+
+Apply by doing:
+	cd /usr/XF4
+	patch -p0 < 009_XF86Setup.patch
+And rebuild and install X. 
+
+Index: xc-old/config/cf/Library.tmpl
+===================================================================
+RCS file: /cvs/XF4/xc-old/config/cf/Library.tmpl,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 Library.tmpl
+--- xc-old/config/cf/Library.tmpl	2001/02/18 15:57:15	1.1.1.1
++++ xc-old/config/cf/Library.tmpl	2001/06/23 19:02:37
+@@ -344,11 +344,12 @@
+ 
+ LibraryObjectRule()
+ 
++/*
++ * On the xc-old tree we need to export the libraries, but don't want to install them
++ */
+ # undef _LinkBuildLibrary
+-# if !defined(LibInstall) || LibInstall
++# if !defined(LibInstall) || !LibInstall
+ #  define _LinkBuildLibrary(lib) LinkBuildLibrary(lib)
+-# else
+-#  define _LinkBuildLibrary(lib) $(_NULLCMD_)
+ # endif
+ 
+ # if !defined(LibCreate) || LibCreate
+
+Note that this is the second version of this patch.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 008_twe.patch
+And then rebuild your kernel. 
+
+Index: sys/dev/ic/twe.c
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/twe.c,v
+retrieving revision 1.9
+retrieving revision 1.9.2.2
+diff -u -r1.9 -r1.9.2.2
+--- sys/dev/ic/twe.c	2001/03/14 02:21:32	1.9
++++ sys/dev/ic/twe.c	2001/05/22 23:00:23	1.9.2.2
+@@ -1,7 +1,7 @@
+-/*	$OpenBSD: twe.c,v 1.9 2001/03/14 02:21:32 mickey Exp $	*/
++/*	$OpenBSD: twe.c,v 1.9.2.2 2001/05/22 23:00:23 jason Exp $	*/
+ 
+ /*
+- * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
++ * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
+  *
+  * The SCSI emulation layer is derived from gdt(4) driver,
+  * Copyright (c) 1999, 2000 Niklas Hallqvist. All rights reserved.
+@@ -33,7 +33,7 @@
+  * THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#undef	TWE_DEBUG
++/* #define	TWE_DEBUG */
+ 
+ #include <sys/param.h>
+ #include <sys/systm.h>
+@@ -114,13 +114,16 @@
+ 	struct twe_softc *sc;
+ {
+ 	register struct twe_ccb *ccb;
+-	/* TODO: traverse the ccbs and destroy the maps */
+-	for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
+-		if (ccb->ccb_dmamap)
+-			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
+-	if (sc->sc_cmdmap != NULL)
++	if (sc->sc_cmdmap != NULL) {
+ 		bus_dmamap_destroy(sc->dmat, sc->sc_cmdmap);
+-	bus_dmamem_free(sc->dmat, &sc->sc_cmdseg, 1);
++		/* traverse the ccbs and destroy the maps */
++		for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
++			if (ccb->ccb_dmamap)
++				bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
++	}
++	bus_dmamem_unmap(sc->dmat, sc->sc_cmds, 
++	    sizeof(struct twe_cmd) * TWE_MAXCMDS);
++	bus_dmamem_free(sc->dmat, sc->sc_cmdseg, 1);
+ }
+ 
+ int
+@@ -137,19 +140,21 @@
+ 	u_int32_t	status;
+ 	int		error, i, retry, nunits, nseg;
+ 	const char	*errstr;
++	twe_lock_t	lock;
+ 
+ 	error = bus_dmamem_alloc(sc->dmat, sizeof(struct twe_cmd) * TWE_MAXCMDS,
+-	    PAGE_SIZE, 0, &sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
++	    PAGE_SIZE, 0, sc->sc_cmdseg, 1, &nseg, BUS_DMA_NOWAIT);
+ 	if (error) {
+ 		printf(": cannot allocate commands (%d)\n", error);
+ 		return (1);
+ 	}
+ 
+-	error = bus_dmamem_map(sc->dmat, &sc->sc_cmdseg, nseg,
++	error = bus_dmamem_map(sc->dmat, sc->sc_cmdseg, nseg,
+ 	    sizeof(struct twe_cmd) * TWE_MAXCMDS,
+ 	    (caddr_t *)&sc->sc_cmds, BUS_DMA_NOWAIT);
+ 	if (error) {
+ 		printf(": cannot map commands (%d)\n", error);
++		bus_dmamem_free(sc->dmat, sc->sc_cmdseg, 1);
+ 		return (1);
+ 	}
+ 
+@@ -349,11 +354,14 @@
+ 		cap->table_id = TWE_PARAM_UI + i;
+ 		cap->param_id = 4;
+ 		cap->param_size = 4;	/* 4 bytes */
++		lock = TWE_LOCK_TWE(sc);
+ 		if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
++			TWE_UNLOCK_TWE(sc, lock);
+ 			printf("%s: error fetching capacity for unit %d\n",
+ 			    sc->sc_dev.dv_xname, i);
+ 			continue;
+ 		}
++		TWE_UNLOCK_TWE(sc, lock);
+ 
+ 		nunits++;
+ 		sc->sc_hdr[i].hd_present = 1;
+@@ -402,24 +410,26 @@
+ 	bus_dmamap_t dmap;
+ 	struct twe_cmd *cmd;
+ 	struct twe_segs *sgp;
+-	int error, i, nseg;
++	int error, i;
+ 
+ 	if (ccb->ccb_data && ((u_long)ccb->ccb_data & (TWE_ALIGN - 1))) {
+ 		TWE_DPRINTF(TWE_D_DMA, ("data=%p is unaligned ",ccb->ccb_data));
+ 		ccb->ccb_realdata = ccb->ccb_data;
+ 
+-		error = bus_dmamem_alloc(sc->dmat, ccb->ccb_length,
+-		    PAGE_SIZE, 0, &ccb->ccb_2bseg, 1, &nseg, BUS_DMA_NOWAIT);
++		error = bus_dmamem_alloc(sc->dmat, ccb->ccb_length, PAGE_SIZE,
++		    0, ccb->ccb_2bseg, TWE_MAXOFFSETS, &ccb->ccb_2nseg,
++		    BUS_DMA_NOWAIT);
+ 		if (error) {
+-			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
++			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed(%d) ", error));
+ 			twe_put_ccb(ccb);
+ 			return (ENOMEM);
+ 		}
+ 
+-		error = bus_dmamem_map(sc->dmat, &ccb->ccb_2bseg, nseg,
++		error = bus_dmamem_map(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg,
+ 		    ccb->ccb_length, (caddr_t *)&ccb->ccb_data, BUS_DMA_NOWAIT);
+ 		if (error) {
+-			TWE_DPRINTF(TWE_D_DMA, ("2buf alloc failed "));
++			TWE_DPRINTF(TWE_D_DMA, ("2buf map failed(%d) ", error));
++			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
+ 			twe_put_ccb(ccb);
+ 			return (ENOMEM);
+ 		}
+@@ -440,6 +450,12 @@
+ 			else
+ 				printf("error %d loading dma map\n", error);
+ 
++			if (ccb->ccb_realdata) {
++				bus_dmamem_unmap(sc->dmat, ccb->ccb_data,
++				    ccb->ccb_length);
++				bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
++				    ccb->ccb_2nseg);
++			}
+ 			twe_put_ccb(ccb);
+ 			return error;
+ 		}
+@@ -483,8 +499,14 @@
+ 
+ 	if ((error = twe_start(ccb, wait))) {
+ 		bus_dmamap_unload(sc->dmat, dmap);
++		if (ccb->ccb_realdata) {
++			bus_dmamem_unmap(sc->dmat, ccb->ccb_data,
++			    ccb->ccb_length);
++			bus_dmamem_free(sc->dmat, ccb->ccb_2bseg,
++			    ccb->ccb_2nseg);
++		}
+ 		twe_put_ccb(ccb);
+-		return error;
++		return (error);
+ 	}
+ 
+ 	return wait? twe_complete(ccb) : 0;
+@@ -544,10 +566,11 @@
+ 	struct twe_ccb *ccb;
+ {
+ 	struct twe_softc *sc = ccb->ccb_sc;
++	struct scsi_xfer *xs = ccb->ccb_xs;
+ 	u_int32_t	status;
+ 	int i;
+ 
+-	for (i = 100000; i--; DELAY(10)) {
++	for (i = 100 * (xs? xs->timeout : 35000); i--; DELAY(10)) {
+ 		status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
+ 		/* TWE_DPRINTF(TWE_D_CMD,  ("twe_intr stat=%b ",
+ 		    status & TWE_STAT_FLAGS, TWE_STAT_BITS)); */
+@@ -583,6 +606,7 @@
+ 	struct twe_ccb *ccb = &sc->sc_ccbs[idx];
+ 	struct twe_cmd *cmd = ccb->ccb_cmd;
+ 	struct scsi_xfer *xs = ccb->ccb_xs;
++	bus_dmamap_t	dmap;
+ 	twe_lock_t	lock;
+ 
+ 	TWE_DPRINTF(TWE_D_CMD, ("done(%d) ", idx));
+@@ -593,28 +617,26 @@
+ 		return 1;
+ 	}
+ 
++	dmap = ccb->ccb_dmamap;
+ 	if (xs) {
+ 		if (xs->cmd->opcode != PREVENT_ALLOW &&
+ 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
++			bus_dmamap_sync(sc->dmat, dmap,
+ 			    (xs->flags & SCSI_DATA_IN) ?
+-			    BUS_DMASYNC_POSTREAD :
+-			    BUS_DMASYNC_POSTWRITE);
+-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
++			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
++			bus_dmamap_unload(sc->dmat, dmap);
+ 		}
+ 	} else {
+-		switch (cmd->cmd_op) {
++		switch (letoh16(cmd->cmd_op)) {
+ 		case TWE_CMD_GPARAM:
+ 		case TWE_CMD_READ:
+-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
+-			    BUS_DMASYNC_POSTREAD);
+-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
++			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTREAD);
++			bus_dmamap_unload(sc->dmat, dmap);
+ 			break;
+ 		case TWE_CMD_SPARAM:
+ 		case TWE_CMD_WRITE:
+-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
+-			    BUS_DMASYNC_POSTWRITE);
+-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
++			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTWRITE);
++			bus_dmamap_unload(sc->dmat, dmap);
+ 			break;
+ 		default:
+ 			/* no data */
+@@ -623,9 +645,8 @@
+ 
+ 	if (ccb->ccb_realdata) {
+ 		bcopy(ccb->ccb_data, ccb->ccb_realdata, ccb->ccb_length);
+-		bus_dmamem_free(sc->dmat, &ccb->ccb_2bseg, 1);
+-		ccb->ccb_data = ccb->ccb_realdata;
+-		ccb->ccb_realdata = NULL;
++		bus_dmamem_unmap(sc->dmat, ccb->ccb_data, ccb->ccb_length);
++		bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
+ 	}
+ 
+ 	lock = TWE_LOCK_TWE(sc);
+@@ -848,7 +869,7 @@
+ 		cmd->cmd_op = op;
+ 		cmd->cmd_flags = flags;
+ 		cmd->cmd_io.count = htole16(blockcnt);
+-		cmd->cmd_io.lba = blockno;
++		cmd->cmd_io.lba = htole32(blockno);
+ 
+ 		if ((error = twe_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
+ 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+@@ -958,9 +979,10 @@
+ 		u_int16_t aen;
+ 
+ 		/*
+-		 * we no attentions of interest right now.
++		 * we know no attentions of interest right now.
+ 		 * one of those would be mirror degradation i think.
+-		 * or, what else exist in there? maybe 3ware can answer that.
++		 * or, what else exists in there?
++		 * maybe 3ware can answer that?
+ 		 */
+ 		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
+ 		    TWE_CTRL_CATTNI);
+Index: sys/dev/ic/twevar.h
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/twevar.h,v
+retrieving revision 1.2
+retrieving revision 1.2.2.1
+diff -u -r1.2 -r1.2.2.1
+--- sys/dev/ic/twevar.h	2001/02/19 20:48:02	1.2
++++ sys/dev/ic/twevar.h	2001/05/11 04:49:50	1.2.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: twevar.h,v 1.2 2001/02/19 20:48:02 mickey Exp $	*/
++/*	$OpenBSD: twevar.h,v 1.2.2.1 2001/05/11 04:49:50 jason Exp $	*/
+ 
+ /*
+  * Copyright (c) 2000 Michael Shalayeff
+@@ -46,7 +46,8 @@
+ 	void			*ccb_data;
+ 	void			*ccb_realdata;
+ 	bus_dmamap_t		ccb_dmamap;
+-	bus_dma_segment_t	ccb_2bseg;
++	bus_dma_segment_t	ccb_2bseg[TWE_MAXOFFSETS];
++	int			ccb_2nseg;
+ };
+ 
+ typedef TAILQ_HEAD(twe_queue_head, twe_ccb)	twe_queue_head;
+@@ -62,7 +63,7 @@
+ 
+ 	void *sc_cmds;
+ 	bus_dmamap_t	sc_cmdmap;
+-	bus_dma_segment_t sc_cmdseg;
++	bus_dma_segment_t sc_cmdseg[1];
+ 	struct twe_ccb	sc_ccbs[TWE_MAXCMDS];
+ 	twe_queue_head	sc_free_ccb;
+ 	twe_queue_head	sc_ccbq;
+@@ -88,5 +89,3 @@
+ void	tweminphys __P((struct buf *bp));
+ int	twe_attach __P((struct twe_softc *));
+ int	twe_intr __P((void *));
+-
+-
+

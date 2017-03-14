@@ -1,0 +1,6 @@
+Several buffer overflows exist in the code parsing
+font.aliases files in XFree86. Thanks to ProPolice, these cannot be
+exploited to gain privileges, but they can cause the X server to abort.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/017_font.patch">
+A source code patch exists which remedies this problem.</a>

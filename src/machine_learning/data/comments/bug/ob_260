@@ -1,0 +1,4 @@
+Querying an invalid hostname with gethostbyname(3) could cause a NULL deref.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/015_asr.patch.sig">
+A source code patch exists which remedies this problem.</a>

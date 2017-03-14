@@ -1,0 +1,56 @@
+Description of problem: keepass fails to open
+
+
+Version-Release number of selected component (if applicable): keepass.x86_64 2.26-9.fc21
+
+
+How reproducible: Always
+
+
+Steps to Reproduce:
+1. Launch from console
+2. Launch from gnome-shell
+3.
+
+Actual results: Un-handled exception
+Unhandled Exception: System.TypeInitializationException: An exception was thrown by the type initializer for System.Windows.Forms.XplatUI ---> System.Net.Sockets.SocketException: The requested address is not valid in this context
+  at System.Net.Sockets.Socket.Bind (System.Net.EndPoint local_end) [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11.SetDisplay (IntPtr display_handle) [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11..ctor () [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11.GetInstance () [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUI..cctor () [0x00000] in <filename unknown>:0 
+  --- End of inner exception stack trace ---
+  at System.Windows.Forms.Application.EnableVisualStyles () [0x00000] in <filename unknown>:0 
+  at KeePass.Program.Main (System.String[] args) [0x00000] in <filename unknown>:0 
+[ERROR] FATAL UNHANDLED EXCEPTION: System.TypeInitializationException: An exception was thrown by the type initializer for System.Windows.Forms.XplatUI ---> System.Net.Sockets.SocketException: The requested address is not valid in this context
+  at System.Net.Sockets.Socket.Bind (System.Net.EndPoint local_end) [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11.SetDisplay (IntPtr display_handle) [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11..ctor () [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUIX11.GetInstance () [0x00000] in <filename unknown>:0 
+  at System.Windows.Forms.XplatUI..cctor () [0x00000] in <filename unknown>:0 
+  --- End of inner exception stack trace ---
+  at System.Windows.Forms.Application.EnableVisualStyles () [0x00000] in <filename unknown>:0 
+  at KeePass.Program.Main (System.String[] args) [0x00000] in <filename unknown>:0
+
+
+
+Expected results:
+
+
+Additional info: Notice that the keepass version is showing as keepass.x86_64 2.26-9.fc21 whilst system is fc22
+What's the environment variable $DISPLAY set to?  Have you tried any other Mono programs (e.g., banshee)?
+(In reply to Peter Oliver from comment #1)
+> What's the environment variable $DISPLAY set to?  Have you tried any other
+> Mono programs (e.g., banshee)?
+
+echo $DISPLAY
+:0
+Haven't tried other mono programs, but running the portable version of keepass, running "mono KeePass.exe" gives same error.
+Is this a fresh install or have you just upgraded from a previous Fedora version, and, if so, did it work then?
+
+Also, the message "System.Net.Sockets.SocketException: The requested address is not valid in this context" makes me wonder if there is something unusual about the network config on your machine.
+This is fedup 21 -->22. KeePass working fine on fc21
+Not sure what could be unusual about network config. Anything related to firewalld?
+Not sure what changed, except kernel update, but Keepass in now working on my fc22 machine.
+4.0.6-300.fc22.x86_64
+Curious!

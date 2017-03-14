@@ -1,0 +1,38 @@
+From 1e052cf12114cff8cc3a3ed7853d27295fc79ce5 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 01:16:53 +0000
+Subject: [PATCH] Update to 1.4.29 (#1235092)
+
+---
+ python-py.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/python-py.spec b/python-py.spec
+index 93bf121..2fc9fdd 100644
+--- a/python-py.spec
++++ b/python-py.spec
+@@ -15,8 +15,8 @@
+ %global pytest_version 2.5
+ 
+ Name:           python-py
+-Version:        1.4.28
+-Release:        2%{?dist}
++Version:        1.4.29
++Release:        1%{?dist}
+ Summary:        Library with cross-python path, ini-parsing, io, code, log facilities
+ Group:          Development/Languages
+ License:        MIT and Public Domain
+@@ -182,6 +182,9 @@ popd
+ 
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.4.29-1
++- Update to 1.4.29 (#1235092)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.28-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

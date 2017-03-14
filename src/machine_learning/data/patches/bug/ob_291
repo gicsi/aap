@@ -1,0 +1,295 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 013_tcprespond.patch
+
+And then build, install and boot a new kernel:
+	cd /usr/src/sys/arch/`arch -s`/conf
+	config GENERIC
+	cd ../compile/GENERIC
+	make depend && make && sudo make install
+
+If you are using the multiprocessor kernel, replace GENERIC by
+GENERIC.MP above.
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.201
+retrieving revision 1.201.2.1
+diff -u -p -r1.201 -r1.201.2.1
+--- sys/netinet/tcp_input.c	13 Feb 2007 06:39:50 -0000	1.201
++++ sys/netinet/tcp_input.c	21 Feb 2008 17:34:26 -0000	1.201.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: tcp_input.c,v 1.201 2007/02/13 06:39:50 itojun Exp $	*/
++/*	$OpenBSD: tcp_input.c,v 1.201.2.1 2008/02/21 17:34:26 henning Exp $	*/
+ /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
+ 
+ /*
+@@ -2201,14 +2201,15 @@ dropwithreset:
+ 	if (tiflags & TH_RST)
+ 		goto drop;
+ 	if (tiflags & TH_ACK) {
+-		tcp_respond(tp, mtod(m, caddr_t), m, (tcp_seq)0, th->th_ack,
++		tcp_respond(tp, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack,
+ 		    TH_RST);
+ 	} else {
+ 		if (tiflags & TH_SYN)
+ 			tlen++;
+-		tcp_respond(tp, mtod(m, caddr_t), m, th->th_seq + tlen,
++		tcp_respond(tp, mtod(m, caddr_t), th, th->th_seq + tlen,
+ 		    (tcp_seq)0, TH_RST|TH_ACK);
+ 	}
++	m_freem(m);
+ 	return;
+ 
+ drop:
+@@ -3852,7 +3853,8 @@ syn_cache_get(src, dst, th, hlen, tlen, 
+ 	return (so);
+ 
+ resetandabort:
+-	tcp_respond(NULL, mtod(m, caddr_t), m, (tcp_seq)0, th->th_ack, TH_RST);
++	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST);
++	m_freem(m);
+ abort:
+ 	if (so != NULL)
+ 		(void) soabort(so);
+Index: sys/netinet/tcp_subr.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_subr.c,v
+retrieving revision 1.93
+retrieving revision 1.93.4.1
+diff -u -p -r1.93 -r1.93.4.1
+--- sys/netinet/tcp_subr.c	4 Mar 2006 22:40:16 -0000	1.93
++++ sys/netinet/tcp_subr.c	21 Feb 2008 17:34:26 -0000	1.93.4.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: tcp_subr.c,v 1.93 2006/03/04 22:40:16 brad Exp $	*/
++/*	$OpenBSD: tcp_subr.c,v 1.93.4.1 2008/02/21 17:34:26 henning Exp $	*/
+ /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
+ 
+ /*
+@@ -317,18 +317,23 @@ tcp_template(tp)
+ /* This function looks hairy, because it was so IPv4-dependent. */
+ #endif /* INET6 */
+ void
+-tcp_respond(tp, template, m, ack, seq, flags)
++tcp_respond(tp, template, th0, ack, seq, flags)
+ 	struct tcpcb *tp;
+ 	caddr_t template;
+-	struct mbuf *m;
++	struct tcphdr *th0;
+ 	tcp_seq ack, seq;
+ 	int flags;
+ {
+ 	int tlen;
+ 	int win = 0;
++	struct mbuf *m = 0;
+ 	struct route *ro = 0;
+ 	struct tcphdr *th;
+-	struct tcpiphdr *ti = (struct tcpiphdr *)template;
++	struct ip *ip;
++	struct ipovly *ih;
++#ifdef INET6
++	struct ip6_hdr *ip6;
++#endif
+ 	int af;		/* af on wire */
+ 
+ 	if (tp) {
+@@ -345,69 +350,52 @@ tcp_respond(tp, template, m, ack, seq, f
+ 		 */
+ 		ro = &tp->t_inpcb->inp_route;
+ 	} else
+-		af = (((struct ip *)ti)->ip_v == 6) ? AF_INET6 : AF_INET;
+-	if (m == 0) {
+-		m = m_gethdr(M_DONTWAIT, MT_HEADER);
+-		if (m == NULL)
+-			return;
++		af = (((struct ip *)template)->ip_v == 6) ? AF_INET6 : AF_INET;
++
++	m = m_gethdr(M_DONTWAIT, MT_HEADER);
++	if (m == NULL)
++		return;
++	m->m_data += max_linkhdr;
+ #ifdef TCP_COMPAT_42
+-		tlen = 1;
++	tlen = 1;
+ #else
+-		tlen = 0;
++	tlen = 0;
+ #endif
+-		m->m_data += max_linkhdr;
+-		switch (af) {
+-#ifdef INET6
+-		case AF_INET6:
+-			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
+-			    sizeof(struct ip6_hdr));
+-			break;
+-#endif /* INET6 */
+-		case AF_INET:
+-			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
+-			    sizeof(struct ip));
+-			break;
+-		}
+ 
+-		ti = mtod(m, struct tcpiphdr *);
+-		flags = TH_ACK;
+-	} else {
+-		m_freem(m->m_next);
+-		m->m_next = 0;
+-		m->m_data = (caddr_t)ti;
+-		tlen = 0;
+ #define xchg(a,b,type) do { type t; t=a; a=b; b=t; } while (0)
+-		switch (af) {
+-#ifdef INET6
+-		case AF_INET6:
+-			m->m_len = sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
+-			xchg(((struct ip6_hdr *)ti)->ip6_dst,
+-			    ((struct ip6_hdr *)ti)->ip6_src, struct in6_addr);
+-			th = (void *)((caddr_t)ti + sizeof(struct ip6_hdr));
+-			break;
+-#endif /* INET6 */
+-		case AF_INET:
+-			m->m_len = sizeof (struct tcpiphdr);
+-			xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_int32_t);
+-			th = (void *)((caddr_t)ti + sizeof(struct ip));
+-			break;
+-		}
+-		xchg(th->th_dport, th->th_sport, u_int16_t);
+-#undef xchg
+-	}
+ 	switch (af) {
+ #ifdef INET6
+ 	case AF_INET6:
+-		tlen += sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
+-		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip6_hdr));
++		ip6 = mtod(m, struct ip6_hdr *);
++		th = (struct tcphdr *)(ip6 + 1);
++		tlen = sizeof(*ip6) + sizeof(*th);
++		if (th0) {
++			bcopy(template, ip6, sizeof(*ip6));
++			bcopy(th0, th, sizeof(*th));
++			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
++		} else {
++			bcopy(template, ip6, tlen);
++		}
+ 		break;
+ #endif /* INET6 */
+ 	case AF_INET:
+-		ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) + tlen));
+-		tlen += sizeof (struct tcpiphdr);
+-		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip));
+-		break;
+-	}
++		ip = mtod(m, struct ip *);
++		th = (struct tcphdr *)(ip + 1);
++		tlen = sizeof(*ip) + sizeof(*th);
++		if (th0) {
++			bcopy(template, ip, sizeof(*ip));
++			bcopy(th0, th, sizeof(*th));
++			xchg(ip->ip_dst.s_addr, ip->ip_src.s_addr, u_int32_t);
++		} else {
++			bcopy(template, ip, tlen);
++		}
++ 		break;
++ 	}
++	if (th0)
++		xchg(th->th_dport, th->th_sport, u_int16_t);
++	else
++		flags = TH_ACK;
++#undef xchg
+ 
+ 	m->m_len = tlen;
+ 	m->m_pkthdr.len = tlen;
+@@ -427,22 +415,22 @@ tcp_respond(tp, template, m, ack, seq, f
+ 	switch (af) {
+ #ifdef INET6
+ 	case AF_INET6:
+-		((struct ip6_hdr *)ti)->ip6_flow   = htonl(0x60000000);
+-		((struct ip6_hdr *)ti)->ip6_nxt  = IPPROTO_TCP;
+-		((struct ip6_hdr *)ti)->ip6_hlim =
+-			in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
+-		((struct ip6_hdr *)ti)->ip6_plen = tlen - sizeof(struct ip6_hdr);
++		ip6->ip6_flow = htonl(0x60000000);
++		ip6->ip6_nxt  = IPPROTO_TCP;
++		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
++		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
+ 		th->th_sum = 0;
+ 		th->th_sum = in6_cksum(m, IPPROTO_TCP,
+-		   sizeof(struct ip6_hdr), ((struct ip6_hdr *)ti)->ip6_plen);
+-		HTONS(((struct ip6_hdr *)ti)->ip6_plen);
++		   sizeof(struct ip6_hdr), ip6->ip6_plen);
++		HTONS(ip6->ip6_plen);
+ 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
+ 		    (struct route_in6 *)ro, 0, NULL, NULL);
+ 		break;
+ #endif /* INET6 */
+ 	case AF_INET:
+-		bzero(ti->ti_x1, sizeof ti->ti_x1);
+-		ti->ti_len = htons((u_short)tlen - sizeof(struct ip));
++		ih = (struct ipovly *)ip;
++		bzero(ih->ih_x1, sizeof ih->ih_x1);
++		ih->ih_len = htons((u_short)tlen - sizeof(struct ip));
+ 
+ 		/*
+ 		 * There's no point deferring to hardware checksum processing
+@@ -451,8 +439,8 @@ tcp_respond(tp, template, m, ack, seq, f
+ 		 */
+ 		th->th_sum = 0;
+ 		th->th_sum = in_cksum(m, tlen);
+-		((struct ip *)ti)->ip_len = htons(tlen);
+-		((struct ip *)ti)->ip_ttl = ip_defttl;
++		ip->ip_len = htons(tlen);
++		ip->ip_ttl = ip_defttl;
+ 		ip_output(m, (void *)NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
+ 			(void *)NULL, tp ? tp->t_inpcb : (void *)NULL);
+ 	}
+Index: sys/netinet/tcp_timer.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_timer.c,v
+retrieving revision 1.38
+retrieving revision 1.38.6.1
+diff -u -p -r1.38 -r1.38.6.1
+--- sys/netinet/tcp_timer.c	15 Nov 2005 21:09:46 -0000	1.38
++++ sys/netinet/tcp_timer.c	21 Feb 2008 17:34:26 -0000	1.38.6.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: tcp_timer.c,v 1.38 2005/11/15 21:09:46 miod Exp $	*/
++/*	$OpenBSD: tcp_timer.c,v 1.38.6.1 2008/02/21 17:34:26 henning Exp $	*/
+ /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
+ 
+ /*
+@@ -461,10 +461,10 @@ tcp_timer_keep(void *arg)
+ 		 * to get a 4.2 host to respond.
+ 		 */
+ 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
+-		    (struct mbuf *)NULL, tp->rcv_nxt - 1, tp->snd_una - 1, 0);
++		    NULL, tp->rcv_nxt - 1, tp->snd_una - 1, 0);
+ #else
+ 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
+-		    (struct mbuf *)NULL, tp->rcv_nxt, tp->snd_una - 1, 0);
++		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0);
+ #endif
+ 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
+ 	} else
+Index: sys/netinet/tcp_var.h
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_var.h,v
+retrieving revision 1.81
+retrieving revision 1.81.2.1
+diff -u -p -r1.81 -r1.81.2.1
+--- sys/netinet/tcp_var.h	1 Feb 2007 19:55:37 -0000	1.81
++++ sys/netinet/tcp_var.h	21 Feb 2008 17:34:26 -0000	1.81.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: tcp_var.h,v 1.81 2007/02/01 19:55:37 jmc Exp $	*/
++/*	$OpenBSD: tcp_var.h,v 1.81.2.1 2008/02/21 17:34:26 henning Exp $	*/
+ /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
+ 
+ /*
+@@ -613,7 +613,7 @@ int	 tcp_output(struct tcpcb *);
+ void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
+ int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
+ void	 tcp_rscale(struct tcpcb *, u_long);
+-void	 tcp_respond(struct tcpcb *, caddr_t, struct mbuf *, tcp_seq,
++void	 tcp_respond(struct tcpcb *, caddr_t, struct tcphdr *, tcp_seq,
+ 		tcp_seq, int);
+ void	 tcp_setpersist(struct tcpcb *);
+ void	 tcp_slowtimo(void);
+

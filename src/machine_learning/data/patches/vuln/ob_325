@@ -1,0 +1,104 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 004_openssl.patch
+
+And then rebuild and install the library and statically-linked binaries
+that depend upon it:
+
+        cd lib/libssl
+        make obj
+        make depend
+        make includes
+        make
+        make install
+        cd ../../sbin
+        make obj
+        make depend
+        make
+        make install
+
+Index: lib/libssl/src/ssl/s3_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_lib.c,v
+retrieving revision 1.14
+retrieving revision 1.14.6.1
+diff -u -p -r1.14 -r1.14.6.1
+--- lib/libssl/src/ssl/s3_lib.c	5 Jan 2009 21:36:39 -0000	1.14
++++ lib/libssl/src/ssl/s3_lib.c	17 Nov 2009 14:34:52 -0000	1.14.6.1
+@@ -2592,6 +2592,9 @@ int ssl3_renegotiate(SSL *s)
+ 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
+ 		return(0);
+ 
++	if (!(s->s3->flags & SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
++		return(0);
++
+ 	s->s3->renegotiate=1;
+ 	return(1);
+ 	}
+Index: lib/libssl/src/ssl/s3_pkt.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_pkt.c,v
+retrieving revision 1.13
+retrieving revision 1.13.6.1
+diff -u -p -r1.13 -r1.13.6.1
+--- lib/libssl/src/ssl/s3_pkt.c	9 Jan 2009 12:15:52 -0000	1.13
++++ lib/libssl/src/ssl/s3_pkt.c	17 Nov 2009 14:34:52 -0000	1.13.6.1
+@@ -985,6 +985,7 @@ start:
+ 
+ 		if (SSL_is_init_finished(s) &&
+ 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
++			(s->s3->flags & SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) &&
+ 			!s->s3->renegotiate)
+ 			{
+ 			ssl3_renegotiate(s);
+@@ -1117,7 +1118,8 @@ start:
+ 	if ((s->s3->handshake_fragment_len >= 4) &&	!s->in_handshake)
+ 		{
+ 		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
+-			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS))
++			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
++			(s->s3->flags & SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+ 			{
+ #if 0 /* worked only because C operator preferences are not as expected (and
+        * because this is not really needed for clients except for detecting
+Index: lib/libssl/src/ssl/s3_srvr.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/s3_srvr.c,v
+retrieving revision 1.23
+retrieving revision 1.23.6.1
+diff -u -p -r1.23 -r1.23.6.1
+--- lib/libssl/src/ssl/s3_srvr.c	9 Jan 2009 12:15:52 -0000	1.23
++++ lib/libssl/src/ssl/s3_srvr.c	17 Nov 2009 14:34:52 -0000	1.23.6.1
+@@ -718,6 +718,14 @@ int ssl3_get_client_hello(SSL *s)
+ #endif
+ 	STACK_OF(SSL_CIPHER) *ciphers=NULL;
+ 
++	if (s->new_session
++	    && !(s->s3->flags&SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
++		{
++		al=SSL_AD_HANDSHAKE_FAILURE;
++		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
++		goto f_err;
++		}
++
+ 	/* We do this so that we will respond with our native type.
+ 	 * If we are TLSv1 and we get SSLv3, we will respond with TLSv1,
+ 	 * This down switching should be handled by a different method.
+Index: lib/libssl/src/ssl/ssl_locl.h
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/ssl/ssl_locl.h,v
+retrieving revision 1.15
+retrieving revision 1.15.6.1
+diff -u -p -r1.15 -r1.15.6.1
+--- lib/libssl/src/ssl/ssl_locl.h	9 Jan 2009 12:15:52 -0000	1.15
++++ lib/libssl/src/ssl/ssl_locl.h	17 Nov 2009 14:34:52 -0000	1.15.6.1
+@@ -401,6 +401,8 @@
+ #define NAMED_CURVE_TYPE           3
+ #endif  /* OPENSSL_NO_EC */
+ 
++#define SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0010
++
+ typedef struct cert_pkey_st
+ 	{
+ 	X509 *x509;
+

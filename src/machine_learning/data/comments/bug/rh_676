@@ -1,0 +1,41 @@
+Description of problem:
+
+ansible man pages not available after installing via dnf
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.sudo dnf install ansible
+2.man -k ansible
+3.
+
+Actual results:
+
+ansible: nothing appropriate
+
+Expected results:
+
+ansible (1)          - run a command somewhere else
+ansible-doc (1)      - show documentation on Ansible modules
+ansible-galaxy (1)   - manage roles using galaxy.ansible.com
+ansible-playbook (1) - run an ansible playbook
+ansible-pull (1)     - set up a remote copy of ansible on each managed node
+ansible-vault (1)    - manage encrypted YAML data.
+
+Additional info: 
+
+I ran sudo mandb and was able to to get expected results. For whatever reason, the manual page index is not updated after installing ansible. This may be a bug with dnf itself.
+currently man-db runs from a daily cron. I don't know if they plan to have some way to run on install or not, moving over there...
+Hi,
+
+apropos command (or man -k) uses man-db's cache to search for man pages containing a keyword in NAME sections. The cache is updated on a daily basis so it may take up to 1 day to get correct output of 'man -k ansible'. Otherwise man pages themselves are accessible right away. Typing 'man ansible' will work.
+
+From f23 rpm should provide file triggers which can be used to update man-db's cache after each update/install of a package.
+
+Cheers
+Jan

@@ -1,0 +1,56 @@
+Description of problem:
+# dnf remove radicale radicale-selinux radicale-httpd
+SELinux is preventing radicale from 'write' accesses on the chr_file /dev/null.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If si crede che radicale dovrebbe avere possibilità di accesso write sui null chr_file in modo predefinito.
+Then si dovrebbe riportare il problema come bug.
+E' possibile generare un modulo di politica locale per consentire questo accesso.
+Do
+consentire questo accesso per il momento eseguendo:
+# grep radicale /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:object_r:unlabeled_t:s0
+Target Context                system_u:object_r:null_device_t:s0
+Target Objects                /dev/null [ chr_file ]
+Source                        radicale
+Source Path                   radicale
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.5-300.fc22.x86_64 #1 SMP Mon
+                              Jun 8 16:15:26 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-06-27 21:06:20 CEST
+Last Seen                     2015-06-27 21:06:20 CEST
+Local ID                      57dd7bf1-d02b-4867-b2a8-68e2e549fe15
+
+Raw Audit Messages
+type=AVC msg=audit(1435431980.67:1195): avc:  denied  { write } for  pid=6586 comm="radicale" path="/dev/null" dev="tmpfs" ino=242201 scontext=system_u:object_r:unlabeled_t:s0 tcontext=system_u:object_r:null_device_t:s0 tclass=chr_file permissive=0
+
+
+Hash: radicale,unlabeled_t,null_device_t,chr_file,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.5-300.fc22.x86_64
+type:           libreport
+Hi, 
+please run:
+# restorecon -R -v /
+This should fix labels on your system. 
+
+When this occur again, please re-open this bug.

@@ -1,0 +1,72 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 008_sem.patch
+And then rebuild your kernel.
+
+Index: sys/kern/sysv_sem.c
+===================================================================
+RCS file: /cvs/src/sys/kern/sysv_sem.c,v
+retrieving revision 1.21
+retrieving revision 1.21.2.1
+diff -u -p -r1.21 -r1.21.2.1
+--- sys/kern/sysv_sem.c	9 Sep 2003 18:57:36 -0000	1.21
++++ sys/kern/sysv_sem.c	20 Nov 2003 23:51:12 -0000	1.21.2.1
+@@ -276,7 +276,7 @@ sys___semctl(struct proc *p, void *v, re
+ 	DPRINTF(("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg));
+ 
+ 	semid = IPCID_TO_IX(semid);
+-	if (semid < 0 || semid >= seminfo.semmsl)
++	if (semid < 0 || semid >= seminfo.semmni)
+ 		return (EINVAL);
+ 
+ 	if ((semaptr = sema[semid]) == NULL ||
+@@ -531,7 +531,7 @@ sys_semop(struct proc *p, void *v, regis
+ 
+ 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
+ 
+-	if (semid < 0 || semid >= seminfo.semmsl)
++	if (semid < 0 || semid >= seminfo.semmni)
+ 		return (EINVAL);
+ 
+ 	if ((semaptr = sema[semid]) == NULL ||
+
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 007_uvm.patch
+And then rebuild your kernel.
+
+Index: sys/uvm/uvm_glue.c
+===================================================================
+RCS file: /cvs/src/sys/uvm/uvm_glue.c,v
+retrieving revision 1.35
+retrieving revision 1.35.2.1
+diff -u -r1.35 -r1.35.2.1
+--- sys/uvm/uvm_glue.c	10 Aug 2003 00:04:50 -0000	1.35
++++ sys/uvm/uvm_glue.c	20 Nov 2003 17:46:49 -0000	1.35.2.1
+@@ -196,6 +196,8 @@
+ 	map = &p->p_vmspace->vm_map;
+ 	start = trunc_page((vaddr_t)addr);
+ 	end = round_page((vaddr_t)addr + len);
++	if (end <= start)
++		return (EINVAL);
+ 
+ 	rv = uvm_fault_wire(map, start, end, access_type);
+ 
+@@ -215,8 +217,14 @@
+ 	caddr_t	addr;
+ 	size_t	len;
+ {
+-	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
+-		round_page((vaddr_t)addr + len));
++	vaddr_t start, end;
++
++	start = trunc_page((vaddr_t)addr);
++	end = round_page((vaddr_t)addr + len);
++	if (end <= start)
++		return;
++
++	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
+ }
+ 
+ /*
+

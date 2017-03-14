@@ -1,0 +1,14 @@
+Latest upstream release: 1.9.6
+Current version/release in rawhide: 1.9.5-2.fc23
+URL: http://www.apache.org/dist/ant/source/
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Created attachment 1045482
+[patch] Update to 1.9.6 (#1238681)
+msimacek's ant-1.9.6-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=666479
+ant-1.9.6-1 should now be available in rawhide
+Scratch build succeeded http://koji.fedoraproject.org/koji/taskinfo?taskID=10270139

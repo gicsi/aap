@@ -1,0 +1,62 @@
+Description of problem: When an ImageStream's spec.dockerImageRepository is set to registry.access.redhat.com/library/rhel, it's not able to import the tags and images due to an error.
+
+
+Version-Release number of selected component (if applicable): 3.0.0
+
+
+How reproducible: 100%
+
+
+Steps to Reproduce:
+1. Create an image stream with spec.dockerImageRepository set to registry.access.redhat.com/library/rhel
+2. Wait a few seconds for the image import controller to process the stream
+
+Actual results: no tags/images imported, and the image stream has this annotation: 	openshift.io/image.dockerRepositoryCheck=could not convert image: &errors.errorString{s:"expected pointer, but got nil"}
+
+
+Expected results: tags/images are imported
+
+
+Additional info:
+
+There is 1 image in the rhel repo that does not have a Config section. While it is optional, OpenShift currently requires it.
+Check on puddle [3.0.1/2015-06-26.1]
+
+1.  Create an image stream with spec.dockerImageRepository set to registry.access.redhat.com/library/rhel
+#vim test.json
+    {
+      "apiVersion": "v1beta3",
+      "kind": "ImageStream",
+      "metadata": {
+        "name": "xiama-test"
+      },
+      "spec": {
+        "dockerImageRepository": "registry.access.redhat.com/library/rhel",
+        "tags": [
+          {
+            "name": "latest",
+            "annotations": {
+              "description" : "Build and run NodeJS 0.10 applications---xiama",
+              "iconClass" : "icon-nodejs",
+              "tags" : "builder,xiama",
+              "version" : "0.10"
+            }
+          }
+        ]
+      }
+    }
+#oc create -f test.json
+2. list the image
+# oc get is -n openshift
+NAME         DOCKER REPO                               TAGS                                            UPDATED
+xiama-test   registry.access.redhat.com/library/rhel   7.0-21,7.0-23,7.0-27,7.1-4,7.1-6,7.1-9,latest   6 minutes ago
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://access.redhat.com/errata/RHBA-2015:1209

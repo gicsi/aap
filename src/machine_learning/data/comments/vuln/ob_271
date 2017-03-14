@@ -1,0 +1,5 @@
+It is possible to cause the kernel to panic when more than the default number of
+sempahores have been allocated.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.9/common/007_sem.patch">
+A source code patch exists which remedies this problem.</a>

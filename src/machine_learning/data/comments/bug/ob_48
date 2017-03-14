@@ -1,0 +1,4 @@
+There is a non-exploitable buffer overflow in sendmail's test mode.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/029_sendmail.patch">
+A source code patch exists which remedies this problem.</a>

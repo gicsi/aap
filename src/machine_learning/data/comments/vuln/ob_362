@@ -1,0 +1,4 @@
+Another fix for buffer overflows in malformed fonts.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/022_freetype.patch.sig">
+A source code patch exists which remedies this problem.</a>

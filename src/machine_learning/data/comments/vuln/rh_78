@@ -1,0 +1,91 @@
+Description of problem:
+During the installation of python-rdomanager-oscplugin it fails with 
+
+Error: Package: diskimage-builder-0.1.47-dev3.el7.centos.noarch (delorean-rdo-management)
+            Requires: qemu-img
+Error: Package: python-hardware-0.14.1-dev1.el7.centos.noarch (delorean-rdo-management)
+            Requires: pexpect
+
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.9-dev11.el7.centos.noarch
+
+
+How reproducible:
+Very
+
+Steps to Reproduce:
+1. the bellow repos are installed:
+2. Do a yum install python-rdomanager-oscplugin
+
+Actual results:
+it fails with 
+
+Expected results:
+Error: Package: diskimage-builder-0.1.47-dev3.el7.centos.noarch (delorean-rdo-management)
+            Requires: qemu-img
+Error: Package: python-hardware-0.14.1-dev1.el7.centos.noarch (delorean-rdo-management)
+            Requires: pexpect
+
+
+Additional info:
+both packages were skipped for priority
+
+diskimage-builder-0.1.42-3.el7.noarch from openstack-kilo excluded (priority)
+python-hardware-0.14-3.el7.noarch from openstack-kilo excluded (priority)
+
+
+Installed repos:
+
+http://trunk.rdoproject.org/kilo/centos7//latest-RDO-kilo-CI/delorean-kilo.repo
+http://trunk-mgt.rdoproject.org/centos-kilo//current-passed-ci/delorean-rdo-management.repo
+
+Full repo list:
+
+Repo-id      : delorean-kilo
+Repo-name    : delorean-kilo-openstack-cinder-5b0f7df80124e1dc86ed2c925a58dc463e7455e4
+Repo-revision: 1434621888
+Repo-updated : Thu Jun 18 10:04:49 2015
+Repo-pkgs    : 128
+Repo-size    : 26 M
+Repo-baseurl : http://trunk.rdoproject.org/kilo/centos7/5b/0f/5b0f7df80124e1dc86ed2c925a58dc463e7455e4_ce71bc99/
+Repo-expire  : 21,600 second(s) (last: Mon Jun 29 14:30:38 2015)
+Repo-excluded: 93
+Repo-filename: /etc/yum.repos.d/rdo-trunk-release.repo
+
+Repo-id      : delorean-rdo-management
+Repo-name    : delorean-rdo-management-openstack-instack-undercloud-bf68406a205f290f4800e7550db117341e6a6648
+Repo-revision: 1435076807
+Repo-updated : Tue Jun 23 16:26:48 2015
+Repo-pkgs    : 65
+Repo-size    : 17 M
+Repo-baseurl : http://trunk-mgt.rdoproject.org/centos-kilo/bf/68/bf68406a205f290f4800e7550db117341e6a6648_1b8315e1_1435076766/
+Repo-expire  : 21,600 second(s) (last: Mon Jun 29 14:30:38 2015)
+Repo-excluded: 28
+Repo-filename: /etc/yum.repos.d/rdo-mgt-trunk-release.repo
+
+Repo-id      : epel/x86_64
+Repo-name    : Extra Packages for Enterprise Linux 7 - x86_64
+Repo-revision: 1435428817
+Repo-tags    : binary-x86_64
+Repo-updated : Sat Jun 27 18:15:50 2015
+Repo-pkgs    : 8,130
+Repo-size    : 5.7 G
+Repo-metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64
+  Updated    : Fri Jun 26 13:43:45 2015
+Repo-baseurl : http://download.bos.redhat.com/pub/epel/7/x86_64/ (32 more)
+Repo-expire  : 21,600 second(s) (last: Mon Jun 29 14:30:44 2015)
+Repo-excluded: 5
+Repo-filename: /etc/yum.repos.d/epel.repo
+
+Repo-id      : openstack-kilo
+Repo-name    : OpenStack Kilo Repository
+Repo-revision: 1435306129
+Repo-updated : Fri Jun 26 08:08:53 2015
+Repo-pkgs    : 552
+Repo-size    : 414 M
+Repo-baseurl : http://repos.fedorapeople.org/repos/openstack/openstack-kilo/el7/
+Repo-expire  : 21,600 second(s) (last: Mon Jun 29 14:30:44 2015)
+Repo-excluded: 179
+Repo-filename: /etc/yum.repos.d/rdo-release.repo
+Where are the core OS repos (RHEL/CentOS)?  qemu-img and pexpect should come from there.

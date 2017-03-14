@@ -1,0 +1,70 @@
+Description of problem:
+
+
+Version-Release number of selected component:
+anaconda-22.20.13-1
+
+The following was filed automatically by anaconda:
+anaconda 22.20.13-1 exception report
+Traceback (most recent call first):
+  File "/usr/lib64/python2.7/site-packages/gi/overrides/BlockDev.py", line 384, in wrapped
+    raise transform[1](msg)
+  File "/usr/lib/python2.7/site-packages/blivet/devices/lvm.py", line 628, in _setup
+    blockdev.lvm.lvactivate(self.vg.name, self._name)
+  File "/usr/lib/python2.7/site-packages/blivet/devices/storage.py", line 430, in setup
+    self._setup(orig=orig)
+  File "/usr/lib/python2.7/site-packages/blivet/osinstall.py", line 582, in mountFilesystems
+    device.setup()
+  File "/usr/lib/python2.7/site-packages/blivet/blivet.py", line 1407, in mountFilesystems
+    readOnly=readOnly, skipRoot=skipRoot)
+  File "/usr/lib/python2.7/site-packages/blivet/osinstall.py", line 1066, in turnOnFilesystems
+    storage.mountFilesystems()
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/install.py", line 196, in doInstall
+    turnOnFilesystems(storage, mountOnly=flags.flags.dirInstall, callbacks=callbacks_reg)
+  File "/usr/lib64/python2.7/threading.py", line 766, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/usr/lib64/python2.7/site-packages/pyanaconda/threads.py", line 244, in run
+    threading.Thread.run(self, *args, **kwargs)
+LVMError: Process reported exit code 1280:   Volume group "vg1" not found
+  Cannot process volume group vg1
+
+
+Additional info:
+addons:         com_redhat_kdump
+cmdline:        /usr/bin/python2  /sbin/anaconda
+cmdline_file:   BOOT_IMAGE=Fedora-22-x86_64/vmlinuz initrd=Fedora-22-x86_64/initrd.img ks=http://dist.control.lth.se/private/kickstart/Fedora-22-x86_64 hostname=lie keymap=se-latin1 reformat=manual BOOTIF=01-70-71-bc-f2-68-ed
+dnf.rpm.log:    Jun 23 17:10:40 INFO --- logging initialized ---
+executable:     /sbin/anaconda
+hashmarkername: anaconda
+kernel:         4.0.4-301.fc22.x86_64
+product:        Fedora
+release:        Cannot get release name.
+type:           anaconda
+version:        22
+Created attachment 1042436
+File: anaconda-tb
+Created attachment 1042437
+File: anaconda.log
+Created attachment 1042438
+File: dnf.log
+Created attachment 1042439
+File: environ
+Created attachment 1042440
+File: ks.cfg
+Created attachment 1042441
+File: lsblk_output
+Created attachment 1042442
+File: nmcli_dev_list
+Created attachment 1042443
+File: os_info
+Created attachment 1042444
+File: program.log
+Created attachment 1042445
+File: storage.log
+Created attachment 1042446
+File: syslog
+Created attachment 1042447
+File: ifcfg.log
+Created attachment 1042448
+File: packaging.log
+*** This bug has been marked as a duplicate of bug 1226244 ***

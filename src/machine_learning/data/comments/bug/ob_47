@@ -1,0 +1,3 @@
+Invalid fields in the exec header could cause a crash.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/033_execsubr.patch">
+A source code patch exists which remedies this problem.</a>

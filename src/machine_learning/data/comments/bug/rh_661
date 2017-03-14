@@ -1,0 +1,80 @@
+Description of problem:
+GNOME-BOXES
+SELinux is preventing NetworkManager from 'write' accesses on the directory /sys.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If 您确定应默认允许 NetworkManager write 访问 sys directory。
+Then 您应该将这个情况作为 bug 报告。
+您可以生成本地策略模块允许这个访问。
+Do
+请执行以下命令此时允许这个访问：
+# grep NetworkManager /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:NetworkManager_t:s0
+Target Context                system_u:object_r:sysfs_t:s0
+Target Objects                /sys [ dir ]
+Source                        NetworkManager
+Source Path                   NetworkManager
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           filesystem-3.2-33.fc23.x86_64
+Policy RPM                    selinux-policy-3.13.1-130.fc23.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.1.0-0.rc8.git0.2.fc23.x86_64 #1
+                              SMP Wed Jun 17 02:51:09 UTC 2015 x86_64 x86_64
+Alert Count                   16
+First Seen                    2015-06-21 09:31:26 CST
+Last Seen                     2015-06-22 10:52:26 CST
+Local ID                      05256f9f-b874-4e3c-a458-3b8e2f6c0dd7
+
+Raw Audit Messages
+type=AVC msg=audit(1434941546.557:632): avc:  denied  { write } for  pid=823 comm="NetworkManager" name="/" dev="sysfs" ino=1 scontext=system_u:system_r:NetworkManager_t:s0 tcontext=system_u:object_r:sysfs_t:s0 tclass=dir permissive=0
+
+
+Hash: NetworkManager,NetworkManager_t,sysfs_t,dir,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-130.fc23.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.1.0-0.rc8.git0.2.fc23.x86_64
+type:           libreport
+
+Potential duplicate: bug 1234086
+Description of problem:
+Seems to break network activation on Rawhide (my Rawhide is a few days old).
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-130.fc23.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.1.0-0.rc8.git0.2.fc23.x86_64
+type:           libreport
+Description of problem:
+This time appeared when I was starting a VM in virt-manager, seems to break the VM startup.
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-130.fc23.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.1.0-1.fc23.x86_64
+type:           libreport
+This is a duplicate of bug #1234086 (F22).
+commit 381d9fbe12943bc86c9220358ff1bf9a92ee608e
+Author: Lukas Vrabec <lvrabec@redhat.com>
+Date:   Tue Jun 23 16:55:11 2015 +0200
+
+    Allow NetworkManager write to sysfs. BZ(1234086)

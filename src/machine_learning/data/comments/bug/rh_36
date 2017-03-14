@@ -1,0 +1,32 @@
+Description of problem:
+The library libclamunrar is not present in the clamav EPEL5 package (which provides clamav-lib itself). Thus, some compressed contents cannot be scanned by ClamAV. Check out Dag Wieers' version which does include it: http://www.rpmfind.net//linux/RPM/dag/redhat/el5/i386/clamav-0.98.4-1.el5.rf.i386.html
+
+
+Version-Release number of selected component (if applicable):
+clamav-0.98.7-1.el5
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.yum whatprovides libclamunrar.so.6
+2.
+3.
+
+Actual results:
+RAR-compressed files cannot be scanned.
+
+Expected results:
+RAR files should be scanned.
+
+Additional info:
+clamscan --debug outputs the following warnings:
+
+LibClamAV debug: searching for unrar: libclamunrar_iface.so.6.1.26 not found
+LibClamAV debug: searching for unrar: libclamunrar_iface.so.6 not found
+LibClamAV debug: searching for unrar: libclamunrar_iface.so not found
+LibClamAV debug: searching for unrar: libclamunrar_iface.a not found
+LibClamAV debug: Cannot dlopen libclamunrar_iface: file not found - unrar support unavailable
+Thank you for your report. However it is intended that there is no unrar
+support, because unrar is only freeware with further limitations but not
+published under an open source license.

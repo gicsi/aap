@@ -1,0 +1,27 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 028_pppd.patch
+
+And then rebuild and install pppd:
+	cd usr.sbin/pppd
+	make obj cleandir depend
+	make && make install
+
+Index: usr.sbin/pppd/main.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/pppd/main.c,v
+retrieving revision 1.31
+retrieving revision 1.31.2.1
+diff -u -r1.31 -r1.31.2.1
+--- usr.sbin/pppd/main.c	15 May 2001 19:56:06 -0000	1.31
++++ usr.sbin/pppd/main.c	30 Jul 2002 07:29:13 -0000	1.31.2.1
+@@ -797,7 +797,7 @@
+     restore_tty(ttyfd);
+ 
+     if (tty_mode != (mode_t) -1)
+-	chmod(devnam, tty_mode);
++	fchmod(ttyfd, tty_mode);
+ 
+     close(ttyfd);
+     ttyfd = -1;
+

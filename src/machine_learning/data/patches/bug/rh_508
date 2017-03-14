@@ -1,0 +1,38 @@
+From 19ea960f0db6e3fbee0ad26340f77c0edd18a25d Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 13:15:49 +0000
+Subject: [PATCH] Update to 2.3.3 (#1235286)
+
+---
+ php-pear-PHP-CodeSniffer.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/php-pear-PHP-CodeSniffer.spec b/php-pear-PHP-CodeSniffer.spec
+index ee053c9..24b2216 100644
+--- a/php-pear-PHP-CodeSniffer.spec
++++ b/php-pear-PHP-CodeSniffer.spec
+@@ -14,8 +14,8 @@
+ %global pear_name     PHP_CodeSniffer
+ 
+ Name:           php-pear-PHP-CodeSniffer
+-Version:        2.3.2
+-Release:        2%{?dist}
++Version:        2.3.3
++Release:        1%{?dist}
+ Summary:        PHP coding standards enforcement tool
+ 
+ Group:          Development/Tools
+@@ -114,6 +114,9 @@ fi
+ 
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 2.3.3-1
++- Update to 2.3.3 (#1235286)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.3.2-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

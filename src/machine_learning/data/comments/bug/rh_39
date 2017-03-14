@@ -1,0 +1,56 @@
+Description of problem: For https://access.redhat.com/articles/1258893
+  "Migrate a Live (running) Instance"
+
+From Daniel Berrange: In the section
+ "⁠2.1. Configure Secure Libvirt"
+It has a list with 3 secure ways of setting up libvirt:
+
+[quote]
+ - TLS for encryption and X.509 client certificates for authentication
+ - GSSAPI/Kerberos for auth+data encryption
+ - TLS for encryption and Kerberos for authentication
+[/quote]
+
+
+It then has a "Table 1. Libvirt Parameters" which lists the libvirtd.conf configuration options for 3 setups. But the setups listed in this table do not
+correspond to the 3 secure setups listed in the previous paragraph's list.
+
+What is even worse is that the 3rd option in the table is recommending customners to open what is equivalent to a remote root shell. This is a massive
+security risk for our customers.
+
+Please remove the current contents of "Table 1. Libvirt Parameters" replacing it with the following
+
+In Row 1
+  "TLS encryption + x509 certs authentication"
+
+  listen_tls=1
+  listen_tcp=0
+  auth_tls="none"
+  tls_no_verify_certificate=0
+  tls_allowed_dn_list = ["C=GB,ST=London,L=London,O=Red Hat,CN=*"] *
+
+  * - replace example x509 distinguish name pattern match
+      with one suitable the certificates you issue for servers
+
+In Row 2
+  "GSSAPI/kerberos encryption + authentication"
+
+  listen_tls=0
+  listen_tcp=1
+  auth_tcp="sasl"
+  sasl_allowed_username_list = ["libvirt/*.example.com@EXAMPLE.COM"] *
+
+  * - replace example kerberos principal name pattern match
+      with one suitable for the tickets you issue for servers
+
+In Row 3
+  "TLS encryption + Kerberos authentication"
+
+  listen_tls=1
+  listen_tcp=0
+  auth_tls="sasl"
+  sasl_allowed_username_list = ["libvirt/*.example.com@EXAMPLE.COM"] *
+
+  * - replace example kerberos principal name pattern match
+      with one suitable for the tickets you issue for servers
+*** This bug has been marked as a duplicate of bug 1240162 ***

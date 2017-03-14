@@ -1,0 +1,39 @@
+Description of problem:
+'dnf upgradeinfo info' gives error 'No such command' 
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+dnf upgradeinfo info
+
+Steps to Reproduce:
+1.  Issue the command 'dnf upgradeinfo info'
+2.
+3.
+
+Actual results:
+dnf upgradeinfo info
+No such command: upgradeinfo. Please use /usr/bin/dnf --help
+It could be a DNF plugin command, try: "dnf install 'dnf-command(upgradeinfo)'"
+sudo dnf install 'dnf-command(upgradeinfo)'
+Last metadata expiration check performed 0:11:15 ago on Thu Jul  2 17:00:58 2015.
+No package dnf-command(upgradeinfo) available.
+Error: no package matched: dnf-command(upgradeinfo)
+
+Expected results:
+Changelogs for packages available for update
+
+Additional info:
+Just started happening a couple of days ago.  The command still works on x86_64
+arch.  Reinstall dnf didn't resolve the problem.
+Hi,
+
+the actual name of command is "updateinfo" -> http://dnf.readthedocs.org/en/latest/command_ref.html?highlight=updateinfo. Are you sure that you are able to perform "upgradeinfo" on x86_64?
+ACK!  Yes, I fat fingered it.  I have a mix of Debian and Fedora machines here, 
+I must have just done the Debian maintenance and had 'upgrade' on my mind.  The
+i386 Fedora machine had the updateinfo but I didn't see it because I was entering
+'upgradeinfo'.  Thanks, OK to close.
+Good news, thanks for reply.
+I think we should consider upgradeinfo alias for updateinfo command and also unified the usage of upgrade/update in help and man. Any objections?
+Just one or two notes: The "update" command is *deprecated*. And I guess that the "updateinfo" name was originally derived from the name of the repodata file "updateinfo.xml.gz" which contains the necessary information. OTOH, the repodata format is not documented and thus the name and the content of the file is just a convention which may change any time. So we can choose whatever name we want. Maybe we can find even better name than "updateinfo" or "upgradeinfo". So far we call it "updateinfo" because of the compatibility with YUM.

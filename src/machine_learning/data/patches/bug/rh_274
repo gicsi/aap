@@ -1,0 +1,37 @@
+From 84aeb6d77cacaa11decd14e9904873c3b26f0e92 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 2 Jul 2015 00:27:51 +0000
+Subject: [PATCH] Update to 7.2.3 (#1238484)
+
+---
+ dos2unix.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/dos2unix.spec b/dos2unix.spec
+index 1eda025..6d41aa6 100644
+--- a/dos2unix.spec
++++ b/dos2unix.spec
+@@ -1,7 +1,7 @@
+ Summary: Text file format converters
+ Name: dos2unix
+-Version: 7.2.2
+-Release: 2%{?dist}
++Version: 7.2.3
++Release: 1%{?dist}
+ Group: Applications/Text
+ License: BSD
+ URL: http://waterlan.home.xs4all.nl/dos2unix.html
+@@ -43,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}
+ rm -rf $RPM_BUILD_ROOT
+ 
+ %changelog
++* Thu Jul 02 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 7.2.3-1
++- Update to 7.2.3 (#1238484)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.2.2-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

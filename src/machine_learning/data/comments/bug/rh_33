@@ -1,0 +1,283 @@
+Created attachment 1049748
+core file
+
+Description of problem:
+=======================
+
+Glusterfsd crashed and one of the brick failed to come up after 3 bricks are brought down and restart with gluster v start force. Also on the client mount writes are failing with I/O errors.
+
+[root@vertigo appends]# gluster v status vol2
+Status of volume: vol2
+Gluster process                             TCP Port  RDMA Port  Online  Pid
+------------------------------------------------------------------------------
+Brick ninja:/rhs/brick1/vol2-1              N/A       N/A        N       N/A  
+Brick ninja:/rhs/brick2/vol2-2              49158     0          Y       19637
+Brick ninja:/rhs/brick3/vol2-3              49159     0          Y       19656
+Brick ninja:/rhs/brick4/vol2-4              49160     0          Y       30942
+Brick vertigo:/rhs/brick1/vol2-5            49156     0          Y       26796
+Brick vertigo:/rhs/brick2/vol2-6            49157     0          Y       25547
+Brick vertigo:/rhs/brick3/vol2-7            49158     0          Y       25565
+Brick ninja:/rhs/brick1/vol2-8              49161     0          Y       30951
+Brick ninja:/rhs/brick2/vol2-9              49162     0          Y       30958
+Brick ninja:/rhs/brick3/vol2-10             49163     0          Y       30969
+Brick ninja:/rhs/brick4/vol2-11             49164     0          Y       30974
+Snapshot Daemon on localhost                49160     0          Y       30626
+NFS Server on localhost                     2049      0          Y       28373
+Self-heal Daemon on localhost               N/A       N/A        N       N/A  
+Snapshot Daemon on interstellar             49179     0          Y       25323
+NFS Server on interstellar                  2049      0          Y       46198
+Self-heal Daemon on interstellar            N/A       N/A        N       N/A  
+Snapshot Daemon on 10.70.34.68              49165     0          Y       30996
+NFS Server on 10.70.34.68                   2049      0          Y       19684
+Self-heal Daemon on 10.70.34.68             N/A       N/A        Y       19713
+Snapshot Daemon on transformers             49162     0          Y       4400 
+NFS Server on transformers                  2049      0          Y       766  
+Self-heal Daemon on transformers            N/A       N/A        N       N/A  
+ 
+Task Status of Volume vol2
+------------------------------------------------------------------------------
+There are no active volume tasks
+ 
+
+Backtrace:
+==========
+(gdb) bt
+#0  0x00007f5ff521ac40 in gf_client_put (client=0x0, detached=0x0)
+    at client_t.c:299
+#1  0x00007f5fe4a89265 in server_setvolume (req=0x7f5fdfa9806c)
+    at server-handshake.c:715
+#2  0x00007f5ff4f82ee5 in rpcsvc_handle_rpc_call (
+    svc=<value optimized out>, trans=<value optimized out>, 
+    msg=0x7f5fd8001800) at rpcsvc.c:703
+#3  0x00007f5ff4f83123 in rpcsvc_notify (trans=0x7f5fd8000920, 
+    mydata=<value optimized out>, event=<value optimized out>, 
+    data=0x7f5fd8001800) at rpcsvc.c:797
+#4  0x00007f5ff4f84ad8 in rpc_transport_notify (
+    this=<value optimized out>, event=<value optimized out>, 
+    data=<value optimized out>) at rpc-transport.c:543
+#5  0x00007f5fe9cea255 in socket_event_poll_in (this=0x7f5fd8000920)
+    at socket.c:2290
+#6  0x00007f5fe9cebe4d in socket_event_handler (fd=<value optimized out>, 
+    idx=<value optimized out>, data=0x7f5fd8000920, poll_in=1, poll_out=0, 
+    poll_err=0) at socket.c:2403
+#7  0x00007f5ff521d970 in event_dispatch_epoll_handler (
+    data=0x7f5fe0020260) at event-epoll.c:575
+#8  event_dispatch_epoll_worker (data=0x7f5fe0020260) at event-epoll.c:678
+#9  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#10 0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+(gdb) q
+
+(gdb) t a a bt
+
+Thread 14 (Thread 0x7f5feb2f7700 (LWP 19622)):
+#0  0x00007f5ff42a8a0e in pthread_cond_timedwait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5ff5200cab in syncenv_task (proc=0x7f5ff73ee3f0)
+    at syncop.c:595
+#2  0x00007f5ff5205ba0 in syncenv_processor (thdata=0x7f5ff73ee3f0)
+    at syncop.c:687
+#3  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#4  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 13 (Thread 0x7f5fdf996700 (LWP 19627)):
+#0  0x00007f5ff42a8a0e in pthread_cond_timedwait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5fe5b2a4a0 in iot_worker (data=0x7f5fe004fc30)
+    at io-threads.c:181
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 12 (Thread 0x7f5fdd68e700 (LWP 19631)):
+#0  0x00007f5ff3c073e3 in select () from /lib64/libc.so.6
+#1  0x00007f5fe67a60ba in changelog_ev_dispatch (data=0x7f5fe00720d0)
+    at changelog-ev-handle.c:335
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 11 (Thread 0x7f5fdea90700 (LWP 19629)):
+#0  0x00007f5ff42a863c in pthread_cond_wait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5fe67a6373 in changelog_ev_connector (data=0x7f5fe00720d0)
+    at changelog-ev-handle.c:193
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 10 (Thread 0x7f5fdf895700 (LWP 19628)):
+#0  0x00007f5ff42a863c in pthread_cond_wait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5fe636f6f3 in br_stub_signth (arg=0x7f5fe0064a60)
+    at bit-rot-stub.c:649
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 9 (Thread 0x7f5fdfa97700 (LWP 19626)):
+#0  0x00007f5ff42a863c in pthread_cond_wait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5fe5713e0b in index_worker (data=<value optimized out>)
+    at index.c:71
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 8 (Thread 0x7f5fdcc8d700 (LWP 19632)):
+#0  0x00007f5ff3c073e3 in select () from /lib64/libc.so.6
+#1  0x00007f5fe67a60ba in changelog_ev_dispatch (data=0x7f5fe00720d0)
+    at changelog-ev-handle.c:335
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 7 (Thread 0x7f5fe84bd700 (LWP 19624)):
+#0  0x00007f5ff3c0b3a7 in mprotect () from /lib64/libc.so.6
+---Type <return> to continue, or q <return> to quit--- 
+#1  0x00007f5ff42a410a in pthread_create@@GLIBC_2.2.5 ()
+   from /lib64/libpthread.so.0
+#2  0x00007f5ff51d5225 in gf_thread_create (thread=0x7f5fe0090960, 
+    attr=0x0, 
+    start_routine=0x7f5fe78ada60 <posix_health_check_thread_proc>, 
+    arg=0x7f5fe0006ae0) at common-utils.c:3358
+#3  0x00007f5fe78aac69 in posix_spawn_health_check_thread (
+    xl=0x7f5fe0006ae0) at posix-helpers.c:1802
+#4  0x00007f5fe78aa52e in init (this=0x7f5fe0006ae0) at posix.c:6327
+#5  0x00007f5ff51b6882 in __xlator_init (xl=0x7f5fe0006ae0) at xlator.c:399
+#6  xlator_init (xl=0x7f5fe0006ae0) at xlator.c:423
+#7  0x00007f5ff51fd901 in glusterfs_graph_init (
+    graph=<value optimized out>) at graph.c:322
+#8  0x00007f5ff51fda65 in glusterfs_graph_activate (graph=0x7f5fe0000af0, 
+    ctx=0x7f5ff73c0010) at graph.c:669
+#9  0x00007f5ff5682d4b in glusterfs_process_volfp (ctx=0x7f5ff73c0010, 
+    fp=0x7f5fe0002610) at glusterfsd.c:2174
+#10 0x00007f5ff568acd5 in mgmt_getspec_cbk (req=<value optimized out>, 
+    iov=<value optimized out>, count=<value optimized out>, 
+    myframe=0x7f5ff2ba96d4) at glusterfsd-mgmt.c:1560
+#11 0x00007f5ff4f88445 in rpc_clnt_handle_reply (clnt=0x7f5ff7425fa0, 
+    pollin=0x7f5fe0001850) at rpc-clnt.c:766
+#12 0x00007f5ff4f898f2 in rpc_clnt_notify (trans=<value optimized out>, 
+    mydata=0x7f5ff7425fd0, event=<value optimized out>, 
+    data=<value optimized out>) at rpc-clnt.c:894
+#13 0x00007f5ff4f84ad8 in rpc_transport_notify (
+    this=<value optimized out>, event=<value optimized out>, 
+    data=<value optimized out>) at rpc-transport.c:543
+#14 0x00007f5fe9cea255 in socket_event_poll_in (this=0x7f5ff7427af0)
+    at socket.c:2290
+#15 0x00007f5fe9cebe4d in socket_event_handler (fd=<value optimized out>, 
+    idx=<value optimized out>, data=0x7f5ff7427af0, poll_in=1, poll_out=0, 
+    poll_err=0) at socket.c:2403
+#16 0x00007f5ff521d970 in event_dispatch_epoll_handler (
+    data=0x7f5ff7428cb0) at event-epoll.c:575
+#17 event_dispatch_epoll_worker (data=0x7f5ff7428cb0) at event-epoll.c:678
+#18 0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#19 0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 6 (Thread 0x7f5fde08f700 (LWP 19630)):
+#0  0x00007f5ff3c073e3 in select () from /lib64/libc.so.6
+#1  0x00007f5fe67a60ba in changelog_ev_dispatch (data=0x7f5fe00720d0)
+    at changelog-ev-handle.c:335
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 5 (Thread 0x7f5ff5667740 (LWP 19619)):
+#0  0x00007f5ff42a52ad in pthread_join () from /lib64/libpthread.so.0
+#1  0x00007f5ff521d41d in event_dispatch_epoll (event_pool=0x7f5ff73dec90)
+    at event-epoll.c:762
+#2  0x00007f5ff5684ef1 in main (argc=19, argv=0x7fffd30357c8)
+    at glusterfsd.c:2333
+
+Thread 4 (Thread 0x7f5fea8f6700 (LWP 19623)):
+#0  0x00007f5ff42a8a0e in pthread_cond_timedwait@@GLIBC_2.3.2 ()
+   from /lib64/libpthread.so.0
+#1  0x00007f5ff5200cab in syncenv_task (proc=0x7f5ff73ee7b0)
+    at syncop.c:595
+#2  0x00007f5ff5205ba0 in syncenv_processor (thdata=0x7f5ff73ee7b0)
+---Type <return> to continue, or q <return> to quit---
+    at syncop.c:687
+#3  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#4  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 3 (Thread 0x7f5fec6f9700 (LWP 19620)):
+#0  0x00007f5ff42abfbd in nanosleep () from /lib64/libpthread.so.0
+#1  0x00007f5ff51db5ca in gf_timer_proc (ctx=0x7f5ff73c0010) at timer.c:205
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f5febcf8700 (LWP 19621)):
+#0  0x00007f5ff42ac535 in sigwait () from /lib64/libpthread.so.0
+#1  0x00007f5ff568302b in glusterfs_sigwaiter (arg=<value optimized out>)
+    at glusterfsd.c:1989
+#2  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#3  0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7f5fe4a5c700 (LWP 19625)):
+#0  0x00007f5ff521ac40 in gf_client_put (client=0x0, detached=0x0)
+    at client_t.c:299
+#1  0x00007f5fe4a89265 in server_setvolume (req=0x7f5fdfa9806c)
+    at server-handshake.c:715
+#2  0x00007f5ff4f82ee5 in rpcsvc_handle_rpc_call (
+    svc=<value optimized out>, trans=<value optimized out>, 
+    msg=0x7f5fd8001800) at rpcsvc.c:703
+#3  0x00007f5ff4f83123 in rpcsvc_notify (trans=0x7f5fd8000920, 
+    mydata=<value optimized out>, event=<value optimized out>, 
+    data=0x7f5fd8001800) at rpcsvc.c:797
+#4  0x00007f5ff4f84ad8 in rpc_transport_notify (
+    this=<value optimized out>, event=<value optimized out>, 
+    data=<value optimized out>) at rpc-transport.c:543
+#5  0x00007f5fe9cea255 in socket_event_poll_in (this=0x7f5fd8000920)
+    at socket.c:2290
+#6  0x00007f5fe9cebe4d in socket_event_handler (fd=<value optimized out>, 
+    idx=<value optimized out>, data=0x7f5fd8000920, poll_in=1, poll_out=0, 
+    poll_err=0) at socket.c:2403
+#7  0x00007f5ff521d970 in event_dispatch_epoll_handler (
+    data=0x7f5fe0020260) at event-epoll.c:575
+#8  event_dispatch_epoll_worker (data=0x7f5fe0020260) at event-epoll.c:678
+#9  0x00007f5ff42a4a51 in start_thread () from /lib64/libpthread.so.0
+#10 0x00007f5ff3c0e96d in clone () from /lib64/libc.so.6
+(gdb) 
+
+Version-Release number of selected component (if applicable):
+==============================================================
+[root@ninja ~]# gluster --version
+glusterfs 3.7.1 built on Jul  2 2015 21:01:51
+Repository revision: git://git.gluster.com/glusterfs.git
+Copyright (c) 2006-2011 Gluster Inc. <http://www.gluster.com>
+GlusterFS comes with ABSOLUTELY NO WARRANTY.
+You may redistribute copies of GlusterFS under the terms of the GNU General Public License.
+[root@ninja ~]# 
+
+How reproducible:
+=================
+100%
+
+Steps to Reproduce:
+1. Create 8+3 disperse volume. Fuse mount on the client  and create huge number of directories and files.
+2. Bring down 3 of the bricks and try to write from the mount. 
+3. Bring back the bricks with gluster v start force.
+
+Actual results:
+===============
+Glusterfsd crash
+
+Expected results:
+
+
+Additional info:
+================
+Core file will be attached.
+IO error when 3 bricks are brough down in a 8+3 config.
+
+[root@rhs-client29 appends]# for i in `seq 1 250`; do cat /etc/passwd >> testfile ; echo " +++++++++++++++++++++++++++++++++++++++++++++++++" >> testfile ; done ; for i in `seq 1 1000`; do md5sum testfile.$i >> testfile ; done 
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+md5sum: write error: Input/output error
+*** This bug has been marked as a duplicate of bug 1239280 ***

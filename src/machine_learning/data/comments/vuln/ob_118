@@ -1,0 +1,5 @@
+All versions of OpenSSH's sshd between 2.3.1 and 3.3 contain an input validation
+error that can result in an integer overflow and privilege escalation.
+This problem is fixed in <a href="http://www.openssh.com/openbsd.html">OpenSSH
+3.4</a>, and a patch for the vulnerable releases is available as part of the
+<a href="http://www.openssh.com/txt/preauth.adv">security advisory</a>.

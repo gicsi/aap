@@ -1,0 +1,38 @@
+Created attachment 1042659
+conf file
+
+Command line:
+repoman --with-sources -k ~sbonazzo/RPM-GPG-ovirt.private /var/www/html/repos/ovirt-3.6-pre-alpha2 add conf:/home/sbonazzo/ovirt-3.6.0_alpha2.conf
+
+
+INFO:repoman.common.repo:Resolving artifact source http://jenkins.ovirt.org/job/ovirt-engine-extension-aaa-ldap_master_create-rpms-el7-x86_64_merged/67/
+Traceback (most recent call last):
+  File "/usr/bin/repoman", line 10, in <module>
+    sys.exit(main())
+  File "/usr/lib/python2.6/site-packages/repoman/cmd.py", line 138, in main
+    repo.add_source(art_src)
+  File "/usr/lib/python2.6/site-packages/repoman/common/repo.py", line 88, in add_source
+    self.parse_conf_file(artifact_source.split(':', 1)[1])
+  File "/usr/lib/python2.6/site-packages/repoman/common/repo.py", line 101, in parse_conf_file
+    self.add_source(line.strip())
+  File "/usr/lib/python2.6/site-packages/repoman/common/repo.py", line 90, in add_source
+    artifacts = self.parser.parse(artifact_source)
+  File "/usr/lib/python2.6/site-packages/repoman/common/parser.py", line 48, in parse
+    section='source.' + source.CONFIG_SECTION)
+  File "/usr/lib/python2.6/site-packages/repoman/common/sources/jenkins.py", line 34, in expand
+    lvl1_page = requests.get(source_str + '/api/json?depth=3').json()
+  File "/usr/lib/python2.6/site-packages/requests/models.py", line 604, in json
+    return json.loads(self.text or self.content)
+  File "/usr/lib/python2.6/site-packages/simplejson/__init__.py", line 307, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python2.6/site-packages/simplejson/decoder.py", line 335, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python2.6/site-packages/simplejson/decoder.py", line 353, in raw_decode
+    raise ValueError("No JSON object could be decoded")
+ValueError: No JSON object could be decoded
+INFO:repoman.common.repo:Cleaning up temporary dir /tmp/tmpSRdpmn
+# rpm -qv repoman
+repoman-1.0.10.g26d6d54-1.el6.noarch
+I guess that the issue was caused by a bad response from jenkins, a second run passed such point.
+Maybe just a retry n-times on failure would be enough.
+Will be fixed on next repoman release

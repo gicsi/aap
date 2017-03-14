@@ -1,0 +1,47 @@
+# Description of problem:
+
+When on a Wayland session (through GDM) the following websites seem to load and render, but aren't displayed (the current content continues to be displayed, instead):
+
+- https://duckduckgo.com/
+- http://globoesporte.globo.com/
+- https://www.youtube.com/
+
+Probably this isn't, exactly, a WebKitGtk4 bug; but I'm "blaming" it first because Firefox is ok.
+
+# Version-Release number of selected component (if applicable):
+
+epiphany-3.16.2-2.fc22
+webkitgtk4-2.8.3-2.fc22
+gnome-session-wayland-session-3.16.0-1.fc22
+xorg-x11-drv-intel-2.99.917-12.20150615.fc22
+mesa-dri-drivers-10.6.0-1.fc22
+libwayland-server-1.7.0-1.fc22
+xorg-x11-server-Xorg-1.17.2-1.fc22
+kernel-4.0.6-300.fc22
+
+# Steps to Reproduce:
+
+1. Login to a Wayland session through GDM.
+2. Open GNOME Web.
+3. Access any of the pages mentioned above.
+
+# Actual results:
+
+Whatever content that is being displayed continues to be displayed.
+
+# Expected results:
+
+Show new page.
+
+# Additional info:
+
+I suspect, in a wild guess, that some CSS features or "tricks" (possibly used by this websites) could be the source of the problem (like the "3D transform" feature, or the "GPU offload" trick). But, again, is just a wild guess.
+Yeah, these are all sites that trigger accelerated compositing, which doesn't work under XWayland. I just recently turned on native Wayland support, so this will be fixed in Fedora 23. (Well, it will still be broken under XWayland, but XWayland will no longer be in use, so it won't matter.)
+
+Specifically, this should be fixed in webkitgtk-2.9.3-2.fc23.
+
+*** This bug has been marked as a duplicate of bug 1220811 ***
+Oops. Searched only for bugs with "wayland" in the name.
+Maybe I should have searched a little more, my bad.
+
+Great work, anyway.

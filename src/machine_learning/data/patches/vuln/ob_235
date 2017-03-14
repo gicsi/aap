@@ -1,0 +1,216 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 007_perl.patch
+
+And then rebuild and install perl:
+	cd gnu/usr.bin/perl
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: gnu/usr.bin/perl/globvar.sym
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/globvar.sym,v
+retrieving revision 1.1.1.1
+retrieving revision 1.1.1.1.22.1
+diff -u -p -r1.1.1.1 -r1.1.1.1.22.1
+--- gnu/usr.bin/perl/globvar.sym	6 Apr 2000 16:08:36 -0000	1.1.1.1
++++ gnu/usr.bin/perl/globvar.sym	3 Jan 2006 05:44:49 -0000	1.1.1.1.22.1
+@@ -66,3 +66,4 @@ vtbl_regdatum
+ vtbl_collxfrm
+ vtbl_amagic
+ vtbl_amagicelem
++memory_wrap
+Index: gnu/usr.bin/perl/makedef.pl
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/makedef.pl,v
+retrieving revision 1.1.1.7
+retrieving revision 1.1.1.7.2.1
+diff -u -p -r1.1.1.7 -r1.1.1.7.2.1
+--- gnu/usr.bin/perl/makedef.pl	15 Jan 2005 21:16:26 -0000	1.1.1.7
++++ gnu/usr.bin/perl/makedef.pl	3 Jan 2006 05:44:49 -0000	1.1.1.7.2.1
+@@ -635,12 +635,6 @@ else {
+ 		    )];
+ }
+ 
+-if ($define{'PERL_MALLOC_WRAP'}) {
+-    emit_symbols [qw(
+-		    PL_memory_wrap
+-		    )];
+-}
+-
+ unless ($define{'USE_5005THREADS'} || $define{'USE_ITHREADS'}) {
+     skip_symbols [qw(
+ 		    PL_thr_key
+Index: gnu/usr.bin/perl/op.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/op.c,v
+retrieving revision 1.10
+retrieving revision 1.10.2.1
+diff -u -p -r1.10 -r1.10.2.1
+--- gnu/usr.bin/perl/op.c	15 Jan 2005 21:30:19 -0000	1.10
++++ gnu/usr.bin/perl/op.c	3 Jan 2006 05:44:49 -0000	1.10.2.1
+@@ -2064,7 +2064,6 @@ Perl_fold_constants(pTHX_ register OP *o
+ 	/* XXX might want a ck_negate() for this */
+ 	cUNOPo->op_first->op_private &= ~OPpCONST_STRICT;
+ 	break;
+-    case OP_SPRINTF:
+     case OP_UCFIRST:
+     case OP_LCFIRST:
+     case OP_UC:
+Index: gnu/usr.bin/perl/opcode.h
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/opcode.h,v
+retrieving revision 1.8
+retrieving revision 1.8.4.1
+diff -u -p -r1.8 -r1.8.4.1
+--- gnu/usr.bin/perl/opcode.h	9 Aug 2004 18:08:55 -0000	1.8
++++ gnu/usr.bin/perl/opcode.h	3 Jan 2006 05:44:49 -0000	1.8.4.1
+@@ -1585,7 +1585,7 @@ EXT U32 PL_opargs[] = {
+ 	0x0022281c,	/* vec */
+ 	0x0122291c,	/* index */
+ 	0x0122291c,	/* rindex */
+-	0x0004280f,	/* sprintf */
++	0x0004280d,	/* sprintf */
+ 	0x00042805,	/* formline */
+ 	0x0001379e,	/* ord */
+ 	0x0001378e,	/* chr */
+Index: gnu/usr.bin/perl/opcode.pl
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/opcode.pl,v
+retrieving revision 1.8
+retrieving revision 1.8.4.1
+diff -u -p -r1.8 -r1.8.4.1
+--- gnu/usr.bin/perl/opcode.pl	9 Aug 2004 18:08:55 -0000	1.8
++++ gnu/usr.bin/perl/opcode.pl	3 Jan 2006 05:44:49 -0000	1.8.4.1
+@@ -602,7 +602,7 @@ vec		vec			ck_fun		ist@	S S S
+ index		index			ck_index	isT@	S S S?
+ rindex		rindex			ck_index	isT@	S S S?
+ 
+-sprintf		sprintf			ck_fun		mfst@	S L
++sprintf		sprintf			ck_fun		mst@	S L
+ formline	formline		ck_fun		ms@	S L
+ ord		ord			ck_fun		ifsTu%	S?
+ chr		chr			ck_fun		fsTu%	S?
+Index: gnu/usr.bin/perl/patchlevel.h
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/patchlevel.h,v
+retrieving revision 1.13
+retrieving revision 1.13.2.1
+diff -u -p -r1.13 -r1.13.2.1
+--- gnu/usr.bin/perl/patchlevel.h	2 Feb 2005 20:13:33 -0000	1.13
++++ gnu/usr.bin/perl/patchlevel.h	3 Jan 2006 05:44:49 -0000	1.13.2.1
+@@ -121,6 +121,7 @@ hunk.
+ static	char	*local_patches[] = {
+ 	NULL
+ 	,"SUIDPERLIO1 - fix PERLIO_DEBUG buffer overflow (CAN-2005-0156)"
++	,"SPRINTF0 - fixes for sprintf formatting issues - CVE-2005-3962"
+ 	,NULL
+ };
+ 
+Index: gnu/usr.bin/perl/perl.h
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/perl.h,v
+retrieving revision 1.10
+retrieving revision 1.10.2.1
+diff -u -p -r1.10 -r1.10.2.1
+--- gnu/usr.bin/perl/perl.h	15 Jan 2005 21:30:20 -0000	1.10
++++ gnu/usr.bin/perl/perl.h	3 Jan 2006 05:44:49 -0000	1.10.2.1
+@@ -3071,10 +3071,8 @@ EXTCONST char PL_no_myglob[]
+   INIT("\"my\" variable %s can't be in a package");
+ EXTCONST char PL_no_localize_ref[]
+   INIT("Can't localize through a reference");
+-#ifdef PERL_MALLOC_WRAP
+ EXTCONST char PL_memory_wrap[]
+   INIT("panic: memory wrap");
+-#endif
+ 
+ EXTCONST char PL_uuemap[65]
+   INIT("`!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_");
+Index: gnu/usr.bin/perl/sv.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.bin/perl/sv.c,v
+retrieving revision 1.10
+retrieving revision 1.10.2.2
+diff -u -p -r1.10 -r1.10.2.2
+--- gnu/usr.bin/perl/sv.c	15 Jan 2005 21:30:22 -0000	1.10
++++ gnu/usr.bin/perl/sv.c	3 Jan 2006 05:44:50 -0000	1.10.2.2
+@@ -8606,9 +8606,12 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 	    if (vectorarg) {
+ 		if (args)
+ 		    vecsv = va_arg(*args, SV*);
+-		else
+-		    vecsv = (evix ? evix <= svmax : svix < svmax) ?
+-			svargs[evix ? evix-1 : svix++] : &PL_sv_undef;
++		else if (evix) {
++		    vecsv = (evix > 0 && evix <= svmax)
++			? svargs[evix-1] : &PL_sv_undef;
++		} else {
++		    vecsv = svix < svmax ? svargs[svix++] : &PL_sv_undef;
++		}
+ 		dotstr = SvPVx(vecsv, dotstrlen);
+ 		if (DO_UTF8(vecsv))
+ 		    is_utf8 = TRUE;
+@@ -8618,12 +8621,13 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 		vecstr = (U8*)SvPVx(vecsv,veclen);
+ 		vec_utf8 = DO_UTF8(vecsv);
+ 	    }
+-	    else if (efix ? efix <= svmax : svix < svmax) {
++	    else if (efix ? (efix > 0 && efix <= svmax) : svix < svmax) {
+ 		vecsv = svargs[efix ? efix-1 : svix++];
+ 		vecstr = (U8*)SvPVx(vecsv,veclen);
+ 		vec_utf8 = DO_UTF8(vecsv);
+ 	    }
+ 	    else {
++		vecsv = &PL_sv_undef;
+ 		vecstr = (U8*)"";
+ 		veclen = 0;
+ 	    }
+@@ -8724,9 +8728,15 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 
+ 	if (vectorize)
+ 	    argsv = vecsv;
+-	else if (!args)
+-	    argsv = (efix ? efix <= svmax : svix < svmax) ?
+-		    svargs[efix ? efix-1 : svix++] : &PL_sv_undef;
++	else if (!args) {
++	    if (efix) {
++		const I32 i = efix-1;
++		argsv = (i >= 0 && i < svmax) ? svargs[i] : &PL_sv_undef;
++	    } else {
++		argsv = (svix >= 0 && svix < svmax)
++		    ? svargs[svix++] : &PL_sv_undef;
++	    }
++	}
+ 
+ 	switch (c = *q++) {
+ 
+@@ -8968,6 +8978,8 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 		    *--eptr = '0';
+ 		break;
+ 	    case 2:
++		if (!uv)
++		    alt = FALSE;
+ 		do {
+ 		    dig = uv & 1;
+ 		    *--eptr = '0' + dig;
+@@ -9270,6 +9282,8 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 
+ 	/* calculate width before utf8_upgrade changes it */
+ 	have = esignlen + zeros + elen;
++	if (have < zeros)
++	    Perl_croak_nocontext(PL_memory_wrap);
+ 
+ 	if (is_utf8 != has_utf8) {
+ 	     if (is_utf8) {
+@@ -9297,6 +9311,8 @@ Perl_sv_vcatpvfn(pTHX_ SV *sv, const cha
+ 	need = (have > width ? have : width);
+ 	gap = need - have;
+ 
++	if (need >= (((STRLEN)~0) - SvCUR(sv) - dotstrlen - 1))
++	    Perl_croak_nocontext(PL_memory_wrap);
+ 	SvGROW(sv, SvCUR(sv) + need + dotstrlen + 1);
+ 	p = SvEND(sv);
+ 	if (esignlen && fill == '0') {
+

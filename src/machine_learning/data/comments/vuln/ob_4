@@ -1,0 +1,4 @@
+A vulnerability exists when (and only when) /etc/named.conf has the
+<strong>fake-iquery</strong> option enabled.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.2/common/named.patch">
+A patch is available which corrects this behaviour</a>.

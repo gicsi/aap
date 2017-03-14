@@ -1,0 +1,5 @@
+If IPSEC communication is attempted by starting photurisd(8) (which is
+disabled by default), a system crash may be evoked from remote if
+an attacker uses some classes of invalid packets.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/ipsec.patch">
+A source code patch exists which remedies this problem.</a>

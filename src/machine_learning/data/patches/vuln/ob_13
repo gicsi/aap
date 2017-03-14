@@ -1,0 +1,55 @@
+To apply:
+	cd /usr/src/usr.bin/chpass
+	patch -p0 < chpass.patch
+
+Index: chpass.c
+===================================================================
+RCS file: /cvs/src/usr.bin/chpass/chpass.c,v
+retrieving revision 1.10
+retrieving revision 1.12
+diff -u -r1.10 -r1.12
+--- chpass.c	1998/03/30 06:59:28	1.10
++++ chpass.c	1998/08/02 03:35:07	1.12
+@@ -90,7 +90,7 @@
+ 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
+ 	struct passwd *pw, lpw;
+ 	int ch, pfd, tfd, dfd;
+-	char *arg, tempname[] = "/etc/pw.XXXXXX";
++	char *arg, tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+ 
+ #ifdef	YP
+ 	use_yp = _yp_check(NULL);
+@@ -181,20 +181,20 @@
+ 	/* Get the passwd lock file and open the passwd file for reading. */
+ 	pw_init();
+ 	tfd = pw_lock(0);
+-	if (tfd < 0) {
++	if (tfd == -1 || fcntl(tfd, F_SETFD, 1) == -1) {
+ 		if (errno == EEXIST)
+ 			errx(1, "the passwd file is busy.");
+ 		else
+ 			err(1, "can't open passwd temp file");
+ 	}
+ 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+-	if (pfd < 0)
++	if (pfd == -1 || fcntl(pfd, F_SETFD, 1) == -1)
+ 		pw_error(_PATH_MASTERPASSWD, 1, 1);
+ 
+ 	/* Edit the user passwd information if requested. */
+ 	if (op == EDITENTRY) {
+ 		dfd = mkstemp(tempname);
+-		if (dfd < 0)
++		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
+ 			pw_error(tempname, 1, 1);
+ 		display(tempname, dfd, pw);
+ 		edit(tempname, pw);
+@@ -217,7 +217,7 @@
+ 		pw_copy(pfd, tfd, pw);
+ 
+ 		/* Now finish the passwd file update. */
+-		if (pw_mkdb() < 0)
++		if (pw_mkdb() == -1)
+ 			pw_error(NULL, 0, 1);
+ 	}
+ 
+

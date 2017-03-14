@@ -1,0 +1,3 @@
+All m68k kernels can possibly be crashed by a user.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.6/m68k/007_locore.patch">
+A source code patch exists which remedies this problem.</a>

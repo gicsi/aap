@@ -1,0 +1,1 @@
+python manage.py dumpdata --format=xml aap > aap_app/fixtures/initial_data.xml

@@ -1,0 +1,3 @@
+Stop profiling (see profil(2)) when we execve() a new process.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/010_profil.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,7 @@
+An off-by-one error exists in the C library function
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=realpath&amp;sektion=3">realpath(3)</a>.
+Since this same bug resulted in a root compromise in the wu-ftpd ftp server
+it is possible that this bug may allow an attacker to gain escalated privileges
+on OpenBSD.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/001_realpath.patch">
+A source code patch exists which remedies this problem.</a>

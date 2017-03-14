@@ -1,0 +1,95 @@
+Description of problem:
+
+pmlogger_daily's 338 fails, complaining about no pmlogger running on host "HOST" - probably missing $ somewhere? hostname seems to be set correctly, other test cases from "sanity" group work fine.
+
+
+[root@ibm-p750e-02-lp3 testsuite]# service pmcd start
+Redirecting to /bin/systemctl start  pmcd.service
+[root@ibm-p750e-02-lp3 testsuite]# service pmlogger start
+Redirecting to /bin/systemctl start  pmlogger.service
+[root@ibm-p750e-02-lp3 testsuite]# service pmcd status
+Redirecting to /bin/systemctl status  pmcd.service
+● pmcd.service - Performance Metrics Collector Daemon
+   Loaded: loaded (/usr/lib/systemd/system/pmcd.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Wed 2015-07-08 15:52:39 EDT; 15min ago
+     Docs: man:pmcd(8)
+ Main PID: 2249 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/pmcd.service
+
+Jul 08 15:52:39 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Starting Performance Metrics Collector Daemon...
+Jul 08 15:52:39 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com pmcd[2249]: Starting pmcd ...
+Jul 08 15:52:39 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Collector Daemon.
+Jul 08 16:07:24 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Collector Daemon.
+Jul 08 16:08:04 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Collector Daemon.
+[root@ibm-p750e-02-lp3 testsuite]# service pmlogger status
+Redirecting to /bin/systemctl status  pmlogger.service
+● pmlogger.service - Performance Metrics Archive Logger
+   Loaded: loaded (/usr/lib/systemd/system/pmlogger.service; disabled; vendor preset: disabled)
+   Active: active (exited) since Wed 2015-07-08 15:52:43 EDT; 15min ago
+     Docs: man:pmlogger(1)
+ Main PID: 2338 (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/pmlogger.service
+
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Starting Performance Metrics Archive Logger...
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com pmlogger[2338]: /usr/share/pcp/lib/pmlogger: Warning: Performance Co-Pilot archive logger(s) not permanently enabled.
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com pmlogger[2338]: To enable pmlogger, run the following as root:
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com pmlogger[2338]: # /usr/bin/systemctl enable pmlogger.service
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com pmlogger[2338]: Starting pmlogger ...
+Jul 08 15:52:43 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Archive Logger.
+Jul 08 16:07:50 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Archive Logger.
+Jul 08 16:08:14 ibm-p750e-02-lp3.rhts.eng.bos.redhat.com systemd[1]: Started Performance Metrics Archive Logger.
+[root@ibm-p750e-02-lp3 testsuite]# ./check 338
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sampledso.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+338 - output mismatch (see 338.out.bad)
+4,5d3
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+31,32d28
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+52,53d47
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+81,82d74
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+125,126d116
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+154,155d143
+< PMLOGGER.DAILY: Error: no pmlogger instance running for host "HOST"
+< [TMP/control:2] ... logging for host "HOST" unchanged
+
+Check local PMCD is still alive ...
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sample.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f sampledso.milliseconds
+PMDA probe: pminfo -h ibm-p750e-02-lp3.rhts.eng.bos.redhat.com -f simple.numfetch
+Failures: 338
+Failed 1 of 1 tests
+[root@ibm-p750e-02-lp3 testsuite]# 
+
+This failure happens on all arches, and breaks basic "./check -g sanity" sanity test, including CI.
+
+
+Version-Release number of selected component (if applicable):
+
+pcp-3.10.5-4.el7
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. cd /var/lib/pcp/testsuite && ./check 338
+
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+As with BZ1241239 this error is a result of not having the pmlogger service enabled.  Now that enabling the pmlogger is part of the qa wrapper, I think we can close this as notabug.

@@ -1,0 +1,22 @@
+# Version-Release number of selected component (if applicable):
+
+GNOME Web (Epiphany) 3.16.2
+WebKitGtk 2.8.3
+
+# Steps to Reproduce:
+
+1. Open https://www.flickr.com/search
+2. Try to select a filter (license, SafeSearch, whatever).
+
+# Actual results:
+
+Nothing happens.
+
+# Expected results:
+
+A "PopOver" should appear, allowing you to filter your search.
+I see in the web inspector:
+
+TypeError: undefined is not an object (evaluating 'e.Plugin.Host')
+
+Most likely a flickr bug.

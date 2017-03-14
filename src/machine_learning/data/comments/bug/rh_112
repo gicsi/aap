@@ -1,0 +1,14 @@
+Your package rubygem-axiom-types failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10149606
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047991
+build.log
+Created attachment 1047992
+root.log
+Created attachment 1047993
+state.log
+The test suite requires rspec-its. Fixed in http://pkgs.fedoraproject.org/cgit/rubygem-axiom-types.git/commit/?id=9b210a265b392089031ba12c43152d2e96400675
+
+Reported upstream at https://github.com/dkubb/axiom-types/issues/17

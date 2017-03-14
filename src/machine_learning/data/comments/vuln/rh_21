@@ -1,0 +1,43 @@
+Description of problem:
+Installing vdsm fails on missing dependency on libvirt-lock-sanlock-1.2.8-16.el7_1.3
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. On host,  enable rhel-7-server-rpms and to  rhel-7-server-rhev-mgmt-agent-rpms repositories
+2. Install vdsm
+3.
+
+Actual results:
+Install fails:
+Error: Package: libvirt-lock-sanlock-1.2.8-16.el7_1.2.x86_64 (rhel-7-server-rhev-mgmt-agent-rpms)
+           Requires: libvirt-daemon = 1.2.8-16.el7_1.2
+           Available: libvirt-daemon-1.1.1-29.el7.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.1.1-29.el7
+           Available: libvirt-daemon-1.1.1-29.el7_0.1.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.1.1-29.el7_0.1
+           Available: libvirt-daemon-1.1.1-29.el7_0.3.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.1.1-29.el7_0.3
+           Available: libvirt-daemon-1.1.1-29.el7_0.4.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.1.1-29.el7_0.4
+           Available: libvirt-daemon-1.1.1-29.el7_0.7.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.1.1-29.el7_0.7
+           Available: libvirt-daemon-1.2.8-16.el7.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.2.8-16.el7
+           Available: libvirt-daemon-1.2.8-16.el7_1.1.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.2.8-16.el7_1.1
+           Available: libvirt-daemon-1.2.8-16.el7_1.2.x86_64 (rhel-7-server-rhev-mgmt-agent-rpms)
+               libvirt-daemon = 1.2.8-16.el7_1.2
+           Installing: libvirt-daemon-1.2.8-16.el7_1.3.x86_64 (rhel-7-server-rpms)
+               libvirt-daemon = 1.2.8-16.el7_1.3
+
+
+Expected results:
+Install succeeds
+
+Additional info:
+The missing package is deployed on rhel-6-server-optional-rpms repository. However, enablingrhel-6-server-optional-rpms is not required.

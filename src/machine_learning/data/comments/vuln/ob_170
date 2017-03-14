@@ -1,0 +1,3 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=httpd&amp;sektion=8">httpd(8)</a> leaks file inode numbers via ETag header as well as child PIDs in multipart MIME boundary generation. This could lead, for example, to NFS exploitation because it uses inode numbers as part of the file handle.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.2/common/008_httpd.patch">
+A source code patch exists which fixes these two issues</a>.

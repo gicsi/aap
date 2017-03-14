@@ -1,0 +1,47 @@
+Created attachment 1046052
+owncloud-rawhide-8.0.4-fix-symfony-dependency-max-version.patch
+
+Description of problem:
+
+Owncloud's rawhide version is 8.0.4 and it's Symfony dependencies ( from https://github.com/owncloud/3rdparty/blob/v8.0.4/composer.json ) are:
+> "symfony/console": "~2.5",
+> "symfony/routing": "~2.5",
+which equates to "2.5 <= symfony < 3.0".
+
+However, the owncloud spec sets it's Symfony max version to 2.6 instead of 3.0:
+> # "symfony/console": "~2.5"
+> Requires:       php-composer(symfony/console) >= 2.5.0
+> Requires:       php-composer(symfony/console) < 2.6
+> # "symfony/routing": "~2.5"
+> Requires:       php-composer(symfony/routing) >= 2.5.0
+> Requires:       php-composer(symfony/routing) < 2.6
+
+
+
+Version-Release number of selected component (if applicable):
+
+owncloud-8.0.4-2
+
+
+
+Actual results:
+
+> # "symfony/console": "~2.5"
+> Requires:       php-composer(symfony/console) >= 2.5.0
+> Requires:       php-composer(symfony/console) < 2.6
+> # "symfony/routing": "~2.5"
+> Requires:       php-composer(symfony/routing) >= 2.5.0
+> Requires:       php-composer(symfony/routing) < 2.6
+
+
+Expected results:
+
+> # "symfony/console": "~2.5"
+> Requires:       php-composer(symfony/console) >= 2.5.0
+> Requires:       php-composer(symfony/console) < 3.0
+> # "symfony/routing": "~2.5"
+> Requires:       php-composer(symfony/routing) >= 2.5.0
+> Requires:       php-composer(symfony/routing) < 3.0
+Patch applied, build ok.
+
+Of course, need to be fully tested.

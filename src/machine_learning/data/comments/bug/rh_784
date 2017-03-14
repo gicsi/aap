@@ -1,0 +1,11 @@
+Created attachment 1040591
+Patch to add missing exported packages to bouncycastle-pkix
+
+Description of problem:
+
+1.52 is missing some exported packages needed by bouncycastle
+org.bouncycastle.pkix.jcaje do not exist in the pkix JAR, is a dummy export?
+and also is not present in your https://bugzilla.redhat.com/attachment.cgi?id=1040590&action=edit manifest file
+Thanks for reporting this issue
+
+Task info: http://koji.fedoraproject.org/koji/taskinfo?taskID=10141685

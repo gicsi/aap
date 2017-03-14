@@ -1,0 +1,43 @@
+Description of problem:
+
+From Tom Hennessy:  
+
+Marianne,
+As a part of my standard appliance bashing I routinely set all reports to be scheduled to run several times per day.  
+
+When I started this today for CFME 3.2 I noticed that there are 117 reports shipped in the starter VMDB instead of 124 shipped previously.
+
+Is there any documentation indicating which reports were removed?
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+setting component to Documentation until I find where the disconnect is.
+using /var/www/miq/vmdb/tools/doc/reports_to_csv.rb to generate list from 5.4 and 5.3
+Two things, first of all when I ran my report of Reports, I got 120 for 5.4 and 127 for 5.3.  So, the difference is still 7.
+
+The change is simply the removal of the reports related to VDI, which is no longer supported in 5.4.
+
+Hardware Information for VDI VMs
+Installed Apps - 
+Registered VDI VMs by Free Space
+Unused VDI VMs
+VDI VM Location and Size
+VDI VM OS Configuration
+VDI VMs with Volume Free Space <= 10%

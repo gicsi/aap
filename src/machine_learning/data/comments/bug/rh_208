@@ -1,0 +1,63 @@
+Description of problem:
+SELinux is preventing 57656220436F6E74656E74 from 'create' accesses on the rawip_socket Unknown.
+
+*****  Plugin mozplugger (99.1 confidence) suggests   ************************
+
+If sie das plugin-Paket benutzen möchten
+Then sie müssen die SELinux-Überwachung der Firefox-Plugins ausschalten.
+Do
+# setsebool -P unconfined_mozilla_plugin_transition 0
+
+*****  Plugin catchall (1.81 confidence) suggests   **************************
+
+If sie denken, dass es 57656220436F6E74656E74 standardmässig erlaubt sein sollte, create Zugriff auf Unknown rawip_socket zu erhalten.
+Then sie sollten dies als Fehler melden.
+Um diesen Zugriff zu erlauben, können Sie ein lokales Richtlinien-Modul erstellen.
+Do
+zugriff jetzt erlauben, indem Sie die nachfolgenden Befehle ausführen:
+# grep 57656220436F6E74656E74 /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c
+                              0.c1023
+Target Context                unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c
+                              0.c1023
+Target Objects                Unknown [ rawip_socket ]
+Source                        57656220436F6E74656E74
+Source Path                   57656220436F6E74656E74
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   2
+First Seen                    2015-07-04 01:31:36 CEST
+Last Seen                     2015-07-04 01:31:36 CEST
+Local ID                      a346f8e6-2220-437e-875e-cf3097f54ec8
+
+Raw Audit Messages
+type=AVC msg=audit(1435966296.467:882): avc:  denied  { create } for  pid=5046 comm=57656220436F6E74656E74 scontext=unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c0.c1023 tcontext=unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c0.c1023 tclass=rawip_socket permissive=0
+
+
+Hash: 57656220436F6E74656E74,mozilla_plugin_t,mozilla_plugin_t,rawip_socket,create
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 1230052
+I think this is something that should be denied.  I would not want a plugin running within my firefox, to create rawip sockets.  If you did not notice anything breaking, I would just ignore this for now.  
+
+Rawipsockets would allow a process to watch trafic coming in and out of your computer.

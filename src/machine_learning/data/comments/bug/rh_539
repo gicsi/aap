@@ -1,0 +1,21 @@
+Description of problem:
+
+$ virsh list --all
+
+<hangs forever>
+
+Version-Release number of selected component (if applicable):
+
+libvirt-1.2.16-1.fc23.x86_64
+
+How reproducible:
+
+100%
+
+Steps to Reproduce:
+1. See above.
+kernel 4.1.0-0.rc8.git0.2.fc23.x86_64
+
+Looking closer at this, it seems more like a "everything
+is fucked in Rawhide".  I cannot even kill -9 processes.
+Fixed itself after a reboot.

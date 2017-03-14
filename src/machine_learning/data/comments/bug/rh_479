@@ -1,0 +1,42 @@
+Created attachment 1043032
+xinetd configuration file for vnc service
+
+Description of problem:
+When triggered by xinetd, Xvnc closes the connection quickly after start.
+
+Version-Release number of selected component (if applicable):
+tigervnc-server-1.4.3-7.fc22
+
+How reproducible:
+Always.
+
+Steps to Reproduce:
+1. Add the line "vnc-1152x864x24         5929/tcp" to /etc/services.
+2. Install xinetd. Create file /etc/xinetd.d/vnc-1152x864x24 with the attachment. Enable xinetd autostart.
+3. Enable XDMCP in your display manager configuration.
+4. Reboot.
+5. Try a vnc connection on port 5929.
+
+Actual results:
+Connects, then immediately disconnects.
+
+Expected results:
+A usable remote graphical session.
+
+Additional info:
+This is the infamous "%*.*s" format bug in xorg. The problem has been fixed in xorg-x11-server-source-1.17.2-1.fc22 that has been produced just one day AFTER you compiled tigervnc-1.4.3-7 :-(
+A simple rebuild of the tigervnc package with up to date dependencies resolves the problem.
+Thanks for the report. I've rebuilt it and will push an update to testing.
+tigervnc-1.4.3-8.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/tigervnc-1.4.3-8.fc22
+Package tigervnc-1.4.3-8.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing tigervnc-1.4.3-8.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10772/tigervnc-1.4.3-8.fc22
+then log in and leave karma (feedback).
+tigervnc-1.4.3-8.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

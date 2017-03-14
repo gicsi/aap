@@ -1,0 +1,94 @@
+Latest upstream release: 2.3.1
+Current version/release in rawhide: 2.3.0-4.fc22
+URL: http://sourceforge.net/projects/ptpd
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+spectool was unable to grab new sources
+
+old source: ptpd-2.3.0.tar.gz
+old sha256: 1a4e90496f004bfd91657ccc49209101dc25b787e540648c07c0973469f1d8f7
+
+new source: ./ptpd-2.3.0.tar.gz
+new sha256: 1a4e90496f004bfd91657ccc49209101dc25b787e540648c07c0973469f1d8f7
+Latest upstream is a release candidate, not production ready.
+
+Closing this in error, as 2.3.0 is still the current production release.
+
+Jon
+(In reply to Jon Kent from comment #2)
+> Latest upstream is a release candidate, not production ready.
+> 
+> Closing this in error, as 2.3.0 is still the current production release.
+> 
+> Jon
+
+Hi,
+
+2.3.1 has been released on 30th of June:
+
+https://sourceforge.net/projects/ptpd/files/ptpd/2.3.1/
+
+http://sourceforge.net/projects/ptpd/files/ptpd/2.3.1/ptpd-2.3.1.tar.gz/download
+
+Regards,
+Wojciech
+Hi,
+
+I'll check the status on 2.3.1 as the project front page still states that 2.3.0 is the current production release.
+
+Regards,
+Jon
+Hi Jon,
+
+I'm one of PTPd's developers. 2.3.1 is out, just the front page is out of date. We are moving to github after this release anyway. I'll get the front page updated but you can pull the 2.3.1 sources for builds.
+
+BTW, the source itself has the spec and sysv init script in the tarball (packagebuild/rpm-rh), but the updated spec and systemd service unit didn't make it to the release - the packagebuild/rpm-rh directory can be pulled from SVN.
+
+Are you responsible for this package?
+
+Regards,
+Wojciech
+Hi,
+
+Thanks for confirming that.
+
+Yes, the source has a spec and sysv init, but, especially the spec (at least when I last looked), didn't meant Fedora guidelines, so I wrote new ones, and obviously the 2.3.0 release didn't have systemd scripts.  I think for packages I created before systemd migration I used your init script with mild mods, can't remember off the top of my head.
+
+Yes, I'm responsible for this package for my sins.  FYI there are rpms built for:
+
+rhel5 (epel)
+rhel6 (epel)
+fc20/21/22/rawhide
+
+There'll be a rhel7 one shortly which I build against 2.3.1
+
+I'll put sometime aside this week to upgrade the rawhide package to 2.3.1, and I may upgrade rhel5/6 to this version as well once I've done some testing.
+
+Thanks again for the information,
+
+Regards,
+Jon
+Hi - thanks, I usually build el5/el6, lately el7 RPMs and put them on sourceforge when we do a release, just for people's convenience - but I'll re-consider this as epel and fc may be the "more proper" way to do it.
+
+Mind that ./configure switches have changed in 2.3.1, also I started building an extra package: ptpd-slaveonly. This is a build incapable of running as PTP master - some users had this requirement. The spec in svn uses a macro for this, otherwise ./configure --enable-slave-only and build it as you wish. Alternatively both binaries could be packaged together but then they would need separate init scripts, sysconfig etc. Just an FYI I guess.
+
+Regards,
+Wojciech
+Hi,
+
+Thanks, saw that in the new source.  I haven't received any feedback about wanting a slave only ptpd, but if that's required I may just create a sub-package for that (assuming its a Fedora approved approach - I'll have to check).
+
+From looking at the licensing it would appear you are the main dev these days, is that correct?
+
+Regards,
+Jon
+Hi - yes, I have been the main dev responsible for 2.3.0 and 2.3.1.
+
+Thanks,
+Wojciech

@@ -1,0 +1,52 @@
+Description of problem:
+All locally created policies get this error; libsepol.permission_copy_callback: Module my_logrotate depends on permission kill in class service, not satisfied (No such file or directory).
+libsemanage.semanage_link_sandbox: Link packages failed (No such file or directory).
+
+Version-Release number of selected component (if applicable):
+libsepol-2.3-4.fc22.x86_64
+
+How reproducible:
+Every time try to install or remove local policy.
+
+Steps to Reproduce:
+1.semodule -i *.pp
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Even though the policies are listed as installed we get avc's for things the policies are set to allow. Firewall is not working because of this issue.
+See also https://bugzilla.redhat.com/show_bug.cgi?id=1226436 and https://bugzilla.redhat.com/show_bug.cgi?id=1149790 (the latter implies that this is a regression?)
+So this is actually really bad; I can't disable or remove any local modules, either:
+
+rlpowell@basti> sudo semanage module -d myvirshbugs880971
+libsepol.permission_copy_callback: Module mylibvirtnumad1101802 depends on permission kill in class service, not satisfied (No such file or directory).
+libsemanage.semanage_link_sandbox: Link packages failed (No such file or directory).
+OSError: No such file or directory
+rlpowell@basti> sudo semanage module -d mylibvirtnumad1101802
+libsepol.permission_copy_callback: Module myvirshbugs880971 depends on permission kill in class service, not satisfied (No such file or directory).
+libsemanage.semanage_link_sandbox: Link packages failed (No such file or directory).
+OSError: No such file or directory
+rlpowell@basti> sudo semanage module -r myvirshbugs880971
+libsepol.permission_copy_callback: Module mylibvirtnumad1101802 depends on permission kill in class service, not satisfied (No such file or directory).
+libsemanage.semanage_link_sandbox: Link packages failed (No such file or directory).
+OSError: No such file or directory
+Actually this is caused by the policy. We removed these permissions in F22 and you need to rebuild your modules with the installed policy and then you can manage them using semanage.
+(In reply to Miroslav Grepl from comment #3)
+> Actually this is caused by the policy. We removed these permissions in F22
+> and you need to rebuild your modules with the installed policy and then you
+> can manage them using semanage.
+
+This is a problem between F21 vs. F22 modules.
+Umm, sure, and the obvious way to rebuild them is to *delete them* using semanage, which I can't do.  Just rebuilding them is tricky because I use a puppet module for the builds and I haven't done one by hand in ages; I guess I could make a one character change to all my modules to make them regen?
+
+Ah, here we go.
+
+So for everybody else: what I did was find all the .pp files (i.e. sudo find /etc | grep my | grep -v mysql | grep -v mythtv | grep '\.pp' or whatever works for you) and then simply deleted them (i.e. sudo rm /etc/selinux/mymodules/mypuppetedit/mypuppetedit.pp /etc/selinux/mymodules/myvirshbugs880971/myvirshbugs880971.pp ...).
+
+After puppet rebuilt them, everything is fine.  I dunno about NOTABUG.  IMO, semanage not being able to remove invalid modules is *absolutely* a bug.  But at least I have a workaround.

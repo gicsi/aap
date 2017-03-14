@@ -1,0 +1,4 @@
+Description of problem:
+xpra requires libvpx 1.4 in order to offer VP9 support. I see in rawhide libvpx has been bumped to 1.4. I realize there's ABI incompatibility here, but what would be the feasibility of updating to libvpx in the current release branches (f22 and f21)?
+I'm really uncomfortable doing this. The change is... very intrusive and would require all of the rawhide patching pushed into stable branches. Is this really something that has to land in 22 or could it wait until 23 releases?
+Actually, investigating further, xpra does actually work with 1.3 (without making use of new vp9 features in 1.4), so given the invasiveness of bumping in a released version, I think we'd better leave released branches at 1.3. Sorry for the noise, and thanks for getting back to me.

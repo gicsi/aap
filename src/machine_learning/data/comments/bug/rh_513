@@ -1,0 +1,47 @@
+Created attachment 1042694
+Yum install fence-agents-all
+
+Trying to install fence-agents-all tries to install fence-agents-compute which is not found.
+
+
+Yum list command:
+# yum list 'fence-agents*'
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.coreix.net
+ * epel: mirrors.coreix.net
+ * extras: mirrors.coreix.net
+ * ovirt-3.5: ftp.nluug.nl
+ * ovirt-3.5-epel: mirrors.coreix.net
+ * updates: mirrors.coreix.net
+Available Packages
+fence-agents-all.x86_64                     4.0.11-13.el7_1             updates
+fence-agents-apc.x86_64                     4.0.11-13.el7_1             updates
+fence-agents-apc-snmp.x86_64                4.0.11-13.el7_1             updates
+fence-agents-bladecenter.x86_64             4.0.11-13.el7_1             updates
+fence-agents-brocade.x86_64                 4.0.11-13.el7_1             updates
+fence-agents-cisco-mds.x86_64               4.0.11-13.el7_1             updates
+fence-agents-cisco-ucs.x86_64               4.0.11-13.el7_1             updates
+fence-agents-common.x86_64                  4.0.11-13.el7_1             updates
+fence-agents-drac5.x86_64                   4.0.11-13.el7_1             updates
+fence-agents-eaton-snmp.x86_64              4.0.11-13.el7_1             updates
+fence-agents-eps.x86_64                     4.0.11-13.el7_1             updates
+fence-agents-hpblade.x86_64                 4.0.11-13.el7_1             updates
+fence-agents-ibmblade.x86_64                4.0.11-13.el7_1             updates
+fence-agents-ifmib.x86_64                   4.0.11-13.el7_1             updates
+fence-agents-ilo-mp.x86_64                  4.0.11-13.el7_1             updates
+fence-agents-ilo-ssh.x86_64                 4.0.11-13.el7_1             updates
+fence-agents-ilo2.x86_64                    4.0.11-13.el7_1             updates
+fence-agents-intelmodular.x86_64            4.0.11-13.el7_1             updates
+fence-agents-ipdu.x86_64                    4.0.11-13.el7_1             updates
+fence-agents-ipmilan.x86_64                 4.0.11-13.el7_1             updates
+fence-agents-kdump.x86_64                   4.0.11-13.el7_1             updates
+fence-agents-rhevm.x86_64                   4.0.11-13.el7_1             updates
+fence-agents-rsb.x86_64                     4.0.11-13.el7_1             updates
+fence-agents-scsi.x86_64                    4.0.11-13.el7_1             updates
+fence-agents-virsh.x86_64                   4.0.11-13.el7_1             updates
+fence-agents-vmware-soap.x86_64             4.0.11-13.el7_1             updates
+fence-agents-wti.x86_64                     4.0.11-13.el7_1             updates
+
+Attached output of 'yum install fence-agents-all'.
+fence-agents-compute had to be approved as a subpackage.

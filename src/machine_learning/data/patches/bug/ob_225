@@ -1,0 +1,36 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 015_tcp.patch
+
+And then rebuild your kernel.
+
+Index: sys/netinet/tcp_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/tcp_input.c,v
+retrieving revision 1.175.2.2
+retrieving revision 1.175.2.3
+diff -u -p -r1.175.2.2 -r1.175.2.3
+--- sys/netinet/tcp_input.c	20 Mar 2005 23:36:10 -0000	1.175.2.2
++++ sys/netinet/tcp_input.c	1 Apr 2005 15:31:06 -0000	1.175.2.3
+@@ -1371,13 +1371,17 @@ trimthenstep6:
+ 
+ 	/*
+ 	 * If last ACK falls within this segment's sequence numbers,
+-	 * record its timestamp.
+-	 * Fix from Braden, see Stevens p. 870
++	 * record its timestamp if it's more recent.
++	 * Cf fix from Braden, see Stevens p. 870
+ 	 */
+ 	if (opti.ts_present && TSTMP_GEQ(opti.ts_val, tp->ts_recent) &&
+ 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
++		if (SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
++		    ((tiflags & (TH_SYN|TH_FIN)) != 0)))
++			tp->ts_recent = opti.ts_val;
++		else
++			tp->ts_recent = 0;
+ 		tp->ts_recent_age = tcp_now;
+-		tp->ts_recent = opti.ts_val;
+ 	}
+ 
+ 	/*
+

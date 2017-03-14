@@ -1,0 +1,35 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 010_sendmail.patch
+	cd usr.sbin/sendmail
+	make
+	make install
+
+Index: usr.sbin/sendmail/src/main.c
+===================================================================
+RCS file: /cvs/src/usr.sbin/sendmail/src/main.c,v
+retrieving revision 1.14
+retrieving revision 1.15
+diff -u -r1.14 -r1.15
+--- usr.sbin/sendmail/src/main.c	1999/01/01 20:33:49	1.14
++++ usr.sbin/sendmail/src/main.c	1999/11/24 19:27:17	1.15
+@@ -984,6 +984,18 @@
+ 		usrerr("Permission denied");
+ 		finis(FALSE, EX_USAGE);
+ 	}
++	if (OpMode == MD_INITALIAS &&
++	    RealUid != 0 &&
++	    RealUid != TrustedUid &&
++	    !wordinclass(RealUserName, 't'))
++	{
++		if (LogLevel > 1)
++			sm_syslog(LOG_ALERT, NOQID,
++				  "user %d attempted to rebuild the alias map",
++				  RealUid);
++ 		usrerr("Permission denied");
++ 		finis(FALSE, EX_USAGE);
++ 	}
+ 
+ 	if (MeToo)
+ 		BlankEnvelope.e_flags |= EF_METOO;
+

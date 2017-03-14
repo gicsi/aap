@@ -1,0 +1,6 @@
+In OpenSSL, use of the SHA384 SSL/TLS ciphers may result in a crash of
+the application.  The i386, amd64, vax and m68k platforms aren't
+affected.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.4/common/005_sha512.patch">
+A source code patch exists which remedies this problem.</a>

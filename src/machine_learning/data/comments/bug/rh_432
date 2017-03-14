@@ -1,0 +1,44 @@
+Latest upstream release: 2.7.0
+Current version/release in rawhide: 2.6.0-11.fc23
+URL: http://www.mpir.org/
+
+Please consult the package updates policy before you issue an update to a stable branch: https://fedoraproject.org/wiki/Updates_Policy
+
+More information about the service that created this bug can be found at: https://fedoraproject.org/wiki/Upstream_release_monitoring
+
+Please keep in mind that with any upstream change, there may also be packaging changes that need to be made. Specifically, please remember that it is your responsibility to review the new version to ensure that the licensing is still correct and that no non-free or legally problematic items have been added upstream.
+Failed to kick off scratch build.
+
+cmd:  spectool -g /var/tmp/thn-1XKQwD/mpir.spec
+return code:  22
+stdout:
+Getting http://mpir.org/mpir-2.7.0.tar.lzma to ./mpir-2.7.0.tar.lzma
+
+stderr:
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (22) The requested URL returned error: 404 Not Found
+jjames's mpir-2.7.0-1.fc23 completed http://koji.fedoraproject.org/koji/buildinfo?buildID=666399
+(In reply to Upstream Release Monitoring from comment #1)
+> Failed to kick off scratch build.
+> 
+> cmd:  spectool -g /var/tmp/thn-1XKQwD/mpir.spec
+> return code:  22
+> stdout:
+> Getting http://mpir.org/mpir-2.7.0.tar.lzma to ./mpir-2.7.0.tar.lzma
+> 
+> stderr:
+>   % Total    % Received % Xferd  Average Speed   Time    Time     Time 
+> Current
+>                                  Dload  Upload   Total   Spent    Left  Speed
+> 
+>   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--    
+> 0
+>   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--    
+> 0
+> curl: (22) The requested URL returned error: 404 Not Found
+
+The URL in the spec file *clearly* has .bz2 at the end, not .lzma.  The *previous* tarball was an .lzma, but so what?  Somebody's code is broken....

@@ -1,0 +1,4 @@
+Calling readv(2) with iov_len &lt; 0 or &gt; INT_MAX would result in a
+kernel panic.  This is the third revision of this patch.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.3/common/resid.patch">
+A source code patch exists which remedies this problem.</a>

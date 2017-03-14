@@ -1,0 +1,52 @@
+Description of problem:
+There is no option to destroy a storage domain using the api.
+
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+The way to "destroy" a storage domain is to delete it including the "delete" element in the "storage_domain" element:
+
+---8<---
+#!/bin/sh -ex
+
+url="https://engine.example.com/ovirt-engine/api"
+user="admin@internal"
+password="..."
+sd_id="..."
+
+curl \
+--verbose \
+--insecure \
+--user "${user}:${password}" \
+--header "Accept: application/xml" \
+--header "Content-Type: application/xml" \
+--request DELETE \
+--data '
+<storage_domain>
+  <host>
+    <name>myhost</name>
+  </host>
+  <destroy>true</destroy>
+</storage_domain>
+' \
+"${url}/storagedomains/${sd_id}"
+--->8---
+
+Please check if this works correctly and if it does close the bug.
+Thank you Juan.

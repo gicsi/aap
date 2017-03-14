@@ -1,0 +1,4 @@
+Executable headers with an unaligned address will trigger a kernel panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.5/common/013_kernexec.patch.sig">
+A source code patch exists which remedies this problem.</a>

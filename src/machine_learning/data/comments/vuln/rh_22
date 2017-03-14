@@ -1,0 +1,12 @@
+Your package ldns failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10112060
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047301
+build.log
+Created attachment 1047302
+root.log
+Created attachment 1047303
+state.log
+*** This bug has been marked as a duplicate of bug 1230140 ***

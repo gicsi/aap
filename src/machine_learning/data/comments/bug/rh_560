@@ -1,0 +1,37 @@
+Version-Release number of selected component:
+firewalld-0.3.14.1-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+cmdline:        /usr/bin/python -Es /usr/sbin/firewalld --nofork --nopid
+executable:     /usr/sbin/firewalld
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           Python
+uid:            0
+
+Truncated backtrace:
+firewalld:131:startup:UnboundLocalError: local variable 'pid_file' referenced before assignment
+
+Traceback (most recent call last):
+  File "/usr/sbin/firewalld", line 176, in <module>
+    main()
+  File "/usr/sbin/firewalld", line 171, in main
+    startup(args)
+  File "/usr/sbin/firewalld", line 131, in startup
+    if not args.nopid and os.path.exists(pid_file):
+UnboundLocalError: local variable 'pid_file' referenced before assignment
+
+Local variables in innermost frame:
+args: Namespace(debug=0, debug_gc=False, nofork=True, nopid=True)
+server: <module 'firewall.server.server' from '/usr/lib/python2.7/site-packages/firewall/server/server.pyc'>
+
+Potential duplicate: bug 1233232
+Created attachment 1042145
+File: backtrace
+Created attachment 1042146
+File: environ
+Please have a look at https://admin.fedoraproject.org/updates/FEDORA-2015-10297
+
+This version contains a patch for this issue.
+Fixed in https://admin.fedoraproject.org/updates/FEDORA-2015-10297

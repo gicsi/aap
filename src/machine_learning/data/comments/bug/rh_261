@@ -1,0 +1,49 @@
+Version-Release number of selected component:
+libreoffice-core-4.3.7.2-7.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+backtrace_rating: 4
+cmdline:        /usr/lib64/libreoffice/program/soffice.bin --writer --splash-pipe=5
+crash_function: in
+executable:     /usr/lib64/libreoffice/program/soffice.bin
+kernel:         4.0.5-200.fc21.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #2 0x00007f1e61127619 in at /usr/lib64/libreoffice/program/../ure-link/lib/libuno_sal.so.3
+ #3 pdfparse::PDFFile::impl_getData() const at /so/ws/OCL330/ooo/sdext/source/pdfimport/pdfparse/pdfentries.cxx:959
+ #5 pdfparse::PDFFile::isEncrypted() const at /so/ws/OCL330/ooo/sdext/source/pdfimport/pdfparse/pdfentries.cxx:982
+ #6 pdfi::checkEncryption(rtl::OUString const&, com::sun::star::uno::Reference<com::sun::star::task::XInteractionHandler> const&, rtl::OUString&, bool&, rtl::OUString const&) at /so/ws/OCL330/ooo/sdext/source/pdfimport/wrapper/wrapper.cxx:907
+ #7 pdfi::xpdf_ImportFromFile(rtl::OUString const&, boost::shared_ptr<pdfi::ContentSink> const&, com::sun::star::uno::Reference<com::sun::star::task::XInteractionHandler> const&, rtl::OUString const&, com::sun::star::uno::Reference<com::sun::star::uno::XComponentContext> const&) at /so/ws/OCL330/ooo/sdext/source/pdfimport/wrapper/wrapper.cxx:960
+ #8 pdfi::PDFIRawAdaptor::parse(com::sun::star::uno::Reference<com::sun::star::io::XInputStream> const&, com::sun::star::uno::Reference<com::sun::star::task::XInteractionHandler> const&, rtl::OUString const&, com::sun::star::uno::Reference<com::sun::star::task::XStatusIndicator> const&, boost::shared_ptr<pdfi::XmlEmitter> const&, rtl::OUString const&) at /so/ws/OCL330/ooo/sdext/source/pdfimport/pdfiadaptor.cxx:256
+ #9 pdfi::PDFIRawAdaptor::importer(com::sun::star::uno::Sequence<com::sun::star::beans::PropertyValue> const&, com::sun::star::uno::Reference<com::sun::star::xml::sax::XDocumentHandler> const&, com::sun::star::uno::Sequence<rtl::OUString> const&) at /so/ws/OCL330/ooo/sdext/source/pdfimport/pdfiadaptor.cxx:311
+ #10 XmlFilterAdaptor::importImpl(com::sun::star::uno::Sequence<com::sun::star::beans::PropertyValue> const&) at /usr/lib64/libreoffice/program/../program/libxmlfalo.so
+ #11 SfxObjectShell::ImportFrom(SfxMedium&, com::sun::star::uno::Reference<com::sun::star::text::XTextRange> const&) at /usr/lib64/libreoffice/program/libsfxlo.so
+ #12 sd::DrawDocShell::ImportFrom(SfxMedium&, com::sun::star::uno::Reference<com::sun::star::text::XTextRange> const&) at /usr/lib64/libreoffice/program/../program/libsdlo.so
+Created attachment 1045495
+File: backtrace
+Created attachment 1045496
+File: cgroup
+Created attachment 1045497
+File: core_backtrace
+Created attachment 1045498
+File: dso_list
+Created attachment 1045499
+File: environ
+Created attachment 1045500
+File: limits
+Created attachment 1045501
+File: maps
+Created attachment 1045502
+File: open_fds
+Created attachment 1045503
+File: proc_pid_status
+I think based on the backtrace that you have a third party pdf import extension installed, from extensions.openoffice.org and that is what is crashing here.
+
+Uninstall that and just install libreoffice-pdfimport (which is the same thing except kept up to date) and try to load the same pdf document again and see if that fails/succeeds.
+
+But right now its that pdf import extension that's crashing

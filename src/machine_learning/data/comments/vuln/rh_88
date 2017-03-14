@@ -1,0 +1,22 @@
+Description of problem: Second monitor does not work with F22.  The same system works fine with F21.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible: Always reproducible.
+
+Steps to Reproduce:
+1. Boot the system
+2.
+3.
+
+Actual results: Second monitor does not work.
+
+Expected results: System should boot up and both monitors connected should be active.
+
+Additional info:
+
+I'm running an HP Folio 9480m with an HP ZDisplay monitor connected to one of the DisplayPort connectors on the docking station.
+
+I have F21 on a USB flash drive and if I boot from that then the second monitor is detected and works.
+Re-installed Fedora 22 and now it works.  It's a mystery.

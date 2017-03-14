@@ -1,0 +1,39 @@
+ISSUE DESCRIPTION
+=================
+
+The xl command line utility mishandles long configuration values when passed as command line arguments, with a buffer overrun.
+
+VULNERABLE SYSTEMS
+==================
+
+Systems built on top of xl which pass laundered or checked (but otherwise untrusted) configuration values onto xl's command line, without restricting their length, are vulnerable.
+
+We are not presently aware of any publicly distributed production software which exposes the xl vulnerability. However it is sufficiently simple to create such an arrangement that it might be done locally in an attempt to grant partial management access to particular domains.
+
+Systems using the libxl library directly, without using xl, are not vulnerable. Systems using toolstacks other than xl are not vulnerable. Systems where only fully trusted input is ever presented to the xl command line are not vulnerable.
+
+The vulnerability exists on x86 and ARM.
+
+The vulnerability was introduced in Xen 4.1 and affects all subsequent Xen releases.
+
+IMPACT
+======
+
+A semi-trusted guest administrator or controller, who is intended to be able to partially control the configuration settings for a domain, can escalate their privileges to that of the whole host.
+
+MITIGATION
+==========
+
+Limiting the length of untrusted configuration settings will avoid the vulnerability. (The total length of all command-line configuration settings, including some interposed newlines and trailing nul, must be less than 1024.)
+
+Acknowledgements:
+
+Red Hat would like to thank the Xen project for reporting this issue.
+Statement:
+
+Not vulnerable.
+
+This issue does not affect the Xen packages as shipped with Red Hat Enterprise Linux 5.
+External References:
+
+http://xenbits.xen.org/xsa/advisory-137.html

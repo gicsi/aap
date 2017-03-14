@@ -1,0 +1,127 @@
+From ba0ad7c51a3f2049adfacdcf0024c7b20f0fa42f Mon Sep 17 00:00:00 2001
+From: Jeff Johnston <jjohnstn@redhat.com>
+Date: Thu, 18 Jun 2015 15:02:43 -0400
+Subject: [PATCH] Add proper MANIFEST.MF.
+
+---
+ MANIFEST.MF        | 41 +++++++++++++++++++++++++++++++++++++++++
+ add-manifest.patch | 19 +++++++++++++++++++
+ jnr-ffi.spec       | 10 +++++++++-
+ 3 files changed, 69 insertions(+), 1 deletion(-)
+ create mode 100644 MANIFEST.MF
+ create mode 100644 add-manifest.patch
+
+diff --git a/MANIFEST.MF b/MANIFEST.MF
+new file mode 100644
+index 0000000..e075cac
+--- /dev/null
++++ b/MANIFEST.MF
+@@ -0,0 +1,41 @@
++Manifest-Version: 1.0
++Bundle-SymbolicName: jnr.ffi
++Export-Package: jnr.ffi;version="@VERSION",
++ jnr.ffi.annotations;version="@VERSION",
++ jnr.ffi.byref;version="@VERSION",
++ jnr.ffi.mapper;version="@VERSION",
++ jnr.ffi.provider;version="@VERSION",
++ jnr.ffi.provider.converters;version="@VERSION",
++ jnr.ffi.provider.jffi;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.arm.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.darwin;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.freebsd;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.openbsd;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.solaris;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.i386.windows;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.mips.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.mipsel.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.ppc.aix;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.ppc.darwin;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.ppc.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.s390.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.s390x.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.sparc.solaris;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.sparcv9.solaris;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.darwin;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.freebsd;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.linux;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.openbsd;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.solaris;version="@VERSION",
++ jnr.ffi.provider.jffi.platform.x86_64.windows;version="@VERSION",
++ jnr.ffi.types;version="@VERSION",
++ jnr.ffi.util;version="@VERSION",
++ jnr.ffi.util.ref;version="@VERSION"
++Bundle-Name: Java Abstracted Foreign Function Layer
++Bundle-Version: @VERSION
++Bundle-ManifestVersion: 2
++Bundle-ActivationPolicy: lazy
++Bundle-RequiredExecutionEnvironment: JavaSE-1.7
++Bundle-Vendor: Eclipse Orbit
++
+diff --git a/add-manifest.patch b/add-manifest.patch
+new file mode 100644
+index 0000000..96522ff
+--- /dev/null
++++ b/add-manifest.patch
+@@ -0,0 +1,19 @@
++diff -up ./pom.xml.fix ./pom.xml
++--- ./pom.xml.fix	2015-06-17 13:53:28.329374753 -0400
+++++ ./pom.xml	2015-06-17 13:54:25.882334422 -0400
++@@ -127,6 +127,15 @@
++       </plugin>
++       <plugin>
++         <groupId>org.apache.maven.plugins</groupId>
+++        <artifactId>maven-jar-plugin</artifactId>
+++        <configuration>
+++          <archive>
+++            <manifestFile>MANIFEST.MF</manifestFile>
+++          </archive>
+++        </configuration>
+++      </plugin>
+++      <plugin>
+++        <groupId>org.apache.maven.plugins</groupId>
++         <artifactId>maven-surefire-plugin</artifactId>
++         <version>2.4.2</version>
++         <configuration>
+diff --git a/jnr-ffi.spec b/jnr-ffi.spec
+index 7ee0bbc..31bfb7a 100644
+--- a/jnr-ffi.spec
++++ b/jnr-ffi.spec
+@@ -1,10 +1,12 @@
+ Name:     jnr-ffi
+ Version:  2.0.3
+-Release:  2%{?dist}
++Release:  3%{?dist}
+ Summary:  Java Abstracted Foreign Function Layer
+ License:  ASL 2.0
+ URL:      http://github.com/jnr/%{name}/
+ Source0:  https://github.com/jnr/%{name}/archive/%{version}.tar.gz
++Source1:  MANIFEST.MF
++Patch0:   add-manifest.patch
+ 
+ BuildRequires:  maven-local
+ BuildRequires:  mvn(com.github.jnr:jffi)
+@@ -36,6 +38,9 @@ This package contains the API documentation for %{name}.
+ 
+ %prep
+ %setup -q
++cp %{SOURCE1} .
++sed -i -e's/@VERSION/%{version}/g' MANIFEST.MF
++%patch0
+ 
+ # remove all builtin jars
+ find -name '*.jar' -o -name '*.class' -exec rm -f '{}' \;
+@@ -59,6 +64,9 @@ sed -i 's|-Werror||' libtest/GNUmakefile
+ %doc LICENSE
+ 
+ %changelog
++* Wed Jun 17 2015 Jeff Johnston <jjohnstn@redhat.com> - 2.0.3-3
++- Add proper MANIFEST.MF.
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.9.3
+
+

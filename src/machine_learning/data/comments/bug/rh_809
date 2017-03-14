@@ -1,0 +1,158 @@
+Description of problem:
+'# hadoop-examples-1.2.1.jar pi 10 100 ' failes with hadoop fs permission .
+# hadoop jar hadoop-examples-1.2
+.1.jar pi 10 100
+Number of Maps  = 10
+Samples per Map = 100
+org.apache.hadoop.security.AccessControlException: Permission denied: user=root, access=WRITE, inode="/user":hdfs:hdfs:drwxr-xr-x
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:234)
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:214)
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkPermission(FSPermissionChecker.java:158)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkPermission(FSNamesystem.java:5202)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkPermission(FSNamesystem.java:5184)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkAncestorAccess(FSNamesystem.java:5158)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirsInternal(FSNamesystem.java:3405)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirsInt(FSNamesystem.java:3375)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirs(FSNamesystem.java:3349)
+        at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.mkdirs(NameNodeRpcServer.java:724)
+        at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.mkdirs(ClientNamenodeProtocolServerSideTranslatorPB.java:502)
+        at org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos$ClientNamenodeProtocol$2.callBlockingMethod(ClientNamenodeProtocolProtos.java:59598)
+        at org.apache.hadoop.ipc.ProtobufRpcEngine$Server$ProtoBufRpcInvoker.call(ProtobufRpcEngine.java:585)
+        at org.apache.hadoop.ipc.RPC$Server.call(RPC.java:928)
+        at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:2053)
+        at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:2049)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at javax.security.auth.Subject.doAs(Subject.java:396)
+        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1491)
+        at org.apache.hadoop.ipc.Server$Handler.run(Server.java:2047)
+
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+        at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+        at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+        at org.apache.hadoop.ipc.RemoteException.instantiateException(RemoteException.java:106)
+        at org.apache.hadoop.ipc.RemoteException.unwrapRemoteException(RemoteException.java:73)
+        at org.apache.hadoop.hdfs.DFSClient.primitiveMkdir(DFSClient.java:2396)
+        at org.apache.hadoop.hdfs.DFSClient.mkdirs(DFSClient.java:2365)
+        at org.apache.hadoop.hdfs.DistributedFileSystem$16.doCall(DistributedFileSystem.java:817)
+        at org.apache.hadoop.hdfs.DistributedFileSystem$16.doCall(DistributedFileSystem.java:813)
+        at org.apache.hadoop.fs.FileSystemLinkResolver.resolve(FileSystemLinkResolver.java:81)
+        at org.apache.hadoop.hdfs.DistributedFileSystem.mkdirsInternal(DistributedFileSystem.java:813)
+        at org.apache.hadoop.hdfs.DistributedFileSystem.mkdirs(DistributedFileSystem.java:806)
+        at org.apache.hadoop.fs.FileSystem.mkdirs(FileSystem.java:1933)
+        at org.apache.hadoop.examples.QuasiMonteCarlo.estimatePi(QuasiMonteCarlo.java:282)
+        at org.apache.hadoop.examples.QuasiMonteCarlo.run(QuasiMonteCarlo.java:354)
+        at org.apache.hadoop.util.ToolRunner.run(ToolRunner.java:70)
+        at org.apache.hadoop.examples.QuasiMonteCarlo.main(QuasiMonteCarlo.java:363)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+        at java.lang.reflect.Method.invoke(Method.java:597)
+        at org.apache.hadoop.util.ProgramDriver$ProgramDescription.invoke(ProgramDriver.java:72)
+        at org.apache.hadoop.util.ProgramDriver.run(ProgramDriver.java:144)
+        at org.apache.hadoop.examples.ExampleDriver.main(ExampleDriver.java:74)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+        at java.lang.reflect.Method.invoke(Method.java:597)
+        at org.apache.hadoop.util.RunJar.main(RunJar.java:212)
+Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException): Permission denied: user=root, access=WRITE, inode="/user":hdfs:hdfs:drwxr-xr-x
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:234)
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:214)
+        at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkPermission(FSPermissionChecker.java:158)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkPermission(FSNamesystem.java:5202)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkPermission(FSNamesystem.java:5184)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkAncestorAccess(FSNamesystem.java:5158)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirsInternal(FSNamesystem.java:3405)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirsInt(FSNamesystem.java:3375)
+        at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirs(FSNamesystem.java:3349)
+        at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.mkdirs(NameNodeRpcServer.java:724)
+        at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.mkdirs(ClientNamenodeProtocolServerSideTranslatorPB.java:502)
+        at org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos$ClientNamenodeProtocol$2.callBlockingMethod(ClientNamenodeProtocolProtos.java:59598)
+        at org.apache.hadoop.ipc.ProtobufRpcEngine$Server$ProtoBufRpcInvoker.call(ProtobufRpcEngine.java:585)
+        at org.apache.hadoop.ipc.RPC$Server.call(RPC.java:928)
+        at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:2053)
+        at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:2049)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at javax.security.auth.Subject.doAs(Subject.java:396)
+        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1491)
+        at org.apache.hadoop.ipc.Server$Handler.run(Server.java:2047)
+
+        at org.apache.hadoop.ipc.Client.call(Client.java:1347)
+        at org.apache.hadoop.ipc.Client.call(Client.java:1300)
+        at org.apache.hadoop.ipc.ProtobufRpcEngine$Invoker.invoke(ProtobufRpcEngine.java:206)
+        at $Proxy9.mkdirs(Unknown Source)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+        at java.lang.reflect.Method.invoke(Method.java:597)
+        at org.apache.hadoop.io.retry.RetryInvocationHandler.invokeMethod(RetryInvocationHandler.java:186)
+        at org.apache.hadoop.io.retry.RetryInvocationHandler.invoke(RetryInvocationHandler.java:102)
+        at $Proxy9.mkdirs(Unknown Source)
+        at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolTranslatorPB.mkdirs(ClientNamenodeProtocolTranslatorPB.java:467)
+        at org.apache.hadoop.hdfs.DFSClient.primitiveMkdir(DFSClient.java:2394)
+        ... 23 more
+
+
+It seems that it wants to write to hadoop fs /user .
+Does any user need to be created & added to hdfs group ?
+
+# hadoop fs -ls /
+Found 6 items
+drwxrwxrwx   - yarn   hadoop          0 2015-06-11 12:16 /app-logs
+drwxr-xr-x   - hdfs   hdfs            0 2015-06-11 15:18 /apps
+drwxr-xr-x   - mapred hdfs            0 2015-06-11 12:16 /mapred
+drwxr-xr-x   - hdfs   hdfs            0 2015-06-11 12:16 /mr-history
+drwxrwxrwx   - hdfs   hdfs            0 2015-06-11 14:19 /tmp
+drwxr-xr-x   - hdfs   hdfs            0 2015-06-11 15:18 /user
+
+# hadoop fs -chmod 777 /user
+chmod: changing permissions of '/user': Permission denied
+
+Version-Release number of selected component (if applicable):
+openstack-sahara-2014.2.2-1.el7ost.noarch
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+hadoop command fails with error .
+
+Expected results:
+hadoop command executes successfully .
+
+Additional info:
+http://www.java2s.com/Code/Jar/h/Downloadhadoopexamples121jar.htm
+Hi all,
+
+At this time, Sahara does not provide HDFS user management, or indeed HDFS path management (files to be placed into HDFS for input, or paths to write to for output, must be maintained by the cluster administrators, though existing or output HDFS paths can be specified as data sources for EDP jobs.) We do expose UI URLs for each cluster on the cluster details page, which you can feel free to use. Generally speaking, any jobs you run outside of Sahara's EDP are pure Hadoop; user and data maintenance are up to you.
+
+It appears to me that you are using a 'calculate pi' job, which likely takes no input, and that you are running it directly against your cluster, rather than through Sahara's EDP engine.
+
+Executing the following on your cluster should give you a user folder:
+
+sudo -u hdfs hadoop fs -mkdir /user/username
+sudo -u hdfs hadoop fs -chown root /user/username
+(Username can be root if you like.)
+
+Alternatively, you certainly can:
+sudo -u hdfs hadoop fs -chmod 777 /user
+(If you want your cluster to be extremely permissive.)
+
+At that point, any job that you run should be able to write to /tmp directories freely for intermediate outputs, and should be configurable to allow specification of output path, and you can direct output into your user directories appropriately.
+
+A few notes:
+
+1) I'll note that it also looks like you're using a Hadoop 1.2.1 example against HDP 2.0.6, which is Hadoop 2.2.0. Might work, haven't tried, but you may want to use a more recent example.
+
+2) root has no special permissions in the HDFS world (in which, as your perms list above shows, 'hdfs' is superuser.) As such, it's often best to run jobs as another user to avoid giving your jars undue access to resources outside of HDFS.
+
+Hope this helps,
+Ethan
+Closing based on comment #3.

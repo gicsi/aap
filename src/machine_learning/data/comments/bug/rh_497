@@ -1,0 +1,58 @@
+rhcert on rhel 6 uses systemtd.  On rhel 6.6. it should use init.
+
+RHEL 6.6
+redhat-certification-1.0-20150624.el6.noarch
+redhat-certification-hardware-1.6.6-20150619.el6.noarch
+
+reliably reproducible
+
+1. create a new certification on a system with python-virtinst (the equivalent of virt-install).
+2. run fv_core (or other fv_* tests.
+3. check output when fv_ test starts
+
+expected behavior is that the fv_ test cause rhcert to restart using `service libvirtd restart`, which causes the test to continue.
+
+
+/var/log/rhcert/RedHatCertDaemon contains:
+
+Running the following tests:
+fv_core                                        
+info                                           
+Running fv_core
+/proc/cpuinfo has vmx flag
+Testing kvm virtualization
+Warning: libvirtd may not be running
+"systemctl enable libvirtd.service" has output on stderr
+Verified that guest hwcert-x86_64 is not running
+Verified: /var/lib/libvirt/images/hwcertData.img
+Verified: /var/lib/libvirt/images/hwcert-x86_64.img
+Verified: /etc/libvirt/qemu/hwcert-x86_64.xml
+Guest files verified
+Restarting libvirtd:
+Error: could not restart libvirtd:
+"systemctl restart libvirtd.service" has output on stderr
+copying attachments...
+checking directory /var/log/rhcert/runs/2/hwcert/fvtest/fv_core 
+Skipping output.log
+saveOutput: /var/log/rhcert/runs/2/hwcert/fvtest/fv_core/output.log
+Return value was False
+Running info
+The inverse of bug 1195299
+
+see also bug 1219869
+and bug 1232852
+Tests potentially impacted:
+
+fv tests
+network tests
+kdump
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://rhn.redhat.com/errata/RHEA-2015-1201.html

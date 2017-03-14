@@ -1,0 +1,224 @@
+Execution of Altivec instructions will crash the kernel.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_altivec.patch
+And then rebuild your kernel.
+
+Index: sys/arch/macppc/macppc/machdep.c
+===================================================================
+RCS file: /cvs/src/sys/arch/macppc/macppc/machdep.c,v
+retrieving revision 1.9
+retrieving revision 1.10
+diff -u -r1.9 -r1.10
+--- sys/arch/macppc/macppc/machdep.c	2001/09/28 04:13:12	1.9
++++ sys/arch/macppc/macppc/machdep.c	2001/11/05 22:26:57	1.10
+@@ -264,7 +264,7 @@
+ 	/*
+ 	 * Set up trap vectors
+ 	 */
+-	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
++	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100) {
+ 		switch (exc) {
+ 		default:
+ 			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
+@@ -309,6 +309,17 @@
+ #endif
+ 			break;
+ 		}
++	}
++
++	/* Grr, ALTIVEC_UNAVAIL is a vector not ~0xff aligned: 0x0f20 */
++	bcopy(&trapcode, (void *)0xf20, (size_t)&trapsize);
++	/*
++	 * since trapsize is > 0x20, we just overwrote the EXC_PERF handler
++	 * since we do not use it, we will "share" it with the EXC_VEC,
++	 * we dont support EXC_VEC either.
++	 * should be a 'ba 0xf20 written' at address 0xf00, but we
++	 * do not generate EXC_PERF exceptions...
++	 */
+ 
+ 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+ 
+Index: sys/arch/powerpc/powerpc/trap.c
+===================================================================
+RCS file: /cvs/src/sys/arch/powerpc/powerpc/trap.c,v
+retrieving revision 1.33
+retrieving revision 1.34
+diff -u -r1.33 -r1.34
+--- sys/arch/powerpc/powerpc/trap.c	2001/09/20 13:46:04	1.33
++++ sys/arch/powerpc/powerpc/trap.c	2001/11/05 22:26:57	1.34
+@@ -413,6 +413,14 @@
+ 		break;
+ 
+ 	}
++	/* This is not really a perf exception, but is an ALTIVEC unavail
++	 * which we do not handle, kill the process with illegal instruction.
++	 */
++	case EXC_PERF|EXC_USER:
++		sv.sival_int = frame->srr0;
++		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
++		break;
++
+ 	case EXC_AST|EXC_USER:
+ 		/* This is just here that we trap */
+ 		break;
+
+Hifn7751 based cards may stop working on certain motherboards due to
+DMA errors.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 004_hifn.patch
+And then rebuild your kernel.
+
+Index: sys/dev/pci/hifn7751.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/hifn7751.c,v
+retrieving revision 1.103
+retrieving revision 1.104
+diff -u -r1.103 -r1.104
+--- sys/dev/pci/hifn7751.c	2001/09/06 03:31:34	1.103
++++ sys/dev/pci/hifn7751.c	2001/11/04 18:31:42	1.104
+@@ -154,6 +154,9 @@
+ 	int rseg;
+ 	caddr_t kva;
+ 
++	sc->sc_pci_pc = pa->pa_pc;
++	sc->sc_pci_tag = pa->pa_tag;
++
+ 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+ 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+ 		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
+@@ -185,6 +188,10 @@
+ 		goto fail_io0;
+ 	}
+ 
++	cmd = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
++	cmd &= 0xffff0000;
++	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, cmd);
++
+ 	sc->sc_dmat = pa->pa_dmat;
+ 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
+ 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
+@@ -438,6 +445,8 @@
+ 	struct hifn_softc *sc;
+ 	int full;
+ {
++	u_int32_t reg;
++
+ 	/*
+ 	 * Set polling in the DMA configuration register to zero.  0x7 avoids
+ 	 * resetting the board and zeros out the other fields.
+@@ -468,6 +477,10 @@
+ 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+ 
+ 	hifn_puc_wait(sc);
++
++	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
++	reg &= 0xffff0000;
++	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
+ }
+ 
+ u_int32_t
+@@ -956,8 +969,13 @@
+ 	struct hifn_softc *sc;
+ {
+ 	struct hifn_dma *dma = sc->sc_dma;
++	u_int32_t reg;
+ 	int i;
+ 
++	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
++	reg &= 0xffff0000;
++	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
++
+ 	/* initialize static pointer values */
+ 	for (i = 0; i < HIFN_D_CMD_RSIZE; i++)
+ 		dma->cmdr[i].p = sc->sc_dmamap->dm_segs[0].ds_addr +
+@@ -1539,6 +1557,7 @@
+ 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
+ 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
+ 	if (restart) {
++		printf("%s: abort, resetting.\n");
+ 		hifnstats.hst_abort++;
+ 		hifn_abort(sc);
+ 		return (1);
+Index: sys/dev/pci/hifn7751reg.h
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/hifn7751reg.h,v
+retrieving revision 1.30
+retrieving revision 1.31
+diff -u -r1.30 -r1.31
+--- sys/dev/pci/hifn7751reg.h	2001/08/27 18:54:56	1.30
++++ sys/dev/pci/hifn7751reg.h	2001/11/04 18:31:42	1.31
+@@ -35,7 +35,7 @@
+  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ #ifndef __HIFN_H__
+-#define __HIFN_H__
++#define	__HIFN_H__
+ 
+ #include <machine/endian.h>
+ 
+@@ -43,8 +43,10 @@
+  * Some PCI configuration space offset defines.  The names were made
+  * identical to the names used by the Linux kernel.
+  */
+-#define HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
+-#define HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
++#define	HIFN_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
++#define	HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
++#define	HIFN_RETRY_TIMEOUT	0x40
++#define	HIFN_TRDY_TIMEOUT	0x41
+ 
+ /*
+  * The values below should multiple of 4 -- and be large enough to handle
+Index: sys/dev/pci/hifn7751var.h
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/hifn7751var.h,v
+retrieving revision 1.37
+retrieving revision 1.38
+diff -u -r1.37 -r1.38
+--- sys/dev/pci/hifn7751var.h	2001/08/28 21:40:54	1.37
++++ sys/dev/pci/hifn7751var.h	2001/11/04 18:31:42	1.38
+@@ -153,6 +153,8 @@
+ 	int sc_rnghz;
+ 	int sc_c_busy, sc_s_busy, sc_d_busy, sc_r_busy, sc_active;
+ 	struct hifn_session sc_sessions[2048];
++	pci_chipset_tag_t sc_pci_pc;
++	pcitag_t sc_pci_tag;
+ };
+ 
+ #define	WRITE_REG_0(sc,reg,val) \
+
+CDROM drives generate bogus interrupts reports on some Sun machines.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 003_sparc64cd.patch
+And then rebuild your kernel.
+
+Index: sys/dev/pci/pciide.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/pciide.c,v
+retrieving revision 1.71
+retrieving revision 1.71.2.1
+diff -u -r1.71 -r1.71.2.1
+--- sys/dev/pci/pciide.c	29 Sep 2001 04:46:49 -0000	1.71
++++ sys/dev/pci/pciide.c	14 Nov 2001 03:00:46 -0000	1.71.2.1
+@@ -2432,10 +2432,12 @@
+ 		if ((i == 0 && (priirq & CMD_CONF_DRV0_INTR)) ||
+ 		    (i == 1 && (secirq & CMD_ARTTIM23_IRQ))) {
+ 			crv = wdcintr(wdc_cp);
+-			if (crv == 0)
++			if (crv == 0) {
++#if 0
+ 				printf("%s:%d: bogus intr\n",
+ 				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+-			else
++#endif
++			} else
+ 				rv = 1;
+ 		}
+ 	}
+

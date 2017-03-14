@@ -1,0 +1,16 @@
+Description of problem:
+Jun 23 09:32:04 microstation systemd-udevd[3047]: invalid ACTION operation
+Jun 23 09:32:04 microstation systemd-udevd[3047]: invalid rule '/usr/lib/udev/rules.d/40-iio-sensor-proxy.rules:5'
+Jun 23 09:32:04 microstation systemd-udevd[3047]: invalid ACTION operation
+Jun 23 09:32:04 microstation systemd-udevd[3047]: invalid rule '/usr/lib/udev/rules.d/40-iio-sensor-proxy.rules:6'
+
+Version-Release number of selected component (if applicable):
+iio-sensor-proxy-1.0-5.fc23.x86_64
+
+
+
+There should be "==" instead of "=" next to both ACTIONs.
+iio-sensor-proxy-1.0-6.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/iio-sensor-proxy-1.0-6.fc22
+iio-sensor-proxy-1.0-6.fc22 has been pushed to the Fedora 22 testing repository.
+iio-sensor-proxy-1.0-6.fc22 has been pushed to the Fedora 22 stable repository.

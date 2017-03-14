@@ -1,0 +1,11 @@
+Your package librepo failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10106725
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047265
+build.log
+Created attachment 1047266
+root.log
+Created attachment 1047267
+state.log

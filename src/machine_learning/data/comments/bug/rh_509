@@ -1,0 +1,15 @@
+User is not able to choose Node details via Tuskar Dashboard.
+
+Version: OSP7 beta2, OSP Director beta1
+
+How reproducible:
+All the time
+
+Steps to Reproduce:
+1. Configure Undercloud
+2. Add node
+3. Login to OSP Dashboard
+4. Go to: infrastructure/nodes
+5. Click any one of nodes
+6. Link redirects to url "horizon:infrastructure:nodes:detail"
+*** This bug has been marked as a duplicate of bug 1227013 ***

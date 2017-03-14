@@ -1,0 +1,124 @@
+Created attachment 1041461
+Engine logs during storage domain import, attach and activate.
+
+Goal:
+
+- Migrate VMs and storage domains to another ovirt installation without using an export domain and reducing VM downtimes.
+
+Steps to reproduce:
+
+- Copy volume with gluster data storage domain (containing OVF files)
+- Import, attach and activate storage domain on a different oVirt/Engine installation.
+
+Symptoms:
+
+- "Disk" tab shows expected OVF_STORE disks, but "Virtual Machines" tab is empty.
+
+Expected results:
+
+- "Virtual Machines" tab should show VMs and allow their registration.
+
+Additional Notes:
+
+- VM's were not stopped before copying the storage domain, since the idea is to do a remote live migration by stopping the VMs and copying their active snapshots just at the end, after all backing chains have been copied.
+(In reply to Christopher Pereira from comment #0)
+> Created attachment 1041461 [details]
+> Engine logs during storage domain import, attach and activate.
+> 
+> Goal:
+> 
+> - Migrate VMs and storage domains to another ovirt installation without
+> using an export domain and reducing VM downtimes.
+> 
+> Steps to reproduce:
+> 
+> - Copy volume with gluster data storage domain (containing OVF files)
+> - Import, attach and activate storage domain on a different oVirt/Engine
+> installation.
+> 
+> Symptoms:
+> 
+> - "Disk" tab shows expected OVF_STORE disks, but "Virtual Machines" tab is
+> empty.
+> 
+> Expected results:
+> 
+> - "Virtual Machines" tab should show VMs and allow their registration.
+> 
+> Additional Notes:
+> 
+> - VM's were not stopped before copying the storage domain, since the idea is
+> to do a remote live migration by stopping the VMs and copying their active
+> snapshots just at the end, after all backing chains have been copied.
+
+Hi Christopher,
+Can u please elaborate more, what do you mean the VMs were not stopped before copying the Storage Domain?
+
+Which Data Center version are you using in your setup?
+
+also, can you please attach the full log of the engine and VDSM.
+From the logs it looks that there is one disk which is the OVF_STORE disk:
+  "GetVolumesListVDSCommand, return: [ec4c4ea7-d581-4cbc-8c71-bf50cc5c1d35]"
+but there are no VMs or templates in it:
+  "Finish to fetch OVF files from tar file. The number of OVF entities are 0"
+Pending input for over two weeks, closing.
+If you can produce the requested info, feel free to reopen the BZ.
+Sorry for not answering. I was using another E-mail address for BZ.
+
+I have a clearer picture now: OVF files seems to be generated when the storage is detached. This requires to stop the VMs :-(
+
+Can we generate the OVF files without the need to stop the VMs and detach the storage?
+
+The goal is to *live* replicate a gluster data storage domain and import the VMs into another Datacenter by attaching the SD and using the "VM Import" tab.
+
+This can be easily managed with libvirt, but if OVF files generation is done when a VM definition is changed (with no need to stop the VMS and detach the SD), oVirt could be used to do live migration between different DCs / oVirt releases.
+
+Besides, I believe it could be risky to rely on detaching the SD in order to generate the OVF files, because if you don't have the OVF files and you loose the Engine database you won't be able to import/recover the VMs.
+
+BTW, I have seen duplicated VMs (OVF files) and sometimes I get a "Storage Domain doesn't exist" error when trying to import VMs. I will create new atomic BZ for this issues.
+Hi Christopher, thanks for the answer.
+Which Data Center version are you using in your setup? Can you please attach the VDSM log if it is still relevant?
+OVF should not be generated when the storage is detached (Maybe you meant move to maintenance?)
+
+(In reply to Christopher Pereira from comment #3)
+> Sorry for not answering. I was using another E-mail address for BZ.
+> 
+> I have a clearer picture now: OVF files seems to be generated when the
+> storage is detached. This requires to stop the VMs :-(
+
+OVF should be generated also when the VMs are running.
+The OVF should be generated for a VM once an operation has occurred like create disk, remove disk, snapshot etc.
+This data will be generated as OVF_STORE disk on the Storage every configured time (The default value is 60 minutes)
+
+> 
+> Can we generate the OVF files without the need to stop the VMs and detach
+> the storage?
+
+see my previous answer
+
+> 
+> The goal is to *live* replicate a gluster data storage domain and import the
+> VMs into another Datacenter by attaching the SD and using the "VM Import"
+> tab.
+> 
+> This can be easily managed with libvirt, but if OVF files generation is done
+> when a VM definition is changed (with no need to stop the VMS and detach the
+> SD), oVirt could be used to do live migration between different DCs / oVirt
+> releases.
+> 
+> Besides, I believe it could be risky to rely on detaching the SD in order to
+> generate the OVF files, because if you don't have the OVF files and you
+> loose the Engine database you won't be able to import/recover the VMs.
+> 
+> BTW, I have seen duplicated VMs (OVF files) and sometimes I get a "Storage
+> Domain doesn't exist" error when trying to import VMs. I will create new
+> atomic BZ for this issues.
+
+This is usually happens when one of the VM's disks has no active Storage Domains in the setup.
+Hi Maor,
+
+I was using alpha-1 in the source Datacenter.
+Yes, I meant moving to maintenance mode (before detaching).
+Ok, if OVF files are generated periodically I probably discovered a bug.
+I will provide clean logs the next time I do a Live Migration.
+Will close and reopen in the future.

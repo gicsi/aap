@@ -1,0 +1,30 @@
+Description of problem:
+For >20 content views, just 20 are listed. Due to --per-page / --full-results options missing.
+
+
+Version-Release number of selected component (if applicable):
+rubygem-hammer_cli_katello-0.0.4-14.el6sat.noarch
+
+
+How reproducible:
+100%
+
+
+Steps to Reproduce:
+1. Create >20 content views
+2. hammer content-view list
+
+
+Actual results:
+Just first 20 CVs are listed
+
+
+Expected results:
+All CVs listed / have --per-page & --full-results options like content-host list or product list.
+
+
+Additional info:
+derived from https://bugzilla.redhat.com/show_bug.cgi?id=1202050#c6
+Realized as duplicate of bz1188244 (by the harder way - found a patch, wanna create PR to upstream and realized it's already fixed there - due to that bz :) )
+
+*** This bug has been marked as a duplicate of bug 1188244 ***

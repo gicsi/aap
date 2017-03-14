@@ -1,0 +1,254 @@
+Apply by doing:
+	cd /usr/XF4	# Assuming XF4 is in /usr/XF4
+	patch -p0 < 021_xorg.patch
+
+And then rebuild and install X:
+	make build
+
+Index: xc/extras/freetype2/src/bdf/bdflib.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/extras/freetype2/src/bdf/bdflib.c,v
+retrieving revision 1.4
+diff -u -r1.4 bdflib.c
+--- xc/extras/freetype2/src/bdf/bdflib.c	1 Jun 2006 17:01:41 -0000	1.4
++++ xc/extras/freetype2/src/bdf/bdflib.c	1 Apr 2007 18:49:36 -0000
+@@ -385,8 +385,10 @@
+   } _bdf_parse_t;
+ 
+ 
+-#define setsbit( m, cc )  ( m[(cc) >> 3] |= (FT_Byte)( 1 << ( (cc) & 7 ) ) )
+-#define sbitset( m, cc )  ( m[(cc) >> 3]  & ( 1 << ( (cc) & 7 ) ) )
++#define setsbit( m, cc ) \
++          ( m[(FT_Byte)(cc) >> 3] |= (FT_Byte)( 1 << ( (cc) & 7 ) ) )
++#define sbitset( m, cc ) \
++          ( m[(FT_Byte)(cc) >> 3]  & ( 1 << ( (cc) & 7 ) ) )
+ 
+ 
+   /* An empty string for empty fields. */
+@@ -1141,7 +1143,7 @@
+                             bdf_options_t*  opts )
+   {
+     unsigned long  len;
+-    char           name[128];
++    char           name[256];
+     _bdf_list_t    list;
+     FT_Memory      memory;
+     FT_Error       error = BDF_Err_Ok;
+@@ -1158,6 +1160,13 @@
+     font->spacing = opts->font_spacing;
+ 
+     len = (unsigned long)( ft_strlen( font->name ) + 1 );
++    /* Limit ourselves to 256 characters in the font name. */
++    if ( len >= 256 )
++    {
++      error = BDF_Err_Invalid_Argument;
++      goto Exit;
++    }
++
+     FT_MEM_COPY( name, font->name, len );
+ 
+     list.size = list.used = 0;
+@@ -1492,6 +1501,14 @@
+       /* Make sure the number of glyphs is non-zero. */
+       if ( p->cnt == 0 )
+         font->glyphs_size = 64;
++
++      /* Limit ourselves to 1,114,112 glyphs in the font (this is the */
++      /* number of code points available in Unicode).                 */
++      if ( p->cnt >= 1114112UL )
++      {
++        error = BDF_Err_Invalid_Argument;
++        goto Exit;
++      }
+ 
+       if ( FT_NEW_ARRAY( font->glyphs, font->glyphs_size ) )
+         goto Exit;
+Index: xc/lib/X11/ImUtil.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/lib/X11/ImUtil.c,v
+retrieving revision 1.3
+diff -u -r1.3 ImUtil.c
+--- xc/lib/X11/ImUtil.c	1 Jan 2006 15:32:07 -0000	1.3
++++ xc/lib/X11/ImUtil.c	1 Apr 2007 18:49:36 -0000
+@@ -327,12 +327,13 @@
+ {
+ 	register XImage *image;
+ 	int bits_per_pixel = 1;
++	int min_bytes_per_line;
+ 
+ 	if (depth == 0 || depth > 32 ||
+ 	    (format != XYBitmap && format != XYPixmap && format != ZPixmap) ||
+ 	    (format == XYBitmap && depth != 1) ||
+ 	    (xpad != 8 && xpad != 16 && xpad != 32) ||
+-	    offset < 0 || image_bytes_per_line < 0)
++	    offset < 0)
+ 	    return (XImage *) NULL;
+ 	if ((image = (XImage *) Xcalloc(1, (unsigned) sizeof(XImage))) == NULL)
+ 	    return (XImage *) NULL;
+@@ -363,16 +364,21 @@
+ 	/*
+ 	 * compute per line accelerator.
+ 	 */
+-	if (image_bytes_per_line == 0)
+ 	{
+ 	if (format == ZPixmap)
+-	    image->bytes_per_line = 
++	    min_bytes_per_line = 
+ 	       ROUNDUP((bits_per_pixel * width), image->bitmap_pad);
+ 	else
+-	    image->bytes_per_line =
++	    min_bytes_per_line =
+ 	        ROUNDUP((width + offset), image->bitmap_pad);
+ 	}
+-	else image->bytes_per_line = image_bytes_per_line;
++	if (image_bytes_per_line == 0) {
++	    image->bytes_per_line = min_bytes_per_line;
++	} else if (image_bytes_per_line < min_bytes_per_line) {
++	    return 0;
++	} else {
++	    image->bytes_per_line = image_bytes_per_line;
++	}
+ 
+ 	image->bits_per_pixel = bits_per_pixel;
+ 	image->obdata = NULL;
+@@ -384,7 +390,11 @@
+ Status XInitImage (image)
+     XImage *image;
+ {
++	int min_bytes_per_line;
++
+ 	if (image->depth == 0 || image->depth > 32 ||
++	    image->bits_per_pixel > 32 || image->bitmap_unit > 32 ||
++	    image->bits_per_pixel < 0 || image->bitmap_unit < 0 ||
+ 	    (image->format != XYBitmap &&
+ 	     image->format != XYPixmap &&
+ 	     image->format != ZPixmap) ||
+@@ -392,21 +402,24 @@
+ 	    (image->bitmap_pad != 8 &&
+ 	     image->bitmap_pad != 16 &&
+ 	     image->bitmap_pad != 32) ||
+-	    image->xoffset < 0 || image->bytes_per_line < 0)
++	    image->xoffset < 0)
+ 	    return 0;
+ 
+ 	/*
+ 	 * compute per line accelerator.
+ 	 */
+-	if (image->bytes_per_line == 0)
+-	{
+ 	if (image->format == ZPixmap)
+-	    image->bytes_per_line = 
++	    min_bytes_per_line = 
+ 	       ROUNDUP((image->bits_per_pixel * image->width),
+ 		       image->bitmap_pad);
+ 	else
+-	    image->bytes_per_line =
++	    min_bytes_per_line =
+ 	        ROUNDUP((image->width + image->xoffset), image->bitmap_pad);
++
++	if (image->bytes_per_line == 0) {
++	    image->bytes_per_line = min_bytes_per_line;
++	} else if (image->bytes_per_line < min_bytes_per_line) {
++	    return 0;
+ 	}
+ 
+ 	_XInitImageFuncPtrs (image);
+Index: xc/lib/font/bitmap/bdfread.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/lib/font/bitmap/bdfread.c,v
+retrieving revision 1.3
+diff -u -r1.3 bdfread.c
+--- xc/lib/font/bitmap/bdfread.c	1 Jan 2006 15:32:13 -0000	1.3
++++ xc/lib/font/bitmap/bdfread.c	1 Apr 2007 18:49:36 -0000
+@@ -65,6 +65,12 @@
+ #include <X11/fonts/bitmap.h>
+ #include <X11/fonts/bdfint.h>
+ 
++#if HAVE_STDINT_H
++#include <stdint.h>
++#elif !defined(INT32_MAX)
++#define INT32_MAX 0x7fffffff
++#endif
++
+ #define INDICES 256
+ #define MAXENCODING 0xFFFF
+ #define BDFLINELEN  1024
+@@ -287,6 +293,11 @@
+     if (nchars < 1) {
+ 	bdfError("invalid number of CHARS in BDF file\n");
+ 	return (FALSE);
++    }
++    if (nchars > INT32_MAX / sizeof(CharInfoRec)) {
++	bdfError("Couldn't allocate pCI (%d*%d)\n", nchars,
++		 sizeof(CharInfoRec));
++	goto BAILOUT;
+     }
+     ci = (CharInfoPtr) xalloc(nchars * sizeof(CharInfoRec));
+     if (!ci) {
+Index: xc/lib/font/fontfile/fontdir.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/lib/font/fontfile/fontdir.c,v
+retrieving revision 1.3
+diff -u -r1.3 fontdir.c
+--- xc/lib/font/fontfile/fontdir.c	1 Jan 2006 15:32:15 -0000	1.3
++++ xc/lib/font/fontfile/fontdir.c	1 Apr 2007 18:49:36 -0000
+@@ -38,9 +38,17 @@
+ #include    <X11/fonts/fntfilst.h>
+ #include    <X11/keysym.h>
+ 
++#if HAVE_STDINT_H
++#include <stdint.h>
++#elif !defined(INT32_MAX)
++#define INT32_MAX 0x7fffffff
++#endif
++
+ Bool
+ FontFileInitTable (FontTablePtr table, int size)
+ {
++    if (size < 0 || (size > INT32_MAX/sizeof(FontEntryRec))) 
++	return FALSE;
+     if (size)
+     {
+ 	table->entries = (FontEntryPtr) xalloc(sizeof(FontEntryRec) * size);
+Index: xc/programs/Xserver/Xext/xcmisc.c
+===================================================================
+RCS file: /cvs/OpenBSD/XF4/xc/programs/Xserver/Xext/xcmisc.c,v
+retrieving revision 1.3
+diff -u -r1.3 xcmisc.c
+--- xc/programs/Xserver/Xext/xcmisc.c	8 Jan 2006 21:18:13 -0000	1.3
++++ xc/programs/Xserver/Xext/xcmisc.c	1 Apr 2007 18:49:36 -0000
+@@ -44,6 +44,12 @@
+ #include <X11/extensions/xcmiscstr.h>
+ #include "modinit.h"
+ 
++#if HAVE_STDINT_H
++#include <stdint.h>
++#elif !defined(UINT32_MAX)
++#define UINT32_MAX 0xffffffffU
++#endif
++
+ #if 0
+ static unsigned char XCMiscCode;
+ #endif
+@@ -145,7 +151,10 @@
+ 
+     REQUEST_SIZE_MATCH(xXCMiscGetXIDListReq);
+ 
+-    pids = (XID *)ALLOCATE_LOCAL(stuff->count * sizeof(XID));
++    if (stuff->count > UINT32_MAX / sizeof(XID))
++	    return BadAlloc;
++
++    pids = (XID *)Xalloc(stuff->count * sizeof(XID));
+     if (!pids)
+     {
+ 	return BadAlloc;
+@@ -166,7 +175,7 @@
+     	client->pSwapReplyFunc = (ReplySwapPtr) Swap32Write;
+ 	WriteSwappedDataToClient(client, count * sizeof(XID), pids);
+     }
+-    DEALLOCATE_LOCAL(pids);
++    Xfree(pids);
+     return(client->noClientException);
+ }
+ 
+

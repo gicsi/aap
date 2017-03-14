@@ -1,0 +1,5 @@
+Parse IPv4 options more carefully.  It is not yet clear if this can even be used
+to crash the machine remote or locally.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/005_ipopts.patch">
+A source code patch exists which remedies this problem.</a>

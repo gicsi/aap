@@ -1,0 +1,32 @@
+telnetd does not strip out the TERMINFO, TERMINFO_DIRS, TERMPATH and
+TERMCAP (when it starts with a '/') environment variables.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 030_telnetd.patch
+
+And then rebuild and install telnetd:
+	cd libexec/telnetd
+	make depend
+	make
+	make install
+
+Index: libexec/telnetd/sys_term.c
+===================================================================
+RCS file: /cvs/src/libexec/telnetd/sys_term.c,v
+retrieving revision 1.19
+diff -u -r1.19 sys_term.c
+--- libexec/telnetd/sys_term.c	2000/09/15 07:13:47	1.19
++++ libexec/telnetd/sys_term.c	2000/10/10 15:57:18
+@@ -1850,6 +1850,10 @@
+ 		if (strncmp(*cpp, "LD_", 3) &&
+ 		    strncmp(*cpp, "_RLD_", 5) &&
+ 		    strncmp(*cpp, "LIBPATH=", 8) &&
++		    strncmp(*cpp, "TERMINFO=", 9) &&
++		    strncmp(*cpp, "TERMINFO_DIRS=", 14) &&
++		    strncmp(*cpp, "TERMPATH=", 9) &&
++		    strncmp(*cpp, "TERMCAP=/", 9) &&
+ 		    strncmp(*cpp, "ENV=", 4) &&
+ 		    strncmp(*cpp, "IFS=", 4))
+ 			*cpp2++ = *cpp;
+

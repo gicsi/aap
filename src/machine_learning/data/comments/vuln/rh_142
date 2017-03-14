@@ -1,0 +1,44 @@
+Description of problem:
+Revision 1686756 is available.
+
+Version-Release number of selected component (if applicable):
+1.0.819819 (revision 819819) 
+
+How reproducible:
+-
+
+Steps to Reproduce:
+1. dnf install amqp
+2.
+3.
+
+Actual results:
+revision 819819 gets installed
+
+Expected results:
+revision 1686756 (or even newer if any available) gets installed
+
+Additional info:
+raising severity to high cause outdated package, it's a violation of policy
+amqp-1.0-1.20150622svn1686756.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/amqp-1.0-1.20150622svn1686756.fc22
+amqp-1.0-1.20150622svn1686756.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/amqp-1.0-1.20150622svn1686756.fc21
+amqp-1.0-1.20150622svn1686756.fc20 has been submitted as an update for Fedora 20.
+https://admin.fedoraproject.org/updates/amqp-1.0-1.20150622svn1686756.fc20
+*** Bug 1234346 has been marked as a duplicate of this bug. ***
+amqp-1.0-1.20150622svn1686756.el7 has been submitted as an update for Fedora EPEL 7.
+https://admin.fedoraproject.org/updates/amqp-1.0-1.20150622svn1686756.el7
+Package amqp-1.0-1.20150622svn1686756.fc20:
+* should fix your issue,
+* was pushed to the Fedora 20 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing amqp-1.0-1.20150622svn1686756.fc20'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10523/amqp-1.0-1.20150622svn1686756.fc20
+then log in and leave karma (feedback).
+amqp-1.0-2.20150624svn1687244.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/amqp-1.0-2.20150624svn1687244.fc22
+amqp-1.0-2.20150624svn1687244.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

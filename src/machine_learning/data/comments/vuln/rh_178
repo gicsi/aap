@@ -1,0 +1,37 @@
+Created attachment 1040313
+The preprocessed source file that generated the internal compiler error
+
+Description of problem:
+I installed the latest Fedora 22 upgrades which appear to include gcc 5.1.1-3.  When I compile my library and its test programs, it generates g++ internal compiler error.  This problem did not happen before the upgrade.
+
+Version-Release number of selected component (if applicable):
+gcc 5.1.1-3
+
+How reproducible:
+The problem happens every time I compile my libraries.
+
+Steps to Reproduce:
+This is the compiler command line that was used:
+g++ -ansi -c -g -o obj-fed22i32/test_cresultset.o -Wall -Werror -ftemplate-depth=1024 -m32 -I/home/Devel/projects/include -I/usr/local/boost_1_58_0/include -std=c++14  -DBOOST_ALL_NO_LIB -DBOOST_NO_AUTO_PTR -D__LINUX__ -D__32__ -D__FED__ -D__FEDI__ -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP -D__L_ENDIAN__ -DBOOST_TEST_DYN_LINK src/test_cresultset.cpp
+
+Actual results:
+This is the complete error message that the compile generated:
+src/test_cresultset.cpp: In member function ‘void TestCResultSet::TestGetFail1::test_method()’:
+src/test_cresultset.cpp:241:4: internal compiler error: in build_ctor_subob_ref, at cp/tree.c:2469
+    };^M
+    ^
+Please submit a full bug report,
+with preprocessed source if appropriate.
+See <http://bugzilla.redhat.com/bugzilla> for instructions.
+Preprocessed source stored into /tmp/cc6rhLSW.out file, please attach this to your bugreport.
+
+Expected results:
+Clean compile.
+
+Additional info:
+Attached is the preprocessed source file.
+FYI, the above problem happened in Fedora 22 32-bit.  The same problem happens in Fedora 22 64-bit.
+*** This bug has been marked as a duplicate of bug 1232679 ***
+gcc-5.1.1-4.fc22,gcc-python-plugin-0.14-4.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/gcc-5.1.1-4.fc22,gcc-python-plugin-0.14-4.fc22
+gcc-5.1.1-4.fc22, gcc-python-plugin-0.14-4.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

@@ -1,0 +1,228 @@
++++ This bug was initially created as a clone of Bug #971451 +++
+
+Description of problem:
+Was erasing HTML-formatted text  from an XMPP message box when it completely crashed after I backspaced an <hr/> (from Pidign's own <hr>s splitting old vs current chat history)
+
+Version-Release number of selected component:
+pidgin-2.10.7-2.fc18
+
+Additional info:
+backtrace_rating: 4
+cmdline:        pidgin
+crash_function: sighandler
+executable:     /usr/bin/pidgin
+kernel:         3.8.4-202.fc18.x86_64
+uid:            1000
+ureports_counter: 1
+var_log_messages: Jun  6 10:24:02 ericdesktop abrt[4569]: Saved core dump of pid 17063 (/usr/bin/pidgin) to /var/tmp/abrt/ccpp-2013-06-06-10:24:01-17063 (106803200 bytes)
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #2 sighandler at gtkmain.c:179
+ #5 gtk_widget_set_size_request at gtkwidget.c:8048
+ #6 gtk_imhtml_size_allocate at gtkimhtml.c:414
+ #11 gtk_widget_size_allocate at gtkwidget.c:4122
+ #12 gtk_scrolled_window_size_allocate at gtkscrolledwindow.c:1436
+ #13 g_cclosure_marshal_VOID__BOXEDv at gmarshal.c:1160
+ #14 _g_closure_invoke_va at gclosure.c:840
+ #17 gtk_widget_size_allocate at gtkwidget.c:4122
+ #18 gtk_box_size_allocate at gtkbox.c:500
+ #19 g_cclosure_marshal_VOID__BOXEDv at gmarshal.c:1160
+
+--- Additional comment from Eric L on 2013-06-06 10:43:52 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:43:55 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:43:58 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:01 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:04 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:09 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:12 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:15 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:19 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:21 EDT ---
+
+
+
+--- Additional comment from Eric L on 2013-06-06 10:44:24 EDT ---
+
+
+
+--- Additional comment from Fedora End Of Life on 2013-12-21 08:53:34 EST ---
+
+This message is a reminder that Fedora 18 is nearing its end of life.
+Approximately 4 (four) weeks from now Fedora will stop maintaining
+and issuing updates for Fedora 18. It is Fedora's policy to close all
+bug reports from releases that are no longer maintained. At that time
+this bug will be closed as WONTFIX if it remains open with a Fedora 
+'version' of '18'.
+
+Package Maintainer: If you wish for this bug to remain open because you
+plan to fix it in a currently maintained version, simply change the 'version' 
+to a later Fedora version prior to Fedora 18's end of life.
+
+Thank you for reporting this issue and we are sorry that we may not be 
+able to fix it before Fedora 18 is end of life. If you would still like 
+to see this bug fixed and are able to reproduce it against a later version 
+of Fedora, you are encouraged  change the 'version' to a later Fedora 
+version prior to Fedora 18's end of life.
+
+Although we aim to fix as many bugs as possible during every release's 
+lifetime, sometimes those efforts are overtaken by events. Often a 
+more recent Fedora release includes newer upstream software that fixes 
+bugs or makes them obsolete.
+
+--- Additional comment from Fedora End Of Life on 2014-02-05 16:42:24 EST ---
+
+Fedora 18 changed to end-of-life (EOL) status on 2014-01-14. Fedora 18 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.
+
+--- Additional comment from Christoph Wickert on 2014-04-23 07:54:16 EDT ---
+
+Reopening. As you can see at https://retrace.fedoraproject.org/faf/problems/740148/ the crash still occurs in Fedora 20.
+
+--- Additional comment from Eric L on 2014-04-23 08:03:21 EDT ---
+
+Although Pidgin still occasionally crashes, I don't remember the newer FC20 versions ever hanging after pasting in HTML-formatted text from Chrome--the trigger for the initial crash report.
+
+--- Additional comment from Seb L. on 2014-05-09 08:48:25 EDT ---
+
+Hi,
+
+I just got exactly the same problem on Fedora 20: crash immediately after deleting (delete key, not backspace) a <hr/>-like object, pasted from Firefox.
+
+Here is the corresponding report from the problem tracker:
+  https://retrace.fedoraproject.org/faf/reports/71137/
+
+--- Additional comment from Seb L. on 2014-05-09 09:09:19 EDT ---
+
+Bug reproduction is trivial:
+1) open the attached "make_pidgin_crash.html" with firefox;
+2) copy the whole content;
+3) paste it into pidgin's message composition area;
+4) backspace until you reach the <hr />, which will cause Pidgin to crash.
+[Pidgin crash]
+
+--- Additional comment from Eric L on 2014-05-09 12:29:03 EDT ---
+
+Beautiful! As soon as I start backspacing (after doing a normal paste from Chrome), Pidgin crashes and spams variations of this to the terminal (during an strace):
+
+brk(0)                                  = 0x2990000
+brk(0x29b1000)                          = 0x29b1000
+poll([{fd=6, events=POLLIN|POLLOUT}], 1, 4294967295) = 1 ([{fd=6, revents=POLLIN|POLLOUT}])
+recvfrom(6, "\34\0\257T?\2\0\4(\0\0\0\371\315N\17\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 4096, 0, NULL, NULL) = 4096
+writev(6, [{"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0"..., 16384}, {NULL, 0}, {"", 0}], 3) = 16384
+recvfrom(6, "\34\0/U?\2\0\4(\0\0\0\371\315N\17\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 4096, 0, NULL, NULL) = 1344
+recvfrom(6, 0xaa88f4, 4096, 0, 0, 0)    = -1 EAGAIN (Resource temporarily unavailable)
+
+The final recvfrom() call is repeated exactly as is, whereas the other recvfrom()s and writev() vary in their addresses/parameters/whatever they're called.
+
+Pasting as unformatted text (so that test HTML simply becomes "A\nB") does not lead to a crash.
+
+--- Additional comment from Eric L on 2014-05-09 12:31:50 EDT ---
+
+This is under version 2.10.9-1.fc20 (libpurple 2.10.9)
+
+--- Additional comment from Eric L on 2014-05-09 12:34:44 EDT ---
+
+Found reference on the official Pidgin bug tracker to what is presumably the same bug.
+https://developer.pidgin.im/ticket/15994
+
+--- Additional comment from Alexandr on 2014-11-15 06:02:06 EST ---
+
+Another user experienced a similar problem:
+
+i have copied previous messages into message input, tried to remove empty lines and it crashed.
+
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        pidgin
+crash_function: sighandler
+executable:     /usr/bin/pidgin
+kernel:         3.17.2-200.fc20.x86_64
+package:        pidgin-2.10.10-1.fc20
+reason:         pidgin killed by SIGABRT
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+--- Additional comment from Fedora End Of Life on 2015-05-29 05:05:57 EDT ---
+
+This message is a reminder that Fedora 20 is nearing its end of life.
+Approximately 4 (four) weeks from now Fedora will stop maintaining
+and issuing updates for Fedora 20. It is Fedora's policy to close all
+bug reports from releases that are no longer maintained. At that time
+this bug will be closed as EOL if it remains open with a Fedora  'version'
+of '20'.
+
+Package Maintainer: If you wish for this bug to remain open because you
+plan to fix it in a currently maintained version, simply change the 'version' 
+to a later Fedora version.
+
+Thank you for reporting this issue and we are sorry that we were not 
+able to fix it before Fedora 20 is end of life. If you would still like 
+to see this bug fixed and are able to reproduce it against a later version 
+of Fedora, you are encouraged  change the 'version' to a later Fedora 
+version prior this bug is closed as described in the policy above.
+
+Although we aim to fix as many bugs as possible during every release's 
+lifetime, sometimes those efforts are overtaken by events. Often a 
+more recent Fedora release includes newer upstream software that fixes 
+bugs or makes them obsolete.
+
+--- Additional comment from Fedora End Of Life on 2015-06-29 07:59:26 EDT ---
+
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.
+Bug still exist in Fedora 21.
+
+Trivial to reproduce:
+- create an account (e.g. bonjour protocol)
+- open a chat with another user
+- cut & paste an HTML <hr/>
+- try to delete it using the backspace key
+- watch Pidgin instantly crashing.
+*** This bug has been marked as a duplicate of bug 1186899 ***

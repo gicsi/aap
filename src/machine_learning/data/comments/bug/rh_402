@@ -1,0 +1,73 @@
+Description of problem:
+I added a build. Maybe the bug was triggered by the fact that I called 'copr cancel' on another build at about the same time from another terminal?
+
+Version-Release number of selected component:
+copr-cli-1.44-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+cmdline:        /usr/bin/python2 /usr/bin/copr-cli build nalimilan/julia-nightlies http://nalimilan.fedorapeople.org/julia-0.4.0-0.20150628.fc22.src.rpm
+executable:     /usr/bin/copr-cli
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           Python
+uid:            1000
+
+Truncated backtrace:
+adapters.py:415:send:ConnectionError: ('Connection aborted.', error(110, 'Connection timed out'))
+
+Traceback (most recent call last):
+  File "/usr/bin/copr-cli", line 9, in <module>
+    load_entry_point('copr-cli==0.3.0', 'console_scripts', 'copr-cli')()
+  File "/usr/lib/python2.7/site-packages/copr_cli/main.py", line 415, in main
+    getattr(commands, arg.func)(arg)
+  File "/usr/lib/python2.7/site-packages/copr_cli/main.py", line 66, in wrapper
+    return func(self, args)
+  File "/usr/lib/python2.7/site-packages/copr_cli/main.py", line 175, in action_build
+    self._watch_builds(result.builds_list)
+  File "/usr/lib/python2.7/site-packages/copr_cli/main.py", line 111, in _watch_builds
+    build_details = self.client.get_build_details(build_id)
+  File "/usr/lib/python2.7/site-packages/copr/client/client.py", line 228, in get_build_details
+    data = self._fetch(url, skip_auth=True)
+  File "/usr/lib/python2.7/site-packages/copr/client/client.py", line 167, in _fetch
+    **kwargs
+  File "/usr/lib/python2.7/site-packages/requests/api.py", line 50, in request
+    response = session.request(method=method, url=url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/requests/sessions.py", line 465, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/usr/lib/python2.7/site-packages/requests/sessions.py", line 573, in send
+    r = adapter.send(request, **kwargs)
+  File "/usr/lib/python2.7/site-packages/requests/adapters.py", line 415, in send
+    raise ConnectionError(err, request=request)
+ConnectionError: ('Connection aborted.', error(110, 'Connection timed out'))
+
+Local variables in innermost frame:
+chunked: False
+stream: False
+err: ProtocolError('Connection aborted.', error(110, 'Connection timed out'))
+url: '/api/coprs/build/101602/'
+verify: True
+self: <requests.adapters.HTTPAdapter object at 0x7f6c1e76ba90>
+request: <PreparedRequest [GET]>
+cert: None
+timeout: <requests.packages.urllib3.util.timeout.Timeout object at 0x7f6c1ff10090>
+proxies: {}
+conn: <requests.packages.urllib3.connectionpool.HTTPSConnectionPool object at 0x7f6c1ff00dd0>
+
+Potential duplicate: bug 1194522
+Created attachment 1044010
+File: backtrace
+Created attachment 1044011
+File: dso_list
+Created attachment 1044012
+File: environ
+Hello Milan,
+thank you for the feedback.
+
+> I added a build. Maybe the bug was triggered by the fact that I called 'copr cancel' on another build at about the same time from another terminal?
+
+More likely there was some external problem with the connection and your client was just timed out. I think that error message is correct output in this kind of situation. BUT, you definitely should get more user-friendly message instead of the traceback.
+
+
+Anyway, this report is duplicate of 1194522 so I would like to ask you to watch progress about the issue there.
+*** This bug has been marked as a duplicate of bug 1194522 ***

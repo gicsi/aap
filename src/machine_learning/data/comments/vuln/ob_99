@@ -1,0 +1,10 @@
+A security hole exists in <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=uuxqt&amp;sektion=8">uuxqt(8)</a>
+that may allow an attacker to run arbitrary commands as user uucp and
+use this to gain root access.
+The UUCP execution daemon, uuxqt(8), has a bug in its command line
+parsing routine that may allow arbitrary commands to be run.  Because
+some UUCP commands are run as root (and daemon) from cron it is possible
+to leverage compromise of the UUCP user to gain root.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/015_uucp.patch">
+A source code patch exists which remedies this problem.</a>

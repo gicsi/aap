@@ -1,0 +1,38 @@
+From 291ef33e0fa78edc7159d2758ddb6853bdca95cb Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Mon, 22 Jun 2015 12:42:24 +0000
+Subject: [PATCH] Update to 0.1.6 (#1234371)
+
+---
+ rubygem-gem-patch.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/rubygem-gem-patch.spec b/rubygem-gem-patch.spec
+index 474718c..c30ad00 100644
+--- a/rubygem-gem-patch.spec
++++ b/rubygem-gem-patch.spec
+@@ -3,8 +3,8 @@
+ 
+ Summary: RubyGems plugin for patching gems
+ Name: rubygem-%{gem_name}
+-Version: 0.1.5
+-Release: 4%{?dist}
++Version: 0.1.6
++Release: 1%{?dist}
+ Group: Development/Languages
+ License: MIT
+ URL: http://github.com/strzibny/gem-patch
+@@ -74,6 +74,9 @@ EOF
+ %{gem_instdir}/test
+ 
+ %changelog
++* Mon Jun 22 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.1.6-1
++- Update to 0.1.6 (#1234371)
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.1.5-4
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

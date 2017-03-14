@@ -1,0 +1,771 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 009_isakmpd.patch
+
+Then rebuild and install isakmpd:
+        cd sbin/isakmpd
+        make clean
+        make depend
+        make
+        make install
+
+Index: sbin/isakmpd/crypto.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/crypto.c,v
+retrieving revision 1.16
+retrieving revision 1.16.2.1
+diff -u -p -r1.16 -r1.16.2.1
+--- sbin/isakmpd/crypto.c	28 Aug 2003 14:43:35 -0000	1.16
++++ sbin/isakmpd/crypto.c	13 Jan 2004 22:50:07 -0000	1.16.2.1
+@@ -39,151 +39,254 @@
+ #include "crypto.h"
+ #include "log.h"
+ 
+-enum cryptoerr evp_init (struct keystate *, u_int8_t *, u_int16_t,
+-    const EVP_CIPHER *);
+ enum cryptoerr des1_init (struct keystate *, u_int8_t *, u_int16_t);
+ enum cryptoerr des3_init (struct keystate *, u_int8_t *, u_int16_t);
+ enum cryptoerr blf_init (struct keystate *, u_int8_t *, u_int16_t);
+ enum cryptoerr cast_init (struct keystate *, u_int8_t *, u_int16_t);
+ enum cryptoerr aes_init (struct keystate *, u_int8_t *, u_int16_t);
+-void evp_encrypt (struct keystate *, u_int8_t *, u_int16_t);
+-void evp_decrypt (struct keystate *, u_int8_t *, u_int16_t);
++void des1_encrypt (struct keystate *, u_int8_t *, u_int16_t);
++void des1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
++void des3_encrypt (struct keystate *, u_int8_t *, u_int16_t);
++void des3_decrypt (struct keystate *, u_int8_t *, u_int16_t);
++void blf_encrypt (struct keystate *, u_int8_t *, u_int16_t);
++void blf_decrypt (struct keystate *, u_int8_t *, u_int16_t);
++void cast1_encrypt (struct keystate *, u_int8_t *, u_int16_t);
++void cast1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
++void aes_encrypt (struct keystate *, u_int8_t *, u_int16_t);
++void aes_decrypt (struct keystate *, u_int8_t *, u_int16_t);
+ 
+ struct crypto_xf transforms[] = {
+ #ifdef USE_DES
+   {
+     DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8, BLOCKSIZE, 0,
+     des1_init,
+-    evp_encrypt, evp_decrypt
++    des1_encrypt, des1_decrypt
+   },
+ #endif
+ #ifdef USE_TRIPLEDES
+   {
+     TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, 0,
+     des3_init,
+-    evp_encrypt, evp_decrypt
++    des3_encrypt, des3_decrypt
+   },
+ #endif
+ #ifdef USE_BLOWFISH
+   {
+     BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56, BLOCKSIZE, 0,
+     blf_init,
+-    evp_encrypt, evp_decrypt
++    blf_encrypt, blf_decrypt
+   },
+ #endif
+ #ifdef USE_CAST
+   {
+     CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, 0,
+     cast_init,
+-    evp_encrypt, evp_decrypt
++    cast1_encrypt, cast1_decrypt
+   },
+ #endif
+ #ifdef USE_AES
+   {
+-    AES_CBC, "AES (CBC-Mode)", 16, 32, 2*BLOCKSIZE, 0,
++    AES_CBC, "AES (CBC-Mode)", 16, 32, AES_BLOCK_SIZE, 0, 
+     aes_init,
+-    evp_encrypt, evp_decrypt
++    aes_encrypt, aes_decrypt
+   },
+ #endif
+ };
+ 
+-#ifdef USE_DES
++/* Hmm, the function prototypes for des are really dumb */
++#ifdef __OpenBSD__
++#define DC	(des_cblock *)
++#else
++#define DC	(void *)
++#endif
++
+ enum cryptoerr
+ des1_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+ {
+-  const EVP_CIPHER *evp;
++  /* des_set_key returns -1 for parity problems, and -2 for weak keys */
++  des_set_odd_parity (DC key);
++  switch (des_set_key (DC key, ks->ks_des[0]))
++    {
++    case -2:
++      return EWEAKKEY;
++    default:
++      return EOKAY;
++    }
++}
++
++void
++des1_encrypt (struct keystate *ks, u_int8_t *d, u_int16_t len)
++{
++  des_cbc_encrypt (DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_ENCRYPT);
++}
+ 
+-  evp = EVP_des_cbc();
+-  return evp_init (ks, key, len, evp);
++void
++des1_decrypt (struct keystate *ks, u_int8_t *d, u_int16_t len)
++{
++  des_cbc_encrypt (DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_DECRYPT);
+ }
+-#endif
+ 
+ #ifdef USE_TRIPLEDES
+ enum cryptoerr
+ des3_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+ {
+-  const EVP_CIPHER *evp;
++  des_set_odd_parity (DC key);
++  des_set_odd_parity (DC (key + 8));
++  des_set_odd_parity (DC (key + 16));
++
++  /* As of the draft Tripe-DES does not check for weak keys */
++  des_set_key (DC key, ks->ks_des[0]);
++  des_set_key (DC (key + 8), ks->ks_des[1]);
++  des_set_key (DC (key + 16), ks->ks_des[2]);
+ 
+-  evp = EVP_des_ede3_cbc();
+-  return evp_init (ks, key, len, evp);
++  return EOKAY;
+ }
+-#endif
++
++void
++des3_encrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++{
++  u_int8_t iv[MAXBLK];
++
++  memcpy (iv, ks->riv, ks->xf->blocksize);
++  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
++			ks->ks_des[2], DC iv, DES_ENCRYPT);
++}
++
++void
++des3_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++{
++  u_int8_t iv[MAXBLK];
++
++  memcpy (iv, ks->riv, ks->xf->blocksize);
++  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
++			ks->ks_des[2], DC iv, DES_DECRYPT);
++}
++#undef DC
++#endif /* USE_TRIPLEDES */
+ 
+ #ifdef USE_BLOWFISH
+ enum cryptoerr
+ blf_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+ {
+-  const EVP_CIPHER *evp;
++  blf_key (&ks->ks_blf, key, len);
+ 
+-  evp = EVP_bf_cbc();
+-  return evp_init (ks, key, len, evp);
++  return EOKAY;
+ }
+-#endif
++
++void
++blf_encrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++{
++  u_int16_t i, blocksize = ks->xf->blocksize;
++  u_int8_t *iv = ks->liv;
++  u_int32_t xl, xr;
++
++  memcpy (iv, ks->riv, blocksize);
++
++  for (i = 0; i < len; data += blocksize, i += blocksize)
++    {
++      XOR64 (data, iv);
++      xl = GET_32BIT_BIG (data);
++      xr = GET_32BIT_BIG (data + 4);
++      Blowfish_encipher (&ks->ks_blf, &xl, &xr);
++      SET_32BIT_BIG (data, xl);
++      SET_32BIT_BIG (data + 4, xr);
++      SET64 (iv, data);
++    }
++}
++
++void
++blf_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++{
++  u_int16_t i, blocksize = ks->xf->blocksize;
++  u_int32_t xl, xr;
++
++  data += len - blocksize;
++  for (i = len - blocksize; i >= blocksize; data -= blocksize, i -= blocksize)
++    {
++      xl = GET_32BIT_BIG (data);
++      xr = GET_32BIT_BIG (data + 4);
++      Blowfish_decipher (&ks->ks_blf, &xl, &xr);
++      SET_32BIT_BIG (data, xl);
++      SET_32BIT_BIG (data + 4, xr);
++      XOR64 (data, data - blocksize);
++
++    }
++  xl = GET_32BIT_BIG (data);
++  xr = GET_32BIT_BIG (data + 4);
++  Blowfish_decipher (&ks->ks_blf, &xl, &xr);
++  SET_32BIT_BIG (data, xl);
++  SET_32BIT_BIG (data + 4, xr);
++  XOR64 (data, ks->riv);
++}
++#endif /* USE_BLOWFISH */
+ 
+ #ifdef USE_CAST
+ enum cryptoerr
+ cast_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+ {
+-  const EVP_CIPHER *evp;
++  cast_setkey (&ks->ks_cast, key, len);
++  return EOKAY;
++}
++
++void
++cast1_encrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++{
++  u_int16_t i, blocksize = ks->xf->blocksize;
++  u_int8_t *iv = ks->liv;
++
++  memcpy (iv, ks->riv, blocksize);
+ 
+-  evp = EVP_cast5_cbc();
+-  return evp_init (ks, key, len, evp);
++  for (i = 0; i < len; data += blocksize, i += blocksize)
++    {
++      XOR64 (data, iv);
++      cast_encrypt (&ks->ks_cast, data, data);
++      SET64 (iv, data);
++    }
+ }
+-#endif
+ 
+-#ifdef USE_AES
+-enum cryptoerr
+-aes_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
++void
++cast1_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
+ {
+-  const EVP_CIPHER *evp;
++  u_int16_t i, blocksize = ks->xf->blocksize;
+ 
+-  switch (8 * len)
++  data += len - blocksize;
++  for (i = len - blocksize; i >= blocksize; data -= blocksize, i -= blocksize)
+     {
+-    case 128:
+-      evp = EVP_aes_128_cbc();
+-      break;
+-    case 192:
+-      evp = EVP_aes_192_cbc();
+-      break;
+-    case 256:
+-      evp = EVP_aes_256_cbc();
+-      break;
+-    default:
+-      return EKEYLEN;
++      cast_decrypt (&ks->ks_cast, data, data);
++      XOR64 (data, data - blocksize);
+     }
+-  return evp_init (ks, key, len, evp);
++  cast_decrypt (&ks->ks_cast, data, data);
++  XOR64 (data, ks->riv);
+ }
+-#endif
++#endif /* USE_CAST */
+ 
++#ifdef USE_AES
+ enum cryptoerr
+-evp_init (struct keystate *ks, u_int8_t *key, u_int16_t len, const EVP_CIPHER *evp)
++aes_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+ {
+-  EVP_CIPHER_CTX_init(&ks->ks_evpenc);
+-  EVP_CIPHER_CTX_init(&ks->ks_evpdec);
+-
+-  if (EVP_CIPHER_key_length(evp) != len
+-      && !(EVP_CIPHER_flags(evp) & EVP_CIPH_VARIABLE_LENGTH))
+-    return EKEYLEN;
+-  if (EVP_CipherInit(&ks->ks_evpenc, evp, key, NULL, 1) <= 0)
+-    return EKEYLEN;
+-  if (EVP_CipherInit(&ks->ks_evpdec, evp, key, NULL, 0) <= 0)
+-    return EKEYLEN;
++  AES_set_encrypt_key (key, len << 3, &ks->ks_aes[0]);
++  AES_set_decrypt_key (key, len << 3, &ks->ks_aes[1]);
+   return EOKAY;
+ }
+ 
+ void
+-evp_encrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++aes_encrypt (struct keystate *ks,  u_int8_t *data, u_int16_t len)
+ {
+-  (void) EVP_CipherInit(&ks->ks_evpenc, NULL, NULL, ks->riv, -1);
+-  EVP_Cipher(&ks->ks_evpenc, data, data, len);
++  u_int8_t iv[MAXBLK];
++
++  memcpy (iv, ks->riv, ks->xf->blocksize);
++  AES_cbc_encrypt (data, data, len, &ks->ks_aes[0], iv, AES_ENCRYPT);
+ }
+ 
+ void
+-evp_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
++aes_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
+ {
+-  (void) EVP_CipherInit(&ks->ks_evpdec, NULL, NULL, ks->riv, -1);
+-  EVP_Cipher(&ks->ks_evpdec, data, data, len);
++  u_int8_t iv[MAXBLK];
++
++  memcpy (iv, ks->riv, ks->xf->blocksize);
++  AES_cbc_encrypt (data, data, len, &ks->ks_aes[1], iv, AES_DECRYPT);
+ }
++#endif /* USE_AES */
+ 
+ struct crypto_xf *
+ crypto_get (enum transform id)
+@@ -257,7 +360,7 @@ crypto_init_iv (struct keystate *ks, u_i
+ {
+   memcpy (ks->riv, buf, len);
+ 
+-  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_update_iv: initialized IV", ks->riv,
++  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_init_iv: initialized IV", ks->riv,
+ 		len));
+ }
+ 
+Index: sbin/isakmpd/crypto.h
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/crypto.h,v
+retrieving revision 1.9
+retrieving revision 1.9.2.1
+diff -u -p -r1.9 -r1.9.2.1
+--- sbin/isakmpd/crypto.h	28 Aug 2003 14:43:35 -0000	1.9
++++ sbin/isakmpd/crypto.h	13 Jan 2004 22:50:07 -0000	1.9.2.1
+@@ -32,16 +32,72 @@
+ #ifndef _CRYPTO_H_
+ #define _CRYPTO_H_
+ 
+-#include <openssl/evp.h>
++#if defined (__APPLE__)
++
++#include <openssl/des.h>
++#ifdef USE_BLOWFISH
++#include <openssl/blowfish.h>
++#endif
++#ifdef USE_CAST
++#include <openssl/cast.h>
++#endif
++
++#else
++
++#include <des.h>
++#ifdef USE_BLOWFISH
++#include <blf.h>
++#endif
++#ifdef USE_CAST
++#include <cast.h>
++#endif
++
++#endif /* __APPLE__ */
++
++#ifdef USE_AES
++#include <openssl/aes.h>
++#endif
++
++#define USE_32BIT
++#if defined (USE_64BIT)
++
++#define XOR64(x,y) *(u_int64_t *)(x) ^= *(u_int64_t *)(y);
++#define SET64(x,y) *(u_int64_t *)(x) = *(u_int64_t *)(y);
++
++#elif defined (USE_32BIT)
++
++#define XOR64(x,y) *(u_int32_t *)(x) ^= *(u_int32_t *)(y); \
++   *(u_int32_t *)((u_int8_t *)(x) + 4) ^= *(u_int32_t *)((u_int8_t *)(y) + 4);
++#define SET64(x,y) *(u_int32_t *)(x) = *(u_int32_t *)(y); \
++   *(u_int32_t *)((u_int8_t *)(x) + 4) = *(u_int32_t *)((u_int8_t *)(y) + 4);
++
++#else
++
++#define XOR8(x,y,i) (x)[i] ^= (y)[i];
++#define XOR64(x,y) XOR8(x,y,0); XOR8(x,y,1); XOR8(x,y,2); XOR8(x,y,3); \
++   XOR8(x,y,4); XOR8(x,y,5); XOR8(x,y,6); XOR8(x,y,7);
++#define SET8(x,y,i) (x)[i] = (y)[i];
++#define SET64(x,y) SET8(x,y,0); SET8(x,y,1); SET8(x,y,2); SET8(x,y,3); \
++   SET8(x,y,4); SET8(x,y,5); SET8(x,y,6); SET8(x,y,7);
++
++#endif /* USE_64BIT */
++
++#define SET_32BIT_BIG(x,y) (x)[3]= (y); (x)[2]= (y) >> 8; \
++    (x)[1] = (y) >> 16; (x)[0]= (y) >> 24;
++#define GET_32BIT_BIG(x) (u_int32_t)(x)[3] | ((u_int32_t)(x)[2] << 8) | \
++    ((u_int32_t)(x)[1] << 16)| ((u_int32_t)(x)[0] << 24);
+ 
+ /*
+  * This is standard for all block ciphers we use at the moment.
+- * Theoretically this could increase in future, e.g. for TwoFish.
+- * Keep MAXBLK uptodate
++ * Keep MAXBLK uptodate.
+  */
+ #define BLOCKSIZE	8
+ 
+-#define MAXBLK		(2*BLOCKSIZE)
++#ifdef USE_AES
++#define MAXBLK		AES_BLOCK_SIZE
++#else
++#define MAXBLK		BLOCKSIZE
++#endif
+ 
+ struct keystate {
+   struct crypto_xf *xf;			/* Back pointer */
+@@ -51,13 +107,24 @@ struct keystate {
+   u_int8_t	iv[MAXBLK];		/* Next IV to use */
+   u_int8_t	iv2[MAXBLK];
+   u_int8_t	*riv, *liv;
+-  struct {
+-      EVP_CIPHER_CTX enc, dec;
+-  } evp;
++  union {
++    des_key_schedule desks[3];
++#ifdef USE_BLOWFISH
++    blf_ctx blfks;
++#endif
++#ifdef USE_CAST
++    cast_key castks;
++#endif
++#ifdef USE_AES
++    AES_KEY aesks[2];
++#endif
++  } keydata;
+ };
+ 
+-#define ks_evpenc	evp.enc
+-#define ks_evpdec	evp.dec
++#define ks_des	keydata.desks
++#define ks_blf	keydata.blfks
++#define ks_cast	keydata.castks
++#define ks_aes	keydata.aesks
+ 
+ /*
+  * Information about the cryptotransform.
+Index: sbin/isakmpd/exchange.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/exchange.c,v
+retrieving revision 1.84
+retrieving revision 1.84.2.1
+diff -u -p -r1.84 -r1.84.2.1
+--- sbin/isakmpd/exchange.c	8 Aug 2003 08:46:59 -0000	1.84
++++ sbin/isakmpd/exchange.c	13 Jan 2004 22:50:07 -0000	1.84.2.1
+@@ -220,8 +220,10 @@ exchange_validate (struct message *msg)
+ 	      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH])
+ 	      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SIG]))
+ 	  || (*pc == EXCHANGE_SCRIPT_INFO
+-	      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY])
+-	      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE])))
++	      && ((!TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY])
++		   && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE]))
++	          || (TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE])
++		      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH])))))
+ 	{
+ 	  /* Missing payload.  */
+ 	  LOG_DBG ((LOG_MESSAGE, 70,
+Index: sbin/isakmpd/ipsec.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/ipsec.c,v
+retrieving revision 1.80
+retrieving revision 1.80.2.1
+diff -u -p -r1.80 -r1.80.2.1
+--- sbin/isakmpd/ipsec.c	2 Sep 2003 18:15:55 -0000	1.80
++++ sbin/isakmpd/ipsec.c	13 Jan 2004 22:50:07 -0000	1.80.2.1
+@@ -1013,43 +1013,6 @@ ipsec_delete_spi_list (struct sockaddr *
+     }
+ }
+ 
+-/*
+- * deal with a NOTIFY of INVALID_SPI
+- */
+-static void
+-ipsec_invalid_spi (struct message *msg, struct payload *p)
+-{
+-  struct sockaddr *dst;
+-  int invspisz, off;
+-  u_int32_t spi;
+-  u_int16_t totsiz;
+-  u_int8_t spisz;
+-
+-  /*
+-   * get the invalid spi out of the variable sized notification data
+-   * field, which is after the variable sized SPI field [which specifies
+-   * the receiving entity's phase-1 SPI, not the invalid spi]
+-   */
+-  totsiz = GET_ISAKMP_GEN_LENGTH (p->p);
+-  spisz = GET_ISAKMP_NOTIFY_SPI_SZ (p->p);
+-  off = ISAKMP_NOTIFY_SPI_OFF + spisz;
+-  invspisz = totsiz - off;
+-
+-  if (invspisz != sizeof spi)
+-    {
+-      LOG_DBG ((LOG_SA, 40,
+-	       "ipsec_invalid_spi: SPI size %d in INVALID_SPI "
+-	       "payload unsupported", spisz));
+-       return;
+-    }
+-  memcpy (&spi, p->p + off, sizeof spi);
+-
+-  msg->transport->vtbl->get_dst (msg->transport, &dst);
+-
+-  /* delete matching SPI's from this peer */
+-  ipsec_delete_spi_list (dst, 0, (u_int8_t *)&spi, 1, "INVALID_SPI");
+-}
+-
+ static int
+ ipsec_responder (struct message *msg)
+ {
+@@ -1101,9 +1064,6 @@ ipsec_responder (struct message *msg)
+ 		    "ipsec_responder: got NOTIFY of type %s",
+ 		    tag ? tag : "<unknown>"));
+ 
+-	  if (type == ISAKMP_NOTIFY_INVALID_SPI)
+-	    ipsec_invalid_spi (msg, p);
+-
+ 	  p->flags |= PL_MARK;
+ 	}
+ 
+@@ -1656,6 +1616,31 @@ ipsec_handle_leftover_payload (struct me
+       switch (GET_ISAKMP_NOTIFY_MSG_TYPE (payload->p))
+ 	{
+ 	case IPSEC_NOTIFY_INITIAL_CONTACT:
++	  /*
++	   * Permit INITIAL-CONTACT if
++	   *   - this is not an AGGRESSIVE mode exchange
++	   *   - it is protected by an ISAKMP SA
++	   *
++	   * XXX Instead of the first condition above, we could permit this
++	   * XXX only for phase 2. In the last packet of main-mode, this
++	   * XXX payload, while encrypted, is not part of the hash digest.
++	   * XXX As we currently send our own INITIAL-CONTACTs at this point,
++	   * XXX this too would need to be changed.
++	   */
++	  if (msg->exchange->type == ISAKMP_EXCH_AGGRESSIVE)
++	    {	
++	      log_print ("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
++			 "in AGGRESSIVE mode");
++	      return -1;
++	    }
++
++	  if ((msg->exchange->flags & EXCHANGE_FLAG_ENCRYPT) == 0)
++	    {
++	      log_print ("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
++			 "without ISAKMP SA");
++	      return -1;
++	    }
++
+ 	  /*
+ 	   * Find out who is sending this and then delete every SA that is
+ 	   * ready.  Exchanges will timeout themselves and then the
+Index: sbin/isakmpd/message.c
+===================================================================
+RCS file: /cvs/src/sbin/isakmpd/message.c,v
+retrieving revision 1.61
+retrieving revision 1.61.2.1
+diff -u -p -r1.61 -r1.61.2.1
+--- sbin/isakmpd/message.c	2 Sep 2003 18:14:52 -0000	1.61
++++ sbin/isakmpd/message.c	13 Jan 2004 22:50:07 -0000	1.61.2.1
+@@ -47,10 +47,13 @@
+ #include "doi.h"
+ #include "exchange.h"
+ #include "field.h"
++#include "hash.h"
++#include "ipsec.h"
+ #include "ipsec_num.h"
+ #include "isakmp.h"
+ #include "log.h"
+ #include "message.h"
++#include "prf.h"
+ #include "sa.h"
+ #include "timer.h"
+ #include "transport.h"
+@@ -439,6 +442,12 @@ message_validate_delete (struct message 
+ {
+   u_int8_t proto = GET_ISAKMP_DELETE_PROTO (p->p);
+   struct doi *doi;
++  struct sa *sa, *isakmp_sa;
++  struct sockaddr *dst, *dst_isa;
++  u_int32_t nspis = GET_ISAKMP_DELETE_NSPIS (p->p);
++  u_int8_t *spis = (u_int8_t *)p->p + ISAKMP_DELETE_SPI_OFF;
++  int i;
++  char *addr;
+ 
+   doi = doi_lookup (GET_ISAKMP_DELETE_DOI (p->p));
+   if (!doi)
+@@ -472,16 +481,141 @@ message_validate_delete (struct message 
+     }
+ 
+   /* Validate the SPIs.  */
++  for (i = 0; i < nspis; i++)
++    {
++      /* Get ISAKMP SA protecting this message. */
++      isakmp_sa = msg->isakmp_sa;
++      if (!isakmp_sa)
++        {
++          /* XXX should not happen? */
++          log_print ("message_validate_delete: invalid spi "
++                     "(no valid ISAKMP SA found)");
++          message_free (msg);
++          return -1;
++        }
++      isakmp_sa->transport->vtbl->get_dst (isakmp_sa->transport, &dst_isa);
++
++      /* Get SA to be deleted. */
++      msg->transport->vtbl->get_dst (msg->transport, &dst);
++      if (proto == ISAKMP_PROTO_ISAKMP)
++	sa = sa_lookup_isakmp_sa (dst, spis + i * ISAKMP_HDR_COOKIES_LEN);
++      else
++	sa = ipsec_sa_lookup (dst, ((u_int32_t *)spis)[i], proto);
++      if (!sa)
++        {
++          log_print ("message_validate_delete: invalid spi "
++		     "(no valid SA found)");
++          message_free (msg);
++          return -1;
++        }
++      sa->transport->vtbl->get_dst (sa->transport, &dst);
++
++      /* Destination addresses must match. */
++      if (dst->sa_family != dst_isa->sa_family ||
++          memcmp (sockaddr_addrdata (dst_isa), sockaddr_addrdata (dst),
++                  sockaddr_addrlen (dst)))
++        {
++          sockaddr2text (dst_isa, &addr, 0);
++
++          log_print ("message_validate_delete: invalid spi "
++                     "(illegal delete request from %s)", addr);
++          free (addr);
++          message_free (msg);
++          return -1;
++        }
++    }
+ 
+   return 0;
+ }
+ 
+ /*
+- * Validate the hash payload P in message MSG.  */
++ * Validate the hash payload P in message MSG.
++ * XXX Currently hash payloads are processed by the particular exchanges,
++ * except INFORMATIONAL.  This should be actually done here.
++ */
+ static int
+ message_validate_hash (struct message *msg, struct payload *p)
+ {
+-  /* XXX Not implemented yet.  */
++  struct sa *isakmp_sa = msg->isakmp_sa;
++  struct ipsec_sa *isa;
++  struct hash *hash;
++  struct payload *hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
++  struct prf *prf;
++  u_int8_t *comp_hash, *rest;
++  u_int8_t message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
++  size_t rest_len;
++
++  if (msg->exchange)	/* active exchange validates hash payload. */
++    return 0;
++
++  if (isakmp_sa == NULL)
++    {
++       log_print ("message_validate_hash: invalid hash information");
++       return -1;
++    }
++
++  isa = isakmp_sa->data;
++  hash = hash_get (isa->hash);
++
++  if (hash == NULL)
++    {
++       log_print ("message_validate_hash: invalid hash information");
++       return -1;
++    }
++
++  /* If no SKEYID_a, we can not do anything (should not happen).  */
++  if (!isa->skeyid_a)
++    {
++      log_print ("message_validate_hash: invalid hash information");
++      return -1;
++    }
++
++  /* Allocate the prf and start calculating our HASH(1). */
++  LOG_DBG_BUF ((LOG_MISC, 90, "message_validate_hash: SKEYID_a", isa->skeyid_a,
++		isa->skeyid_len));
++  prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
++  if (!prf)
++    return -1;
++
++  comp_hash = (u_int8_t *)malloc (hash->hashsize);
++  if (!comp_hash)
++    {
++      log_error ("message_validate_hash: malloc (%lu) failed",
++	        (unsigned long)hash->hashsize);
++      prf_free (prf);
++      return -1;
++    }
++
++  /* This is not an active exchange. */
++  GET_ISAKMP_HDR_MESSAGE_ID (msg->iov[0].iov_base, message_id);
++
++  prf->Init (prf->prfctx);
++  LOG_DBG_BUF ((LOG_MISC, 90, "message_validate_hash: message_id",
++		message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
++  prf->Update (prf->prfctx, message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
++  rest = hashp->p + GET_ISAKMP_GEN_LENGTH (hashp->p);
++  rest_len = (GET_ISAKMP_HDR_LENGTH (msg->iov[0].iov_base)
++	        - (rest - (u_int8_t*)msg->iov[0].iov_base));
++  LOG_DBG_BUF ((LOG_MISC, 90, "message_validate_hash: payloads after HASH(1)",
++		rest, rest_len));
++  prf->Update (prf->prfctx, rest, rest_len);
++  prf->Final (comp_hash, prf->prfctx);
++  prf_free (prf);
++
++  if (memcmp (hashp->p + ISAKMP_HASH_DATA_OFF, comp_hash, hash->hashsize))
++    {
++      log_print ("message_validate_hash: invalid hash value for %s payload",
++		 TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE])
++		 ? "DELETE" : "NOTIFY");
++      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
++      free (comp_hash);
++      return -1;
++    }
++  free (comp_hash);
++
++  /* Mark the HASH as handled. */
++  hashp->flags |= PL_MARK;
++
+   return 0;
+ }
+ 
+@@ -1217,10 +1351,12 @@ message_recv (struct message *msg)
+       && (flags & ISAKMP_FLAGS_COMMIT))
+     msg->exchange->flags |= EXCHANGE_FLAG_HE_COMMITTED;
+ 
+-  /* Require encryption for any phase 2 message. XXX Always?  */
+-  if (msg->exchange->phase == 2 && (flags & ISAKMP_FLAGS_ENC) == 0)
++  /* Require encryption as soon as we have the keystate for it.  */
++  if ((flags & ISAKMP_FLAGS_ENC) == 0 &&
++      (msg->exchange->phase == 2 || msg->exchange->keystate))
+     {
+-      log_print ("message_recv: cleartext phase 2 message");
++      log_print ("message_recv: cleartext phase %d message",
++		 msg->exchange->phase);
+       message_drop (msg, ISAKMP_NOTIFY_INVALID_FLAGS, 0, 1, 1);
+       return -1;
+     }
+

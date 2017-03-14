@@ -1,0 +1,120 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_spamd.patch
+
+Then build and install spamd.
+
+	cd libexec/spamd
+	make obj
+	make cleandir
+	make depend
+	make
+	make install
+
+
+Index: libexec/spamd/sync.c
+===================================================================
+RCS file: /cvs/src/libexec/spamd/sync.c,v
+retrieving revision 1.1
+retrieving revision 1.1.2.1
+diff -u -p -r1.1 -r1.1.2.1
+--- libexec/spamd/sync.c	4 Mar 2007 03:19:41 -0000	1.1
++++ libexec/spamd/sync.c	28 Apr 2007 02:25:52 -0000	1.1.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: sync.c,v 1.1 2007/03/04 03:19:41 beck Exp $	*/
++/*	$OpenBSD: sync.c,v 1.1.2.1 2007/04/28 02:25:52 ckuethe Exp $	*/
+ 
+ /*
+  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
+@@ -65,7 +65,7 @@ struct sync_host {
+ 	LIST_ENTRY(sync_host)	h_entry;
+ 
+ 	char			*h_name;
+-	struct sockaddr_in	h_addr;
++	struct sockaddr_in	sh_addr;
+ };
+ LIST_HEAD(synchosts, sync_host) sync_hosts = LIST_HEAD_INITIALIZER(sync_hosts);
+ 
+@@ -105,9 +105,9 @@ sync_addhost(const char *name, u_short p
+ 		return (ENOMEM);
+ 	}
+ 
+-	shost->h_addr.sin_family = AF_INET;
+-	shost->h_addr.sin_port = htons(port);
+-	shost->h_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
++	shost->sh_addr.sin_family = AF_INET;
++	shost->sh_addr.sin_port = htons(port);
++	shost->sh_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
+ 	freeaddrinfo(res0);
+ 
+ 	LIST_INSERT_HEAD(&sync_hosts, shost, h_entry);
+@@ -115,7 +115,7 @@ sync_addhost(const char *name, u_short p
+ 	if (debug)
+ 		fprintf(stderr, "added spam sync host %s "
+ 		    "(address %s, port %d)\n", shost->h_name,
+-		    inet_ntoa(shost->h_addr.sin_addr), port);
++		    inet_ntoa(shost->sh_addr.sin_addr), port);
+ 
+ 	return (0);
+ }
+@@ -412,9 +412,9 @@ sync_send(struct iovec *iov, int iovlen)
+ 	LIST_FOREACH(shost, &sync_hosts, h_entry) {
+ 		if (debug)
+ 			fprintf(stderr, "sending sync message to %s (%s)\n",
+-			    shost->h_name, inet_ntoa(shost->h_addr.sin_addr));
+-		msg.msg_name = &shost->h_addr;
+-		msg.msg_namelen = sizeof(shost->h_addr);
++			    shost->h_name, inet_ntoa(shost->sh_addr.sin_addr));
++		msg.msg_name = &shost->sh_addr;
++		msg.msg_namelen = sizeof(shost->sh_addr);
+ 		sendmsg(syncfd, &msg, 0);
+ 	}
+ }
+@@ -497,6 +497,7 @@ sync_update(time_t now, char *helo, char
+ 
+ 	/* Send message to the target hosts */
+ 	sync_send(iov, i);
++	HMAC_CTX_cleanup(&ctx);
+ }
+ 
+ void
+@@ -552,6 +553,7 @@ sync_addr(time_t now, time_t expire, cha
+ 
+ 	/* Send message to the target hosts */
+ 	sync_send(iov, i);
++	HMAC_CTX_cleanup(&ctx);
+ }
+ 
+ void
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 002_splnet.patch
+
+Then build and install a new kernel.
+
+
+Index: sys/kern/kern_event.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_event.c,v
+retrieving revision 1.28
+retrieving revision 1.28.2.1
+diff -u -p -r1.28 -r1.28.2.1
+--- sys/kern/kern_event.c	1 Dec 2006 07:17:25 -0000	1.28
++++ sys/kern/kern_event.c	28 Apr 2007 01:53:46 -0000	1.28.2.1
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: kern_event.c,v 1.28 2006/12/01 07:17:25 camield Exp $	*/
++/*	$OpenBSD: kern_event.c,v 1.28.2.1 2007/04/28 01:53:46 ckuethe Exp $	*/
+ 
+ /*-
+  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
+@@ -703,7 +703,7 @@ kqueue_poll(struct file *fp, int events,
+ {
+ 	struct kqueue *kq = (struct kqueue *)fp->f_data;
+ 	int revents = 0;
+-	int s = splnet();
++	int s = splhigh();
+ 
+ 	if (events & (POLLIN | POLLRDNORM)) {
+ 		if (kq->kq_count) {
+

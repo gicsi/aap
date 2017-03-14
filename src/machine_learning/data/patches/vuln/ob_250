@@ -1,0 +1,28 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 010_sendmail3.patch
+
+And then rebuild and install sendmail:
+	cd gnu/usr.sbin/sendmail
+	make obj
+	make depend
+	make
+	make install
+
+Index: gnu/usr.sbin/sendmail/sendmail/main.c
+===================================================================
+RCS file: /cvs/src/gnu/usr.sbin/sendmail/sendmail/main.c,v
+retrieving revision 1.21
+retrieving revision 1.21.6.1
+diff -u -p -r1.21 -r1.21.6.1
+--- gnu/usr.sbin/sendmail/sendmail/main.c	24 Jun 2004 03:59:27 -0000	1.21
++++ gnu/usr.sbin/sendmail/sendmail/main.c	8 Aug 2006 20:33:12 -0000	1.21.6.1
+@@ -2893,6 +2893,7 @@ finis(drop, cleanup, exitstat)
+ 				dropenvelope(CurEnv, true, false);
+ 				sm_rpool_free(CurEnv->e_rpool);
+ 				CurEnv->e_rpool = NULL;
++				CurEnv->e_to = NULL;
+ 			}
+ 			else
+ 				poststats(StatFile);
+

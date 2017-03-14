@@ -1,0 +1,36 @@
+From 7797d9159b77f9b859b25a2f0a692d6fbfed05db Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 12:59:19 +0000
+Subject: [PATCH] Update to 3.4.0 (#1235660)
+
+---
+ lm_sensors.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/lm_sensors.spec b/lm_sensors.spec
+index 262b6b5..51868d9 100644
+--- a/lm_sensors.spec
++++ b/lm_sensors.spec
+@@ -1,6 +1,6 @@
+ Name: lm_sensors
+-Version: 3.3.5
+-Release: 6%{?dist}
++Version: 3.4.0
++Release: 1%{?dist}
+ Summary: Hardware monitoring tools
+ Group: Applications/System
+ License: LGPLv2+ and GPLv3+ and GPLv2+ and Verbatim and Public Domain
+@@ -177,6 +177,9 @@ fi
+ 
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 3.4.0-1
++- Update to 3.4.0 (#1235660)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.3.5-6
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

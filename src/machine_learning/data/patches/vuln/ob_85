@@ -1,0 +1,282 @@
+Apply by doing:
+	cd /usr/X11
+	patch -p0<014_xlock.patch
+
+Then rebuild the xlock binary:
+	cd xc/programs/xlockmore
+	xmkmf; make Makefiles; make; make install
+
+--- xc/programs/xlockmore/iconfig.h	2000/10/07 17:36:06	1.12
++++ xc/programs/xlockmore/iconfig.h	2000/12/19 20:21:41	1.13
+@@ -313,6 +313,10 @@
+ 
+ XCOMM      *** END DEBUG CHECK SECTION ***
+ 
++XCOMM      *** DEFINE THIS TO USE A SEPARATE PROCESS (SAFER) ***
++XCOMM      *** TO VALIDATE PASSWORDS                         ***
++PIPEDEF = -DUSE_A_DAMN_PIPE
++
+ #ifndef __QNX__
+ #ifndef MathLibrary
+ #define MathLibrary -lm
+@@ -522,7 +526,7 @@
+ XCOMM  OPTDEF += -DSTAFF_NETGROUP=\"/etc/xlock.netgroup\"
+ 
+ DEFINES = -DDEF_FILESEARCHPATH=\"$(LIBDIR)/%T/%N%S\" \
+-$(SYSTEMDEF) $(EDITRESDEF) $(SLEEPDEF) $(OPTDEF) $(RANDDEF) \
++$(PIPEDEF) $(SYSTEMDEF) $(EDITRESDEF) $(SLEEPDEF) $(OPTDEF) $(RANDDEF) \
+ $(MODULEDEF) $(CHECKDEF) $(UNSTABLEDEF) $(PASSWDDEF) $(XMINC) $(XAWINC) \
+ $(CPPDEF) $(XPMDEF) $(GLDEF) $(DTSAVERDEF) $(DPMSDEF) \
+ $(SOUNDDEF) $(PASSWDINC) $(XPMINC) $(GLINC) $(DTSAVERINC) $(DPMSINC) \
+--- xc/programs/xlockmore/modes/Imakefile	2000/04/15 09:45:59	1.6
++++ xc/programs/xlockmore/modes/Imakefile	2000/12/19 19:20:23	1.7
+@@ -80,7 +80,7 @@
+ $(DOU)util$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+ $(DOU)vis$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+ $(DOU)spline$(OU)erase$(OU)sound$(O)$(S)\
+-$(DOU)vtlock$(OU)vtlock_proc$(O)
++$(DOU)vtlock$(OU)vtlock_proc$(OU)atomicio$(O)
+ #ifdef Check
+ XLOCKCHECKOBJS = $(S)memcheck$(O)
+ #endif
+@@ -162,7 +162,7 @@
+ XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(CU)parsecmd$(C) \
+ $(DU)vis$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+ $(DU)spline$(CU)sound$(CU)erase$(C) \
+-$(DU)vtlock$(CU)vtlock_proc$(C)
++$(DU)vtlock$(CU)vtlock_proc$(CU)atomicio$(C)
+ XLOCKCHECKSRCS = $(DU)memcheck$(C)
+ XLOCKMODESRCS = $(DM)ant$(CM)ball$(CM)bat$(CM)blot$(C) \
+ $(DM)bouboule$(CM)bounce$(CM)braid$(CM)bubble$(CM)bug$(C) \
+--- xc/programs/xlockmore/xlock/Imakefile	1999/12/05 16:37:06	1.5
++++ xc/programs/xlockmore/xlock/Imakefile	2000/12/19 19:20:24	1.6
+@@ -19,7 +19,7 @@
+ $(DOU)util$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+ $(DOU)vis$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+ $(DOU)spline$(OU)sound$(OU)erase$(O)$(S)\
+-$(DOU)vtlock$(OU)vtlock_proc$(O)
++$(DOU)vtlock$(OU)vtlock_proc$(OU)atomicio$(O)
+ #ifdef Check
+ XLOCKCHECKOBJS = $(S)memcheck$(O)
+ #endif
+@@ -30,7 +30,7 @@
+ $(DU)util$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+ $(DU)vis$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+ $(DU)spline$(CU)sound$(CU)erase$(C) \
+-$(DU)vtlock$(CU)vtlock_proc$(C)
++$(DU)vtlock$(CU)vtlock_proc$(CU)atomicio$(C)
+ XLOCKCHECKSRCS = $(DU)memcheck$(C)
+ 
+ XCOMM default target
+--- xc/programs/xlockmore/xlock/passwd.c	2000/04/15 09:46:00	1.9
++++ xc/programs/xlockmore/xlock/passwd.c	2000/12/19 19:20:24	1.10
+@@ -64,7 +64,14 @@
+ #include <sys/param.h>
+ #endif
+ 
++#ifdef USE_A_DAMN_PIPE
++#include <limits.h>
+ 
++int passwd_rpipe = -1;
++int passwd_wpipe = -1;
++pid_t passwd_pid;
++#endif
++
+ #if defined( __bsdi__ ) && _BSDI_VERSION >= 199608
+ #define       BSD_AUTH
+ #endif
+@@ -1193,6 +1200,9 @@
+ 			}
+ 	}
+ #endif
++#ifdef USE_A_DAMN_PIPE
++	done = passwd_do_check(buffer);
++#else
+ 	if (!done) {
+ 		done = (!strcmp((char *) crypt(buffer, userpass), userpass));
+ 		/* userpass is used */
+@@ -1220,6 +1230,7 @@
+ 			syslog(SYSLOG_NOTICE, "%s: %s unlocked screen", ProgramName, ROOT);
+ #endif
+ 	}
++#endif /* !USE_A_DAMN_PIPE */
+ #endif /* !BSD_AUTH */
+ #endif /* !ultrix */
+ #endif /* !PAM */
+@@ -1925,9 +1936,50 @@
+ 		else
+ 			gpass();
+ #else
++#ifdef USE_A_DAMN_PIPE
++		{
++			int pipes1[2];
++			int pipes2[2];
++
++			if (pipe(pipes1) == -1)
++				return;
++			if (pipe(pipes2) == -1) {
++				close(pipes1[0]);
++				close(pipes1[1]);
++				return;
++			}
++			passwd_pid = fork();
++			switch (passwd_pid) {
++			case -1:
++				close(pipes1[0]);
++				close(pipes1[1]);
++				close(pipes2[0]);
++				close(pipes2[1]);
++				return;
++			default:
++				/* parent */
++				close(pipes1[0]);
++				passwd_wpipe = pipes1[1];
++				close(pipes2[1]);
++				passwd_rpipe = pipes2[0];
++				return;
++
++			case 0:
++				/* child */
++				close(pipes1[1]);
++				passwd_rpipe = pipes1[0];
++				close(pipes2[0]);
++				passwd_wpipe = pipes2[1];
++
++				passwd_run_checks();
++				_exit(1);
++			}
++		}
++#else
+ 		getCryptedUserPasswd();
+ #endif
+ #endif
++#endif
+ 		if (allowroot)
+ 			getCryptedRootPasswd();
+ #endif /* !BSD_AUTH */
+@@ -1937,3 +1989,53 @@
+ 	initDCE();
+ #endif
+ }
++
++#ifdef USE_A_DAMN_PIPE
++
++int
++passwd_do_check(user)
++	char *user;
++{
++	char buf[PIPE_BUF];
++
++	strlcpy(buf, user, sizeof buf);
++	if (atomicio(write, passwd_wpipe, buf, sizeof buf) != sizeof buf)
++		return 0;	/* what to do? */
++	buf[0] = '\0';
++	read(passwd_rpipe, buf, 1);
++	if (buf[0])
++		return 1;
++	else
++		return 0;
++}
++
++passwd_run_checks()
++{
++	char buf[PIPE_BUF];
++	struct passwd *pw = NULL;
++	int off, len;
++	u_char ack;
++
++	while (1) {
++		memset(buf, 0, sizeof buf);
++		ack = 0;
++
++		if (atomicio(read, passwd_rpipe, buf, sizeof buf) != sizeof buf)
++			_exit(1);
++
++		buf[sizeof(buf)-1] = '\0';
++
++		pw = getpwnam(user);
++		if (pw && strcmp(crypt(buf, pw->pw_passwd), pw->pw_passwd) == 0)
++			ack = 1;
++		if (ack == 0) {
++			pw = getpwnam("root");
++			if (pw && strcmp(crypt(buf, pw->pw_passwd),
++			    pw->pw_passwd) == 0)
++				ack = 1;
++		}
++		endpwent();
++		(void) write(passwd_wpipe, &ack, 1);
++	}
++}
++#endif
+--- xc/programs/xlockmore/xlock/resource.c	2000/05/16 03:33:11	1.2
++++ xc/programs/xlockmore/xlock/resource.c	2000/12/19 19:20:24	1.3
+@@ -155,8 +155,8 @@
+ #ifdef USE_MB
+ #define DEF_FONTSET	DEF_FONT ## ",-*-24-*"
+ #endif
+-#define DEF_BG		"White"
+-#define DEF_FG		"Black"
++#define DEF_BG		"Black"
++#define DEF_FG		"White"
+ #ifdef FR
+ #define DEF_NAME	"Nom: "
+ #define DEF_PASS	"Mot de passe: "
+--- /dev/null	Fri Dec 22 01:30:03 2000
++++ xc/programs/xlockmore/xlock/atomicio.c	Tue Dec 19 13:20:24 2000
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (c) 1999 Theo de Raadt
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <sys/types.h>
++#include <errno.h>
++
++/*
++ * ensure all of data on socket comes through. f==read || f==write
++ */
++ssize_t
++atomicio(f, fd, _s, n)
++	ssize_t (*f) ();
++	int fd;
++	void *_s;
++	size_t n;
++{
++	char *s = _s;
++	ssize_t res, pos = 0;
++
++	while (n > pos) {
++		res = (f) (fd, s + pos, n - pos);
++		switch (res) {
++		case -1:
++			if (errno == EINTR || errno == EAGAIN)
++				continue;
++		case 0:
++			return (res);
++		default:
++			pos += res;
++		}
++	}
++	return (pos);
++}
+

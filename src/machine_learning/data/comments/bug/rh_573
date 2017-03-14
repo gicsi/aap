@@ -1,0 +1,86 @@
+Description of problem:
+
+From the description of strict-O_DIRECT,
+
+        { .key = {"strict-O_DIRECT"},
+          .type = GF_OPTION_TYPE_BOOL,
+          .default_value = "off",
+          .description = "This option when set to off, ignores the "
+          "O_DIRECT flag."
+        },
+
+However the implementation is as belows:
+
+<wb_writev>
+
+....
+        if (!conf->strict_O_DIRECT)
+                o_direct = 0;
+
+        if (fd->flags & (O_SYNC|O_DSYNC|o_direct))
+		wb_disabled = 1;
+
+	if (flags & (O_SYNC|O_DSYNC|o_direct))
+                wb_disabled = 1;
+
+....
+
+</wb_writev>
+
+The above code has some issues:
+
+1. O_DIRECT flag (which is passed by application) is never checked against. Instead it is replaced with o_direct (which is an option of write-behind). This seems to be a regression introduced by commit,
+
+commit ea982a764b7cb447eb866129fef2cfafaa48eb6a
+Author: Vijay Bellur <vbellur@redhat.com>
+Date:   Wed Mar 20 11:06:19 2013 +0530
+
+    performance/write-behind: Enable write-behind when strict_O_DIRECT is not set.
+    
+    When open() with O_DIRECT happens, write-behind was being disabled for the
+    fd irrespective of strict_O_DIRECT option. This commit disables write-behind
+    only when strict_O_DIRECT is enabled.
+    
+    Change-Id: Ieef180e52910c3bf64d46b26b0e5dc3b8542f6d2
+    BUG: 923556
+    Signed-off-by: Vijay Bellur <vbellur@redhat.com>
+    Reviewed-on: http://review.gluster.org/4697
+    Tested-by: Gluster Build System <jenkins@build.gluster.com>
+    Reviewed-by: Jeff Darcy <jdarcy@redhat.com>
+
+-       if (flags & (O_SYNC|O_DSYNC|O_DIRECT))
+-               /* O_DIRECT flag in params of writev must _always_ be honored */
++       if (flags & (O_SYNC|O_DSYNC|o_direct))
+                wb_disabled = 1;
+
+
+However even without this regression, the code used to enforce o_direct option is wrong as can be seen from code snippet:
+
+  if (flags & (O_SYNC|O_DSYNC|o_direct))
+           wb_disabled = 1;
+
+This code snippet disables write-behind when any of O_SYNC, O_DSYNC or O_WRONLY flags are set. This is because o_direct equals 0x00000001 and O_WRONLY has exact same value. So, it is doing what the option is intended to do. The correct should've been something like:
+
+  if (o_direct && (flags & (O_SYNC | O_DSYNC | O_DIRECT))
+            wb_disabled = 1;
+
+
+Version-Release number of selected component (if applicable):
+mainline master
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Found it through code review.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+Didn't notice that variable o_direct is initialized with O_DIRECT. Hence previous analysis is wrong. I am closing this bug.

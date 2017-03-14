@@ -1,0 +1,79 @@
+Description of problem:
+after upgrading f21 to f22, the three f21 kernels are blocked by some bogus dependency calculation.  THe same issue also block upgrades, since an upgrade wants to add a new kernel, triggering the calculation to keep only three.
+
+
+Version-Release number of selected component (if applicable): dnf-1.0.0-1.fc22.noarch
+
+
+How reproducible: I can't make it go away
+
+These are the existing kernel and related pkgs:
+kernel-3.19.5-200.fc21.x86_64
+kernel-3.19.7-200.fc21.x86_64
+kernel-4.0.4-202.fc21.x86_64
+kernel-4.0.4-303.fc22.x86_64
+kernel-core-3.19.5-200.fc21.x86_64
+kernel-core-3.19.7-200.fc21.x86_64
+kernel-core-4.0.4-202.fc21.x86_64
+kernel-core-4.0.4-303.fc22.x86_64
+kernel-devel-3.19.5-200.fc21.x86_64
+kernel-devel-3.19.7-200.fc21.x86_64
+kernel-devel-4.0.4-202.fc21.x86_64
+kernel-devel-4.0.4-303.fc22.x86_64
+kernel-headers-4.0.4-303.fc22.x86_64
+kernel-modules-3.19.5-200.fc21.x86_64
+kernel-modules-3.19.7-200.fc21.x86_64
+kernel-modules-4.0.4-202.fc21.x86_64
+kernel-modules-4.0.4-303.fc22.x86_64
+kernel-modules-extra-3.19.5-200.fc21.x86_64
+kernel-modules-extra-3.19.7-200.fc21.x86_64
+kernel-modules-extra-4.0.4-202.fc21.x86_64
+kernel-modules-extra-4.0.4-303.fc22.x86_64
+kernel-tools-4.0.4-303.fc22.x86_64
+kernel-tools-libs-4.0.4-303.fc22.x86_64
+kmod-VirtualBox-3.19.5-200.fc21.x86_64-4.3.26-2.fc21.x86_64
+kmod-VirtualBox-3.19.7-200.fc21.x86_64-4.3.28-1.fc21.x86_64
+kmod-VirtualBox-4.0.2-300.fc22.x86_64-4.3.28-1.fc22.x86_64
+kmod-VirtualBox-4.0.4-202.fc21.x86_64-4.3.28-1.fc21.3.x86_64
+kmod-VirtualBox-4.3.28-1.fc22.x86_64
+
+
+Upon attempting to remove the *fc21* ones (only!)
+
+Running transaction check
+Error: transaction check vs depsolve:
+kernel-uname-r = 4.0.2-300.fc22.x86_64 is needed by (installed) kmod-VirtualBox-4.0.2-300.fc22.x86_64-4.3.28-1.fc22.x86_64
+kernel-uname-r = 4.0.2-300.fc22.x86_64 is needed by (installed) kmod-VirtualBox-4.0.2-300.fc22.x86_64-4.3.28-1.fc22.x86_64
+kernel-uname-r = 4.0.2-300.fc22.x86_64 is needed by (installed) kmod-VirtualBox-4.0.2-300.fc22.x86_64-4.3.28-1.fc22.x86_64
+To diagnose the problem, try running: 'rpm -Va --nofiles --nodigest'.
+To fix inconsistent RPMDB, try running: 'rpm --rebuilddb'.
+If the above doesn't help please report this error at 'https://bugzilla.redhat.com/enter_bug.cgi?product=Fedora&component=dnf'.
+
+
+the fact that kernel 4.0.2-300.fc22 is needed by kmod-VirtualBox-4.0.2-300.fc22 is completely irrelevant, neither of those packages are being requested for removal and do not visibly appear in the transaction set:
+
+Removing:
+ kernel                                 x86_64 3.19.5-200.fc21    @System   0  
+ kernel                                 x86_64 3.19.7-200.fc21    @System   0  
+ kernel                                 x86_64 4.0.4-202.fc21     @System   0  
+ kernel-core                            x86_64 3.19.5-200.fc21    @System  41 M
+ kernel-core                            x86_64 3.19.7-200.fc21    @System  41 M
+ kernel-core                            x86_64 4.0.4-202.fc21     @System  41 M
+ kernel-devel                           x86_64 3.19.5-200.fc21    @System  35 M
+ kernel-devel                           x86_64 3.19.7-200.fc21    @System  35 M
+ kernel-devel                           x86_64 4.0.4-202.fc21     @System  35 M
+ kernel-modules                         x86_64 3.19.5-200.fc21    @System  17 M
+ kernel-modules                         x86_64 3.19.7-200.fc21    @System  17 M
+ kernel-modules                         x86_64 4.0.4-202.fc21     @System  17 M
+ kernel-modules-extra                   x86_64 3.19.5-200.fc21    @System 2.1 M
+ kernel-modules-extra                   x86_64 3.19.7-200.fc21    @System 2.1 M
+ kernel-modules-extra                   x86_64 4.0.4-202.fc21     @System 2.1 M
+ kmod-VirtualBox-3.19.5-200.fc21.x86_64 x86_64 4.3.26-2.fc21      @System 1.0 M
+ kmod-VirtualBox-3.19.7-200.fc21.x86_64 x86_64 4.3.28-1.fc21      @System 1.0 M
+ kmod-VirtualBox-4.0.4-202.fc21.x86_64  x86_64 4.3.28-1.fc21.3    @System 1.0 M
+
+Transaction Summary
+================================================================================
+Remove  18 Packages
+hmmm, looks like vbox version mismatch I didn't see before. By manually forcing that one out I can at least undo the blocker.
+What seems to be happening is that you have some broken dependencies between packages on your system. In other words, you have some packages on your system that depend on other packages which are not there even though they should be. Dnf is not designed to run in such inconsistent system state, that's why it refuses to go through with the transaction. As you figured out, removing the culprit (VirtualBox modules) from your system should fix the problem.

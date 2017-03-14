@@ -1,0 +1,8 @@
+perl-DBD-ODBC-1.52-3.fc23 fails to build in F23 because tests fail because the package does not declare build-time dependency on `perl(open)':
+
+t/41Unicode.t ................ skipped: DBI_DSN is undefined
+Can't locate open.pm in @INC (you may need to install the open module) (@INC contains: ./t /builddir/build/BUILD/DBD-ODBC-1.52/blib/lib /builddir/build/BUILD/DBD-ODBC-1.52/blib/arch /usr/local/lib64/perl5 /usr/local/share/perl5 /usr/lib64/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib64/perl5 /usr/share/perl5 .) at t/45_unicode_varchar.t line 7.
+BEGIN failed--compilation aborted at t/45_unicode_varchar.t line 7.
+t/45_unicode_varchar.t ....... 
+Dubious, test returned 2 (wstat 512, 0x200)
+No subtests run

@@ -1,0 +1,186 @@
+Fresh installation of RHEL 7.1 with all packages updated. OSP7 RC2 + OSP Director Beta1
+Following "Director Installation Guide", step 3.5 "Configuring the Director" cannot be finished.
+
+After running 'instack-install-undercloud' script fails with info:
+ERROR: Element grub2 already loaded
+
+
+[stack@gklab-17-081 ~]$ instack-install-undercloud 
++ mkdir -p /home/stack/.instack
++ LOGFILE=/home/stack/.instack/install-undercloud.log
++ exec
++ exec
+++ tee /home/stack/.instack/install-undercloud.log
++ echo 'Running /bin/instack-install-undercloud'
+Running /bin/instack-install-undercloud
++ echo 'Checking for a FQDN hostname...'
+Checking for a FQDN hostname...
+++ sudo hostnamectl --static
++ detected_static_hostname=gklab-17-081
++ echo 'static hostname detected as...gklab-17-081'
+static hostname detected as...gklab-17-081
+++ sudo hostnamectl --transient
++ detected_transient_hostname=gklab-17-081
++ echo 'transient hostname detected as...gklab-17-081'
+transient hostname detected as...gklab-17-081
++ echo '$HOSTNAME detected as...gklab-17-081'
+$HOSTNAME detected as...gklab-17-081
++ '[' '!' gklab-17-081 = gklab-17-081 ']'
++ '[' '!' gklab-17-081 = gklab-17-081 ']'
++ grep -E '\s+gklab-17-081(\s|$)+' /etc/hosts
+127.0.0.1   gklab-17-081 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         gklab-17-081 localhost localhost.localdomain localhost6 localhost6.localdomain6
++ JSONFILEDIR=/usr/share/instack-undercloud/json-files
++ '[' '!' -d /usr/share/instack-undercloud/json-files ']'
+++ grep -Eqs 'Red Hat Enterprise Linux' /etc/redhat-release
++ export NODE_DIST=rhel7
++ NODE_DIST=rhel7
++ export JSONFILE=/usr/share/instack-undercloud/json-files/rhel-7-undercloud-packages.json
++ JSONFILE=/usr/share/instack-undercloud/json-files/rhel-7-undercloud-packages.json
++ export REG_METHOD=disable
++ REG_METHOD=disable
++ export REG_HALT_UNREGISTER=1
++ REG_HALT_UNREGISTER=1
++ INSTACKUNDERCLOUDELEMENTS=/usr/share/instack-undercloud
++ '[' '!' -d /usr/share/instack-undercloud ']'
++ TRIPLEOPUPPETELEMENTS=/usr/share/tripleo-puppet-elements
++ '[' '!' -d /usr/share/tripleo-puppet-elements ']'
++ export ELEMENTS_PATH=/usr/share/tripleo-puppet-elements:/usr/share/instack-undercloud:/usr/share/tripleo-image-elements:/usr/share/diskimage-builder/elements
++ ELEMENTS_PATH=/usr/share/tripleo-puppet-elements:/usr/share/instack-undercloud:/usr/share/tripleo-image-elements:/usr/share/diskimage-builder/elements
++ echo 'Sourcing answers file from instack.answers...'
+Sourcing answers file from instack.answers...
++ source /home/stack/instack.answers
+++ DEPLOYMENT_MODE=scale
+++ IMAGE_PATH=.
+++ LOCAL_IP=192.0.2.1/24
+++ LOCAL_INTERFACE=em1
+++ MASQUERADE_NETWORK=192.0.2.0/24
+++ DHCP_START=192.0.2.5
+++ DHCP_END=192.0.2.24
+++ NETWORK_CIDR=192.0.2.0/24
+++ NETWORK_GATEWAY=192.0.2.1
+++ DISCOVERY_INTERFACE=br-ctlplane
+++ DISCOVERY_IPRANGE=192.0.2.100,192.0.2.120
+++ DISCOVERY_RUNBENCH=0
+++ UNDERCLOUD_DEBUG=true
+++ UNDERCLOUD_DB_PASSWORD=
+++ UNDERCLOUD_ADMIN_TOKEN=r00tme
+++ UNDERCLOUD_ADMIN_PASSWORD=
+++ UNDERCLOUD_GLANCE_PASSWORD=
+++ UNDERCLOUD_HEAT_PASSWORD=
+++ UNDERCLOUD_NEUTRON_PASSWORD=
+++ UNDERCLOUD_NOVA_PASSWORD=
+++ UNDERCLOUD_IRONIC_PASSWORD=
+++ UNDERCLOUD_TUSKAR_PASSWORD=
+++ UNDERCLOUD_CEILOMETER_PASSWORD=
+++ UNDERCLOUD_CEILOMETER_METERING_SECRET=
+++ UNDERCLOUD_CEILOMETER_SNMPD_USER=
+++ UNDERCLOUD_CEILOMETER_SNMPD_PASSWORD=
+++ UNDERCLOUD_SWIFT_PASSWORD=
+++ UNDERCLOUD_RABBIT_COOKIE=
+++ UNDERCLOUD_RABBIT_PASSWORD=
+++ UNDERCLOUD_RABBIT_USERNAME=
+++ UNDERCLOUD_HEAT_STACK_DOMAIN_ADMIN_PASSWORD=
+++ UNDERCLOUD_SWIFT_HASH_SUFFIX=
++ export PUBLIC_INTERFACE_IP=192.0.2.1/24
++ PUBLIC_INTERFACE_IP=192.0.2.1/24
++ export LOCAL_IP=192.0.2.1
++ LOCAL_IP=192.0.2.1
++ export IMAGE_PATH
++ export LOCAL_INTERFACE
++ export MASQUERADE_NETWORK
++ export DHCP_START
++ export DHCP_END
++ export NETWORK_CIDR
++ export NETWORK_GATEWAY
++ export DISCOVERY_INTERFACE
++ export DISCOVERY_IPRANGE
++ export DISCOVERY_RUNBENCH
++ export UNDERCLOUD_DEBUG
++ sudo bash -c '[[ -f /root/tripleo-undercloud-passwords ]]'
+++ tripleo os-make-password
++ export UNDERCLOUD_HEAT_STACK_DOMAIN_ADMIN_PASSWORD=1d8c3ee85319b7fb4702426629ae947e2f054d3e
++ UNDERCLOUD_HEAT_STACK_DOMAIN_ADMIN_PASSWORD=1d8c3ee85319b7fb4702426629ae947e2f054d3e
+++ tripleo os-make-password
++ export UNDERCLOUD_RABBIT_COOKIE=524552051dbb0c48d79b0e9b64ea343afc50e5e7
++ UNDERCLOUD_RABBIT_COOKIE=524552051dbb0c48d79b0e9b64ea343afc50e5e7
++ export UNDERCLOUD_RABBIT_PASSWORD=guest
++ UNDERCLOUD_RABBIT_PASSWORD=guest
++ export UNDERCLOUD_RABBIT_USERNAME=guest
++ UNDERCLOUD_RABBIT_USERNAME=guest
+++ tripleo os-make-password
++ export UNDERCLOUD_SWIFT_HASH_SUFFIX=bf3bc192238163fa022892478393d2e05401c45d
++ UNDERCLOUD_SWIFT_HASH_SUFFIX=bf3bc192238163fa022892478393d2e05401c45d
+++ tripleo os-make-password
++ export UNDERCLOUD_ADMIN_PASSWORD=9fe0a93c5bd459001c313d8f7f4cac297c9a2b04
++ UNDERCLOUD_ADMIN_PASSWORD=9fe0a93c5bd459001c313d8f7f4cac297c9a2b04
++ export UNDERCLOUD_ADMIN_TOKEN=r00tme
++ UNDERCLOUD_ADMIN_TOKEN=r00tme
+++ tripleo os-make-password
++ export UNDERCLOUD_CEILOMETER_METERING_SECRET=79b668fb3673c1169777772c4959d79c8a65badb
++ UNDERCLOUD_CEILOMETER_METERING_SECRET=79b668fb3673c1169777772c4959d79c8a65badb
+++ tripleo os-make-password
++ export UNDERCLOUD_CEILOMETER_PASSWORD=7816bce331f229c9cfe8b26eef78dea4d20766f3
++ UNDERCLOUD_CEILOMETER_PASSWORD=7816bce331f229c9cfe8b26eef78dea4d20766f3
+++ tripleo os-make-password
++ export UNDERCLOUD_CEILOMETER_SNMPD_PASSWORD=eacde0f308a56dfa8194e9d97cdaa3f7adca772c
++ UNDERCLOUD_CEILOMETER_SNMPD_PASSWORD=eacde0f308a56dfa8194e9d97cdaa3f7adca772c
+++ tripleo os-make-password
++ export UNDERCLOUD_CEILOMETER_SNMPD_USER=32c75a0149a69bba7c693937b9eedda2b073b126
++ UNDERCLOUD_CEILOMETER_SNMPD_USER=32c75a0149a69bba7c693937b9eedda2b073b126
+++ tripleo os-make-password
++ export UNDERCLOUD_GLANCE_PASSWORD=0f743b5ca4381f81354160a299884f45d41d114b
++ UNDERCLOUD_GLANCE_PASSWORD=0f743b5ca4381f81354160a299884f45d41d114b
+++ tripleo os-make-password
++ export UNDERCLOUD_HEAT_PASSWORD=7ffb7fc42cccca36f0b3190d3f19a11ae60906a0
++ UNDERCLOUD_HEAT_PASSWORD=7ffb7fc42cccca36f0b3190d3f19a11ae60906a0
+++ tripleo os-make-password
++ export UNDERCLOUD_HORIZON_SECRET_KEY=5242bad7e15e298736e27f622ae10e98af829731
++ UNDERCLOUD_HORIZON_SECRET_KEY=5242bad7e15e298736e27f622ae10e98af829731
+++ tripleo os-make-password
++ export UNDERCLOUD_IRONIC_PASSWORD=f2e88c8acc5e2f00197cb3052e1d895cf7665605
++ UNDERCLOUD_IRONIC_PASSWORD=f2e88c8acc5e2f00197cb3052e1d895cf7665605
+++ tripleo os-make-password
++ export UNDERCLOUD_NEUTRON_PASSWORD=4259398f53922199afe1ead6638c16b610ee7c43
++ UNDERCLOUD_NEUTRON_PASSWORD=4259398f53922199afe1ead6638c16b610ee7c43
+++ tripleo os-make-password
++ export UNDERCLOUD_NOVA_PASSWORD=69bf4a51a26c75e97505cd338b1f183b14353bd8
++ UNDERCLOUD_NOVA_PASSWORD=69bf4a51a26c75e97505cd338b1f183b14353bd8
+++ tripleo os-make-password
++ export UNDERCLOUD_SWIFT_PASSWORD=72d3fceb3479c14ccfc04a54f4e7ef74b9c256f6
++ UNDERCLOUD_SWIFT_PASSWORD=72d3fceb3479c14ccfc04a54f4e7ef74b9c256f6
+++ tripleo os-make-password
++ export UNDERCLOUD_TUSKAR_PASSWORD=0ef77fed465292e8fb463314266bcfd4624144ec
++ UNDERCLOUD_TUSKAR_PASSWORD=0ef77fed465292e8fb463314266bcfd4624144ec
++ sudo -E instack -p /usr/share/tripleo-puppet-elements:/usr/share/instack-undercloud:/usr/share/tripleo-image-elements:/usr/share/diskimage-builder/elements -j /usr/share/instack-undercloud/json-files/rhel-7-undercloud-packages.json
+INFO: 2015-06-29 14:49:11,107 -- Starting run of instack
+INFO: 2015-06-29 14:49:11,111 -- Using json file: /usr/share/instack-undercloud/json-files/rhel-7-undercloud-packages.json
+INFO: 2015-06-29 14:49:11,112 -- Running Installation
+INFO: 2015-06-29 14:49:11,112 -- Initialized with elements path: /usr/share/tripleo-puppet-elements /usr/share/instack-undercloud /usr/share/tripleo-image-elements /usr/share/diskimage-builder/elements
+ERROR: 2015-06-29 14:49:11,121 -- Element grub2 already loaded.
+  File "/usr/lib/python2.7/site-packages/instack/main.py", line 162, in main
+    args.dry_run, args.interactive, args.no_cleanup)
+  File "/usr/lib/python2.7/site-packages/instack/runner.py", line 71, in __init__
+    self.load_elements()
+  File "/usr/lib/python2.7/site-packages/instack/runner.py", line 94, in load_elements
+    self.process_path(path)
+  File "/usr/lib/python2.7/site-packages/instack/runner.py", line 128, in process_path
+    raise Exception("Element %s already loaded." % elem)
+ERROR: 2015-06-29 14:49:11,122 -- None
+There is 'grub2' entry in two different element paths:
+
+ipdb> self.element_paths
+['/usr/share/tripleo-puppet-elements', '/usr/share/instack-undercloud', '/usr/share/tripleo-image-elements', '/usr/share/diskimage-builder/elements']
+ipdb> 'grub2' in os.listdir('/usr/share/instack-undercloud')
+True
+ipdb> 'grub2' in os.listdir('/usr/share/diskimage-builder/elements')
+True
+ipdb> 
+
+That's why instack finds it again, and fails.
+Temporary workaround for this problem:
+mv /usr/share/instack_undercloud/grub2 /usr/share/_instack_grub2
+This was one of a few known issues with the director beta and the new RC drop for the core components.
+
+There is a new director drop coming soon with fixes for this.
+Checked with OSP7 RC2 and OSP Director. This problem no longer occurs.

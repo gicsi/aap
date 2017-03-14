@@ -1,0 +1,15 @@
+Recently - I think after oddjob-0.34.1-1.fc23 landed - on my Rawhide machine I find 'su' and 'sudo' operations fail quite often, reporting a segfault. The journal shows the segfault is in pam_oddjob_mkhomedir.so . Tonight I rebooted the system and found it failed to boot, apparently due to a similar segfault preventing gdm from starting up. Note this journal line:
+
+Jun 29 22:12:03 adam.happyassassin.net kernel: gdm-session-wor[2142]: segfault at 0 ip 00007f05846bc75c sp 00007ffd847b8150 error 6 in pam_oddjob_mkhomedir.so[7f05846b7000+8000]
+
+I'm attaching a longer extract from the journal of the boot that failed - this is 'journalctl -b | grep -15 mkhomedir' .
+
+Nominating as an Alpha blocker, seems to break boot of F23 at least sometimes, per https://fedoraproject.org/wiki/Fedora_23_Alpha_Release_Criteria#Expected_installed_system_boot_behavior .
+
+I'm currently testing to see if downgrading oddjob packages resolves the issue.
+Created attachment 1044548
+journal extract from an affected boot
+Yikes, definitely a bug in 0.34.  Should be fixed in 0.34.2, if you can give it a go:
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10253459
+Thanks for the fast response! Dropping back to 0.33 did seem to stop the segfaults. I'll try 0.34.2 and get back to you in a day or two.
+Seems to be working fine so far, let's call it fixed - thanks.

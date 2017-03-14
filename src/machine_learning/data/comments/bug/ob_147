@@ -1,0 +1,5 @@
+Fix for transmit side breakage on macppc and mbuf leaks with
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=xl&sektion=4">xl(4)</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.6/common/006_xl.patch">
+A source code patch exists which remedies this problem.</a>

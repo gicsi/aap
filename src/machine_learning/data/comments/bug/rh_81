@@ -1,0 +1,42 @@
+Document URL: 
+
+Need to document the SELinux permission context to be set on ctdb_wrapper:
+
+ctdbd_wrapper is a wrapper around ctdbd which sets a few command line options for ctdbd and also creates /var/run/ctdb if it does not exist. ctdbd_wrapper is the recommended and supported way of starting ctdbd.
+The setting is required for ctdbd_wrapper.
+
+Commands to be added in ctdb spec file in post install:
+#semanage fcontext -a -t ctdbd_exec_t /usr/sbin/ctdbd_wrapper 
+#restorecon -R -v /usr/sbin/ctdbd_wrapper 
+"/usr/sbin/" should be replaced accordingly.
+
+Fix will be available in the ctdb package .
+If the directory /var/run/ctdb will be deleted then following commands has to be executed:
+
+#semanage fcontext -a -t ctdbd_exec_t /usr/sbin/ctdbd_wrapper 
+#restorecon -R -v /usr/sbin/ctdbd_wrapper
+
+
+#semanage fcontext -a -t ctdbd_t /var/run/ctdb
+#restorecon -R -v /var/run/ctdb
+
+Section Number and Name: 
+
+Describe the issue: 
+
+Suggestions for improvement: 
+
+Additional information:
+With the latest updates to the CTDB rpm (see bug #1235613), is this necessary any more? ctdbd_wrapper gets the context by that RPM now.
+
+/var/run/ctdb has the desired context from the policy already as it seems.
+So what remains to be documented, if I got everything right, is to run restorecon on /var/run/ctdb, if the directory has been recreated manually.
+(In reply to Michael Adam from comment #2)
+> With the latest updates to the CTDB rpm (see bug #1235613), is this
+> necessary any more? ctdbd_wrapper gets the context by that RPM now.
+> 
+> /var/run/ctdb has the desired context from the policy already as it seems.
+> So what remains to be documented, if I got everything right, is to run
+> restorecon on /var/run/ctdb, if the directory has been recreated manually.
+
+Ok, update: After discussing with Surabhi, we agree that we can't document all steps to be taken in case human intervention messes something up. I.e. we don't need to document anything, since the package now works as desired.

@@ -1,0 +1,62 @@
+Description of problem:
+opening the icon directory in bomi-0.9.11 sourcecode
+
+Version-Release number of selected component:
+nemo-2.6.7-1.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        nemo -n
+crash_function: jpc_qmfb_join_colgrp
+executable:     /usr/bin/nemo
+global_pid:     10155
+kernel:         4.0.6-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 jpc_qmfb_join_colgrp at jpc_qmfb.c:732
+ #2 jpc_tsfb_synthesize2 at jpc_tsfb.c:170
+ #7 jpc_tsfb_synthesize at jpc_tsfb.c:154
+ #8 jpc_dec_tiledecode at jpc_dec.c:1066
+ #9 jpc_dec_process_sod at jpc_dec.c:621
+ #10 jpc_decode at jpc_dec.c:390
+ #12 jp2_decode at jp2_dec.c:215
+ #13 jas_image_decode at jas_image.c:379
+ #14 jasper_image_stop_load at io-jasper.c:100
+ #16 gdk_pixbuf_loader_close at gdk-pixbuf-loader.c:819
+Created attachment 1045849
+File: backtrace
+Created attachment 1045850
+File: cgroup
+Created attachment 1045851
+File: core_backtrace
+Created attachment 1045852
+File: dso_list
+Created attachment 1045853
+File: environ
+Created attachment 1045854
+File: limits
+Created attachment 1045855
+File: maps
+Created attachment 1045856
+File: mountinfo
+Created attachment 1045857
+File: namespaces
+Created attachment 1045858
+File: open_fds
+Created attachment 1045859
+File: proc_pid_status
+Created attachment 1045860
+File: var_log_messages
+It's the bomi.icns image that causes the cause
+
+https://github.com/xylosper/bomi/archive/v0.9.11.tar.gz
+*** This bug has been marked as a duplicate of bug 1212827 ***
+cinnamon-settings-daemon-2.6.3-2.fc21, cinnamon-session-2.6.3-1.fc21, nemo-2.6.7-1.fc21, cjs-2.6.2-1.fc21, cinnamon-screensaver-2.6.4-2.fc21, cinnamon-2.6.12-1.fc21, cinnamon-desktop-2.6.5-3.fc21 has been submitted as an update for Fedora 21.
+https://admin.fedoraproject.org/updates/FEDORA-2015-10878/cinnamon-2.6.12-1.fc21,cinnamon-settings-daemon-2.6.3-2.fc21,cinnamon-desktop-2.6.5-3.fc21,cinnamon-session-2.6.3-1.fc21,nemo-2.6.7-1.fc21,cinnamon-screensaver-2.6.4-2.fc21,cjs-2.6.2-1.fc21
+cinnamon-settings-daemon-2.6.3-2.fc22, cinnamon-session-2.6.3-1.fc22, nemo-2.6.7-1.fc22, cjs-2.6.2-1.fc22, cinnamon-screensaver-2.6.4-2.fc22, cinnamon-2.6.12-1.fc22, cinnamon-desktop-2.6.5-3.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/FEDORA-2015-10907/cinnamon-settings-daemon-2.6.3-2.fc22,cinnamon-desktop-2.6.5-3.fc22,cinnamon-session-2.6.3-1.fc22,nemo-2.6.7-1.fc22,cinnamon-screensaver-2.6.4-2.fc22,cinnamon-2.6.12-1.fc22,cjs-2.6.2-1.fc22

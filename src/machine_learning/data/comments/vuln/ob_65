@@ -1,0 +1,5 @@
+A serious bug in dhclient(8) could allow strings from a malicious dhcp
+server to be executed in the shell as root.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/012_dhclient.patch">
+A source code patch exists which remedies this problem.</a>

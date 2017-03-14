@@ -1,0 +1,4 @@
+A realtime tuned profile was developed and is built as a sub-package of tuna, named tuned-profile-realtime.
+
+This new package should be delivered with the RHEL-RT content set for the RHEL-7.2 release.
+*** This bug has been marked as a duplicate of bug 1228801 ***

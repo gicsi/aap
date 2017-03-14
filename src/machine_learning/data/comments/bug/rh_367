@@ -1,0 +1,25 @@
+Description of problem:
+Set selinux to Permissive and Minimum
+
+Version-Release number of selected component:
+setroubleshoot-server-3.2.24-1.fc21
+
+Additional info:
+reporter:       libreport-2.3.0
+cmdline:        /usr/bin/python -Es /usr/sbin/setroubleshootd -f ''
+dso_list:       policycoreutils-python-2.3-7.1.fc21.x86_64
+executable:     /usr/sbin/setroubleshootd
+kernel:         4.0.5-200.fc21.x86_64
+runlevel:       N 5
+type:           Python
+uid:            986
+
+Truncated backtrace:
+#1 <module> in /usr/lib64/python2.7/site-packages/sepolicy/__init__.py:824
+#2 <module> in /usr/lib64/python2.7/site-packages/setroubleshoot/util.py:291
+#3 <module> in /usr/sbin/setroubleshootd:30
+Created attachment 1044440
+File: backtrace
+Created attachment 1044441
+File: environ
+You need to have selinux-policy-minimum installed when you want to use minimum policy.

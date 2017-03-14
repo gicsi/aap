@@ -1,0 +1,166 @@
+Description of problem:
+On deletion of a pod and a pvc, the pv's status does not become 'available' when it's reclaim policy is 'recycle', it can not be bound to another pvc.
+
+Version-Release number of selected component (if applicable):
+openshift v3.0.0.0-25-g235b0e7
+kubernetes v0.17.1-804-g496be63
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. Create an nfs pv, create pvc and pod
+```pv
+{
+  "apiVersion": "v1",
+  "kind": "PersistentVolume",
+  "metadata": {
+    "name": "nfs"
+  },
+  "spec": {
+    "capacity": {
+        "storage": "5Gi"
+    },
+    "accessModes": [ "ReadWriteOnce" ],
+    "nfs": {
+        "path": "/nfsshare",
+        "server": "10.66.79.155"
+    },
+    "persistentVolumeReclaimPolicy": "Recycle"
+  }
+}
+```
+
+```pvc
+{
+    "apiVersion": "v1",
+    "kind": "PersistentVolumeClaim",
+    "metadata": {
+        "name": "nfsc"
+    },
+    "spec": {
+        "accessModes": [ "ReadWriteOnce" ],
+        "resources": {
+            "requests": {
+                "storage": "5Gi"
+            }
+        }
+    }
+}
+```
+
+```pod
+{
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+        "name": "nfs",
+        "labels": {
+            "name": "frontendhttp"
+        }
+    },
+    "spec": {
+        "containers": [{
+            "name": "myfrontend",
+            "image": "jhou/hello-openshift",
+            "imagePullPolicy": "IfNotPresent",
+            "ports": [{
+                "containerPort": 80,
+                "name": "http-server"
+            }],
+            "volumeMounts": [{
+                "mountPath": "/mnt/nfs",
+                "name": "pvol"
+            }]
+        }],
+        "volumes": [{
+            "name": "pvol",
+            "persistentVolumeClaim": {
+                "claimName": "nfsc"
+            }
+        }]
+    }
+}
+```
+
+2. Delete the pod and delete the PVC, the PV's status become 'released'
+3. Wait for a moment at get the PV status again, it remains 'released'
+4. Go to the NFS volume, verify it's data are deleted
+5. Create a PVC again using the same json template
+6. Get the PV status
+
+Actual results:
+After step 4:
+Data on NFS volume are not deleted when the pod and pvc are deleted
+
+After step 5:
+The PVC can not bound the PV, PV is not available
+
+After step 6:
+The PV's status is 'Failed'
+
+NAME      LABELS       CAPACITY     ACCESSMODES   STATUS    CLAIM           REASON
+gluster   <none>       5368709120   RWO           Bound     jhou/glusterc   
+iscsi     <none>       5368709120   RWO           Bound     jhou/iscsic     
+local     type=local   5368709120   RWO           Bound     jhou/localc     
+nfs       <none>       5368709120   RWO           Failed    jhou/nfsc   
+
+Expected results:
+The data on nfs volume should be scrubbed, the PV should become available and can be bound to new PVC
+
+Additional info:
+The Kube version is too old for the recycler:  kubernetes v0.17.1-804-g496be63
+what is the output for "describe pod nfs"?  What does that container's "docker inspect" look like?  Any errors in the kubelet log?
+Cut and pasted from an email from Jan Safranek who is working with gluster:
+
+To follow up on current development, docker-1.6.2-14.el7 adds a new
+boolean to SELinux policy. This should allow docker container to access
+gluster volume (optionally with -P for persistent change):
+
+setsebool virt_sandbox_use_fusefs 1
+
+dwalsh told me docker-1.6.2-14.el7 is heading to RHEL 7.1.3, i.e. to be
+released in couple of days (2015-Jun-23?) in RHEL7 extras channel.
+
+So what we need is just to document the boolean and encourage customers
+to check docker package version (and wait for 1.6.2-14).
+
+Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1231936
+Docker build: https://brewweb.devel.redhat.com/buildinfo?buildID=441835
+Errata: https://errata.devel.redhat.com/advisory/20663
+
+*** This bug has been marked as a duplicate of bug 1231936 ***
+sorry.  closed the wrong one :)
+
+I am looking into this one.
+What does the container log say?
+
+Also, what image does "docker ps -a" list for the scrubber pod?  The scrubber pod will be named something like "pv-scrubber-nfs-ulzou".
+
+I successfully tested the recycler code using a HostPath PV (have to enable HostPath via a SCC), so the code is working as expected.
+
+NFS has specific permission issues to work around.  See this: https://ci.openshift.redhat.com/openshift-docs-master-testing/latest/admin_guide/persistent_storage_nfs.html#selinux-and-nfs-export-settings
+If your OpenShift installation is pulling only from approved docker registries, it could be recycling fails because it is pulling the wrong image.
+
+https://github.com/openshift/origin/pull/3351
+
+Alternatively, if your install allows you to pull from other public registries, the currently used image (gcr.io/google_containers/busybox) would work if your NFS permissions are correct.
+Success after PR 3351 above is applied.
+Verified with:
+openshift v3.0.0.0-32-g3ae1d27
+kubernetes v0.17.1-804-g496be63
+
+Given a persistentVolumeReclaimPolicy is 'Recycle', after the pod and PVC are deleted, the PV became available again. The data on the nfs volume are scrubbed.
+
+Also verified hostPath mode, works as expected. I'll mark it as verified when it's ON_QA.
+Move it to verified according to test result in comment 9
+Since the problem described in this bug report should be
+resolved in a recent advisory, it has been closed with a
+resolution of ERRATA.
+
+For information on the advisory, and where to find the updated
+files, follow the link below.
+
+If the solution does not work for you, open a new bug report.
+
+https://access.redhat.com/errata/RHBA-2015:1209

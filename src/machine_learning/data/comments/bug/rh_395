@@ -1,0 +1,41 @@
+Created attachment 1044073
+dnf failure log
+
+Description of problem:
+# dnf upgrade [b]\*
+tries to upgrade packages that are not installed. 
+it looks like if you give a parameter to dnf, it chooses the wrong package set
+
+Version-Release number of selected component (if applicable):
+# rpm -q dnf
+dnf-1.0.1-2.fc22.noarch
+
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1.as above
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+See attached log.
+Additional info: the problem is not there if the parameter is clearly specified. For example, dnf upgrade dnf will work. But this will fail:
+
+# dnf upgrade dnf\*
+Last metadata expiration check performed 0:08:59 ago on Sun Jun 28 20:01:18 2015.
+Package dnf-automatic not installed, cannot update it.
+Dependencies resolved.
+Nothing to do.
+Complete!
+
+Hope this help nail down the root cause.
+*** This bug has been marked as a duplicate of bug 1234763 ***

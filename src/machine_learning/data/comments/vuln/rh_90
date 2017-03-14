@@ -1,0 +1,6 @@
+Needed in 7.2.0 otherwise regression when upgrading from 6.7.0.
+
+Just backport: 915b5d7b8b3f806b66af4b3f522963be72d9777a
+As I was informed, openshift plugin only applies to openshift v2, which is only available for EL6 (and will never be released in EL7). Therefore no need to clone the orig. bug to RHEL7.
+
+Closing the bug then.

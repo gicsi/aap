@@ -1,0 +1,11 @@
+Your package apr-api-docs failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10078364
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046440
+build.log
+Created attachment 1046441
+root.log
+Created attachment 1046442
+state.log

@@ -1,0 +1,8 @@
+A security problem exists in the curses and ocurses libraries that affect
+setuid programs linked with -lcurses or -locurses.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/termcap.patch">
+A source code patch exists which remedies this problem.</a>
+<br>
+Precompiled versions of libcurses and libocurses exist for the
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/i386/curses.tar.gz">i386</a>
+platform.  Unpack it in /usr/lib.

@@ -1,0 +1,83 @@
+Description of problem:
+I am trying to setup an AD member server. I followed the wiki (https://wiki.samba.org/index.php/Setup_a_Samba_AD_Member_Server).
+The domain join succeeded
+
+But wbinfo fails:
+
+$ wbinfo -u
+Error looking up domain users
+
+I tried to increase windbind log verbosity to 10, but I can see no trace when issuing wbinfo:
+/etc/smb.conf
+       log level = winbind:10 
+
+Version-Release number of selected component (if applicable):
+samba-winbind-clients-4.1.17-1.fc21.x86_64
+samba-4.1.17-1.fc21.x86_64
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+# net ads testjoin
+Join is OK
+
+# wbinfo -u
+Error looking up domain users
+
+$ rpm -q samba-winbind
+samba-winbind-4.1.17-1.fc21.x86_64
+
+$ cat /etc/hosts
+127.0.0.1        localhost.localdomain localhost
+::1        localhost6.localdomain6 localhost6
+192.168.0.84    linuxmr.studelec-sa.com linuxmr
+
+/etc/samba/smb.conf is here:  http://pastebin.com/gAk6nX0x
+
+$ cat /etc/resolv.conf
+search studelec-sa.com
+nameserver 192.168.0.250
+
+$ cat /etc/krb5.conf (ALTHOUGH THE WIKI DOES STATE ANY CONFIGURATION IS REQUIRED IN THAT FILE)
+[logging]
+ default = FILE:/var/log/krb5libs.log
+ kdc = FILE:/var/log/krb5kdc.log
+ admin_server = FILE:/var/log/kadmind.log
+
+[libdefaults]
+ dns_lookup_realm = false
+ ticket_lifetime = 24h
+ renew_lifetime = 7d
+ forwardable = true
+ rdns = false
+# default_realm = EXAMPLE.COM
+ # Utile ou pas ?
+ default_realm = STUDELEC-SA.COM
+ dns_lookup_kdc = true
+ default_ccache_name = KEYRING:persistent:%{uid}
+
+[realms]
+# EXAMPLE.COM = {
+#  kdc = kerberos.example.com
+#  admin_server = kerberos.example.com
+# }
+
+[domain_realm]
+# .example.com = EXAMPLE.COM
+# example.com = EXAMPLE.COM
+Please check is accidentally the  sssd-libwbclient package is installed. If yes, please remove it an try again.
+Yes it works !
+
+Many thanks

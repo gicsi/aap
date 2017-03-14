@@ -1,0 +1,41 @@
+loading ./data/patches
+2 labels: ['bug', 'vuln']
+calculating word scores
+using bag of words from known set feature extraction
+1000 words meet min_score and/or max_feats
+400 training feats, 204 testing feats
+training DecisionTree classifier
+best stump for    400 toks uses ('revision', '1')    err=0.2000
+best stump for    318 toks uses sc                   err=0.1761
+best stump for     32 toks uses timestamp            err=0.1250
+best stump for     30 toks uses xenocara             err=0.1000
+best stump for     29 toks uses s3                   err=0.0690
+best stump for     28 toks uses 7                    err=0.0357
+best stump for     27 toks uses None                 err=0.0370
+best stump for    286 toks uses netinet              err=0.1608
+best stump for     24 toks uses options              err=0.2083
+best stump for     19 toks uses ('include', 'netinet') err=0.1579
+best stump for     17 toks uses org                  err=0.1176
+best stump for     16 toks uses fp                   err=0.0625
+best stump for     15 toks uses None                 err=0.0667
+best stump for    262 toks uses released             err=0.1260
+best stump for    259 toks uses ('error', 'ifdef')   err=0.1197
+best stump for    257 toks uses entering             err=0.1128
+best stump for    255 toks uses lists                err=0.1059
+best stump for    253 toks uses dist                 err=0.1028
+best stump for    252 toks uses sun                  err=0.0992
+best stump for    251 toks uses ('f', 'n')           err=0.0956
+best stump for    250 toks uses plen                 err=0.0920
+best stump for      3 toks uses protocol             err=0.0000
+best stump for    247 toks uses identity             err=0.0850
+best stump for    246 toks uses None                 err=0.0854
+best stump for     82 toks uses 1999                 err=0.0122
+best stump for     79 toks uses drive                err=0.0000
+accuracy: 0.892157
+bug precision: 0.888889
+bug recall: 0.820513
+bug f-measure: 0.853333
+vuln precision: 0.893939
+vuln recall: 0.936508
+vuln f-measure: 0.914729
+dumping DecisionTreeClassifier to ./patches_DecisionTree.pickle

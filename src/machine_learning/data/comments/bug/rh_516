@@ -1,0 +1,12 @@
+Description of problem:
+Logrotate can't rotate syslog files properly. They are renamed, bug rsyslog is not restarted. Looks like problem is in /etc/logrotate.d/syslog file, which is trying to HUP kill /var/run/syslogd.pid instead of  /var/run/rsyslogd.pid.
+
+Version-Release number of selected component (if applicable):
+rsyslog-8.8.0-2.fc22.x86_64
+
+How reproducible:
+weekly (always on rotation)
+
+Additional info:
+Consider changing /etc/logrotate/syslog to /etc/logrotate/rsyslog too, but may be only in Fedora 23. For Fedora 22 this could cause problems if somebody modified this file.
+*** This bug has been marked as a duplicate of bug 1224972 ***

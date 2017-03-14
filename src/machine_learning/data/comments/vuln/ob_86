@@ -1,0 +1,3 @@
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=mount_procfs&amp;sektion=8">Procfs</a> contained numerous overflows, which could lead an intruder to root permissions. Procfs is NOT enabled by default in OpenBSD. <br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.8/common/013_procfs.patch">
+A source code patch exists which remedies this problem.</a>

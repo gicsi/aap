@@ -1,0 +1,126 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 018_procfs.patch
+
+And then rebuild your kernel.
+
+For free, you also get the fix for a possible NULL dereference in
+execve(2).
+
+Index: sys/kern/kern_exec.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_exec.c,v
+retrieving revision 1.33
+retrieving revision 1.36
+diff -u -r1.33 -r1.36
+--- sys/kern/kern_exec.c	1999/08/09 12:19:07	1.33
++++ sys/kern/kern_exec.c	2000/01/20 01:16:50	1.36
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: kern_exec.c,v 1.33 1999/08/09 12:19:07 millert Exp $	*/
++/*	$OpenBSD: kern_exec.c,v 1.36 2000/01/20 01:16:50 deraadt Exp $	*/
+ /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
+ 
+ /*-
+@@ -425,7 +425,11 @@
+ 	arginfo.ps_nargvstr = argc;
+ 	arginfo.ps_nenvstr = envc;
+ 
++#ifdef MACHINE_STACK_GROWS_UP
++	stack = (char *)USRSTACK;
++#else
+ 	stack = (char *)(USRSTACK - len);
++#endif
+ 	/* Now copy argc, args & environ to new stack */
+ 	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+ 		goto exec_abort;
+@@ -434,10 +438,16 @@
+ 	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
+ 		goto exec_abort;
+ 
+-	/* copy out the process's signal trapoline code */
++	/* copy out the process's signal trampoline code */
++#ifdef MACHINE_STACK_GROWS_UP
+ 	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
++	    ((char *)PS_STRINGS) + sizeof(struct ps_strings), szsigcode))
++		goto exec_abort;
++#else
++	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
+ 	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
+ 		goto exec_abort;
++#endif
+ 
+ 	stopprofclock(p);	/* stop profiling */
+ 	fdcloseexec(p);		/* handle close on exec */
+@@ -496,22 +506,39 @@
+ 		p->p_flag |= P_SUGIDEXEC;
+ 
+ 		/*
+-		 * XXX For setuid processes, attempt to ensure that
+-		 * stdin, stdout, and stderr are already allocated.
+-		 * We do not want userland to accidentally allocate
+-		 * descriptors in this range which has implied meaning
+-		 * to libc.
++		 * For setuid processes, a few caveats apply to stdin, stdout,
++		 * and stderr.
+ 		 */
+ 		for (i = 0; i < 3; i++) {
+-			extern struct fileops vnops;
+-			struct nameidata nd;
+-			struct file *fp;
+-			int indx;
+-			short flags;
++			struct file *fp = NULL;
+ 
+-			flags = FREAD | (i == 0 ? 0 : FWRITE);
++			if (i < p->p_fd->fd_nfiles)
++				fp = p->p_fd->fd_ofiles[i];
+ 
+-			if (p->p_fd->fd_ofiles[i] == NULL) {
++#ifdef PROCFS
++			/*
++			 * Close descriptors that are writing to procfs.
++			 */
++			if (fp && fp->f_type == DTYPE_VNODE &&
++			    ((struct vnode *)(fp->f_data))->v_tag == VT_PROCFS &&
++			    (fp->f_flag & FWRITE)) {
++				fdrelease(p, i);
++				fp = NULL;
++			}
++#endif
++
++			/*
++			 * Ensure that stdin, stdout, and stderr are already
++			 * allocated.  We do not want userland to accidentally
++			 * allocate descriptors in this range which has implied
++			 * meaning to libc.
++			 */
++			if (fp == NULL) {
++				short flags = FREAD | (i == 0 ? 0 : FWRITE);
++				extern struct fileops vnops;
++				struct nameidata nd;
++				int indx;
++
+ 				if ((error = falloc(p, &fp, &indx)) != 0)
+ 					continue;
+ 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
+@@ -528,7 +555,6 @@
+ 				VOP_UNLOCK(nd.ni_vp, 0, p);
+ 			}
+ 		}
+-
+ 	} else
+ 		p->p_flag &= ~P_SUGID;
+ 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
+@@ -563,7 +589,11 @@
+ 		if((*pack.ep_emul->e_fixup)(p, &pack) != 0)
+ 			goto free_pack_abort;
+ 	}
++#ifdef MACHINE_STACK_GROWS_UP
++	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack + len, retval);
++#else
+ 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack, retval);
++#endif
+ 
+ 	if (p->p_flag & P_TRACED)
+ 		psignal(p, SIGTRAP);
+

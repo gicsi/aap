@@ -1,0 +1,35 @@
+Additional info:
+reporter:       libreport-2.6.0
+WARNING: CPU: 0 PID: 10470 at drivers/media/v4l2-core/videobuf2-core.c:2144 __vb2_queue_cancel+0x11e/0x180 [videobuf2_core]()
+Modules linked in: blowfish_generic blowfish_x86_64 blowfish_common rfcomm fuse xt_CHECKSUM ipt_MASQUERADE tun nf_conntrack_netbios_ns nf_conntrack_broadcast ip6t_rpfilter ip6t_REJECT xt_conntrack ebtable_nat ebtable_broute bridge stp llc ebtable_filter ebtables ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 ip6table_mangle ip6table_security ip6table_raw ip6table_filter ip6_tables iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 nf_nat nf_conntrack iptable_mangle iptable_security iptable_raw rndis_host cdc_ether usbnet bnep arc4 uvcvideo videobuf2_vmalloc videobuf2_memops cdc_acm iwlmvm videobuf2_core v4l2_common x86_pkg_temp_thermal videodev coretemp media kvm_intel mac80211 snd_hda_codec_via kvm snd_hda_codec_generic snd_hda_codec_hdmi rtsx_pci_ms memstick iTCO_wdt
+ snd_hda_intel snd_hda_controller snd_hda_codec iTCO_vendor_support iwlwifi snd_hwdep cfg80211 ie31200_edac btusb snd_seq bluetooth snd_seq_device crct10dif_pclmul crc32_pclmul edac_core shpchp snd_pcm crc32c_intel rfkill ghash_clmulni_intel snd_timer serio_raw snd mei_me mei lpc_ich i2c_i801 soundcore tpm_infineon tpm_tis ecryptfs encrypted_keys trusted tpm nfsd auth_rpcgss nfs_acl lockd sunrpc binfmt_misc nouveau i915 rtsx_pci_sdmmc mmc_core ttm mxm_wmi i2c_algo_bit drm_kms_helper drm r8169 rtsx_pci mfd_core mii wmi video
+CPU: 0 PID: 10470 Comm: hipchat.bin Not tainted 3.17.4-301.fc21.x86_64 #1
+Hardware name: Notebook                         W35xSS_370SS              /W35xSS_370SS              , BIOS 4.6.5 04/08/2014
+ 0000000000000000 00000000125a981e ffff8804e506bbd8 ffffffff8173f929
+ 0000000000000000 ffff8804e506bc10 ffffffff810970ad 0000000000000000
+ 0000000000000000 ffff8800c0bda2f0 ffff8800c0bda0d8 ffff8804a2ce1280
+Call Trace:
+ [<ffffffff8173f929>] dump_stack+0x45/0x56
+ [<ffffffff810970ad>] warn_slowpath_common+0x7d/0xa0
+ [<ffffffff810971da>] warn_slowpath_null+0x1a/0x20
+ [<ffffffffa07b35fe>] __vb2_queue_cancel+0x11e/0x180 [videobuf2_core]
+ [<ffffffffa07b4e15>] vb2_internal_streamoff+0x35/0xd0 [videobuf2_core]
+ [<ffffffffa07b4f15>] vb2_streamoff+0x65/0x70 [videobuf2_core]
+ [<ffffffffa083c875>] uvc_queue_enable+0x65/0xa0 [uvcvideo]
+ [<ffffffffa08416aa>] uvc_video_enable+0x4a/0x1b0 [uvcvideo]
+ [<ffffffffa083dff7>] uvc_v4l2_do_ioctl+0x757/0x14c0 [uvcvideo]
+ [<ffffffff8110d393>] ? futex_wait+0x203/0x280
+ [<ffffffffa0819686>] video_usercopy+0x366/0x5d0 [videodev]
+ [<ffffffff8110ce60>] ? get_futex_key+0x250/0x2f0
+ [<ffffffffa083d8a0>] ? uvc_v4l2_open+0x150/0x150 [uvcvideo]
+ [<ffffffff8110d590>] ? futex_wake+0x80/0x160
+ [<ffffffffa083cc1f>] uvc_v4l2_ioctl+0x2f/0x70 [uvcvideo]
+ [<ffffffffa0813754>] v4l2_ioctl+0x154/0x190 [videodev]
+ [<ffffffff81220910>] do_vfs_ioctl+0x2d0/0x4b0
+ [<ffffffff81220b71>] SyS_ioctl+0x81/0xa0
+ [<ffffffff81746ae9>] system_call_fastpath+0x16/0x1b
+
+Potential duplicate: bug 1122286
+Created attachment 1046205
+File: dmesg
+Please update your kernel to 4.0.y or newer.  3.17.4 is no longer supported.

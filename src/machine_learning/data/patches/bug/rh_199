@@ -1,0 +1,38 @@
+From 2dad23900f0ebb10d4c6d3718ec8bc5bfa2c6cc4 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Sat, 4 Jul 2015 13:13:46 +0000
+Subject: [PATCH] Update to 3.5.0.32 (#1239215)
+
+---
+ nx-libs.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/nx-libs.spec b/nx-libs.spec
+index e7187b6..09e89d5 100644
+--- a/nx-libs.spec
++++ b/nx-libs.spec
+@@ -3,8 +3,8 @@
+ %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro -Wl,-z,now}
+ 
+ Name:           nx-libs
+-Version:        3.5.0.31
+-Release:        2%{?dist}
++Version:        3.5.0.32
++Release:        1%{?dist}
+ Summary:        NX X11 protocol compression libraries
+ 
+ Group:          System Environment/Libraries
+@@ -902,6 +902,9 @@ ln -s -f ../../../../%{_lib}/libXext.so.6 %{buildroot}%{_libdir}/nx/X11/Xinerama
+ 
+ 
+ %changelog
++* Sat Jul 04 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 3.5.0.32-1
++- Update to 3.5.0.32 (#1239215)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.5.0.31-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

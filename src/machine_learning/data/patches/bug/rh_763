@@ -1,0 +1,36 @@
+From 3f6507bc1f414b2893508338274651fafa982b41 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 19 Jun 2015 01:57:51 +0000
+Subject: [PATCH] Update to 0.9.41 (#1233462)
+
+---
+ harfbuzz.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/harfbuzz.spec b/harfbuzz.spec
+index 916546d..2306b24 100644
+--- a/harfbuzz.spec
++++ b/harfbuzz.spec
+@@ -1,6 +1,6 @@
+ Name:           harfbuzz
+-Version:        0.9.40
+-Release:        3%{?dist}
++Version:        0.9.41
++Release:        1%{?dist}
+ Summary:        Text shaping library
+ 
+ License:        MIT
+@@ -79,6 +79,9 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
+ %{_libdir}/libharfbuzz-icu.so.*
+ 
+ %changelog
++* Fri Jun 19 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.9.41-1
++- Update to 0.9.41 (#1233462)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9.40-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

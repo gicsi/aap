@@ -1,0 +1,49 @@
+This patch fixes a one-byte buffer overflow.
+
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 005_ftpd.patch
+
+And then rebuild and install ftpd:
+	cd libexec/ftpd
+	make obj
+	make depend
+	make
+	make install
+
+Index: libexec/ftpd/ftpd.c
+===================================================================
+RCS file: /cvs/src/libexec/ftpd/ftpd.c,v
+retrieving revision 1.79
+diff -u -r1.79 ftpd.c
+--- libexec/ftpd/ftpd.c	2000/09/15 07:13:45	1.79
++++ libexec/ftpd/ftpd.c	2000/12/05 17:06:29
+@@ -1959,15 +1959,21 @@
+ replydirname(name, message)
+ 	const char *name, *message;
+ {
++	char *p, *ep;
+ 	char npath[MAXPATHLEN];
+-	int i;
+ 
+-	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
+-		npath[i] = *name;
+-		if (*name == '"')
+-			npath[++i] = '"';
++	p = npath;
++	ep = &npath[sizeof(npath) - 1];
++	while (*name) {
++		if (*name == '"' && ep - p >= 2) {
++			*p++ = *name++;
++			*p++ = '"';
++		} else if (ep - p >= 1)
++			*p++ = *name++;
++		else
++			break;
+ 	}
+-	npath[i] = '\0';
++	*p = '\0';
+ 	reply(257, "\"%s\" %s", npath, message);
+ }
+ 
+

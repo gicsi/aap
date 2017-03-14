@@ -1,0 +1,100 @@
+When attempting to run the following code on a RHEV-M hypervisor,
+
+#!/usr/bin/env python
+import guestfs
+guest_dev = guestfs.GuestFS()
+guest_dev.add_drive_opts("/dev/mapper/<some_constant>-<disk_image_id>", readonly=1)
+guest_dev.launch()
+
+the operation always fails (the dev path is configured correctly) with error message:
+
+Description of problem:
+Traceback (most recent call last):
+  File "libguest.py", line 5, in <module>
+    g.launch()
+  File "/usr/lib64/python2.7/site-packages/guestfs.py", line 4699, in launch
+    r = libguestfsmod.launch (self._o)
+RuntimeError: could not create appliance through libvirt.
+
+Try running qemu directly without libvirt using this environment variable:
+export LIBGUESTFS_BACKEND=direct
+
+Original error from libvirt: internal error: process exited while connecting to monitor: 2015-07-05T15:23:19.479573Z qemu-kvm: -drive file=/tmp/libguestfsrkNQV0/overlay1,if=none,id=drive-scsi0-0-0-0,format=qcow2,cache=unsafe: could not open disk image /tmp/libguestfsrkNQV0/overlay1: Could not open '/tmp/libguestfsrkNQV0/overlay1': Permission denied
+ [code=1 domain=10]
+
+The problem is caused due to the fact that libvirt is looking for the environment variable, 'LIBGUESTFS_BACKEND', but couldn't find it.
+this bug has a real easy workaround just execute:
+'export LIBGUESTFS_BACKEND=direct' from the command line, nonetheless still a bug.
+
+Version-Release number of selected component (if applicable):
+oVirt 3.6.0.3
+
+[root@purple-vds3 ~]# rpm -qa | grep libguest
+libguestfs-tools-c-1.28.1-1.18.el7.x86_64
+python-libguestfs-1.28.1-1.18.el7.x86_64
+libguestfs-1.28.1-1.18.el7.x86_64
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.have a block storage
+2.create a virtual disk from the domain and activate the device
+3.enter the path leading to the virtual disk (something like "/dev/mapper/${domain-uuid}-${image-uuid})
+
+Actual results:
+The operation fails
+
+Expected results:
+The operation should be executed successfully and create a 'mini' qemu process which relates to the Vdisk
+
+Additional info:
+No no no.
+
+First off, the underlying error is from qemu, and it says:
+
+internal error: process exited while connecting to monitor: 2015-07-05T15:23:19.479573Z qemu-kvm: -drive file=/tmp/libguestfsrkNQV0/overlay1,if=none,id=drive-scsi0-0-0-0,format=qcow2,cache=unsafe: could not open disk image /tmp/libguestfsrkNQV0/overlay1: Could not open '/tmp/libguestfsrkNQV0/overlay1': Permission denied
+
+It's some kind of permissions problem.  You'll need to investigate
+that further yourself.
+
+Secondly, when libguestfs cannot start up the appliance, it prints out
+this *as a suggestions for end users*:
+
+Try running qemu directly without libvirt using this environment variable:
+export LIBGUESTFS_BACKEND=direct
+
+It prints that out because libvirt is frequently broken, and for
+end users the easiest thing is to set that environment variable which
+bypasses libvirt and runs qemu directly.
+
+In RHEV you *must not* set this environment variable.  RHEV needs to
+diagnose these situations and correct the underlying error (see above),
+and not work around the issue by removing libvirt.  Libvirt provides
+vital extra protections for the host, such as confining qemu with
+SELinux, and if you remove libvirt then you remove these security
+features.
+To debug this, add calls to:
+
+ g.set_verbose(true);
+ g.set_trace(true);
+
+before the call to launch.  Or you can set the LIBGUESTFS_DEBUG=1
+and LIBGUESTFS_TRACE=1 environment variables, if that is easier.
+That will send debug messages to stderr.  If you need them to go
+somewhere else you'll also have to set up an event handler.  For
+how to do that in Java, see this example:
+
+https://github.com/libguestfs/libguestfs/blob/master/java/t/GuestFS420LogMessages.java
+
+Most likely the problem is actually in libvirt/qemu, in which
+case you'll have to also look at the libvirt log.  The first
+log file of interest is the one from qemu which can be found
+in ~user/.cache/libvirt/qemu/log/<guestname>.log or
+/var/log/libvirt/qemu/<guestname>.log.  For <guestname> you
+will have to look at the libguestfs logs collected above.
+It will be something like guestfs-<randomstring>
+
+If you need to enable libvirt daemon debugging, then that's
+another step which I can cover but it's quite complex.

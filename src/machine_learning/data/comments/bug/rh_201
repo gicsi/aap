@@ -1,0 +1,93 @@
+Description of problem:
+SELinux is preventing java from 'name_bind' accesses on the udp_socket port 11303.
+
+*****  Plugin bind_ports (50.5 confidence) suggests   ************************
+
+If you want to allow java to bind to network port 11303
+Then you need to modify the port type.
+Do
+# semanage port -a -t  -p udp 11303
+
+*****  Plugin mozplugger (38.0 confidence) suggests   ************************
+
+If você deseja usar o pacote plugin
+Then você deve desligar os controles SELinux nos plugins do Firefox.
+Do
+# setsebool -P unconfined_mozilla_plugin_transition 0
+
+*****  Plugin catchall_boolean (4.5 confidence) suggests   *******************
+
+If você deseja allow nis to enabled
+Then você deve informar o SELinux sobre isso habilitando o booleano 'nis_enabled'.
+Você pode ler a man page 'None' para mais detalhes.
+Do
+setsebool -P nis_enabled 1
+
+*****  Plugin catchall_boolean (4.5 confidence) suggests   *******************
+
+If você deseja allow mozilla to plugin bind unreserved ports
+Then você deve informar o SELinux sobre isso habilitando o booleano 'mozilla_plugin_bind_unreserved_ports'.
+Você pode ler a man page 'None' para mais detalhes.
+Do
+setsebool -P mozilla_plugin_bind_unreserved_ports 1
+
+*****  Plugin catchall_boolean (4.5 confidence) suggests   *******************
+
+If você deseja allow mozilla to plugin use bluejeans
+Then você deve informar o SELinux sobre isso habilitando o booleano 'mozilla_plugin_use_bluejeans'.
+Você pode ler a man page 'None' para mais detalhes.
+Do
+setsebool -P mozilla_plugin_use_bluejeans 1
+
+*****  Plugin catchall (1.0 confidence) suggests   ***************************
+
+If você acredita que o java deva ser permitido acesso de name_bind em port 11303 udp_socket  por default.
+Then você precisa reportar este como um erro.
+Você pode gerar um módulo de política local para permitir este acesso.
+Do
+permitir este acesso agora executando:
+# grep java /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c
+                              0.c1023
+Target Context                system_u:object_r:unreserved_port_t:s0
+Target Objects                port 11303 [ udp_socket ]
+Source                        java
+Source Path                   java
+Port                          11303
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   29
+First Seen                    2015-07-03 16:10:30 BRT
+Last Seen                     2015-07-03 16:14:29 BRT
+Local ID                      f7b7bab9-0ac7-48d3-8aa3-3994ed5551d6
+
+Raw Audit Messages
+type=AVC msg=audit(1435950869.125:725): avc:  denied  { name_bind } for  pid=3838 comm="java" src=11303 scontext=unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c0.c1023 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=udp_socket permissive=0
+
+
+Hash: java,mozilla_plugin_t,unreserved_port_t,udp_socket,name_bind
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 1115711
+Hi, 
+
+When you look closer in your report, you will see solutions for this issue. You could turn on boolean to fix this issue.

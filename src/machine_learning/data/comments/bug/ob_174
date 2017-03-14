@@ -1,0 +1,3 @@
+Incorrect assumptions in tcp_respond can lead to a kernel panic.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.2/common/007_tcprespond.patch">
+A source code patch exists which remedies this problem.</a>

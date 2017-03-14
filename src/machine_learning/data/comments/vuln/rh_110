@@ -1,0 +1,51 @@
+Description of problem:
+dnssec-trigger-script checks NetworkManager configuration, which is located in /etc/NetworkManager/ to determine, if NM is handling the /etc/resolv.conf. Thus dnssec-trigger should be able to do that.
+SELinux is preventing dnssec-trigger- from 'read' accesses on the file /etc/NetworkManager/NetworkManager.conf.
+
+*****  Plugin catchall (100. confidence) suggests   **************************
+
+If you believe that dnssec-trigger- should be allowed read access on the NetworkManager.conf file by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep dnssec-trigger- /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:dnssec_trigger_t:s0
+Target Context                system_u:object_r:NetworkManager_etc_rw_t:s0
+Target Objects                /etc/NetworkManager/NetworkManager.conf [ file ]
+Source                        dnssec-trigger-
+Source Path                   dnssec-trigger-
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           NetworkManager-1.0.2-1.fc22.x86_64
+Policy RPM                    selinux-policy-3.13.1-128.1.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.4-301.fc22.x86_64 #1 SMP Thu
+                              May 21 13:10:33 UTC 2015 x86_64 x86_64
+Alert Count                   7
+First Seen                    2015-06-15 09:19:52 CEST
+Last Seen                     2015-06-17 15:58:29 CEST
+Local ID                      3a65588e-c4ce-4747-b0c9-68413fac18c1
+
+Raw Audit Messages
+type=AVC msg=audit(1434549509.505:3341): avc:  denied  { read } for  pid=23436 comm="dnssec-trigger-" name="NetworkManager.conf" dev="dm-1" ino=5112381 scontext=system_u:system_r:dnssec_trigger_t:s0 tcontext=system_u:object_r:NetworkManager_etc_rw_t:s0 tclass=file permissive=1
+
+
+Hash: dnssec-trigger-,dnssec_trigger_t,NetworkManager_etc_rw_t,file,read
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.1.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.5-300.fc22.x86_64
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1231798 ***

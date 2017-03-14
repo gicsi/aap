@@ -1,0 +1,6 @@
+The <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=an&amp;sektion=4">an(4)</a>
+Aironet Communications 4500/4800 IEEE 802.11DS driver has a bug which prevents
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=ancontrol&amp;sektion=8">ancontrol(8)</a> from working correctly, instead causing a panic.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/i386/011_an.patch">
+A source code patch exists which remedies this problem.</a>

@@ -1,0 +1,4 @@
+Mopd contained a buffer overflow.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/018_mopd.patch">
+A source code patch exists which remedies this problem.</a>

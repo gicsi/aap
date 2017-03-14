@@ -1,0 +1,14 @@
+The X binary sets shipped with OpenBSD 2.9 do not contain several files.  These
+missing files can be added manually from the sparc tarballs after the
+installation:<br>
+Grab the
+<a href="http://ftp.openbsd.org/pub/OpenBSD/2.9/sparc/xbase29.tgz">xbase29.tgz</a>
+and
+<a href="http://ftp.openbsd.org/pub/OpenBSD/2.9/sparc/xshare29.tgz">xshare29.tgz</a>
+files found in the 2.9/sparc directory on the CD, or any FTP site.  The missing
+files can be installed by using the following commands:
+<pre>
+   # cd /; tar xzpf xbase29.tgz ./usr/X11R6/lib/X11/{rgb.txt,xdm}
+   # cd /; tar xzpf xserv29.tgz ./etc/X11/xserver ./usr/X11R6/lib/X11/xserver
+   # cd /usr/X11R6/bin/; ln -fs Xmac68k X
+</pre>

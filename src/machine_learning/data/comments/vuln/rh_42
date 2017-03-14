@@ -1,0 +1,26 @@
+Description of problem:
+Run hosted-engine --deploy on NFS storage, continue until you need to enter storage domain name, stage stuck no matter what input you give.
+Please provide storage domain name. [hosted_storage]: 
+          Storage domain name cannot be empty. It can only consist of alphanumeric characters (that is, letters, numbers, and signs "-" and "_"). All other characters are not valid in the name.
+          Please provide storage domain name. [hosted_storage]: hosted_storage
+          Storage domain name cannot be empty. It can only consist of alphanumeric characters (that is, letters, numbers, and signs "-" and "_"). All other characters are not valid in the name.
+
+Version-Release number of selected component (if applicable):
+ovirt-hosted-engine-setup-1.2.5-1.el7ev.noarch
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1. See above
+2.
+3.
+
+Actual results:
+Deployment can not pass stage of storage domain name
+
+Expected results:
+Deployment must pass stage of storage domain name if name is correct and continue deployment
+
+Additional info:
+*** This bug has been marked as a duplicate of bug 1238668 ***

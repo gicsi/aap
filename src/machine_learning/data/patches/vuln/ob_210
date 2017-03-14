@@ -1,0 +1,25 @@
+Apply by doing:                                                                 
+        cd /usr/src                                                             
+	patch < 024_pfkey.patch                                                 
+Rebuild your kernel.    
+
+Index: sys/net/pfkeyv2.c
+===================================================================
+RCS file: /export/home.local/cvs/openbsd/src/sys/net/pfkeyv2.c,v
+retrieving revision 1.90
+diff -u -p -r1.90 pfkeyv2.c
+--- sys/net/pfkeyv2.c	2 Dec 2003 23:16:29 -0000	1.90
++++ sys/net/pfkeyv2.c	13 Dec 2004 18:18:43 -0000
+@@ -1793,6 +1793,11 @@ pfkeyv2_acquire(struct ipsec_policy *ipo
+ 	if (ipo->ipo_dstid)
+ 		i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
+ 
++	if (ipo->ipo_local_cred)
++		i += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_cred->ref_len);
++
++	if (ipo->ipo_local_auth)
++		i += sizeof(struct sadb_x_cred) + PADUP(ipo->ipo_local_auth->ref_len);
+ 
+ 	/* Allocate */
+ 	if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
+

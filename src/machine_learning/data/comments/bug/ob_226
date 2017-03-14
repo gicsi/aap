@@ -1,0 +1,6 @@
+sp_protocol in RTM_DELETE messages could contain garbage values
+leading to routing socket users that restrict the AF (such as ospfd)
+not seeing any of the RTM_DELETE messages.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.8/common/007_rtsock.patch">
+A source code patch exists which remedies this problem.</a>

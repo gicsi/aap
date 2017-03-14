@@ -1,0 +1,6 @@
+PF_KEY socket operations leak internal kernel resources, so that a
+system running an IPsec key management daemon like photurisd or isakmpd
+will cause the networking subsystem to stop working after a finite amount
+of time.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/001_pfkey.patch">
+A source code patch exists which remedies this problem.</a>

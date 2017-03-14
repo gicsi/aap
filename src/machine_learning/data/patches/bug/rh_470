@@ -1,0 +1,36 @@
+From 063327d2f7e6c2c84512144dbb255a0ca10c2255 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 12:59:54 +0000
+Subject: [PATCH] Update to 8.0.1 (#1235661)
+
+---
+ nodejs-mapnik-reference.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/nodejs-mapnik-reference.spec b/nodejs-mapnik-reference.spec
+index 089302b..b6b5fa0 100644
+--- a/nodejs-mapnik-reference.spec
++++ b/nodejs-mapnik-reference.spec
+@@ -1,6 +1,6 @@
+ Name:           nodejs-mapnik-reference
+-Version:        8.0.0
+-Release:        2%{?dist}
++Version:        8.0.1
++Release:        1%{?dist}
+ Summary:        Reference for Mapnik Styling Options
+ 
+ License:        Public Domain
+@@ -52,6 +52,9 @@ done
+ 
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 8.0.1-1
++- Update to 8.0.1 (#1235661)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 8.0.0-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

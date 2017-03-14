@@ -1,0 +1,10 @@
+If the Postfix sendmail replacement is installed on a system an
+attacker may be able to gain root privileges on the local host via
+sudo(8) which runs the mailer as root with an environment inherited
+from the invoking user.  While this is a bug in sudo it is not
+believed to be possible to exploit when sendmail (the mailer that
+ships with OpenBSD) is the mailer.  As of version 1.6.5, sudo passes
+the mailer an environment that is not subject to influence from the
+invoking user.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.9/common/019_sudo.patch">
+A source code patch exists which remedies this problem.</a>

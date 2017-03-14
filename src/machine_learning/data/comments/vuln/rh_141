@@ -1,0 +1,85 @@
+Description of problem:
+
+This is a generic gluster-SELinux BZ which can be used to update all the new AVC's seen in your component testing against the latest build: selinux-policy-3.7.19-278.el6
+
+Version-Release number of selected component (if applicable):
+selinux-policy-3.7.19-278.el6
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results: AVC's seen while testing
+
+
+Expected results: No AVC's should be reported
+Seen the following AVC's with build: selinux-policy-3.7.19-278.el6.noarch
+
+[root@georep2 ~]# grep "AVC" /var/log/audit/audit.log
+type=AVC msg=audit(1434635056.640:10081): avc:  denied  { connectto } for  pid=5031 comm="status" path=002F636F6D2F7562756E74752F75707374617274 scontext=unconfined_u:system_r:glusterd_t:s0 tcontext=system_u:system_r:init_t:s0 tclass=unix_stream_socket
+type=AVC msg=audit(1434717550.573:11374): avc:  denied  { connectto } for  pid=16673 comm="status" path=002F636F6D2F7562756E74752F75707374617274 scontext=unconfined_u:system_r:glusterd_t:s0 tcontext=system_u:system_r:init_t:s0 tclass=unix_stream_socket
+type=AVC msg=audit(1434837661.846:13065): avc:  denied  { getattr } for  pid=9591 comm="ps" path="/dev/tty2" dev=devtmpfs ino=5644 scontext=system_u:system_r:logrotate_t:s0-s0:c0.c1023 tcontext=system_u:object_r:tty_device_t:s0 tclass=chr_file
+[root@georep2 ~]# 
+[root@georep2 ~]# cat /var/log/audit/audit.log|audit2allow
+
+
+#============= glusterd_t ==============
+allow glusterd_t init_t:unix_stream_socket connectto;
+
+#============= logrotate_t ==============
+allow logrotate_t tty_device_t:chr_file getattr;
+[root@georep2 ~]# rpm -qa | grep selinux
+libselinux-2.0.94-5.8.el6.x86_64
+libselinux-utils-2.0.94-5.8.el6.x86_64
+libselinux-python-2.0.94-5.8.el6.x86_64
+selinux-policy-targeted-3.7.19-278.el6.noarch
+selinux-policy-3.7.19-278.el6.noarch
+[root@georep2 ~]# 
+
+
+These were with the basic geo-rep cases, but I dont think they are specific to geo-replication as the command shows denied for "ps" and "status" for unix socket
+Not sure why 
+
+type=AVC msg=audit(1434837661.846:13065): avc:  denied  { getattr } for  pid=9591 comm="ps" path="/dev/tty2" dev=devtmpfs ino=5644 scontext=system_u:system_r:logrotate_t:s0-s0:c0.c1023 tcontext=system_u:object_r:tty_device_t:s0 tclass=chr_file
+
+is needed. What are you getting in permssive mode?
+(In reply to Miroslav Grepl from comment #2)
+> Not sure why 
+> 
+> type=AVC msg=audit(1434837661.846:13065): avc:  denied  { getattr } for 
+> pid=9591 comm="ps" path="/dev/tty2" dev=devtmpfs ino=5644
+> scontext=system_u:system_r:logrotate_t:s0-s0:c0.c1023
+> tcontext=system_u:object_r:tty_device_t:s0 tclass=chr_file
+> 
+> is needed. What are you getting in permssive mode?
+
+These AVC's were from permissive mode. I have cleared my systems for other tests and now I am on enforcing mode.
+Found following logrotate configs:
+ * /etc/logrotate.d/glusterfs
+ * /etc/logrotate.d/glusterfs-georep 
+
+The AVC related to ps is most likely triggered by the second one.
+I would say it's a leaked file descriptor, because the /etc/logrotate.d/glusterfs-georep file does not handle stderr:
+
+... {
+    sharedscripts
+    rotate 52
+    missingok
+    compress
+    delaycompress
+    notifempty
+    postrotate
+    for pid in `ps -aef | grep glusterfs | egrep "\-\-aux-gfid-mount" | awk '{print $2}'`; do
+        /usr/bin/kill -HUP $pid > /dev/null 2>&1 || true
+    done
+    endscript
+}
+Milos,
+
+Which file descriptor is being leaked here? /etc/logrotate.d/glusterfs also redirects stderr to /dev/null. Why is that not triggering the same AVC errors?
+Does this needs a fix in glusterfs?
+*** This bug has been marked as a duplicate of bug 1230371 ***

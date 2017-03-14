@@ -1,0 +1,91 @@
+Description of problem:
+The following errors are displayed when navigating to cinder volumes:
+
+Error: Unable to retrieve volume list.
+Error: Unable to retrieve snapshot list.
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+Navigate to System->Volumes
+
+Steps to Reproduce:
+1. Navigate to System->Volumes
+2. Note 2 errors listed above are displayed in GUI
+
+Actual results:
+Above errors are displayed in GUI
+
+Expected results:
+No errors should be displayed in GUI
+
+Additional info:
+The following errors appear in /var/log/horizon/horizon.log:
+
+2015-06-19 12:53:17,916 22500 WARNING openstack_dashboard.api.cinder Cinder v2 requested but no 'volumev2' service type available in Keystone catalog.
+2015-06-19 12:53:17,917 22500 WARNING horizon.exceptions Recoverable error: Invalid URL '/os-volume-transfer/detail': No schema supplied. Perhaps you meant http:///os-volume-transfer/detail?
+2015-06-19 12:53:17,946 22500 WARNING horizon.exceptions Recoverable error: Invalid URL '/snapshots/detail?all_tenants=True': No schema supplied. Perhaps you meant http:///snapshots/detail?all_tenants=True?
+I can reproduce this behaviour by manually deleting cinder v2 endpoint from deployment with packstack.
+
+A more detailed stacktrace is this:
+
+2015-06-24 08:12:59,579 11778 ERROR horizon.tables.base Error while checking action permissions.
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/horizon/tables/base.py", line 1260, in _filter_action
+    return action._allowed(request, datum) and row_matched
+  File "/usr/lib/python2.7/site-packages/horizon/tables/actions.py", line 136, in _allowed
+    self.allowed(request, datum))
+  File "/usr/share/openstack-dashboard/openstack_dashboard/wsgi/../../openstack_dashboard/dashboards/project/volumes/volumes/tables.py", line 108, in allowed
+    limits = api.cinder.tenant_absolute_limits(request)
+  File "/usr/lib/python2.7/site-packages/horizon/utils/memoized.py", line 90, in wrapped
+    value = cache[key] = func(*args, **kwargs)
+  File "/usr/share/openstack-dashboard/openstack_dashboard/wsgi/../../openstack_dashboard/api/cinder.py", line 547, in tenant_absolute_limits
+    limits = cinderclient(request).limits.get().absolute
+  File "/usr/lib/python2.7/site-packages/cinderclient/v2/limits.py", line 91, in get
+    return self._get("/limits", "limits")
+  File "/usr/lib/python2.7/site-packages/cinderclient/base.py", line 149, in _get
+    resp, body = self.api.client.get(url)
+  File "/usr/lib/python2.7/site-packages/cinderclient/client.py", line 302, in get
+    return self._cs_request(url, 'GET', **kwargs)
+  File "/usr/lib/python2.7/site-packages/cinderclient/client.py", line 269, in _cs_request
+    **kwargs)
+  File "/usr/lib/python2.7/site-packages/cinderclient/client.py", line 239, in request
+    **kwargs)
+  File "/usr/lib/python2.7/site-packages/requests/api.py", line 50, in request
+    response = session.request(method=method, url=url, **kwargs)
+  File "/usr/lib/python2.7/site-packages/requests/sessions.py", line 451, in request
+    prep = self.prepare_request(req)
+  File "/usr/lib/python2.7/site-packages/requests/sessions.py", line 382, in prepare_request
+    hooks=merge_hooks(request.hooks, self.hooks),
+  File "/usr/lib/python2.7/site-packages/requests/models.py", line 304, in prepare
+    self.prepare_url(url, params)
+  File "/usr/lib/python2.7/site-packages/requests/models.py", line 362, in prepare_url
+    to_native_string(url, 'utf8')))
+MissingSchema: Invalid URL '/limits': No schema supplied. Perhaps you meant http:///limits?
+2015-06-24 08:13:04,212 11777 WARNING openstack_dashboard.api.cinder Cinder v2 requested but no 'volumev2' service type available in Keystone catalog.
+2015-06-24 08:13:04,213 11777 WARNING horizon.exceptions Recoverable error: Invalid URL '/snapshots/detail': No schema supplied. Perhaps you meant http:///snapshots/detail?
+From a director standpoint, this might be resolved already.  Missing Cinder v2 was just recently fixed in bug 1233956
+This sounds like a discrepancy between packstack based install and OSP based install; this is then most likely a duplicate of bug 1233956
+
+Cinder upstream is moving to deprecating cinder v1.
+
+using Cinder v2 is default in horizon.
+This might be a WONTFIX candidate.  If v1 API is deprecated upstream, then fixing this in Horizon might be a "don't care".  One possible issue is upgrades which might bear some investigation.
+*** Bug 1232780 has been marked as a duplicate of this bug. ***
+*** Bug 1235887 has been marked as a duplicate of this bug. ***
+My POV on this bug:
+
+There has been a deployment made by OSP Director, which contained bug 1233956 .
+Thus, the deployment did not had a volumev2 endpoint. That director bug has been fixed, later installs now work with Horizon and volumes are shown fine.
+
+
+Horizon moved to use volumev2 as default endpoint (i.e. Cinder API V2). Cinder V1 is deprecated by cinder upstream.
+
+Taking https://bugzilla.redhat.com/show_bug.cgi?id=1233945#c7 into account, I would open an RFE on Horizon to support cinder volume v1 only (without v2).
+With the root cause of this was fixed in director and didn't exist in packstack, we should close this bug or at least remove the blocker.
+The root cause of this bug was a director bug 1233956 where it didn't configure cinder v2 interface by default.  Investigation of this bug identified that horizon still has some possible improvements if cinder v2 api endpoints are not present but that's a different issue than a blocker.
+
+Chris Dearborn please re-open bug if this is still an issue to you.
+
+*** This bug has been marked as a duplicate of bug 1233956 ***

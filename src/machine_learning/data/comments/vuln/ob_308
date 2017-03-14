@@ -1,0 +1,8 @@
+sudo(8) may allow a user listed in the sudoers file to run a command
+as a different user than their access rule specifies when a Unix
+group is used in the RunAs portion of the rule.  The bug only manifests
+when the user being granted privileges is also a member of the group
+in the RunAs portion of the rule.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.3/common/011_sudo.patch">
+A source code patch exists which remedies this problem.</a>

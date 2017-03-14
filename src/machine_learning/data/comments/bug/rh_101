@@ -1,0 +1,11 @@
+Your package subversion-api-docs failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10155572
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1048417
+build.log
+Created attachment 1048418
+root.log
+Created attachment 1048419
+state.log

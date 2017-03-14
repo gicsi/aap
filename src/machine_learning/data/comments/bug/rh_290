@@ -1,0 +1,27 @@
+Description of problem:
+after install pcp pcp-gui, can not start the pcp service,
+[root@hp-dl388g8-15 ~]# systemctl start pcp
+Failed to start pcp.service: Unit pcp.service failed to load: No such file or directory.
+[root@hp-dl388g8-15 ~]# rpm -q pcp pcp-gui
+pcp-3.10.5-2.el7.x86_64
+pcp-gui-3.10.5-2.el7.x86_64
+
+Version-Release number of selected component (if applicable):
+RHEL-7.2
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. yum install pcp pcp-gui
+2. systemctl start pcp
+3.
+
+Actual results:
+start pcp service fail
+
+Expected results:
+should start success
+
+Additional info:
+There are individual services for the different components of pcp.  Such as pmcd, pmlogger, pmmgr, pmie, etc.  There is no 'pcp' service to activate.

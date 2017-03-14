@@ -1,0 +1,55 @@
+Version-Release number of selected component:
+blender-2.69-5.fc20
+
+Additional info:
+reporter:       libreport-2.2.3
+backtrace_rating: 4
+cmdline:        blender
+crash_function: pthread_join
+executable:     /usr/bin/blender
+kernel:         3.19.8-100.fc20.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+var_log_messages: [System Logs]:\n-- Logs begin at Fri 2014-05-16 16:39:05 PDT, end at Tue 2015-06-16 20:33:09 PDT. --
+
+Truncated backtrace:
+Thread no. 1 (9 frames)
+ #0 pthread_join at pthread_join.c:47
+ #1 BLI_end_threads at /usr/src/debug/blender-2.69/source/blender/blenlib/intern/threads.c:303
+ #2 threaded_tile_processor at /usr/src/debug/blender-2.69/source/blender/render/intern/source/pipeline.c:1074
+ #3 do_render_3d at /usr/src/debug/blender-2.69/source/blender/render/intern/source/pipeline.c:1173
+ #4 RE_PreviewRender at /usr/src/debug/blender-2.69/source/blender/render/intern/source/pipeline.c:2792
+ #5 shader_preview_render at /usr/src/debug/blender-2.69/source/blender/editors/render/render_preview.c:747
+ #6 shader_preview_startjob at /usr/src/debug/blender-2.69/source/blender/editors/render/render_preview.c:787
+ #7 common_preview_startjob at /usr/src/debug/blender-2.69/source/blender/editors/render/render_preview.c:1007
+ #8 do_job_thread at /usr/src/debug/blender-2.69/source/blender/windowmanager/intern/wm_jobs.c:322
+Created attachment 1040293
+File: backtrace
+Created attachment 1040294
+File: cgroup
+Created attachment 1040295
+File: core_backtrace
+Created attachment 1040296
+File: dso_list
+Created attachment 1040297
+File: environ
+Created attachment 1040298
+File: limits
+Created attachment 1040299
+File: maps
+Created attachment 1040300
+File: open_fds
+Created attachment 1040301
+File: proc_pid_status
+Fedora 20 changed to end-of-life (EOL) status on 2015-06-23. Fedora 20 is
+no longer maintained, which means that it will not receive any further
+security or bug fix updates. As a result we are closing this bug.
+
+If you can reproduce this bug against a currently maintained version of
+Fedora please feel free to reopen this bug against that version. If you
+are unable to reopen this bug, please file a new report against the
+current release. If you experience problems, please add a comment to this
+bug.
+
+Thank you for reporting this bug and we are sorry it could not be fixed.

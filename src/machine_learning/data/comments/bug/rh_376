@@ -1,0 +1,33 @@
+Created attachment 1044378
+glance logs
+
+Description of problem:
+Creating an image has failed with error message:"Denying attempt to upload image because it exceeds the quota", although there was enough space for upload the image
+
+Version-Release number of selected component (if applicable):
+python-glanceclient-0.17.0-2.el7ost.noarch
+python-glance-2015.1.0-6.el7ost.noarch
+python-glance-store-0.4.0-1.el7ost.noarch
+openstack-glance-2015.1.0-6.el7ost.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+With only cirros image(size=12.6MB) run those steps
+1. Edit /etc/glance/glance-api.conf set user_storage_quota =1536000
+2. openstack-service restart glance
+3. Try to upload an image less than 1536000MB
+
+Actual results:
+Failed with 'Denying attempt to upload image because it exceeds the quota'
+
+Expected results:
+Creating an image should succeed 
+
+Additional info:
+It is similar to bug id=1043929
+Glance logs
+If the units are not specified, the value will be read as Bytes, which is why this error is being raised. You could try setting a different unit at the end of the value. For example,  1536000MB
+
+I'm closing this as an upstream bug.

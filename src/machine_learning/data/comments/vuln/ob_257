@@ -1,0 +1,5 @@
+A buffer overflow has been found in the Perl interpreter with the sprintf function which
+may be exploitable under certain conditions.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.8/common/001_perl.patch">
+A source code patch exists which remedies this problem.</a>

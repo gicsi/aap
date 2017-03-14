@@ -1,0 +1,5 @@
+This is a tracking bug for Change: Perl 5.22
+For more details, see: https://fedoraproject.org//wiki/Changes/perl5.22
+
+A new perl 5.22 version brings a lot of changes done over a year of development. Perl 5.22 should be released 5/20/2015. See  5.21.11 perldelta for more details about preparing release.
+*** This bug has been marked as a duplicate of bug 1220680 ***

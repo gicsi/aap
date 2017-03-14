@@ -1,0 +1,59 @@
+Created attachment 1043506
+ovirt-host-mgmt-20150626142234-akh4jx.log
+
+Description of problem:
+When engine is restarted while yum is in process on host, update fails. IMO host's update should work autonomously from engine.
+
+~~~
+...
+2015-06-26 14:22:46 DEBUG otopi.plugins.otopi.dialog.machine dialog.__logString:218 DIALOG:SEND       ***Q:STRING CUSTOMIZATION_COMMAND
+2015-06-26 14:22:46 DEBUG otopi.plugins.otopi.dialog.machine dialog.__logString:218 DIALOG:SEND       ###
+2015-06-26 14:22:46 DEBUG otopi.plugins.otopi.dialog.machine dialog.__logString:218 DIALOG:SEND       ### Customization phase, use 'install' to proceed
+2015-06-26 14:22:46 DEBUG otopi.plugins.otopi.dialog.machine dialog.__logString:218 DIALOG:SEND       ### COMMAND> 
+2015-06-26 14:22:46 DEBUG otopi.context context._executeMethod:155 method exception
+Traceback (most recent call last):
+  File "/tmp/ovirt-C9q1Hh0I58/pythonlib/otopi/context.py", line 145, in _executeMethod
+    method['method']()
+  File "/tmp/ovirt-C9q1Hh0I58/otopi-plugins/otopi/dialog/cli.py", line 152, in _customize
+    "\nCustomization phase, use 'install' to proceed\nCOMMAND> "
+  File "/tmp/ovirt-C9q1Hh0I58/otopi-plugins/otopi/dialog/cli.py", line 107, in _runCommandPrompt
+    prompt=True,
+  File "/tmp/ovirt-C9q1Hh0I58/otopi-plugins/otopi/dialog/machine.py", line 165, in queryString
+    value = self._readline()
+  File "/tmp/ovirt-C9q1Hh0I58/pythonlib/otopi/dialog.py", line 262, in _readline
+    raise IOError(_('End of file'))
+IOError: End of file
+2015-06-26 14:22:46 ERROR otopi.context context._executeMethod:164 Failed to execute stage 'Environment customization': End of file
+2015-06-26 14:22:46 DEBUG otopi.context context.dumpEnvironment:499 ENVIRONMENT DUMP - BEGIN
+2015-06-26 14:22:46 DEBUG otopi.context context.dumpEnvironment:509 ENV BASE/error=bool:'True'
+2015-06-26 14:22:46 DEBUG otopi.context context.dumpEnvironment:509 ENV BASE/exceptionInfo=list:'[(<type 'exceptions.IOError'>, IOError('End of file',), <traceback object at 0x22bd320>)]'
+...
+~~~
+
+Version-Release number of selected component (if applicable):
+ovirt-engine-backend-3.6.0-0.0.master.20150519172219.git9a2e2b3.el6.noarch
+vdsm-4.17.0-901.git50c5a54.el7.noarch
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. have a host which has pending vdsm* updates (thus it has newer vdsm* in repos)
+2. click 'Upgrade' in Admin portal to upgrade the host
+3. on host observe with tail -f /tmp/ovirt-host-mgmt-*.log for occurrence of 'Yum Downloading', when it appears in the output, do 'service ovirt-engine restart' on engine
+
+Actual results:
+upgrade action fails with:
+  2015-06-26 14:22:46 ERROR otopi.context context._executeMethod:164 Failed to execute stage 'Pre-termination': End of file
+
+Expected results:
+the upgrade action should work autonomously from engine restart
+
+Additional info:
+good!
+
+manager is required to manage the process and result.
+
+without a manager this cannot be done.
+
+in time a more complex management process will be added, this is not fire and forget.

@@ -1,0 +1,15 @@
+Your package perl-MooseX-Workers failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10129979
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047649
+build.log
+Created attachment 1047650
+root.log
+Created attachment 1047651
+state.log
+Rebuilt by ppisar in Rawhide.
+The build.log reports time out. I could not reproduce it nor find any similar failure in Koschei or CPAN testers history. Either it's a very rare race condition or the builder was ill.
+
+I rebuilt the package with fine-tuned dependencies.

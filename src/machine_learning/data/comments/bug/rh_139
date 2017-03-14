@@ -1,0 +1,12 @@
+Your package perl-CGI-Application-Structured-Tools failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10124126
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047616
+build.log
+Created attachment 1047617
+root.log
+Created attachment 1047618
+state.log
+*** This bug has been marked as a duplicate of bug 1195343 ***

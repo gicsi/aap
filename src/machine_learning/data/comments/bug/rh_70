@@ -1,0 +1,46 @@
+Description of problem:
+'dnf check-update' and 'dnf updateinfo info' sometimes reports package(s) available for update but 'dnf upgrade' says 'Nothing to do!' even if all
+dependencies are installed. 
+
+Version-Release number of selected component (if applicable):
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Run 'dnf check-update' and 'dnf upgradeinfo info' as part of cron.daily. 
+2. When upgradeinfo job shows the changelog, or check-update shows the package
+is available for upgrade, run 'dnf upgrade'.
+3.
+
+Actual results:
+Sometimes dnf says 'Nothing to do!'.
+
+Expected results:
+Upgrade the packages that were listed as upgradable or show the reason why.
+
+Additional info:
+Today 'dnf check-update|updateinfo info' reported package 'youtube-dl' posted on 7/4/15 was available for update, but 'dnf upgrade' said nothing to do.  Running 'dnf -vvv upgrade' showed: 
+
+DEBUG repo: using cache for: updates
+
+Subsequent perusal of https://bugzilla.redhat.com/show_bug.cgi?id=1227924 led
+me to the DNF FAQ which offered a few tips on how to always get fresh metadata (i.e. 'dnf clean metadata'), which enabled me to install the latest youtube-dl (bugfix).  The FAQ mentions that unmet dependencies can cause a difference of opinion as to what is actually 'installable' at a given point in time, but stale metadata, not unmet dependencies, was the cause of the failure to install.
+Thanks for the report. The reason why the fresh metadata helped with the update could be because of the fact that metadata was corrupted or the freshest metadata offered another update which blocked the 'youtube-dl' update before. This is really hard to reproduce. Can you reopen, and attach debugdata [1] with stout when you hit the issue again, please?
+
+# dnf check-upgrade
+# dnf update --debugdata
+(not successful update)
+(attach this debugdata)
+# dnf update --debugdata --refresh
+(successful update)
+(attach this debugdata)
+
+
+[1] https://github.com/rpm-software-management/dnf/wiki/Bug-Reporting#dependency-resolution-problem
+OK, I will run with that --debugdata next time I run into this.  FWIW the '/var/log/dnf.log*' files show some curl errors and python crashes when downloading.  This may the cause of the corrupted data problem you mentioned, but the errors are silent so no way for the user to take action without reading the logs.  I am emailing a couple of logs that show the error(s) around the time of the youtube-dl installation tries.  
+
+Just an added note, in my 'cron.daily' job to do 'check update' and 'updateinfo info' I inserted 'dnf clean metadata' at the top and things went well today as 
+it picked the latest 'google-chrome-stable' and was able to run 'dnf upgrade' and
+install the update.  I commented out the 'dnf clean metadata' on my 64 bit machine and left it in the 32 bit machine.  If I see updates available on the 32 bit machine but not for the same package on the 64 bit machine it's a good indicator this case is occurring.

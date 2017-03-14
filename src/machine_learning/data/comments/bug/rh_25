@@ -1,0 +1,17 @@
+Adobe Security Bulletin APSB15-16 for Adobe Flash Player describes a security bypass and multiple same-origin-policy bypass vulnerabilities that can be used to disclose sensitive information when Flash Player is used to play a specially crafted SWF file.
+
+Quoting from the APSB15-16:
+
+These updates resolve a security bypass vulnerability that could lead to information disclosure (CVE-2015-3114).
+
+These updates resolve vulnerabilities that could be exploited to bypass the same-origin-policy and lead to information disclosure (CVE-2014-0578, CVE-2015-3115, CVE-2015-3116, CVE-2015-3125, CVE-2015-5116).
+
+External References:
+
+https://helpx.adobe.com/security/products/flash-player/apsb15-16.html
+This issue has been addressed in the following products:
+
+  Supplementary for Red Hat Enterprise Linux 5
+  Supplementary for Red Hat Enterprise Linux 6
+
+Via RHSA-2015:1214 https://rhn.redhat.com/errata/RHSA-2015-1214.html

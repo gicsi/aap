@@ -1,0 +1,5 @@
+Spec URL: http://ojuba.org/test/mkchroot
+SRPM URL: http://ojuba.org/test/mkchroot-0.0.1-1.oj35.noarch.rpm
+Description: Fedora Chroot Directory Maker
+Fedora Account System Username: moceap
+*** This bug has been marked as a duplicate of bug 1241383 ***

@@ -1,0 +1,36 @@
+From 455840699f2e0005b83362d2e6dde5fcf43eb680 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 8 Jul 2015 00:16:57 +0000
+Subject: [PATCH] Update to 0.6 (#1240865)
+
+---
+ st.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/st.spec b/st.spec
+index 3e2bea7..56da3c6 100644
+--- a/st.spec
++++ b/st.spec
+@@ -1,6 +1,6 @@
+ Name:           st
+-Version:        0.5
+-Release:        7%{?dist}
++Version:        0.6
++Release:        1%{?dist}
+ Summary:        A simple terminal implementation for X
+ %global         _stsourcedir %{_usrsrc}/%{name}-user-%{version}-%{release}
+ License:        MIT
+@@ -109,6 +109,9 @@ fi
+ %{_stsourcedir}
+ 
+ %changelog
++* Wed Jul 08 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.6-1
++- Update to 0.6 (#1240865)
++
+ * Thu Jun 25 2015 Petr Šabata <contyk@redhat.com> - 0.5-7
+ - Correct the dep list
+ - Modernize spec
+-- 
+1.8.3.1
+
+

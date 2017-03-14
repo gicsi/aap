@@ -1,0 +1,69 @@
+Description of problem:
+SELinux is preventing /usr/sbin/httpd from 'open' accesses on the file .
+
+*****  Plugin catchall_boolean (89.3 confidence) suggests   ******************
+
+If desea allow httpd to read user content
+Then usted debe decir a SELinux sobre esto habilitando el booleano 'httpd_read_user_content'.
+Puede leer la página man de 'None' para más detalles.
+Do
+setsebool -P httpd_read_user_content 1
+
+*****  Plugin catchall (11.6 confidence) suggests   **************************
+
+If cree que de manera predeterminada, httpd debería permitir acceso open sobre   file.     
+Then debería reportar esto como un error.
+Puede generar un módulo de política local para permitir este acceso.
+Do
+permita el acceso momentáneamente executando:
+# grep httpd /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:httpd_t:s0
+Target Context                unconfined_u:object_r:user_home_t:s0
+Target Objects                 [ file ]
+Source                        httpd
+Source Path                   /usr/sbin/httpd
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           httpd-2.4.10-2.fc20.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.12.1-197.fc20.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 3.19.8-100.fc20.x86_64 #1 SMP Tue
+                              May 12 17:08:50 UTC 2015 x86_64 x86_64
+Alert Count                   2
+First Seen                    2015-07-02 12:28:49 CDT
+Last Seen                     2015-07-02 12:29:02 CDT
+Local ID                      31ee43ca-3f5c-409a-a3a9-65a61edc3e8c
+
+Raw Audit Messages
+type=AVC msg=audit(1435858142.568:1333): avc:  denied  { open } for  pid=7148 comm="httpd" path="/var/www/html/favicon.ico" dev="dm-1" ino=1992833 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0
+
+
+type=SYSCALL msg=audit(1435858142.568:1333): arch=x86_64 syscall=open success=no exit=EACCES a0=7f81fa502520 a1=80000 a2=0 a3=7f81fa4ff5c8 items=0 ppid=6709 pid=7148 auid=4294967295 uid=48 gid=48 euid=48 suid=48 fsuid=48 egid=48 sgid=48 fsgid=48 tty=(none) ses=4294967295 comm=httpd exe=/usr/sbin/httpd subj=system_u:system_r:httpd_t:s0 key=(null)
+
+Hash: httpd,httpd_t,user_home_t,file,open
+
+Additional info:
+reporter:       libreport-2.2.3
+hashmarkername: setroubleshoot
+kernel:         3.19.8-100.fc20.x86_64
+type:           libreport
+You mv'd content from your home dir to /var/www.
+
+
+
+You need to run restorecon
+
+restorecon -R -v /var/www
+
+You might want to alias mv to mv -Z
+
+I have
+
+alias mv='mv -iZ'

@@ -1,0 +1,69 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 003_systrace.patch
+
+And then rebuild your kernel.
+
+Index: sys/dev/systrace.c
+===================================================================
+RCS file: /cvs/src/sys/dev/systrace.c,v
+retrieving revision 1.42
+retrieving revision 1.42.2.1
+diff -u -p -r1.42 -r1.42.2.1
+--- sys/dev/systrace.c	28 May 2006 17:06:38 -0000	1.42
++++ sys/dev/systrace.c	1 Nov 2006 20:03:35 -0000	1.42.2.1
+@@ -1359,9 +1359,16 @@ systrace_preprepl(struct str_process *st
+ 		return (EINVAL);
+ 
+ 	for (i = 0, len = 0; i < repl->strr_nrepl; i++) {
+-		len += repl->strr_offlen[i];
++		if (repl->strr_argind[i] < 0 ||
++		    repl->strr_argind[i] >= SYSTR_MAXARGS)
++			return (EINVAL);
+ 		if (repl->strr_offlen[i] == 0)
+ 			continue;
++		len += repl->strr_offlen[i];
++		if (repl->strr_offlen[i] > SYSTR_MAXREPLEN ||
++		    repl->strr_off[i] > SYSTR_MAXREPLEN ||
++		    len > SYSTR_MAXREPLEN)
++			return (EINVAL);
+ 		if (repl->strr_offlen[i] + repl->strr_off[i] > len)
+ 			return (EINVAL);
+ 	}
+@@ -1371,7 +1378,7 @@ systrace_preprepl(struct str_process *st
+ 		return (EINVAL);
+ 
+ 	/* Check against a maximum length */
+-	if (repl->strr_len > 2048)
++	if (repl->strr_len > SYSTR_MAXREPLEN)
+ 		return (EINVAL);
+ 
+ 	strp->replace = (struct systrace_replace *)
+@@ -1406,6 +1413,10 @@ systrace_replace(struct str_process *str
+ 
+ 	maxarg = argsize/sizeof(register_t);
+ 	ubase = stackgap_alloc(&strp->sg, repl->strr_len);
++	if (ubase == NULL) {
++		ret = EINVAL;
++		goto out;
++	}
+ 
+ 	kbase = repl->strr_base;
+ 	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
+Index: sys/dev/systrace.h
+===================================================================
+RCS file: /cvs/src/sys/dev/systrace.h,v
+retrieving revision 1.19
+retrieving revision 1.19.2.1
+diff -u -p -r1.19 -r1.19.2.1
+--- sys/dev/systrace.h	23 May 2006 22:28:22 -0000	1.19
++++ sys/dev/systrace.h	1 Nov 2006 20:03:35 -0000	1.19.2.1
+@@ -54,6 +54,7 @@ struct str_msg_execve {
+ #define SYSTR_MAXARGS		64
+ #define SYSTR_MAXFNAME		8
+ #define SYSTR_MAXINJECTS        8
++#define SYSTR_MAXREPLEN		2048
+ 
+ struct str_msg_ask {
+ 	int code;
+

@@ -1,0 +1,189 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 014_sppp.patch
+
+And then rebuild your kernel.
+
+Index: sys/net/if_spppsubr.c
+===================================================================
+RCS file: /cvs/src/sys/net/if_spppsubr.c,v
+retrieving revision 1.36
+retrieving revision 1.36.2.1
+diff -u -p -r1.36 -r1.36.2.1
+--- sys/net/if_spppsubr.c	12 Aug 2005 21:29:10 -0000	1.36
++++ sys/net/if_spppsubr.c	2 Sep 2006 18:08:23 -0000	1.36.2.1
+@@ -1315,6 +1315,9 @@ sppp_cp_input(const struct cp *cp, struc
+ 			return;
+ 		}
+ 		rv = (cp->RCR)(sp, h, len);
++		/* silently drop illegal packets */
++		if (rv == -1)
++			return;
+ 		switch (sp->state[cp->protoidx]) {
+ 		case STATE_OPENED:
+ 			sppp_cp_change_state(cp, sp, rv?
+@@ -2033,7 +2036,11 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp
+ 
+ 	/* pass 1: check for things that need to be rejected */
+ 	p = (void*) (h+1);
+-	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
++	for (rlen = 0; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len) {
++			free(buf, M_TEMP);
++			return (-1);
++		}
+ 		if (debug)
+ 			addlog("%s ", sppp_lcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2220,19 +2227,18 @@ HIDE void
+ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
+ {
+ 	STDDCL;
+-	u_char *buf, *p;
++	u_char *p;
+ 
+ 	len -= 4;
+-	buf = malloc (len, M_TEMP, M_NOWAIT);
+-	if (!buf)
+-		return;
+ 
+ 	if (debug)
+ 		log(LOG_DEBUG, SPP_FMT "lcp rej opts: ",
+ 		    SPP_ARGS(ifp));
+ 
+ 	p = (void*) (h+1);
+-	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
++	for (; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len)
++			return;
+ 		if (debug)
+ 			addlog("%s ", sppp_lcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2271,8 +2277,6 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct
+ 	}
+ 	if (debug)
+ 		addlog("\n");
+-	free (buf, M_TEMP);
+-	return;
+ }
+ 
+ /*
+@@ -2283,20 +2287,19 @@ HIDE void
+ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
+ {
+ 	STDDCL;
+-	u_char *buf, *p;
++	u_char *p;
+ 	u_long magic;
+ 
+ 	len -= 4;
+-	buf = malloc (len, M_TEMP, M_NOWAIT);
+-	if (!buf)
+-		return;
+ 
+ 	if (debug)
+ 		log(LOG_DEBUG, SPP_FMT "lcp nak opts: ",
+ 		    SPP_ARGS(ifp));
+ 
+ 	p = (void*) (h+1);
+-	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
++	for (; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len)
++			return;
+ 		if (debug)
+ 			addlog("%s ", sppp_lcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2351,8 +2354,6 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct
+ 	}
+ 	if (debug)
+ 		addlog("\n");
+-	free (buf, M_TEMP);
+-	return;
+ }
+ 
+ HIDE void
+@@ -2653,7 +2654,11 @@ sppp_ipcp_RCR(struct sppp *sp, struct lc
+ 		log(LOG_DEBUG, SPP_FMT "ipcp parse opts: ",
+ 		    SPP_ARGS(ifp));
+ 	p = (void*) (h+1);
+-	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
++	for (rlen = 0; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len) {
++			free(buf, M_TEMP);
++			return (-1);
++		}
+ 		if (debug)
+ 			addlog("%s ", sppp_ipcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2800,21 +2805,20 @@ sppp_ipcp_RCR(struct sppp *sp, struct lc
+ HIDE void
+ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
+ {
+-	u_char *buf, *p;
++	u_char *p;
+ 	struct ifnet *ifp = &sp->pp_if;
+ 	int debug = ifp->if_flags & IFF_DEBUG;
+ 
+ 	len -= 4;
+-	buf = malloc (len, M_TEMP, M_NOWAIT);
+-	if (!buf)
+-		return;
+ 
+ 	if (debug)
+ 		log(LOG_DEBUG, SPP_FMT "ipcp rej opts: ",
+ 		    SPP_ARGS(ifp));
+ 
+ 	p = (void*) (h+1);
+-	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
++	for (; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len)
++			return;
+ 		if (debug)
+ 			addlog("%s ", sppp_ipcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2834,8 +2838,6 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struc
+ 	}
+ 	if (debug)
+ 		addlog("\n");
+-	free (buf, M_TEMP);
+-	return;
+ }
+ 
+ /*
+@@ -2845,22 +2847,21 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struc
+ HIDE void
+ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
+ {
+-	u_char *buf, *p;
++	u_char *p;
+ 	struct ifnet *ifp = &sp->pp_if;
+ 	int debug = ifp->if_flags & IFF_DEBUG;
+ 	u_long wantaddr;
+ 
+ 	len -= 4;
+-	buf = malloc (len, M_TEMP, M_NOWAIT);
+-	if (!buf)
+-		return;
+ 
+ 	if (debug)
+ 		log(LOG_DEBUG, SPP_FMT "ipcp nak opts: ",
+ 		    SPP_ARGS(ifp));
+ 
+ 	p = (void*) (h+1);
+-	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
++	for (; len > 1; len -= p[1], p += p[1]) {
++		if (p[1] < 2 || p[1] > len)
++			return;
+ 		if (debug)
+ 			addlog("%s ", sppp_ipcp_opt_name(*p));
+ 		switch (*p) {
+@@ -2901,8 +2902,6 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struc
+ 	}
+ 	if (debug)
+ 		addlog("\n");
+-	free (buf, M_TEMP);
+-	return;
+ }
+ 
+ HIDE void
+

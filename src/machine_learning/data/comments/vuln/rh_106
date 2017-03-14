@@ -1,0 +1,35 @@
+Description of problem:
+
+In Backups, the Overview tab says “You can restore the entire backup with the Restore... button or use Files to either revert individual files or restore missing ones.”
+
+In Files's Help, at Files » Backing up » Restore a backup, the help says:
+
+“If you created your backup using a backup application such as Déjà Dup, it is recommended that you use the same application to restore your backup. Review the application help for your backup program: it will provide specific instructions on how to restore your files.”
+
+This is not true. I can't find any way to restore a backup of an individual file.
+
+
+Version-Release number of selected component (if applicable):
+
+Files 3.16.2
+Backups doesn't have an “About” dialogue; its version is “Unknown” according to Software.
+
+How reproducible:
+Every time
+
+Steps to Reproduce:
+1. Make a backup using Backups
+2. Try to restore or revert an individual backed-up file
+3.
+
+Actual results:
+Cannot
+
+Expected results:
+Can
+
+Additional info:
+I'm sure Files used to have a content menu item to allow this, but it doesn't seem to exist any more. If so, this is a regression.
+This is entirely my fault. I had excluded this folder from Backups. Well done me.
+
+There *is* a content menu option to revert a file to a previous version, but of course only if the folder has been backed up.

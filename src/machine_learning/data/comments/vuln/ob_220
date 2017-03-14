@@ -1,0 +1,4 @@
+Check for integer overflow in procfs.  Use of procfs is not recommended.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.5/common/006_procfs.patch">
+A source code patch exists which remedies this problem.</a>

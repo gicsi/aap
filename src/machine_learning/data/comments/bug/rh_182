@@ -1,0 +1,77 @@
+Description of problem:
+SElinux error
+# grep plugin-containe /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+SELinux is preventing plugin-containe from 'write' accesses on the directory kardiweb.
+
+*****  Plugin mozplugger (89.7 confidence) suggests   ************************
+
+If ha szeretné használni a plugin csomagot
+Then ki kell kapcsolnia az SELinux vezérléseit a Firefox pluginjain.
+Do
+# setsebool -P unconfined_mozilla_plugin_transition 0
+
+*****  Plugin catchall_boolean (10.0 confidence) suggests   ******************
+
+If azt akarja hogy allow use to fusefs home dirs
+Then adja meg az SELinux számára erről, azzal hogy engedélyezi a 'use_fusefs_home_dirs' boolean-t.
+Elolvashatja 'None' man oldalt a további részletekért.
+Do
+setsebool -P use_fusefs_home_dirs 1
+
+*****  Plugin catchall (1.69 confidence) suggests   **************************
+
+If ha úgy érzi, hogy plugin-containe számára engedélyezni kell write hozzáférést itt: kardiweb directory alapértelmezésben.
+Then ezt jelentenie kell, mint hibát.
+Hogy engedélyezze ezt a hozzáférést előállíthat egy helyi szabálymodult.
+Do
+engedélyezheti ezt a hozzáférést most ezzel:
+# grep plugin-containe /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c
+                              0.c1023
+Target Context                system_u:object_r:fusefs_t:s0
+Target Objects                kardiweb [ dir ]
+Source                        plugin-containe
+Source Path                   plugin-containe
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.2.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.6-300.fc22.x86_64 #1 SMP Tue
+                              Jun 23 13:58:53 UTC 2015 x86_64 x86_64
+Alert Count                   20
+First Seen                    2015-07-05 19:43:16 CEST
+Last Seen                     2015-07-05 19:43:16 CEST
+Local ID                      8feacdb0-32db-486f-9efe-6abd77316c22
+
+Raw Audit Messages
+type=AVC msg=audit(1436118196.729:603): avc:  denied  { write } for  pid=2890 comm="plugin-containe" name="kardiweb" dev="sdb2" ino=64 scontext=unconfined_u:unconfined_r:mozilla_plugin_t:s0-s0:c0.c1023 tcontext=system_u:object_r:fusefs_t:s0 tclass=dir permissive=0
+
+
+Hash: plugin-containe,mozilla_plugin_t,fusefs_t,dir,write
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.2.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.6-300.fc22.x86_64
+type:           libreport
+
+Potential duplicate: bug 884895
+*****  Plugin catchall_boolean (10.0 confidence) suggests   ******************
+
+If azt akarja hogy allow use to fusefs home dirs
+Then adja meg az SELinux számára erről, azzal hogy engedélyezi a 'use_fusefs_home_dirs' boolean-t.
+Elolvashatja 'None' man oldalt a további részletekért.
+Do
+setsebool -P use_fusefs_home_dirs 1

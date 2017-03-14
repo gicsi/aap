@@ -1,0 +1,19 @@
+Your package gwibber failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10095617
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046974
+build.log
+Created attachment 1046975
+root.log
+Created attachment 1046976
+state.log
+This package has changed ownership in the Fedora Package Database.  Reassigning to the new owner of this component.
+This broken package is not worth the effort to fix. The upstream has moved to making it a Unity component, it no longer works without the Ubuntu glue.
+
+As shown here:
+
+https://admin.fedoraproject.org/pkgdb/package/gwibber/
+
+I have orphaned and retired this in rawhide.

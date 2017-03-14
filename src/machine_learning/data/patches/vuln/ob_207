@@ -1,0 +1,99 @@
+Apply by doing:
+        cd /usr/src
+        patch -p0 < 029_copy.patch
+
+And then rebuild your kernel.
+
+Index: sys/arch/amd64/amd64/copy.S
+===================================================================
+RCS file: /cvs/src/sys/arch/amd64/amd64/copy.S,v
+retrieving revision 1.1
+retrieving revision 1.1.4.1
+diff -u -p -U20 -r1.1 -r1.1.4.1
+--- sys/arch/amd64/amd64/copy.S	28 Jan 2004 01:39:38 -0000	1.1
++++ sys/arch/amd64/amd64/copy.S	16 Mar 2005 23:53:27 -0000	1.1.4.1
+@@ -190,40 +190,41 @@ NENTRY(copy_efault)
+ 	movq	$EFAULT,%rax
+ 
+ NENTRY(copy_fault)
+ 	movq	CPUVAR(CURPCB),%rdx
+ 	popq	PCB_ONFAULT(%rdx)
+ 	ret
+ 
+ ENTRY(copyoutstr)
+ 	xchgq	%rdi,%rsi
+ 	movq	%rdx,%r8
+ 	movq	%rcx,%r9
+ 
+ 5:	movq	CPUVAR(CURPCB),%rax
+ 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
+ 	movq	%r11,PCB_ONFAULT(%rax)
+ 	/*
+ 	 * Get min(%rdx, VM_MAXUSER_ADDRESS-%rdi).
+ 	 */
+ 	movq	$VM_MAXUSER_ADDRESS,%rax
+ 	subq	%rdi,%rax
++	jc	_C_LABEL(copystr_efault)
+ 	cmpq	%rdx,%rax
+ 	jae	1f
+ 	movq	%rax,%rdx
+ 	movq	%rax,%r8
+ 
+ 1:	incq	%rdx
+ 	cld
+ 
+ 1:	decq	%rdx
+ 	jz	2f
+ 	lodsb
+ 	stosb
+ 	testb	%al,%al
+ 	jnz	1b
+ 
+ 	/* Success -- 0 byte reached. */
+ 	decq	%rdx
+ 	xorq	%rax,%rax
+ 	jmp	copystr_return
+ 
+@@ -231,40 +232,41 @@ ENTRY(copyoutstr)
+ 	movq	$VM_MAXUSER_ADDRESS,%r11
+ 	cmpq	%r11,%rdi
+ 	jae	_C_LABEL(copystr_efault)
+ 	movq	$ENAMETOOLONG,%rax
+ 	jmp	copystr_return
+ 
+ ENTRY(copyinstr)
+ 	xchgq	%rdi,%rsi
+ 	movq	%rdx,%r8
+ 	movq	%rcx,%r9
+ 
+ 	movq	CPUVAR(CURPCB),%rcx
+ 	leaq	_C_LABEL(copystr_fault)(%rip),%r11
+ 	movq	%r11,PCB_ONFAULT(%rcx)
+ 
+ 	/*
+ 	 * Get min(%rdx, VM_MAXUSER_ADDRESS-%rsi).
+ 	 */
+ 	movq	$VM_MAXUSER_ADDRESS,%rax
+ 	subq	%rsi,%rax
++	jc	_C_LABEL(copystr_efault)
+ 	cmpq	%rdx,%rax
+ 	jae	1f
+ 	movq	%rax,%rdx
+ 	movq	%rax,%r8
+ 
+ 1:	incq	%rdx
+ 	cld
+ 
+ 1:	decq	%rdx
+ 	jz	2f
+ 	lodsb
+ 	stosb
+ 	testb	%al,%al
+ 	jnz	1b
+ 
+ 	/* Success -- 0 byte reached. */
+ 	decq	%rdx
+ 	xorq	%rax,%rax
+ 	jmp	copystr_return
+ 
+

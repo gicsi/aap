@@ -1,0 +1,122 @@
+Description of problem:
+
+Firefox 39 not open home page defined in Preferences but "restore session"
+
+
+Version-Release number of selected component (if applicable):
+
+firefox-39.0-6.fc22.x86_64
+
+
+How reproducible:
+Steps to Reproduce:
+
+1. update to firefox-39.0-6.fc22.x86_64
+2. start firefox
+3. define home page in Preferences
+4. properly close Firefox
+5. restart Firefox
+
+
+Actual results:
+
+Firefox display "restore session" with last opened session before close
+
+
+Expected results:
+
+Firefox should display home page as defined in Preferences
+Thanks for the bug report, fix is on the way.
+Upstream bug - https://bugzilla.mozilla.org/show_bug.cgi?id=884831
+Builds:
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10299978 (F21)
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10299987 (F22)
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10299994 (Rawhide)
+Problem still exists, not fixed for me by firefox-39.0-7.fc22.x86_64
+
+I deleted tried to delete ~/.mozilla but no change.
+I am having the opposite problem with 39.0.6.
+My preferene is set for restoring the previous session and it does not.
+Restore from history works.
+I am having the opposite problem with 39.0.6.
+My preferene is set for restoring the previous session and it does not.
+Restore from history works.
+39.0-7 doesn't seems to solves the bug.
+
+Each time I launch FF (configured to displayed by home page), it display the "restore session after crash" page.
+Notice: I can reproduce this issue using a fresh new profile (firefox-39.0-7.fc21)
+*** Bug 1239231 has been marked as a duplicate of this bug. ***
+Firefox-39.0-7.fc22 does not solve this problem for me.
+I see. Thanks for the feedback.
+This bug seems to be cause by a Fedora specific patch. Still investigating.
+I set firefox to always show the profile manager before starting.
+With the update to 39.0 I noticed that I get the profile manager twice every time I start firefox. It does not apply to all profiles though.
+$ gdb firefox ...
+GNU gdb (GDB) Fedora 7.9.50.20150531-4.fc23
+...
+"/usr/bin/firefox": not in executable format: File format not recognized
+(gdb) run
+Starting program:  
+No executable file specified.
+Use the "file" or "exec-file" command.
+(gdb) exec-file firefox
+"/usr/bin/firefox": not in executable format: File format not recognized
+(gdb) file /usr/bin/firefox
+"/usr/bin/firefox": not in executable format: File format not recognized
+(gdb) quit
+
+$ gdb /usr/lib64/firefox/firefox-bin ...
+...
+Reading symbols from /usr/lib64/firefox/firefox-bin...Reading symbols from /usr/lib/debug/usr/lib64/firefox/firefox-bin.debug...done.
+done.
+...
+(gdb) run
+Starting program: /usr/lib64/firefox/firefox-bin 
+...
+(gdb) backtrace full
+No stack.
+(gdb) quit
+
+
+ - Conclusion -
+
+While it runs indirectly - via script ("This script is meant to run a mozilla program from the mozilla rpm installation"):
+$ /usr/bin/firefox
+
+it'll go: "We're Sorry" Firefox had a problem and crashed. ... routine.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In contrast to "script mode", while it runs directly:
+$ /usr/lib64/firefox/firefox-bin
+
+no problemos whatsoever.
+
+
+firefox-39.0-7.fc23.x86_64
+firefox-debuginfo-39.0-7.fc23.x86_64
+(In reply to poma from comment #14)
+>  - Conclusion -
+> 
+> While it runs indirectly - via script ("This script is meant to run a
+> mozilla program from the mozilla rpm installation"):
+> $ /usr/bin/firefox
+> 
+> it'll go: "We're Sorry" Firefox had a problem and crashed. ... routine.
+
+Good catch! It's caused by "firefox -remote 'ping()'" command which crashes and then (in regular FF launch) Firefox takes this crash as normal FF crash and tries to restore the session.
+I commented on the entire "MOZILLA_DOWN" section, so far works OK.
+Gonna emerge some defect, we will see.
+
+BTW take a look at this paragraph, if you haven't already
+https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#-remote_remote_command
+firefox-39.0-8.fc22.x86_64 available on koji fixes this problem for me.
+
+Thanks to Martin for his efforts.
+Fixes it for me as well on F21.x86_64, Thanks.
+Yep, bug fixed, thanks a lot!
+I confirm that firefox-39.0-8.fc21 fix this issue, thanks.
+This fix actually doesn't require expanded testing, therefore
++2
+firefox-39.0-8.fc23.x86_64
+firefox-39.0-8.fc22.x86_64

@@ -1,0 +1,17 @@
+<strong>2nd revision, February 10, 2008</strong><br>
+Multiple vulnerabilities have been discovered in X.Org.<br>
+XFree86 Misc extension out of bounds array index,
+File existence disclosure,
+Xinput extension memory corruption,
+TOG-cup extension memory corruption,
+MIT-SHM and EVI extensions integer overflows,
+PCF Font parser buffer overflow.
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5760">CVE-2007-5760</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5958">CVE-2007-5958</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6427">CVE-2007-6427</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6428">CVE-2007-6428</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6429">CVE-2007-6429</a>,
+<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2008-0006">CVE-2008-0006</a>.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/4.1/common/012_xorg.patch">
+A source code patch exists which remedies this problem.</a>

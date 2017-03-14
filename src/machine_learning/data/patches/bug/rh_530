@@ -1,0 +1,36 @@
+From f2856790c464cdafd25834023b0ea73a2e3588ad Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 24 Jun 2015 00:12:37 +0000
+Subject: [PATCH] Update to 0.22 (#1235085)
+
+---
+ tangerine.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/tangerine.spec b/tangerine.spec
+index c8bd605..8c8b968 100644
+--- a/tangerine.spec
++++ b/tangerine.spec
+@@ -1,6 +1,6 @@
+ Name:           tangerine
+-Version:        0.20
+-Release:        3%{?dist}
++Version:        0.22
++Release:        1%{?dist}
+ Summary:        Perl dependency metadata tool
+ License:        MIT
+ URL:            http://search.cpan.org/dist/App-Tangerine/
+@@ -59,6 +59,9 @@ make test
+ %{_mandir}/man3/*
+ 
+ %changelog
++* Wed Jun 24 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.22-1
++- Update to 0.22 (#1235085)
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.20-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

@@ -1,0 +1,38 @@
+From 97049fb62bc0aeb5709d2a60fd8d31ea03c74821 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Wed, 1 Jul 2015 13:38:01 +0000
+Subject: [PATCH] Update to 4.3.0 (#1238262)
+
+---
+ spatialite-tools.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/spatialite-tools.spec b/spatialite-tools.spec
+index 0c44e39..a79d2b3 100644
+--- a/spatialite-tools.spec
++++ b/spatialite-tools.spec
+@@ -18,8 +18,8 @@
+ %endif
+ 
+ Name:           spatialite-tools
+-Version:        4.2.0
+-Release:        13%{?dist}
++Version:        4.3.0
++Release:        1%{?dist}
+ Summary:        A set of useful CLI tools for SpatiaLite
+ 
+ Group:          Development/Tools
+@@ -77,6 +77,9 @@ make install DESTDIR=%{buildroot}
+ %{_bindir}/spatialite_xml_*
+ 
+ %changelog
++* Wed Jul 01 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 4.3.0-1
++- Update to 4.3.0 (#1238262)
++
+ * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.2.0-13
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

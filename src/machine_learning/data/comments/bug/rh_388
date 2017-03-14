@@ -1,0 +1,47 @@
+Description of problem:
+I got traceback when using rpm-python3
+
+Version-Release number of selected component (if applicable):
+rpm-python3-4.12.0.1-11.fc22.x86_64
+
+How reproducible:
+always
+
+Steps to Reproduce:
+mock -r fedora-22-x86_64 --scm-enable --scm-option method=git --scm-option package=rpmconf --scm-option git_get=set --scm-option spec=rpmconf.spec --scm-option branch=master --scm-option write_tar=True --scm-option git_get='git clone https://github.com/xsuchy/rpmconf.git'
+...
+
+Traceback (most recent call last):
+  File "/usr/sbin/mock", line 828, in <module>
+    main()
+  File "/usr/lib/python3.4/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 650, in main
+    run_command(options, args, config_opts, commands, buildroot, state)
+  File "/usr/lib/python3.4/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/sbin/mock", line 663, in run_command
+    (options.sources, options.spec) = scmWorker.prepare_sources()
+  File "/usr/lib/python3.4/site-packages/mockbuild/trace_decorator.py", line 84, in trace
+    result = func(*args, **kw)
+  File "/usr/lib/python3.4/site-packages/mockbuild/scm.py", line 126, in prepare_sources
+    rpm_spec = ts.parseSpec(self.spec)
+  File "/usr/lib64/python3.4/site-packages/rpm/transaction.py", line 40, in parseSpec
+    import _rpmb
+ImportError: No module named '_rpmb'
+This seems to be fixed in upstream in commit
+  97989236c0f39ccbc7f2c1d52cc30f167fd827fe
+It would be nice if you can backport it to current Fedoras.
+rpm-4.12.0.1-12.fc22 has been submitted as an update for Fedora 22.
+https://admin.fedoraproject.org/updates/rpm-4.12.0.1-12.fc22
+Package rpm-4.12.0.1-12.fc22:
+* should fix your issue,
+* was pushed to the Fedora 22 testing repository,
+* should be available at your local mirror within two days.
+Update it with:
+# su -c 'yum update --enablerepo=updates-testing rpm-4.12.0.1-12.fc22'
+as soon as you are able to.
+Please go to the following url:
+https://admin.fedoraproject.org/updates/FEDORA-2015-10901/rpm-4.12.0.1-12.fc22
+then log in and leave karma (feedback).
+rpm-4.12.0.1-12.fc22 has been pushed to the Fedora 22 stable repository.  If problems still persist, please make note of it in this bug report.

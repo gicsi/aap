@@ -1,0 +1,56 @@
+Description of problem:
+
+caja crashes when opening an external USB drive on the desktop
+
+Version-Release number of selected component (if applicable):
+
+caja-1.8.2-4.fc21.x86_64
+
+How reproducible:
+
+
+Steps to Reproduce:
+1. Attach external drive; window opens on desktop.
+2. Close this window.
+3. Double-click the disk's icon.
+4. caja crashes and restarts.
+
+Actual results:
+
+As above.
+
+Expected results:
+
+New window should open showing disk's contents.
+
+Additional info:
+
+This message appears in /var/log/messages:
+
+systemd: Failed at step EXEC spawning /usr/lib/udisks/udisks-daemon: No such file or directory
+
+Installing a symbolic link
+
+/usr/lib/udisks/udisks-daemon -> /usr/libexec/udisks-daemon
+
+is an effective workaround.  Perhaps caja is using an outdated interface to systemd.
+Confirmed with udisks-1.0.5-1.fc21.
+Downgrade to udisks-1.0.4-15.fc21.x86_64 and the issue is gone.
+But that's not the only issue with new udisk version.
+Here caja becomes unusable.
+[root@mother rave]# systemctl status udisks.service -l
+● udisks.service - Disk Manager (legacy version)
+   Loaded: loaded (/usr/lib/systemd/system/udisks.service; static)
+   Active: failed (Result: exit-code) since Sa 2015-07-04 00:19:12 CEST; 25s ago
+     Docs: man:udisks(7)
+  Process: 2875 ExecStart=/usr/lib/udisks/udisks-daemon --no-debug (code=exited, status=203/EXEC)
+ Main PID: 2875 (code=exited, status=203/EXEC)
+
+Jul 04 00:19:12 mother.mother.loc systemd[2875]: Failed at step EXEC spawning /usr/lib/udisks/udisks-daemon: No such file or directory
+Jul 04 00:19:12 mother.mother.loc systemd[1]: udisks.service: main process exited, code=exited, status=203/EXEC
+Jul 04 00:19:12 mother.mother.loc systemd[1]: Failed to start Disk Manager (legacy version).
+Jul 04 00:19:12 mother.mother.loc systemd[1]: Unit udisks.service entered failed state.
+Jul 04 00:19:12 mother.mother.loc systemd[1]: udisks.service failed.
+try https://koji.fedoraproject.org/koji/buildinfo?buildID=666503
+OK, I removed the symlink /usr/lib/udisks/udisks-daemon -> /usr/libexec/udisks-daemon and installed udisks-1.0.5-2 per above.  Issue resolved, thanks.
+*** This bug has been marked as a duplicate of bug 1238664 ***

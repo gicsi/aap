@@ -1,0 +1,7 @@
+Apache has several bugs in <tt>mod_rewrite</tt> and <tt>mod_vhost_alias</tt>
+that could cause arbitrary files accessible to the www user on the server
+to be exposed under certain configurations when these modules are used.
+(These modules are not active by default).
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.7/common/031_httpd.patch">
+A source code patch exists which remedies this problem.</a>

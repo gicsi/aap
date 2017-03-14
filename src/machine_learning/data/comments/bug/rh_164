@@ -1,0 +1,12 @@
+Your package gbrainy failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10090045
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1046875
+build.log
+Created attachment 1046876
+root.log
+Created attachment 1046877
+state.log
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10307566

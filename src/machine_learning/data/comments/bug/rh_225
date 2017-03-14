@@ -1,0 +1,58 @@
+Description of problem:
+SELinux is preventing php-fpm from 'remove_name' accesses on the directory xml_archive.zip.iYLAxo.
+
+*****  Plugin catchall_boolean (89.3 confidence) suggests   ******************
+
+If you want to allow httpd to unified
+Then you must tell SELinux about this by enabling the 'httpd_unified' boolean.
+You can read 'None' man page for more details.
+Do
+setsebool -P httpd_unified 1
+
+*****  Plugin catchall (11.6 confidence) suggests   **************************
+
+If you believe that php-fpm should be allowed remove_name access on the xml_archive.zip.iYLAxo directory by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# grep php-fpm /var/log/audit/audit.log | audit2allow -M mypol
+# semodule -i mypol.pp
+
+Additional Information:
+Source Context                system_u:system_r:httpd_t:s0
+Target Context                unconfined_u:object_r:httpd_user_content_t:s0
+Target Objects                xml_archive.zip.iYLAxo [ dir ]
+Source                        php-fpm
+Source Path                   php-fpm
+Port                          <Unknown>
+Host                          (removed)
+Source RPM Packages           
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-128.4.fc22.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Permissive
+Host Name                     (removed)
+Platform                      Linux (removed) 4.0.7-300.fc22.x86_64+debug #1 SMP
+                              Mon Jun 29 21:56:44 UTC 2015 x86_64 x86_64
+Alert Count                   1
+First Seen                    2015-07-03 13:32:40 YEKT
+Last Seen                     2015-07-03 13:32:40 YEKT
+Local ID                      54461a52-3aa3-489b-9264-6731d5dfa6e4
+
+Raw Audit Messages
+type=AVC msg=audit(1435912360.15:3075): avc:  denied  { remove_name } for  pid=25682 comm="php-fpm" name="xml_archive.zip.iYLAxo" dev="sdb1" ino=39706956 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:httpd_user_content_t:s0 tclass=dir permissive=1
+
+
+Hash: php-fpm,httpd_t,httpd_user_content_t,dir,remove_name
+
+Version-Release number of selected component:
+selinux-policy-3.13.1-128.4.fc22.noarch
+
+Additional info:
+reporter:       libreport-2.6.0
+hashmarkername: setroubleshoot
+kernel:         4.0.7-300.fc22.x86_64+debug
+type:           libreport
+*** This bug has been marked as a duplicate of bug 1238970 ***

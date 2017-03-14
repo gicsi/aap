@@ -1,0 +1,127 @@
+From 25a2de78a92603508ae7d4a4689091dac7b6cd1e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ville=20Skytt=C3=A4?= <ville.skytta@iki.fi>
+Date: Tue, 30 Jun 2015 13:45:43 +0300
+Subject: [PATCH] Install bash completion
+
+- Ship LICENSE.txt as %license where available
+---
+ python-pip.spec | 69 ++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 66 insertions(+), 3 deletions(-)
+
+diff --git a/python-pip.spec b/python-pip.spec
+index ceac72c..c24ce04 100644
+--- a/python-pip.spec
++++ b/python-pip.spec
+@@ -15,9 +15,14 @@
+ %endif
+ %endif
+ 
++%global bashcompdir %(b=$(pkg-config --variable=completionsdir bash-completion 2>/dev/null); echo ${b:-%{_sysconfdir}/bash_completion.d})
++%if "%{bashcompdir}" != "%{_sysconfdir}/bash_completion.d"
++%global bashcomp2 1
++%endif
++
+ Name:           python-%{srcname}
+ Version:        7.0.3
+-Release:        2%{?dist}
++Release:        3%{?dist}
+ Summary:        A tool for installing and managing Python packages
+ 
+ Group:          Development/Libraries
+@@ -67,6 +72,7 @@ Group:          Development/Libraries
+ 
+ BuildRequires:  python3-devel
+ BuildRequires:  python3-setuptools
++BuildRequires:  bash-completion
+ %if 0%{?with_tests}
+ BuildRequires:  python3-mock
+ BuildRequires:  python3-pytest
+@@ -142,6 +148,44 @@ pip2 install -I dist/%{python2_wheelname} --root %{buildroot} --strip-file-prefi
+ %{__python} setup.py install -O1 --skip-build --root %{buildroot}
+ %endif
+ 
++mkdir -p %{buildroot}%{bashcompdir}
++PYTHONPATH=%{buildroot}%{python_sitelib} \
++    %{buildroot}%{_bindir}/pip completion --bash \
++    > %{buildroot}%{bashcompdir}/pip
++%if 0%{?with_python3}
++PYTHONPATH=%{buildroot}%{python3_sitelib} \
++    %{buildroot}%{_bindir}/pip3 completion --bash \
++    > %{buildroot}%{bashcompdir}/pip3
++%endif
++pips2=pip
++pips3=pip3
++for pip in %{buildroot}%{_bindir}/pip*; do
++    pip=$(basename $pip)
++    case $pip in
++        pip2*)
++            pips2="$pips2 $pip"
++%if 0%{?bashcomp2}
++            ln -s pip %{buildroot}%{bashcompdir}/$pip
++%endif
++            ;;
++%if 0%{?with_python3}
++        pip3?*)
++            pips3="$pips3 $pip"
++%if 0%{?bashcomp2}
++            ln -s pip3 %{buildroot}%{bashcompdir}/$pip
++%endif
++            ;;
++%endif
++    esac
++done
++%if 0%{?with_python3}
++sed -i -e "s/^\\(complete.*\\) pip\$/\\1 $pips3/" \
++    -e s/_pip_completion/_pip3_completion/ \
++    %{buildroot}%{bashcompdir}/pip3
++%endif
++sed -i -e "s/^\\(complete.*\\) pip\$/\\1 $pips2/" \
++    %{buildroot}%{bashcompdir}/pip
++
+ %if 0%{?with_tests}
+ %check
+ py.test -m 'not network'
+@@ -159,20 +203,39 @@ popd
+ 
+ %files
+ %defattr(-,root,root,-)
+-%doc LICENSE.txt README.rst docs
++%{!?_licensedir:%global license %%doc}
++%license LICENSE.txt
++%doc README.rst docs
+ %attr(755,root,root) %{_bindir}/pip
+ %attr(755,root,root) %{_bindir}/pip2*
+ %{python_sitelib}/pip*
++%{bashcompdir}
++%if 0%{?with_python3}
++%exclude %{bashcompdir}/pip3*
++%endif
++%if 0%{?bashcomp2}
++%dir %(dirname %{bashcompdir})
++%endif
+ 
+ %if 0%{?with_python3}
+ %files -n python3-pip
+ %defattr(-,root,root,-)
+-%doc LICENSE.txt README.rst docs
++%license LICENSE.txt
++%doc README.rst docs
+ %attr(755,root,root) %{_bindir}/pip3*
+ %{python3_sitelib}/pip*
++%dir %{bashcompdir}
++%{bashcompdir}/pip3*
++%if 0%{?bashcomp2}
++%dir %(dirname %{bashcompdir})
++%endif
+ %endif # with_python3
+ 
+ %changelog
++* Tue Jun 30 2015 Ville Skyttä <ville.skytta@iki.fi> - 7.0.3-3
++- Install bash completion
++- Ship LICENSE.txt as %%license where available
++
+ * Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 7.0.3-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+2.4.3

@@ -1,0 +1,5 @@
+The "miniroot" install method is broken (related to the addition of
+softraid support).  This method is used by the official CD 3 as
+well, so it fails to boot on sparc64 machines.
+<br>
+No patch is available for obvious reasons, so use a different install method.

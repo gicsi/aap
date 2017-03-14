@@ -1,0 +1,128 @@
+Description of problem:
+Updating scaled overcloud with openstack deploy --plan-uuid command redeployed the overcloud with default roles (1 controller and 1 compute)
+
+Version-Release number of selected component (if applicable):
+python-rdomanager-oscplugin-0.0.8-1.el7ost.noarch
+rhos-release-0.62-1.noarch
+
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1.deploy overcloud 1 compute and 1 controller
+2.scale the overcloud to 2 computes, 2 controllers and 1 ceph (expected to fail because of 2 controllers - invalid deployment)
+3. update the overcloud using openstack overcloud deploy --plan-uuid $UUID
+
+Actual results:
+overcloud was redeployed with1 controller and 1 compute
+
+Expected results:
+scaled overcloud was updated - e.g nothing changed.
+
+Additional info:
+at the beginning the scale failed for 1 controller.
+
+
+Stack before update:
+[stack@instack ~]$ nova list
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+| ID                                   | Name                    | Status | Task State | Power State | Networks            |
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+| 7aff7c7f-5834-4dc8-9883-1a018ed0be03 | overcloud-cephstorage-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.11 |
+| 7633d058-bfae-4731-a14b-8da6c225f2f2 | overcloud-compute-0     | ACTIVE | -          | Running     | ctlplane=192.0.2.10 |
+| 548085d2-3b74-42d4-868c-65b657839114 | overcloud-compute-1     | ACTIVE | -          | Running     | ctlplane=192.0.2.13 |
+| 454b0202-eff3-46bf-a75b-e49875354167 | overcloud-controller-0  | ACTIVE | -          | Running     | ctlplane=192.0.2.9  |
+| e747a12d-96cc-4f24-9f96-8e36947007ad | overcloud-controller-1  | ACTIVE | -          | Running     | ctlplane=192.0.2.12 |
++--------------------------------------+-------------------------+--------+------------+-------------+---------------------+
+
+Failure details:
+
+$ heat resource-list 70261d64-ce22-4dd6-9239-7d3504d20f54
++-----------------------------------+-----------------------------------------------+---------------------------------------------------+-----------------+----------------------+
+| resource_name                     | physical_resource_id                          | resource_type                                     | resource_status | updated_time         |
++-----------------------------------+-----------------------------------------------+---------------------------------------------------+-----------------+----------------------+
+| CephStorageNodesPostDeployment    | af483340-35d2-4de7-95dd-0ae78d5e4c9b          | OS::TripleO::CephStoragePostDeployment            | CREATE_COMPLETE | 2015-06-21T09:43:27Z |
+| BlockStorageNodesPostDeployment   | 81e30378-39b1-40bf-ba88-005dee3160e8          | OS::TripleO::BlockStoragePostDeployment           | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| ControlVirtualIP                  | b4f73210-2000-4ba8-a933-5d8d058e1655          | OS::Neutron:ort                                 | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| HeatAuthEncryptionKey             | overcloud-HeatAuthEncryptionKey-zubuht6wolju  | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| HorizonSecret                     | overcloud-HorizonSecret-u62vggnuomwx          | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| MysqlClusterUniquePart            | overcloud-MysqlClusterUniquePart-roobryxfcotn | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| MysqlRootPassword                 | overcloud-MysqlRootPassword-w22c5xiifjib      | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| PcsdPassword                      | overcloud-PcsdPassword-qbmxpy6hl65h           | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| PublicVirtualIP                   | b025200d-10b6-4570-b1fa-94771f18fa19          | OS::Neutron:ort                                 | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| RabbitCookie                      | overcloud-RabbitCookie-q4vodvqnmybc           | OS::Heat::RandomString                            | CREATE_COMPLETE | 2015-06-21T09:43:28Z |
+| Networks                          | ccd0f65a-499d-48a8-8519-6100cf3cde3c          | OS::TripleO::Network                              | UPDATE_COMPLETE | 2015-06-21T10:06:00Z |
+| Ceph-Storage                      | 48d89dfc-858d-4537-8d57-ead66ce3c3a1          | OS::Heat::ResourceGroup                           | UPDATE_COMPLETE | 2015-06-21T10:06:02Z |
+| VipConfig                         | 08fe0ee8-9e6d-4583-b8f4-3f0c58a2da6d          | OS::TripleO::VipConfig                            | UPDATE_COMPLETE | 2015-06-21T10:06:03Z |
+| Swift-Storage                     | 49a2baf7-5b51-45ec-914f-250ac9f59acb          | OS::Heat::ResourceGroup                           | UPDATE_COMPLETE | 2015-06-21T10:06:04Z |
+| StorageVirtualIP                  | 85c5c817-1490-491e-ae08-066eeb3e7626          | OS::TripleO::Controller:orts::StoragePort       | UPDATE_COMPLETE | 2015-06-21T10:06:12Z |
+| InternalApiVirtualIP              | 7765e89c-93a8-4906-9f3b-36d0f4c720c8          | OS::TripleO::Controller:orts::InternalApiPort   | UPDATE_COMPLETE | 2015-06-21T10:06:13Z |
+| StorageMgmtVirtualIP              | e85f73cd-3f18-4876-81f9-ebbc06df0d87          | OS::TripleO::Controller:orts::StorageMgmtPort   | UPDATE_COMPLETE | 2015-06-21T10:06:14Z |
+| RedisVirtualIP                    | ccd5ab39-5eef-466d-95bb-9631dbf2e534          | OS::TripleO::Controller:orts::RedisVipPort      | UPDATE_COMPLETE | 2015-06-21T10:06:15Z |
+| VipMap                            | 6fcc7b00-90b3-4c89-8410-749faf83e4a2          | OS::TripleO::Network:orts::NetIpMap             | UPDATE_COMPLETE | 2015-06-21T10:06:17Z |
+| Cinder-Storage                    | 093ef6a1-f62a-4ff6-8e91-048ba0ff34fa          | OS::Heat::ResourceGroup                           | UPDATE_COMPLETE | 2015-06-21T10:06:19Z |
+| Compute                           | 357d1054-bc60-4106-a3e2-92c516b85a82          | OS::Heat::ResourceGroup                           | UPDATE_COMPLETE | 2015-06-21T10:06:19Z |
+| Controller                        | 611127f2-f28d-4f56-824e-6a15379e269a          | OS::Heat::ResourceGroup                           | UPDATE_COMPLETE | 2015-06-21T10:06:21Z |
+| ControllerIpListMap               | ad774c0b-b5e8-4750-b9f4-cc86bfaab2f9          | OS::TripleO::Network:orts::NetIpListMap         | UPDATE_COMPLETE | 2015-06-21T10:09:54Z |
+| VipDeployment                     | 60c43e29-065b-48d3-88fa-03c2ac431fbe          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:09:55Z |
+| SwiftDevicesAndProxyConfig        | 11c927f2-4a3b-4f4b-88ab-c2c599b2e10c          | OS::TripleO::SwiftDevicesAndProxy::SoftwareConfig | UPDATE_COMPLETE | 2015-06-21T10:09:57Z |
+| ControllerBootstrapNodeConfig     | 4fcd3adf-7404-4b6c-9e65-d9a20fe2974b          | OS::TripleO::BootstrapNode::SoftwareConfig        | UPDATE_COMPLETE | 2015-06-21T10:09:58Z |
+| ControllerClusterConfig           | 8e508a81-8d1f-477f-a101-98f92a37f110          | OS::Heat::StructuredConfig                        | CREATE_COMPLETE | 2015-06-21T10:09:59Z |
+| CephClusterConfig                 | 6af9fc8a-8a30-46d3-ba64-e0cce7f7ebcd          | OS::TripleO::CephClusterConfig::SoftwareConfig    | UPDATE_COMPLETE | 2015-06-21T10:10:00Z |
+| ControllerClusterDeployment       | b728c995-659b-4916-8b40-a549fb6d932a          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:01Z |
+| allNodesConfig                    | 34f1af91-e55b-4ab2-8834-a0f2b83d1ef1          | OS::TripleO::AllNodes::SoftwareConfig             | UPDATE_COMPLETE | 2015-06-21T10:10:02Z |
+| CephStorageCephDeployment         | e5f27ad5-e95f-4587-a627-887bc3df109f          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:05Z |
+| ObjectStorageSwiftDeployment      | d3a91f9f-cf42-4df0-80ea-efe453d002f3          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:05Z |
+| ComputeCephDeployment             | 73747c0c-c7d5-41cb-9b2e-815aa419701e          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:07Z |
+| ControllerBootstrapNodeDeployment | df0d3e59-f701-4616-8403-4b1474603a49          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:09Z |
+| ControllerSwiftDeployment         | b3a57216-a4e7-4932-8e58-f7a0039dfea7          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:10Z |
+| ControllerCephDeployment          | 0db3244c-2bbf-45f2-9cae-54ab72050805          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:11Z |
+| ObjectStorageAllNodesDeployment   | 533afdae-4001-4752-8071-e4e45586a9ef          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:14Z |
+| BlockStorageAllNodesDeployment    | cb820190-60b6-4b43-b2fd-55f4c35c6e9d          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:15Z |
+| CephStorageAllNodesDeployment     | 78354e58-9517-428d-be77-60ec8f8562d6          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:15Z |
+| ControllerAllNodesDeployment      | 91667362-d810-4d4d-93a9-93e9d0e13e94          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:16Z |
+| ComputeAllNodesDeployment         | 0b504191-b8e0-452a-8d5c-22feee6c8f2e          | OS::Heat::StructuredDeployments                   | UPDATE_COMPLETE | 2015-06-21T10:10:18Z |
+| ObjectStorageNodesPostDeployment  | fc6fd58a-c698-4030-bbf0-45d4e1b0bc1a          | OS::TripleO::ObjectStoragePostDeployment          | UPDATE_COMPLETE | 2015-06-21T10:10:21Z |
+| ComputeNodesPostDeployment        | 38829a42-3e05-41d2-b5f6-b41dd2a21212          | OS::TripleO::ComputePostDeployment                | UPDATE_COMPLETE | 2015-06-21T10:10:40Z |
+| ControllerNodesPostDeployment     | f1bb74fb-daa6-46de-bf75-362d4454e3d2          | OS::TripleO::ControllerPostDeployment             | UPDATE_FAILED   | 2015-06-21T10:10:44Z |
++-----------------------------------+-----------------------------------------------+---------------------------------------------------+-----------------+----------------------+
+
+[stack@instack ~]$ heat resource-show 70261d64-ce22-4dd6-9239-7d3504d20f54 ControllerNodesPostDeployment
++------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Property               | Value                                                                                                                                                               |
++------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| attributes             | {}                                                                                                                                                                  |
+| description            |                                                                                                                                                                     |
+| links                  | http://192.0.2.1:8004/v1/0efccdb864264fb6870c608e254c0d4b/stacks/overcloud/70261d64-ce22-4dd6-9239-7d3504d20f54/resources/ControllerNodesPostDeployment (self)      |
+|                        | http://192.0.2.1:8004/v1/0efccdb864264fb6870c608e254c0d4b/stacks/overcloud/70261d64-ce22-4dd6-9239-7d3504d20f54 (stack)                                             |
+|                        | http://192.0.2.1:8004/v1/0efccdb864264fb6870c608e254c0d4b/stacks/overcloud-ControllerNodesPostDeployment-pkzyclj2xffz/f1bb74fb-daa6-46de-bf75-362d4454e3d2 (nested) |
+| logical_resource_id    | ControllerNodesPostDeployment                                                                                                                                       |
+| physical_resource_id   | f1bb74fb-daa6-46de-bf75-362d4454e3d2                                                                                                                                |
+| required_by            | BlockStorageNodesPostDeployment                                                                                                                                     |
+|                        | CephStorageNodesPostDeployment                                                                                                                                      |
+| resource_name          | ControllerNodesPostDeployment                                                                                                                                       |
+| resource_status        | UPDATE_FAILED                                                                                                                                                       |
+| resource_status_reason | UPDATE aborted                                                                                                                                                      |
+| resource_type          | OS::TripleO::ControllerPostDeployment                                                                                                                               |
+| updated_time           | 2015-06-21T10:10:44Z                                                                                                                                                |
++------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+After update:
+
+[stack@instack ~]$ heat stack-list
++--------------------------------------+------------+-----------------+----------------------+
+| id                                   | stack_name | stack_status    | creation_time        |
++--------------------------------------+------------+-----------------+----------------------+
+| 70261d64-ce22-4dd6-9239-7d3504d20f54 | overcloud  | UPDATE_COMPLETE | 2015-06-21T09:43:27Z |
++--------------------------------------+------------+-----------------+----------------------+
+[stack@instack ~]$ nova list
++--------------------------------------+------------------------+--------+------------+-------------+---------------------+
+| ID                                   | Name                   | Status | Task State | Power State | Networks            |
++--------------------------------------+------------------------+--------+------------+-------------+---------------------+
+| 7633d058-bfae-4731-a14b-8da6c225f2f2 | overcloud-compute-0    | ACTIVE | -          | Running     | ctlplane=192.0.2.10 |
+| 454b0202-eff3-46bf-a75b-e49875354167 | overcloud-controller-0 | ACTIVE | -          | Running     | ctlplane=192.0.2.9  |
++--------------------------------------+------------------------+--------+------------+-------------+---------------------+
+This sounds like a duplicate of https://bugzilla.redhat.com/show_bug.cgi?id=1232838
+IMO they are both duplicates of https://bugzilla.redhat.com/show_bug.cgi?id=1227873
+*** This bug has been marked as a duplicate of bug 1227873 ***

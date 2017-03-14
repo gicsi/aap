@@ -1,0 +1,21 @@
+Description of problem:  Resuming a docked notebook won't change it's output to the external monitor.
+
+
+Version-Release number of selected component (if applicable):
+gnome-settings-daemon-3.16.2-1.fc22.x86_64
+
+Steps to Reproduce:
+1. Undock the notebook (no external monitors are atteched to it)
+2. Put it to sleep;
+3. Dock the notebook (closed lid);
+4. Wake the notebook (external monitor is connected to the docking station).
+
+Actual results:
+The output isn't switched, so I can't see the GDM.
+
+Expected results:
+Switch outputs.
+I fixed this issue in Cinnamon, (c-s-d) by:
+
+https://github.com/phatina/cinnamon-settings-daemon/commit/724520b80d73fa0903435c71f68150c93ae58435
+Closing this cause I prefer to track bugs in a single place.

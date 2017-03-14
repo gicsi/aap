@@ -1,0 +1,36 @@
+From c0c8d10ce758563c2e40b8be1ff862939379e681 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Thu, 25 Jun 2015 00:59:12 +0000
+Subject: [PATCH] Update to 1.6 (#1235482)
+
+---
+ maven-verifier.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/maven-verifier.spec b/maven-verifier.spec
+index 50ba421..e32c40b 100644
+--- a/maven-verifier.spec
++++ b/maven-verifier.spec
+@@ -1,6 +1,6 @@
+ Name:           maven-verifier
+-Version:        1.5
+-Release:        5%{?dist}
++Version:        1.6
++Release:        1%{?dist}
+ Summary:        Maven verifier
+ License:        ASL 2.0
+ URL:            http://maven.apache.org/shared/maven-verifier
+@@ -47,6 +47,9 @@ API documentation for %{name}.
+ 
+ 
+ %changelog
++* Thu Jun 25 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 1.6-1
++- Update to 1.6 (#1235482)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5-5
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

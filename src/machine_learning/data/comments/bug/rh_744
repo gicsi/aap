@@ -1,0 +1,33 @@
+Description of problem:
+-After add some photos and videos or music and turn on player, stop player, etc. Openshot complete fall. Sometimes on first turn on play fall, sometimes on second or more tries.
+
+
+Version-Release number of selected component (if applicable):
+-openshot-1.4.3-3.fc21.x86_64
+
+
+How reproducible:
+-crashes when running the built-in player
+
+
+Steps to Reproduce:
+1.turn on OpenShot
+2.add some photos, music, videos or more to timeline
+3.play the built-in player, stop built-in player and rewind to the beginning
+
+Actual results:
+-it is still the same
+
+
+Expected results:
+-it should not fall
+
+Additional info:
+-please repair it, thank you.
+(In reply to Matěj Beránek from comment #0)
+..
+> etc. Openshot
+...
+Openshot is not in Fedora. You can check where you got openshot from using a terminal prompt with:
+$ rpm -qi openshot
+, and look for the Packager or Vendor field. Can you please submit your issue in their bugtracker. Closing.

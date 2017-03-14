@@ -1,0 +1,51 @@
+Description of problem:
+**************************************
+While running the test on PTM (protocol test manager)which is to test whether server can handle per share encryption correctly.
+
+The test fails with the error message that "Server should set SMB2_SHAREFLAG_ENCRYPT_DATA for share flags in TREE_CONNECT response"
+
+The settings are default as follows:
+1.max protocol = smb3
+2.smb encrypt = default (global)
+
+When max protocol is set to SMB3 , the global option for smb encrypt is set to default(auto) which means if client requires encrypted session the server is capable of SMB encryption.
+
+The expectation is same for smb encrypt for all the shares of this server.
+
+Version-Release number of selected component (if applicable):
+samba-4.1.17-7.el6rhs.x86_64.rpm
+
+
+How reproducible:
+Always
+
+Steps to Reproduce:
+1.2X2 volume accessed by windows as a samba share
+2.Verify if max protocol is set to SMB3
+3.Verify the value of smb encrypt for global
+4.Run the test from PTM to verify if the server can handle per share encryption correctly.
+5.Verify the results.
+
+Actual results:
+************************************
+The test fails with the error message that "Server should set SMB2_SHAREFLAG_ENCRYPT_DATA for share flags in TREE_CONNECT response"
+
+Expected results:
+*************************************
+When the smb encrypt flag is set globally as default(auto) , the share flags should also be set appropriately so if a session request comes from a client which is capable of smb encryption the share should also have that capability as server unless it is set locally to a different value.
+
+
+Additional info:
+The results with smb encrypt = auto and smb encrypt = enabled is same as above.
+
+Also we need smb.conf man page to be updated with latest settings for smb encrypt.
+Sorry for the confusion:
+There are several bug related to SMB3 encryption.
+In comment #5 I did in fact propose to close this one as NOTABUG,
+because the default setting does actually work as expected.
+
+Instead bug #1237085 and #1237063 are the important ones to get.
+
+==> Closing this one now.
+
+Apologies for the confusion!

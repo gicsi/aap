@@ -1,0 +1,52 @@
+Description of problem:
+Closed a GNOME Web's "WebApp" (if I remember right).
+
+Version-Release number of selected component:
+webkitgtk4-2.8.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.6.0
+backtrace_rating: 4
+cmdline:        /usr/libexec/webkit2gtk-4.0/WebKitWebProcess 15
+crash_function: __atomic_base
+executable:     /usr/libexec/webkit2gtk-4.0/WebKitWebProcess
+global_pid:     2448
+kernel:         4.0.5-300.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (10 frames)
+ #0 __atomic_base at /usr/include/c++/5.1.1/bits/atomic_base.h:256
+ #1 atomic at /usr/include/c++/5.1.1/atomic:616
+ #2 ThreadSafeRefCountedBase at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/ThreadSafeRefCounted.h:73
+ #3 ThreadSafeRefCounted at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/ThreadSafeRefCounted.h:117
+ #4 WTF::FunctionDispatcher::FunctionDispatcher at /usr/src/debug/webkitgtk-2.8.3/Source/WTF/wtf/FunctionDispatcher.cpp:31
+ #5 WorkQueue::WorkQueue at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/WorkQueue.cpp:34
+ #6 WorkQueue::create at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/WorkQueue.cpp:31
+ #7 WebKit::didCloseOnConnectionWorkQueue at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Shared/ChildProcess.cpp:52
+ #8 IPC::Connection::connectionDidClose at /usr/src/debug/webkitgtk-2.8.3/Source/WebKit2/Platform/IPC/Connection.cpp:747
+ #9 operator() at /usr/include/c++/5.1.1/functional:2271
+Created attachment 1044357
+File: backtrace
+Created attachment 1044358
+File: cgroup
+Created attachment 1044359
+File: core_backtrace
+Created attachment 1044360
+File: dso_list
+Created attachment 1044361
+File: environ
+Created attachment 1044362
+File: limits
+Created attachment 1044363
+File: maps
+Created attachment 1044364
+File: mountinfo
+Created attachment 1044365
+File: namespaces
+Created attachment 1044366
+File: open_fds
+Created attachment 1044367
+File: proc_pid_status

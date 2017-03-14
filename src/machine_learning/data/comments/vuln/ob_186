@@ -1,0 +1,4 @@
+Root may be able to reduce the security level by taking advantage of
+an integer overflow when the semaphore limits are made very large.<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/3.3/common/003_sysvsem.patch">
+A source code patch exists which remedies this problem.</a>

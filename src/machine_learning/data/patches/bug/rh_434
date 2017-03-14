@@ -1,0 +1,38 @@
+From 5d2acbce348d83a776829bb108b682e0a2c72829 Mon Sep 17 00:00:00 2001
+From: Fedora Release Monitoring <release-monitoring@fedoraproject.org>
+Date: Fri, 26 Jun 2015 12:54:45 +0000
+Subject: [PATCH] Update to 0.5.7 (#1236060)
+
+---
+ liblangtag.spec | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/liblangtag.spec b/liblangtag.spec
+index bb84c17..31fadd1 100644
+--- a/liblangtag.spec
++++ b/liblangtag.spec
+@@ -2,8 +2,8 @@
+ %global girapiversion 0.5
+ 
+ Name: liblangtag
+-Version: 0.5.6
+-Release: 2%{?dist}
++Version: 0.5.7
++Release: 1%{?dist}
+ Summary: An interface library to access tags for identifying languages
+ 
+ License: (LGPLv3+ or MPLv2.0) and UCD
+@@ -116,6 +116,9 @@ make %{?_smp_mflags} check
+ %{_datadir}/gtk-doc/html/%{name}
+ 
+ %changelog
++* Fri Jun 26 2015 Fedora Release Monitoring <release-monitoring@fedoraproject.org> - 0.5.7-1
++- Update to 0.5.7 (#1236060)
++
+ * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.5.6-2
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+ 
+-- 
+1.8.3.1
+
+

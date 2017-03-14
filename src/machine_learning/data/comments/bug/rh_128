@@ -1,0 +1,12 @@
+Your package perl-Task-Kensho-Testing failed to build from source in current rawhide.
+
+http://koji.fedoraproject.org/koji/taskinfo?taskID=10132329
+
+For details on mass rebuild see https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+Created attachment 1047661
+build.log
+Created attachment 1047662
+root.log
+Created attachment 1047663
+state.log
+*** This bug has been marked as a duplicate of bug 1231888 ***

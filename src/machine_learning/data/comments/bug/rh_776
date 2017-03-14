@@ -1,0 +1,38 @@
+After upgrading to the 7.1.3 tree in the stage environment, the cert for RHEL Workstation (71.pem) is included in '/etc/pki/product'
+
+# ls -al /etc/pki/product
+total 16
+drwxr-xr-x.  2 root root   46 Jun 18 18:42 .
+drwxr-xr-x. 12 root root 4096 Jun 18 18:42 ..
+-rw-r--r--.  1 root root 2175 Jan  1  1970 271.pem
+-rw-r--r--.  1 root root 2159 Jan  1  1970 69.pem
+-rw-r--r--.  1 root root 2171 Jan  1  1970 71.pem
+
+
+This causes the system to consume RHEL Workstation entitlements, which are not required for RHEL Atomic.
+I currently believe this patch will fix it:
+
+diff --git a/subscription-manager.spec b/subscription-manager.spec
+index 4650743..40757d1 100644
+--- a/subscription-manager.spec
++++ b/subscription-manager.spec
+@@ -443,9 +443,11 @@ rm -rf %{buildroot}
+ 
+ %post
+ %if %use_systemd
++if test -d /run/systemd; then
+     /bin/systemctl enable rhsmcertd.service >/dev/null 2>&1 || :
+     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+     /bin/systemctl try-restart rhsmcertd.service >/dev/null 2>&1 || :
++fi
+ %else
+     chkconfig --add rhsmcertd
+ %endif
+
+
+I'm testing now.
+Created attachment 1040636
+log from compose
+This turned out to be the flexible branding service being loaded into the host yum affecting the installroot. 
+
+The new rpm-ostree uses libhif(hawkey/librepo) and thus no longer uses yum plugins.  So calling this one fixed.

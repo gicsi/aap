@@ -1,0 +1,23 @@
+Created attachment 1045163
+server log
+
+Description of problem: When executing the following query, an exception is thrown indicating that "Sentence already started.  Cannot use 'having(..)' again:
+
+SELECT g_0.memberIdentifier, g_0.carrierId, g_0.accountId, g_0.groupId, g_0.claimSequenceNumber, g_0.claimIdentifier, g_0.claimStatusCode, g_0.daysSupplyNumber, g_0.fillDate, g_0.gpi, g_0.claimSubmitDate 
+FROM Claim.PharmacyClaim AS g_0 
+WHERE g_0.memberIdentifier = '123'
+AND g_0.carrierId = 'ABC' 
+AND g_0.accountId = 'XYZ'
+AND g_0.groupId = 'JKL'
+
+This exception only occurs when there are more than 2 criterias in the WHERE clause.  
+
+Version-Release number of selected component (if applicable): translator-infinispan-dsl 8.7.1
+I've duplicated the issue in DV 6.2 and I believe I have found the problem.  Will do more testing tomorrow to verify the fix works in DV 6.1.
+I've got a fix for this, is this something you are going to file a client ticket on to get it into a roll-up?   Or do you want a patch to work with for the time being?
+Created attachment 1045522
+PatchedJarToTestWith
+
+I've attached a patched jar that can be used to verify the fix.
+Thank you for the patch.  I have tested and verified that the patch fixed the issue in my environment.
+*** This bug has been marked as a duplicate of bug 1232282 ***

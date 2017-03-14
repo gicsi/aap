@@ -1,0 +1,8 @@
+Created attachment 1040618
+Patch to add exported packages to jnr-posix MANIFEST.MF
+
+Description of problem:
+
+New Eclipse plugins require some jnr-posix packages be exported in the manifest.
+Pushed to master.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=663666

@@ -1,0 +1,104 @@
+Description of problem:
+
+Installing bits on virt from the latest poodle, deploying the overcloud (1 controller, 1 compute, 1 cephstorage) and then scaling out to two compute nodes errors out:
+
+[stack@instack ~]$ openstack overcloud scale stack overcloud overcloud -r Compute-1 -n 2
+Scaling out role Compute-1 in stack overcloud to 2 nodes
+ERROR: openstack ERROR: Parameter 'Cinder-Storage-1::Flavor' is invalid: Error validating value u'': The Flavor ID () could not be found.
+
+
+Version-Release number of selected component (if applicable):
+
+[stack@instack ~]$ rpm -qa | grep openstack
+openstack-nova-console-2015.1.0-13.el7ost.noarch
+openstack-neutron-2015.1.0-8.el7ost.noarch
+openstack-ironic-conductor-2015.1.0-4.el7ost.noarch
+openstack-ceilometer-alarm-2015.1.0-2.el7ost.noarch
+openstack-swift-account-2.3.0-1.el7ost.noarch
+python-django-openstack-auth-1.2.0-2.el7ost.noarch
+openstack-tuskar-ui-0.3.0-2.el7ost.noarch
+openstack-utils-2014.2-1.el7ost.noarch
+openstack-heat-api-cloudwatch-2015.1.0-3.el7ost.noarch
+openstack-ceilometer-notification-2015.1.0-2.el7ost.noarch
+openstack-neutron-openvswitch-2015.1.0-8.el7ost.noarch
+openstack-nova-api-2015.1.0-13.el7ost.noarch
+openstack-tripleo-image-elements-0.9.6-1.el7ost.noarch
+python-openstackclient-1.0.3-2.el7ost.noarch
+openstack-ironic-discoverd-1.1.0-3.el7ost.noarch
+openstack-tripleo-puppet-elements-0.0.1-2.el7ost.noarch
+openstack-swift-object-2.3.0-1.el7ost.noarch
+openstack-tripleo-0.0.7-0.1.1664e566.el7ost.noarch
+openstack-nova-common-2015.1.0-13.el7ost.noarch
+openstack-heat-common-2015.1.0-3.el7ost.noarch
+openstack-tuskar-0.4.18-2.el7ost.noarch
+openstack-dashboard-theme-2015.1.0-10.el7ost.noarch
+openstack-tripleo-heat-templates-0.8.6-10.el7ost.noarch
+openstack-tuskar-ui-extras-0.0.4-1.el7ost.noarch
+openstack-tempest-kilo-20150507.2.el7ost.noarch
+openstack-swift-2.3.0-1.el7ost.noarch
+openstack-neutron-ml2-2015.1.0-8.el7ost.noarch
+openstack-nova-novncproxy-2015.1.0-13.el7ost.noarch
+openstack-keystone-2015.1.0-1.el7ost.noarch
+openstack-swift-plugin-swift3-1.7-3.el7ost.noarch
+openstack-tripleo-common-0.0.1.dev6-0.git49b57eb.el7ost.noarch
+openstack-neutron-common-2015.1.0-8.el7ost.noarch
+openstack-heat-engine-2015.1.0-3.el7ost.noarch
+openstack-ceilometer-common-2015.1.0-2.el7ost.noarch
+openstack-heat-api-cfn-2015.1.0-3.el7ost.noarch
+openstack-ceilometer-api-2015.1.0-2.el7ost.noarch
+openstack-ironic-api-2015.1.0-4.el7ost.noarch
+openstack-swift-proxy-2.3.0-1.el7ost.noarch
+openstack-heat-templates-0-0.6.20150605git.el7ost.noarch
+openstack-ceilometer-collector-2015.1.0-2.el7ost.noarch
+openstack-ironic-common-2015.1.0-4.el7ost.noarch
+openstack-selinux-0.6.32-1.el7ost.noarch
+openstack-nova-compute-2015.1.0-13.el7ost.noarch
+openstack-nova-conductor-2015.1.0-13.el7ost.noarch
+openstack-swift-container-2.3.0-1.el7ost.noarch
+redhat-access-plugin-openstack-7.0.0-0.el7ost.noarch
+openstack-glance-2015.1.0-6.el7ost.noarch
+openstack-heat-api-2015.1.0-3.el7ost.noarch
+openstack-ceilometer-central-2015.1.0-2.el7ost.noarch
+openstack-puppet-modules-2015.1.6-2.el7ost.noarch
+openstack-nova-scheduler-2015.1.0-13.el7ost.noarch
+openstack-nova-cert-2015.1.0-13.el7ost.noarch
+openstack-dashboard-2015.1.0-10.el7ost.noarch
+
+[stack@instack ~]$ rpm -qa | grep oscplugin
+python-rdomanager-oscplugin-0.0.8-1.el7ost.noarch
+
+
+How reproducible:
+
+Always with latest poodle
+
+Steps to Reproduce:
+1. Install on virt with bits from latest poodle
+2. Deploy the overcloud
+3. Scale the compute node: openstack overcloud scale stack overcloud overcloud -r Compute-1 -n 2
+
+Actual results:
+
+ERROR: openstack ERROR: Parameter 'Cinder-Storage-1::Flavor' is invalid: Error validating value u'': The Flavor ID () could not be found.
+
+Expected results:
+
+Two compute nodes in the overcloud
+
+Additional info:
+Checking the plan for flavors:
+
+[stack@instack ~]$ tuskar plan-show-flavors overcloud
+
++------------------+-------+
+| Property         | Value |
++------------------+-------+
+| Ceph-Storage-1   |       |
+| Cinder-Storage-1 |       |
+| Compute-1        |       |
+| Controller-1     |       |
+| Swift-Storage-1  |       |
++------------------+-------+
+[stack@instack ~]$
+*** This bug has been marked as a duplicate of bug 1232837 ***
+*** Bug 1235310 has been marked as a duplicate of this bug. ***

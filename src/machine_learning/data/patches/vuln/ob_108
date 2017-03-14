@@ -1,0 +1,43 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 035_kernresource.patch
+And then rebuild your kernel.
+
+Index: sys/kern/kern_resource.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_resource.c,v
+retrieving revision 1.14
+retrieving revision 1.14.2.2
+diff -u -r1.14 -r1.14.2.2
+--- sys/kern/kern_resource.c	27 Jun 2001 04:49:44 -0000	1.14
++++ sys/kern/kern_resource.c	6 Nov 2002 22:11:19 -0000	1.14.2.2
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: kern_resource.c,v 1.14 2001/06/27 04:49:44 art Exp $	*/
++/*	$OpenBSD: kern_resource.c,v 1.14.2.2 2002/11/06 22:11:19 miod Exp $	*/
+ /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
+ 
+ /*-
+@@ -209,7 +209,7 @@
+ 	register_t *retval;
+ {
+ 	register struct sys_setrlimit_args /* {
+-		syscallarg(u_int) which;
++		syscallarg(int) which;
+ 		syscallarg(struct rlimit *) rlp;
+ 	} */ *uap = v;
+ 	struct rlimit alim;
+@@ -321,11 +321,11 @@
+ 	register_t *retval;
+ {
+ 	register struct sys_getrlimit_args /* {
+-		syscallarg(u_int) which;
++		syscallarg(int) which;
+ 		syscallarg(struct rlimit *) rlp;
+ 	} */ *uap = v;
+ 
+-	if (SCARG(uap, which) >= RLIM_NLIMITS)
++	if (SCARG(uap, which) < 0 || SCARG(uap, which) >= RLIM_NLIMITS)
+ 		return (EINVAL);
+ 	return (copyout((caddr_t)&p->p_rlimit[SCARG(uap, which)],
+ 	    (caddr_t)SCARG(uap, rlp), sizeof (struct rlimit)));
+

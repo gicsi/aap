@@ -1,0 +1,93 @@
+Apply by doing:
+	cd /usr/src
+	patch -p0 < 024_blinding.patch
+
+And then rebuild and install OpenSSL:
+	rm -fr /usr/obj/lib/libssl
+	cd lib/libssl
+	make -f Makefile.bsd-wrapper obj
+	make -f Makefile.bsd-wrapper depend
+	make -f Makefile.bsd-wrapper
+	make -f Makefile.bsd-wrapper install
+
+Index: lib/libssl/src/crypto/rsa/rsa_eay.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/rsa/rsa_eay.c,v
+retrieving revision 1.8
+retrieving revision 1.8.4.1
+diff -u -r1.8 -r1.8.4.1
+--- lib/libssl/src/crypto/rsa/rsa_eay.c	22 Jun 2001 00:03:19 -0000	1.8
++++ lib/libssl/src/crypto/rsa/rsa_eay.c	19 Mar 2003 01:05:20 -0000	1.8.4.1
+@@ -186,6 +186,26 @@
+ 	return(r);
+ 	}
+ 
++static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
++	{
++	int ret = 1;
++	CRYPTO_w_lock(CRYPTO_LOCK_RSA);
++	/* Check again inside the lock - the macro's check is racey */
++	if(rsa->blinding == NULL)
++		ret = RSA_blinding_on(rsa, ctx);
++	CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
++	return ret;
++	}
++
++#define BLINDING_HELPER(rsa, ctx, err_instr) \
++	do { \
++		if(((rsa)->flags & RSA_FLAG_BLINDING) && \
++				((rsa)->blinding == NULL) && \
++				!rsa_eay_blinding(rsa, ctx)) \
++			err_instr \
++	} while(0)
++
++/* signing */
+ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
+ 	     unsigned char *to, RSA *rsa, int padding)
+ 	{
+@@ -224,8 +244,8 @@
+ 
+ 	if (BN_bin2bn(buf,num,&f) == NULL) goto err;
+ 
+-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
+-		RSA_blinding_on(rsa,ctx);
++	BLINDING_HELPER(rsa, ctx, goto err;);
++
+ 	if (rsa->flags & RSA_FLAG_BLINDING)
+ 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+ 
+@@ -299,8 +319,8 @@
+ 	/* make data into a big number */
+ 	if (BN_bin2bn(from,(int)flen,&f) == NULL) goto err;
+ 
+-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
+-		RSA_blinding_on(rsa,ctx);
++	BLINDING_HELPER(rsa, ctx, goto err;);
++
+ 	if (rsa->flags & RSA_FLAG_BLINDING)
+ 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+ 
+Index: lib/libssl/src/crypto/rsa/rsa_lib.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/rsa/rsa_lib.c,v
+retrieving revision 1.5
+retrieving revision 1.5.4.1
+diff -u -r1.5 -r1.5.4.1
+--- lib/libssl/src/crypto/rsa/rsa_lib.c	22 Jun 2001 00:03:19 -0000	1.5
++++ lib/libssl/src/crypto/rsa/rsa_lib.c	19 Mar 2003 01:05:20 -0000	1.5.4.1
+@@ -72,7 +72,13 @@
+ 
+ RSA *RSA_new(void)
+ 	{
+-	return(RSA_new_method(NULL));
++	RSA *r=RSA_new_method(NULL);
++
++#ifndef OPENSSL_NO_FORCE_RSA_BLINDING
++	r->flags|=RSA_FLAG_BLINDING;
++#endif
++
++	return r;
+ 	}
+ 
+ void RSA_set_default_openssl_method(RSA_METHOD *meth)
+

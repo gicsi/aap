@@ -1,0 +1,37 @@
+Created attachment 1043268
+screenshot
+
+Description of problem:
+When selecting more than one content host to apply errata to (on the new errata web page), the confirm button does nothing
+
+Version-Release number of selected component (if applicable):
+6.1.0 public beta
+firefox 38.0.5 on Fedora 22
+firefox 38.0.5 on Windows 7
+
+How reproducible:
+Always (i think)
+
+Steps to Reproduce:
+1. Select 2 errata
+2. Select 2 content hosts
+3. press confirm
+
+Actual results:
+nothing happens
+
+Expected results:
+the task gets started
+
+Additional info:
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.
+This works fine for me in 
+Firefox 34 in Fedora 19 (Obviously my versions are older than yours)
+Chrome 42 in Fedora 19.
+
+Can you please give me more information so I can reproduce this bug in my test box:
+1. What kind of errata you selected - both applicable or one applicable/one installable or both installable?
+2. The content hosts use the same cv or different cvs?
+3. Did you see any js error or anything in browser dev console?
+4. Can you please add foreman-debug?

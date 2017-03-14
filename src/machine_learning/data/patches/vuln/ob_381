@@ -1,0 +1,135 @@
+untrusted comment: signature from openbsd 5.7 base secret key
+RWSvUZXnw9gUb/RUef97IvNWdo/ATqh/E6SLVblpV5x/ydtJGAYlpfJKMm1aZS25L9Mv37ogb9SMlj2CEzyxLy4ZtWqNfiHGvAg=
+
+OpenBSD 5.7 errata 9, June 11, 2015
+
+Fix several defects from OpenSSL.  These include:
+
+CVE-2015-1788 - Malformed ECParameters causes infinite loop
+CVE-2015-1789 - Exploitable out-of-bounds read in X509_cmp_time
+CVE-2015-1792 - CMS verify infinite loop with unknown hash function
+
+Several other issues did not apply or were already fixed.  One low
+severity issue is still in review.  For further details, please refer to
+https://www.openssl.org/news/secadv_20150611.txt
+
+Apply patch using:
+
+    signify -Vep /etc/signify/openbsd-57-base.pub -x 009_openssl.patch.sig \
+        -m - | (cd /usr/src && patch -p0)
+
+Then build and install libcrypto
+
+    cd /usr/src/lib/libcrypto/crypto
+    make obj
+    make
+    make install
+
+Index: lib/libssl/src/crypto/bn/bn_gf2m.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/bn/bn_gf2m.c,v
+retrieving revision 1.18
+diff -u -p -r1.18 bn_gf2m.c
+--- lib/libssl/src/crypto/bn/bn_gf2m.c	10 Feb 2015 09:50:12 -0000	1.18
++++ lib/libssl/src/crypto/bn/bn_gf2m.c	11 Jun 2015 16:21:08 -0000
+@@ -745,8 +745,13 @@ BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM 
+ 				ubits--;
+ 			}
+ 
+-			if (ubits <= BN_BITS2 && udp[0] == 1)
+-				break;
++			if (ubits <= BN_BITS2) {
++				/* See if poly was reducible. */
++				if (udp[0] == 0)
++					goto err;
++				if (udp[0] == 1)
++					break;
++			}
+ 
+ 			if (ubits < vbits) {
+ 				i = ubits;
+Index: lib/libssl/src/crypto/cms/cms_smime.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/cms/cms_smime.c,v
+retrieving revision 1.12
+diff -u -p -r1.12 cms_smime.c
+--- lib/libssl/src/crypto/cms/cms_smime.c	11 Jul 2014 12:12:39 -0000	1.12
++++ lib/libssl/src/crypto/cms/cms_smime.c	11 Jun 2015 16:21:09 -0000
+@@ -132,7 +132,7 @@ do_free_upto(BIO *f, BIO *upto)
+ 			tbio = BIO_pop(f);
+ 			BIO_free(f);
+ 			f = tbio;
+-		} while (f != upto);
++		} while (f != NULL && f != upto);
+ 	} else
+ 		BIO_free_all(f);
+ }
+Index: lib/libssl/src/crypto/x509/x509_vfy.c
+===================================================================
+RCS file: /cvs/src/lib/libssl/src/crypto/x509/x509_vfy.c,v
+retrieving revision 1.40
+diff -u -p -r1.40 x509_vfy.c
+--- lib/libssl/src/crypto/x509/x509_vfy.c	11 Feb 2015 02:17:59 -0000	1.40
++++ lib/libssl/src/crypto/x509/x509_vfy.c	11 Jun 2015 16:21:09 -0000
+@@ -1650,34 +1650,57 @@ X509_cmp_time(const ASN1_TIME *ctm, time
+ 		memcpy(p, str, 10);
+ 		p += 10;
+ 		str += 10;
++		i -= 10;
+ 	} else {
+ 		if (i < 13)
+ 			return 0;
+ 		memcpy(p, str, 12);
+ 		p += 12;
+ 		str += 12;
++		i -= 12;
+ 	}
+ 
++	if (i < 1)
++		return 0;
+ 	if ((*str == 'Z') || (*str == '-') || (*str == '+')) {
+ 		*(p++) = '0';
+ 		*(p++) = '0';
+ 	} else {
++		if (i < 2)
++			return 0;
+ 		*(p++) = *(str++);
+ 		*(p++) = *(str++);
++		i -= 2;
++		if (i < 1)
++			return 0;
+ 		/* Skip any fractional seconds... */
+ 		if (*str == '.') {
+ 			str++;
+-			while ((*str >= '0') && (*str <= '9'))
++			i--;
++			while (i > 1 && (*str >= '0') && (*str <= '9')) {
+ 				str++;
++				i--;
++			}
+ 		}
+ 	}
+ 	*(p++) = 'Z';
+ 	*(p++) = '\0';
+ 
+-	if (*str == 'Z')
++	if (i < 1)
++		return 0;
++	if (*str == 'Z') {
++		if (i != 1)
++			return 0;
+ 		offset = 0;
+-	else {
++	} else {
++		if (i != 5)
++			return 0;
+ 		if ((*str != '+') && (*str != '-'))
++			return 0;
++		if (str[1] < '0' || str[1] > '9' ||
++		    str[2] < '0' || str[2] > '9' ||
++		    str[3] < '0' || str[3] > '9' ||
++		    str[4] < '0' || str[4] > '9')
+ 			return 0;
+ 		offset = ((str[1] - '0') * 10 + (str[2] - '0')) * 60;
+ 		offset += (str[3] - '0') * 10 + (str[4] - '0');
+

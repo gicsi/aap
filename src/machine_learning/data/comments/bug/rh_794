@@ -1,0 +1,31 @@
++++ This bug was initially created as a clone of Bug #1233258 +++
+
+Description of problem:
+
+When a fop starts a subfop as part of its own execution, it's possible that this subfop finishes before the manager has completed the processing of the current state. In this case ec_resume() is called and a new instance of the same state machine is executed by another thread.
+
+This could cause multiple problems.
+
+Version-Release number of selected component (if applicable): mainline
+
+
+How reproducible:
+
+
+Steps to Reproduce:
+1.
+2.
+3.
+
+Actual results:
+
+
+Expected results:
+
+
+Additional info:
+
+--- Additional comment from Anand Avati on 2015-06-18 16:52:24 CEST ---
+
+REVIEW: http://review.gluster.org/11317 (cluster/ec: Avoid parallel executions of the same state machine) posted (#1) for review on master by Xavier Hernandez (xhernandez@datalab.es)
+*** This bug has been marked as a duplicate of bug 1233484 ***

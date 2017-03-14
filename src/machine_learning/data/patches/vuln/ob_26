@@ -1,0 +1,241 @@
+This is version two of this patch.
+
+To apply:
+    cd /usr/src/sys/netinet
+    patch -p0 < maxqueue.patch
+
+Recompile your kernel.
+
+Index: in.h
+===================================================================
+RCS file: /cvs/src/sys/netinet/in.h,v
+retrieving revision 1.12
+diff -u -r1.12 in.h
+--- in.h	1998/02/11 03:58:31	1.12
++++ in.h	1999/02/18 04:33:56
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: in.h,v 1.12 1998/02/11 03:58:31 deraadt Exp $	*/
++/*	$OpenBSD: in.h,v 1.18 1999/02/17 23:51:12 deraadt Exp $	*/
+ /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
+ 
+ /*
+@@ -325,7 +325,8 @@
+ #define IPCTL_IPPORT_LASTAUTO	8
+ #define IPCTL_IPPORT_HIFIRSTAUTO 9
+ #define IPCTL_IPPORT_HILASTAUTO	10
+-#define	IPCTL_MAXID		11
++#define	IPCTL_IPPORT_MAXQUEUE	11
++#define	IPCTL_MAXID		12
+ 
+ #define	IPCTL_NAMES { \
+ 	{ 0, 0 }, \
+@@ -339,6 +340,7 @@
+ 	{ "portlast", CTLTYPE_INT }, \
+ 	{ "porthifirst", CTLTYPE_INT }, \
+ 	{ "porthilast", CTLTYPE_INT }, \
++	{ "maxqueue", CTLTYPE_INT }, \
+ }
+ 
+ #ifndef _KERNEL
+Index: ip_input.c
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_input.c,v
+retrieving revision 1.30
+diff -u -r1.30 ip_input.c
+--- ip_input.c	1998/02/14 18:50:36	1.30
++++ ip_input.c	1999/02/18 04:33:56
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: ip_input.c,v 1.30 1998/02/14 18:50:36 mickey Exp $	*/
++/*	$OpenBSD: ip_input.c,v 1.35 1999/02/17 23:51:12 deraadt Exp $	*/
+ /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
+ 
+ /*
+@@ -99,6 +99,10 @@
+ u_char  ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
+ u_char  ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
+ 
++/* Keep track of memory used for reassembly */
++int	ip_maxqueue = 300;
++int	ip_frags = 0;
++
+ /* from in_pcb.c */
+ extern int ipport_firstauto;
+ extern int ipport_lastauto;
+@@ -117,7 +121,6 @@
+ 			  struct mbuf **));
+ #endif
+ 
+-
+ char *
+ inet_ntoa(ina)
+ 	struct in_addr ina;
+@@ -279,10 +282,10 @@
+ 	}
+ 
+ #if defined(IPFILTER) || defined(IPFILTER_LKM)
+-       /*
+-	* Check if we want to allow this packet to be processed.
+-	* Consider it to be bad if not.
+-	*/
++	 /*
++	 * Check if we want to allow this packet to be processed.
++	 * Consider it to be bad if not.
++	 */
+ 	{
+ 		struct mbuf *m0 = m;
+ 		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
+@@ -433,12 +436,19 @@
+ 		 */
+ 		if (mff || ip->ip_off) {
+ 			ipstat.ips_fragments++;
++			if (ip_frags + 1 > ip_maxqueue) {
++				ip_flush();
++				ipstat.ips_rcvmemdrop++;
++				goto bad;
++			}
++			    
+ 			MALLOC(ipqe, struct ipqent *, sizeof (struct ipqent),
+ 			    M_IPQ, M_NOWAIT);
+ 			if (ipqe == NULL) {
+ 				ipstat.ips_rcvmemdrop++;
+ 				goto bad;
+ 			}
++			ip_frags++;
+ 			ipqe->ipqe_mff = mff;
+ 			ipqe->ipqe_ip = ip;
+ 			ip = ip_reass(ipqe, fp);
+@@ -580,6 +590,7 @@
+ 		m_freem(dtom(q->ipqe_ip));
+ 		LIST_REMOVE(q, ipqe_q);
+ 		FREE(q, M_IPQ);
++		ip_frags--;
+ 	}
+ 
+ insert:
+@@ -619,10 +630,12 @@
+ 	m_cat(m, t);
+ 	nq = q->ipqe_q.le_next;
+ 	FREE(q, M_IPQ);
++	ip_frags--;
+ 	for (q = nq; q != NULL; q = nq) {
+ 		t = dtom(q->ipqe_ip);
+ 		nq = q->ipqe_q.le_next;
+ 		FREE(q, M_IPQ);
++		ip_frags--;
+ 		m_cat(m, t);
+ 	}
+ 
+@@ -652,6 +665,7 @@
+ 	ipstat.ips_fragdropped++;
+ 	m_freem(m);
+ 	FREE(ipqe, M_IPQ);
++	ip_frags--;
+ 	return (0);
+ }
+ 
+@@ -670,6 +684,7 @@
+ 		m_freem(dtom(q->ipqe_ip));
+ 		LIST_REMOVE(q, ipqe_q);
+ 		FREE(q, M_IPQ);
++		ip_frags--;
+ 	}
+ 	LIST_REMOVE(fp, ipq_q);
+ 	(void) m_free(dtom(fp));
+@@ -710,6 +725,19 @@
+ }
+ 
+ /*
++ * Flush a bunch of datagram fragments, till we are down to 75%.
++ */
++void
++ip_flush()
++{
++
++	while (ipq.lh_first != NULL && ip_frags > ip_maxqueue * 3 / 4) {
++		ipstat.ips_fragdropped++;
++		ip_freef(ipq.lh_first);
++	}
++}
++
++/*
+  * Do option processing on a datagram,
+  * possibly discarding it if bad options are encountered,
+  * or forwarding it if source-routed.
+@@ -973,9 +1001,9 @@
+  */
+ static int
+ ip_weadvertise(addr)
+-        u_int32_t addr;
++	u_int32_t addr;
+ {
+-        register struct rtentry *rt;
++	register struct rtentry *rt;
+ 	register struct ifnet *ifp;
+ 	register struct ifaddr *ifa;
+ 	struct sockaddr_inarp sin;
+@@ -990,21 +1018,21 @@
+ 	
+ 	RTFREE(rt);
+ 	
+-	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 
+-	    || rt->rt_gateway->sa_family != AF_LINK)
++	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
++	    rt->rt_gateway->sa_family != AF_LINK)
+ 	  return 0;
+ 
+ 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+-          for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) 
+-	  {
+-		if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
+-		  continue;
+-
+-		if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
+-			  LLADDR((struct sockaddr_dl *)rt->rt_gateway),
+-			  ETHER_ADDR_LEN))
+-		  return 1;
+-	  }
++		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
++		    ifa = ifa->ifa_list.tqe_next) {
++			if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
++				continue;
++
++			if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
++			    LLADDR((struct sockaddr_dl *)rt->rt_gateway),
++			    ETHER_ADDR_LEN))
++				return 1;
++		}
+ 
+ 	return 0;
+ }
+@@ -1313,6 +1341,9 @@
+ 	case IPCTL_IPPORT_HILASTAUTO:
+ 		return (sysctl_int(oldp, oldlenp, newp, newlen,
+ 		    &ipport_hilastauto));
++	case IPCTL_IPPORT_MAXQUEUE:
++		return (sysctl_int(oldp, oldlenp, newp, newlen,
++		    &ip_maxqueue));
+ 	default:
+ 		return (EOPNOTSUPP);
+ 	}
+Index: ip_var.h
+===================================================================
+RCS file: /cvs/src/sys/netinet/ip_var.h,v
+retrieving revision 1.8
+diff -u -r1.8 ip_var.h
+--- ip_var.h	1998/02/14 18:50:36	1.8
++++ ip_var.h	1999/02/18 04:33:56
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: ip_var.h,v 1.8 1998/02/14 18:50:36 mickey Exp $	*/
++/*	$OpenBSD: ip_var.h,v 1.11 1999/02/17 23:51:12 deraadt Exp $	*/
+ /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
+ 
+ /*
+@@ -166,6 +166,7 @@
+ int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+ int	 ip_dooptions __P((struct mbuf *));
+ void	 ip_drain __P((void));
++void	 ip_flush __P((void));
+ void	 ip_forward __P((struct mbuf *, int));
+ void	 ip_freef __P((struct ipq *));
+ void	 ip_freemoptions __P((struct ip_moptions *));
+

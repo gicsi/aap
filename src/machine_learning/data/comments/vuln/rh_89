@@ -1,0 +1,226 @@
+Description of problem:
+bind99 libs are in the wrong location:
+dhclient can't load them and exits,
+making IPv4 networking fail to acquire an address.
+The machine is not reachable over IPv4.
+
+IPv6 seems to also be affected but I only did a very superficial check.
+
+
+Version-Release number of selected component (if applicable):
+bind99-libs-9.9.7-3.fc22.x86_64
+
+
+How reproducible:
+always
+
+
+Steps to Reproduce:
+1. using NetworkManager I did set up:
+
+            +-------+   +-----+
+enp2s0f0 ---|       |   |     |
+            | bond0 |---| br0 |---
+enp2s0f1 ---|       |   |     |
+            +-------+   +-----+
+                           |
+                           +--- VMs
+
+
+# configure  eth0 + eth1 --> bond0 --> br0
+bridgeName="br0"
+bondName="bond0"
+mac="00:1b:21:65:52:0c"
+ethernetNames=( "enp2s0f0" "enp2s0f1" )
+
+nmcli con add type bond con-name "$bondName" ifname "$bondName" mode 802.3ad
+for i in "${ethernetNames[@]}"; do
+  nmcli con add type bond-slave ifname "$i" master "$bondName"
+done
+
+nmcli con add type bridge con-name "$bridgeName" ifname "$bridgeName" stp yes forward-delay 2 mac "$mac"
+nmcli con modify "$bondName" connection.slave-type bridge connection.master "$bridgeName"
+
+
+2. reboot the machine
+
+
+3. DHCP lease is not acquired
+
+
+4. run dhclient and get error:
+
+# dhclient --help
+dhclient: error while loading shared libraries: libirs-export.so.91: cannot open shared object file: No such file or directory
+
+
+5. copy the bind99 libs to the correct place:
+
+# cd /usr/lib64/bind99/
+# cp -a * ..
+
+
+6. run dhclient and get NO error:
+
+# dhclient --help
+Internet Systems Consortium DHCP Client 4.3.2
+Copyright 2004-2015 Internet Systems Consortium.
+All rights reserved.
+For info, please visit https://www.isc.org/software/dhcp/
+Usage: dhclient [-4|-6] [-SNTPI1dvrxi] [-nw] [-p <port>] [-D LL|LLT] 
+                [-s server-addr] [-cf config-file]
+                [-df duid-file] [-lf lease-file]
+                [-pf pid-file] [--no-pid] [-e VAR=val]
+                [-C <dhcp-client-identifier>] [-B]
+                [-H <host-name> | -F <fqdn.fqdn>] [-timeout <timeout>]
+                [-V <vendor-class-identifier>]
+                [-R <request option list>]
+                [-sf script-file] [interface]
+
+This version of ISC DHCP is based on the release available
+on ftp.isc.org.  Features have been added and other changes
+have been made to the base software release in order to make
+it work better with this distribution.
+
+Please report for this software via the Red Hat Bugzilla site:
+    http://bugzilla.redhat.com
+
+exiting.
+
+
+7. reboot the machine
+
+
+8. DHCP lease is acquired, everything ok
+
+
+
+
+I have the ifcfg files available in case they might they be needed.
+PS. this is on a Fedora 22 server, minimum install
+Hi.
+
+The location is correct, as it is intentional. The purpose is no to conflict with the BIND libraries distributed with regular BIND package.
+
+I'll try to reproduce your issue, however the same libs are used in all variants of F22. NM still uses dhclient AFAIK, therefore I expect some very specific issue with your installation.
+Well, I've seen it on at least 2 machines.
+(In reply to Ferry Huberts from comment #3)
+> Well, I've seen it on at least 2 machines.
+
+I'm not saying it is not real :) was the second machine also minimal installation of Server with the same network configuration?
+yes it was
+I'm not able to reproduce your issue. I tried clean installation of Fedora Server in variants:
+- Fedora server
+- minimal server
+
+On both dhclient works fine after following your steps to reproduce. Did you use some custom kickstart to install your system? If so, please attach it.
+
+bind99 ships configuration for ldconfig. Please verify that:
+1. the configuration is installed in /etc/ld.so.conf.d/bind99-x86_64.conf
+2. that /etc/ld.so.conf contains "include ld.so.conf.d/*.conf"
+
+Please attach output of:
+# ldconfig -p | grep bind99
+
+Thank you!
+(In reply to Tomas Hozza from comment #6)
+> I'm not able to reproduce your issue. I tried clean installation of Fedora
+> Server in variants:
+> - Fedora server
+> - minimal server
+> 
+> On both dhclient works fine after following your steps to reproduce. Did you
+> use some custom kickstart to install your system? If so, please attach it.
+> 
+> bind99 ships configuration for ldconfig. Please verify that:
+> 1. the configuration is installed in /etc/ld.so.conf.d/bind99-x86_64.conf
+
+it is there with correct looking contents
+
+> 2. that /etc/ld.so.conf contains "include ld.so.conf.d/*.conf"
+
+it does
+
+> 
+> Please attach output of:
+> # ldconfig -p | grep bind99
+> 
+
+	libisccfg-export.so.90 (libc6,x86-64) => /usr/lib64/bind99/libisccfg-export.so.90
+	libisc-export.so.104 (libc6,x86-64) => /usr/lib64/bind99/libisc-export.so.104
+	libirs-export.so.91 (libc6,x86-64) => /usr/lib64/bind99/libirs-export.so.91
+	libdns-export.so.106 (libc6,x86-64) => /usr/lib64/bind99/libdns-export.so.106
+
+So these files look ok.
+
+I still had the problem, twice.
+
+Did an update fix this?
+
+The thing is, I installed the machine without the bond/bridge, just a simple DHCP single connection.
+After install reboot, I remove all NM connections and ran the commands to setup the bond/bridge.
+Now everything works ok because the IP address of the single connection is still there.
+After a reboot the IP address was not aquired.
+The reboot really is needed.
+This also looks ok
+
+# ldd /usr/sbin/dhclient | grep export
+	libirs-export.so.91 => /usr/lib64/bind99/libirs-export.so.91 (0x00007f72f332f000)
+	libdns-export.so.106 => /usr/lib64/bind99/libdns-export.so.106 (0x00007f72f2fec000)
+	libisccfg-export.so.90 => /usr/lib64/bind99/libisccfg-export.so.90 (0x00007f72f2dde000)
+	libisc-export.so.104 => /usr/lib64/bind99/libisc-export.so.104 (0x00007f72f2b89000)
+(In reply to Ferry Huberts from comment #7)
+> (In reply to Tomas Hozza from comment #6)
+> > I'm not able to reproduce your issue. I tried clean installation of Fedora
+> > Server in variants:
+> > - Fedora server
+> > - minimal server
+> > 
+> > On both dhclient works fine after following your steps to reproduce. Did you
+> > use some custom kickstart to install your system? If so, please attach it.
+> > 
+> > bind99 ships configuration for ldconfig. Please verify that:
+> > 1. the configuration is installed in /etc/ld.so.conf.d/bind99-x86_64.conf
+> 
+> it is there with correct looking contents
+> 
+> > 2. that /etc/ld.so.conf contains "include ld.so.conf.d/*.conf"
+> 
+> it does
+> 
+> > 
+> > Please attach output of:
+> > # ldconfig -p | grep bind99
+> > 
+> 
+> 	libisccfg-export.so.90 (libc6,x86-64) =>
+> /usr/lib64/bind99/libisccfg-export.so.90
+> 	libisc-export.so.104 (libc6,x86-64) =>
+> /usr/lib64/bind99/libisc-export.so.104
+> 	libirs-export.so.91 (libc6,x86-64) => /usr/lib64/bind99/libirs-export.so.91
+> 	libdns-export.so.106 (libc6,x86-64) =>
+> /usr/lib64/bind99/libdns-export.so.106
+> 
+> So these files look ok.
+> 
+> I still had the problem, twice.
+> 
+> Did an update fix this?
+
+F22 contained the bind99 and dhclient compiled against bind99 from the GA. Since you did a clean install, I can not think of any update that could break things for you.
+
+What version of dhcp-client you have installed?
+
+> The thing is, I installed the machine without the bond/bridge, just a simple
+> DHCP single connection.
+> After install reboot, I remove all NM connections and ran the commands to
+> setup the bond/bridge.
+> Now everything works ok because the IP address of the single connection is
+> still there.
+> After a reboot the IP address was not aquired.
+> The reboot really is needed.
+
+Are you able to reproduce this on any new clean install? I tried exactly what you are describing, using exactly the commands you specified. Still dhclient works fine. If you are able to reproduce it, there must be something I'm missing.
+
+Can you please attach the journal log from the boot when it breaks? Also please try to run ldd on the dhclient when the issue happens. Hopefully there will be at least some information.
+I'm closing this for now, since I'm not able to reproduce it and it looks like you are not either. Feel free to reopen with additional information requested in comment #9.

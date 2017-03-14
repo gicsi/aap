@@ -1,0 +1,19 @@
+Mozilla developers and community identified and fixed several memory safety bugs in the browser engine used in Firefox and other Mozilla-based products. Some of these bugs showed evidence of memory corruption under certain circumstances, and we presume that with enough effort at least some of these could be exploited to run arbitrary code.
+
+In general these flaws cannot be exploited through email in the Thunderbird product because scripting is disabled, but are potentially a risk in browser or browser-like contexts.
+
+Christian Holler, Tooru Fujisawa, Andrew Sutherland, Andrew McCreight, and Gary Kwong reported memory safety problems and crashes that affect Firefox 38.
+
+
+External Reference:
+
+http://www.mozilla.org/security/announce/2015/mfsa2015-59.html
+
+
+Acknowledgements:
+
+Red Hat would like to thank the Mozilla project for reporting this issue. Upstream acknowledges Christian Holler, Tooru Fujisawa, Andrew Sutherland, Andrew McCreight, and Gary Kwong as the original reporter.
+
+Statement:
+
+This issue does not affect the version of firefox and thunderbird as shipped with Red Hat Enterprise Linux 5, 6 and 7.

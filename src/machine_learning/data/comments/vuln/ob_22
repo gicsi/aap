@@ -1,0 +1,4 @@
+A machine crash is possible when playing with link(2) on FFS.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.4/common/nlink.patch">
+A source code patch exists which remedies this problem.</a>
+This is version four of the patch.

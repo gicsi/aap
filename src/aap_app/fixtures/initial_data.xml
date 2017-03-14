@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<django-objects version="1.0"><object pk="1" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Services and/or deamons</field><field type="TextField" name="descripcion"></field></object><object pk="2" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Desktop applications</field><field type="TextField" name="descripcion"></field></object><object pk="3" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Mobile applications</field><field type="TextField" name="descripcion"></field></object><object pk="4" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Other</field><field type="TextField" name="descripcion"></field></object><object pk="5" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Frameworks and libraries</field><field type="TextField" name="descripcion"></field></object><object pk="6" model="aap.categoriaproyectosoftware"><field type="CharField" name="nombre">Scripts</field><field type="TextField" name="descripcion"></field></object><object pk="1" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Linux</field><field type="TextField" name="descripcion"></field></object><object pk="5" model="aap.sistemaoperativo"><field type="CharField" name="nombre">FreeBSD</field><field type="TextField" name="descripcion"></field></object><object pk="6" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Windows</field><field type="TextField" name="descripcion"></field></object><object pk="7" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Windows Server</field><field type="TextField" name="descripcion"></field></object><object pk="8" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Windows 7</field><field type="TextField" name="descripcion"></field></object><object pk="9" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Windows 8</field><field type="TextField" name="descripcion"></field></object><object pk="10" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Android</field><field type="TextField" name="descripcion"></field></object><object pk="11" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Other</field><field type="TextField" name="descripcion"></field></object><object pk="12" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Linux - Debian</field><field type="TextField" name="descripcion"></field></object><object pk="13" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Linux - CentOS</field><field type="TextField" name="descripcion"></field></object><object pk="14" model="aap.sistemaoperativo"><field type="CharField" name="nombre">Linux - RedHat</field><field type="TextField" name="descripcion"></field></object><object pk="2" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">C/C++</field><field type="TextField" name="descripcion"></field></object><object pk="3" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">Python</field><field type="TextField" name="descripcion"></field></object><object pk="4" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">PHP</field><field type="TextField" name="descripcion"></field></object><object pk="5" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">Java</field><field type="TextField" name="descripcion"></field></object><object pk="6" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">Perl</field><field type="TextField" name="descripcion"></field></object><object pk="7" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">C#</field><field type="TextField" name="descripcion"></field></object><object pk="8" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">Other</field><field type="TextField" name="descripcion"></field></object><object pk="9" model="aap.lenguajeprogramacion"><field type="CharField" name="nombre">Javascript</field><field type="TextField" name="descripcion"></field></object><object pk="1" model="aap.proyectosoftware"><field to="aap.categoriaproyectosoftware" name="categoria_proyecto_software" rel="ManyToOneRel">4</field><field to="aap.lenguajeprogramacion" name="lenguaje_programacion" rel="ManyToOneRel">8</field><field type="CharField" name="nombre">Demo - Github</field><field type="TextField" name="descripcion">"Hello-world" demo project maintained by Github for testing pourposes.</field><field type="TextField" name="observaciones"></field><field to="aap.sistemaoperativo" name="sistemas_operativos" rel="ManyToManyRel"><object pk="11"></object></field></object><object pk="1" model="aap.analistaasignado"><field to="aap.proyectosoftware" name="proyecto_software" rel="ManyToOneRel">1</field><field to="auth.user" name="analista" rel="ManyToOneRel">1</field><field type="TextField" name="tarea">First revision. Reporting.</field><field type="BooleanField" name="recibe_emails">True</field><field type="DateTimeField" name="fechahora">2015-01-12T06:03:55.219564+00:00</field></object><object pk="1" model="aap.repositorio"><field to="aap.proyectosoftware" name="proyecto_software" rel="ManyToOneRel">1</field><field type="CharField" name="url">https://github.com/octocat/Hello-World</field><field type="CharField" name="usuario"></field><field type="CharField" name="contrasena"></field><field type="CharField" name="ruta_local">/opt/aap.git/aap/src/REPOSITORIES/772d1113608f38a333963c58a0770ddd</field><field type="BooleanField" name="compara_ramas">True</field><field type="TextField" name="observaciones"></field><field type="DateField" name="fecha_inicial">2009-12-31</field><field type="BooleanField" name="clonado">False</field><field type="DateTimeField" name="fechahora_ult_pull"><None></None></field><field type="BooleanField" name="activo">True</field></object><object pk="2" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured usernames and emails against authors and commiters</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginAuthor(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            if re.search('%s' % re.escape(pattern), commit_obj.author):
+                line = 'commit: %s - author: %s' % (commit_obj.abbr_hash,
+                                                     commit_obj.author)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            if re.search('%s' % re.escape(pattern), commit_obj.committer):
+                line = 'commit: %s - committer: %s' % (commit_obj.abbr_hash,
+                                                       commit_obj.committer)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            if re.search('%s' % re.escape(pattern), commit_obj.author_email):
+                line = 'commit: %s - author email: %s' % (commit_obj.abbr_hash,
+                                                       commit_obj.author_email)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            if re.search('%s' % re.escape(pattern), commit_obj.committer_email):
+                line = 'commit: %s - committer email: %s' % (commit_obj.abbr_hash,
+                                                       commit_obj.committer_email)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">@domain.com,Joe Doe,joe.doe@gmail.com</field><field type="BooleanField" name="activa">True</field></object><object pk="3" model="aap.reglaanalisis"><field type="CharField" name="nombre">Detect source code implementing cryptography</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginCryptoCode(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        self.crypto_patterns = []
+        dict_file = os.path.join(settings.BASE_DIR, 'crypto_dict', 'dict.txt')
+        with open(dict_file) as f:
+            self.crypto_patterns = f.read().splitlines()
+
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        for pattern in self.crypto_patterns:
+            if re.search('^[\+\-].*?%s.*?$' % re.escape(pattern),
+                         commit_obj.patches, re.MULTILINE|re.IGNORECASE):
+                line = 'commit: %s - crypto pattern: %s' % (commit_obj.abbr_hash,
+                                                     pattern)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default"></field><field type="BooleanField" name="activa">True</field></object><object pk="4" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured patterns in subject and body comments</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginComments(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            if re.search('%s' % re.escape(pattern),
+                         commit_obj.subject + commit_obj.body, re.MULTILINE|re.IGNORECASE):
+                line = 'commit: %s - pattern: %s' % (commit_obj.abbr_hash,
+                                                     pattern)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">pattern,another_pattern,...</field><field type="BooleanField" name="activa">True</field></object><object pk="5" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured patterns in added and deleted source code</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginReplacedReplacement(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            if re.search('^[\+\-].*%s.*$' % re.escape(pattern),
+                         commit_obj.patches, re.MULTILINE|re.IGNORECASE):
+                line = 'commit: %s - pattern: %s' % (commit_obj.abbr_hash,
+                                                     pattern)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">pattern,another_pattern,...</field><field type="BooleanField" name="activa">True</field></object><object pk="6" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured patterns in added source code</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginReplacement(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            if re.search('^\+.*%s.*$' % re.escape(pattern),
+                         commit_obj.patches, re.MULTILINE|re.IGNORECASE):
+                line = 'commit: %s - pattern: %s' % (commit_obj.abbr_hash,
+                                                     pattern)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">pattern,another_pattern,...</field><field type="BooleanField" name="activa">True</field></object><object pk="7" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured patterns in deleted source code</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginReplaced(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            if re.search('^\-.*%s.*$' % re.escape(pattern),
+                         commit_obj.patches, re.MULTILINE|re.IGNORECASE):
+                line = 'commit: %s - pattern: %s' % (commit_obj.abbr_hash,
+                                                     pattern)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + ' * diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">pattern,another_pattern,...</field><field type="BooleanField" name="activa">True</field></object><object pk="8" model="aap.reglaanalisis"><field type="CharField" name="nombre">Match configured file and folder names</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginFiles(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        config_string = self.get_config_string()
+        if not config_string is None and not config_string.strip() == '':
+            return True
+        return False
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        config_patterns = self.get_config_string().split(',')
+        for pattern in config_patterns:
+            for file in commit_obj.files:
+                if re.search('%s' % re.escape(pattern), file):
+                    line = 'commit: %s - file: %s' % (commit_obj.abbr_hash,
+                                                      file)
+                    if commit_obj.branch != commit_obj.diff_branch:
+                        line = line + ' * diff branch: ' + commit_obj.diff_branch
+                    self.add_test_result(line)
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">filename,/path/filename,...</field><field type="BooleanField" name="activa">True</field></object><object pk="9" model="aap.reglaanalisis"><field type="CharField" name="nombre">Test patches by external tool FLAWFINDER</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginFlawFinder(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        cmd = "flawfinder -"
+        args = shlex.split(cmd)
+        p = subprocess.Popen(args, cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p.stdin.write(commit_obj.patches)
+        (stdout, stderr) = p.communicate()
+        p.stdin.close()
+        if stdout.find("\nHits = ") &gt; 0:
+            line = 'commit: %s - flawfinder hits:\n%s' % (commit_obj.abbr_hash, stdout)
+            if commit_obj.branch != commit_obj.diff_branch:
+                line = line + '* diff branch: ' + commit_obj.diff_branch
+            self.add_test_result(line)
+        return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default">-</field><field type="BooleanField" name="activa">True</field></object><object pk="11" model="aap.reglaanalisis"><field type="CharField" name="nombre">Test modified files by external tool RATS</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginRATS(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        for file in commit_obj.files:
+            file_full_path = os.path.join(commit_obj.local_path, file)
+            cmd = "rats --resultsonly " + file_full_path
+            args = shlex.split(cmd)
+            p = subprocess.Popen(args, cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if stdout:
+                line = 'commit: %s - rats:\n%s' % (commit_obj.abbr_hash, stdout)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + '* diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default"></field><field type="BooleanField" name="activa">True</field></object><object pk="12" model="aap.reglaanalisis"><field type="CharField" name="nombre">Test modified files by external tool SPLINT</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginSplint(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        for file in commit_obj.files:
+            file_full_path = os.path.join(commit_obj.local_path, file)
+            cmd = "splint " + file_full_path
+            args = shlex.split(cmd)
+            p = subprocess.Popen(args, cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if (stdout.find("--- no warnings") &lt; 0 and stdout.find("Unrecognized file extension") &lt; 0):
+                line = 'commit: %s - splint:\n%s' % (commit_obj.abbr_hash, stdout)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + '* diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default"></field><field type="BooleanField" name="activa">True</field></object><object pk="13" model="aap.reglaanalisis"><field type="CharField" name="nombre">Test modified files by external tool CPPCHECK</field><field type="TextField" name="descripcion"></field><field type="TextField" name="codigo_regla">class PluginCppCheck(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        for file in commit_obj.files:
+            file_full_path = os.path.join(commit_obj.local_path, file)
+            cmd = "cppcheck " + file_full_path
+            args = shlex.split(cmd)
+            p = subprocess.Popen(args, cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            (stdout, stderr) = p.communicate()
+            if len(stdout.splitlines()) &gt;= 2:
+                line = 'commit: %s - cppcheck:\n%s' % (commit_obj.abbr_hash, stdout)
+                if commit_obj.branch != commit_obj.diff_branch:
+                    line = line + '* diff branch: ' + commit_obj.diff_branch
+                self.add_test_result(line)
+            return</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default"></field><field type="BooleanField" name="activa">True</field></object><object pk="14" model="aap.reglaanalisis"><field type="CharField" name="nombre">Machine learning predictor #1</field><field type="TextField" name="descripcion">Naive bayes classifier.</field><field type="TextField" name="codigo_regla">class PluginMachineLearning1(PluginAAP):
+    """
+    """
+
+    def validate_config_string(self):
+        """
+        """
+
+        classifier_file = os.path.join(settings.BASE_DIR, 'machine_learning', 'comments_NaiveBayes.pickle')
+        self.classifier = pickle.load(open(classifier_file))
+        return True
+
+    def test_commit(self, commit_obj=None):
+        """
+        """
+
+        words = wordpunct_tokenize(commit_obj.subject + commit_obj.body + commit_obj.patches)
+        stopset = set(stopwords.words("english"))
+        words = [w.lower() for w in words if w.lower() not in stopset]
+        bigrams = list(ngrams(words, 2))
+        feats = dict([(feat, True) for feat in words + bigrams])
+        prediction = self.classifier.classify(feats)
+        if prediction == "vuln":
+            line = 'commit: %s - machine learning plugin #1: classified as "vuln" ' % commit_obj.abbr_hash
+            if commit_obj.branch != commit_obj.diff_branch:
+                line = line + '* diff branch: ' + commit_obj.diff_branch
+            self.add_test_result(line)
+        return
+</field><field type="CharField" name="criticidad_regla">3</field><field type="TextField" name="configuracion_default"></field><field type="BooleanField" name="activa">True</field></object><object pk="1" model="aap.rama"><field to="aap.repositorio" name="repositorio" rel="ManyToOneRel">1</field><field type="CharField" name="rama">master</field><field type="BooleanField" name="default">True</field><field type="TextField" name="observaciones"></field><field type="DateTimeField" name="fechahora_ult_analisis"><None></None></field><field type="CharField" name="hash_ult_commit"></field><field type="BooleanField" name="activa">True</field></object><object pk="2" model="aap.rama"><field to="aap.repositorio" name="repositorio" rel="ManyToOneRel">1</field><field type="CharField" name="rama">test</field><field type="BooleanField" name="default">False</field><field type="TextField" name="observaciones"></field><field type="DateTimeField" name="fechahora_ult_analisis"><None></None></field><field type="CharField" name="hash_ult_commit"></field><field type="BooleanField" name="activa">True</field></object><object pk="1" model="aap.reglaconfigurada"><field to="aap.rama" name="rama" rel="ManyToOneRel">1</field><field to="aap.reglaanalisis" name="regla" rel="ManyToOneRel">14</field><field type="TextField" name="configuracion"></field><field type="DateTimeField" name="fechahora">2015-01-29T18:41:06.379466+00:00</field><field type="BooleanField" name="activa">True</field></object><object pk="2" model="aap.reglaconfigurada"><field to="aap.rama" name="rama" rel="ManyToOneRel">2</field><field to="aap.reglaanalisis" name="regla" rel="ManyToOneRel">8</field><field type="TextField" name="configuracion">README,README.md</field><field type="DateTimeField" name="fechahora">2015-07-14T02:37:40.107647+00:00</field><field type="BooleanField" name="activa">True</field></object></django-objects>

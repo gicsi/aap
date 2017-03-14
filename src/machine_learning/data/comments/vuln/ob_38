@@ -1,0 +1,4 @@
+Do not permit regular users to chflags(2) or fchflags(2) on character or
+block devices which they may currently be the owner of.
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/2.5/common/007_chflags.patch">
+A source code patch exists which remedies this problem.</a>

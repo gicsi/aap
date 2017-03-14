@@ -1,0 +1,47 @@
+Description of problem:
+
+Filtering by name works only on the top-level name.
+
+
+Version-Release number of selected component (if applicable):
+
+dnf-0:0.6.4-5.fc21.noarch
+dnf-0:1.0.0-1.fc22.noarch
+
+How reproducible:
+
+SSCCE below
+
+Steps to Reproduce:
+
+>>> import dnf
+>>> b = dnf.Base()
+>>> b.read_all_repos()
+>>> b.fill_sack()
+>>> q = b.sack.query().available()
+>>> len(q.filter(name='hg'))
+0
+>>> len(q.filter(name='mercurial'))
+1
+
+Actual results:
+Filtering by 'hg' returns empty result set
+
+Expected results:
+Filtering by 'hg' returns the same result set as filtering by 'mercurial'
+
+Additional info:
+instead of query filter api, use subject get_best_selector api.
+
+dnf.subject.Subject('hg').get_best_selector(b.sack)
+There's nothing like 'alternate package name' in rpm :).
+So you are most likely looking for a standard 'provide' which works:
+
+>>> q.filter(provides='hg').run()
+[<hawkey.Package object id 21127, mercurial-3.3.3-1.fc22.x86_64, fedora>]
+Fair enough, then the documentation is somewhat misleading:
+
+>>> name | string | match against packages’ names
+http://dnf.readthedocs.org/en/latest/api_queries.html
+
+I'm going to use 'provides=' since it fits best into the code pattern in the SSCCE above. Thanks

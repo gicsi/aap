@@ -1,0 +1,33 @@
++++ This bug was initially created as a clone of Bug #1238731 +++
+
+Description of problem:
+There are several API calls for working with lifecycle environments. The following are relevant:
+
+* `POST /katello/api/environments`
+* `PUT /katello/api/environments/:id`
+
+Both of these calls accept a `prior` parameter. Intuitively, one would expect that this parameter is an attribute of a lifecycle environment. However, it turns out that the `prior` parameter is a foreign key pointing to another lifecycle environment.
+
+Nearly every foreign key attribute is represented in the form of `related_entity_id` or `related_entity_ids`. Thus, I would expect that an attribute named `prior_id` or `lifecycle_environment_id` would be used. This exception to the normal attribute naming scheme makes it harder to understand how the API works and makes it harder to write API client code.
+
+Version-Release number of selected component (if applicable):
+Satellite 6.0.8.
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+1. Work with `POST …/environments` or `PUT …/lifecycle_environments/:id`.
+2. Discover that a parameter named `prior` must be used when referencing an associated lifecycle environment.
+3.
+
+Actual results:
+A parameter named `prior` must be used when referencing a lifecycle
+
+Expected results:
+A parameter named `prior_id` or `lifecycle_environment_id` must be used when referencing a lifecycle environment.
+
+Additional info:
+This bug has been fixed as of Satellite 6.1.0. The `prior_id` parameter may be used. However, I am submitting this bug against Satellite 6.0.8 for reference purposes.
+Since this issue was entered in Red Hat Bugzilla, the release flag has been
+set to ? to ensure that it is properly evaluated for this release.

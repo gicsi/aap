@@ -1,0 +1,10 @@
+Multiple issues in tar/pax/cpio:
+<ul>
+<li>extracting a malicious archive could create files outside of
+the current directory without using pre-existing symlinks to 'escape',
+and could change the timestamps and modes on preexisting files
+<li>tar without -P would permit extraction of paths with ".." components
+<li>there was a buffer overflow in the handling of pax extension headers
+</ul>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.7/common/007_tar.patch.sig">
+A source code patch exists which remedies this problem.</a>

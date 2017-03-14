@@ -1,0 +1,5 @@
+Missing bounds checking in OpenSSL's implementation of the TLS/DTLS
+heartbeat extension (RFC6520) which can result in a leak of memory contents.
+<br>
+<a href="http://ftp.openbsd.org/pub/OpenBSD/patches/5.3/common/014_openssl.patch">
+A source code patch exists which remedies this problem.</a>

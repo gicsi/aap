@@ -1,0 +1,70 @@
+Description of problem:
+ Evolution just crashed on me.
+
+This was the first time it happened.
+
+This is the automated bug reporting in action.
+
+
+Version-Release number of selected component:
+evolution-3.16.3-2.fc22
+
+Additional info:
+reporter:       libreport-2.5.1
+backtrace_rating: 4
+cmdline:        evolution
+crash_function: g_main_context_acquire
+executable:     /usr/bin/evolution
+global_pid:     2434
+kernel:         4.0.4-303.fc22.x86_64
+runlevel:       N 5
+type:           CCpp
+uid:            1000
+
+Truncated backtrace:
+Thread no. 1 (2 frames)
+ #4 g_main_context_acquire at gmain.c:3187
+ #7 gtk_main at gtkmain.c:1219
+Created attachment 1043414
+File: backtrace
+Created attachment 1043415
+File: cgroup
+Created attachment 1043416
+File: core_backtrace
+Created attachment 1043417
+File: dso_list
+Created attachment 1043418
+File: environ
+Created attachment 1043419
+File: limits
+Created attachment 1043420
+File: maps
+Created attachment 1043421
+File: mountinfo
+Created attachment 1043422
+File: namespaces
+Created attachment 1043423
+File: open_fds
+Created attachment 1043424
+File: proc_pid_status
+Created attachment 1043425
+File: var_log_messages
+Thanks for a bug report. This crashed due to this assertion error:
+> assertion failed: (context->owner_count == 0
+and looking into the var_log_messages there were more issues printed on the console before the actual crash.
+
+I do not see any such crash myself, thus I'm rather asking, doe sit crash for you each start of the evolution, or after some time? Is there any pattern of the actions you do that would lead to the crash, like some steps for a reproducer, please?
+
+The backtrace also shows that you were creating an appointment from a mail message. Whether it's related or not is hard to tell. If I guess properly, then you tried to create the appointment in a Google calendar.
+I dont know what i was doing when evolution crashed.  
+
+It does crash sometimes, but mostly when it is running for some time.  Not at startup.  
+
+I will update this ticket whenever this happens again, and pay more attention what i did before the crash
+Evolution crashed again.
+
+I was marking mails using the 'mark mail a junk' button
+*** Bug 1236293 has been marked as a duplicate of this bug. ***
+The above bug #1236293 provides a different backtrace, but at least claims a memory corruption, leading to a better place. That's filled upstream in GLib as this [1] bug report. I'm closing this in favour of [1]. Please see it for any further updates.
+
+[1] https://bugzilla.gnome.org/show_bug.cgi?id=745013

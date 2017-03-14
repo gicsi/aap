@@ -1,0 +1,8 @@
+Created attachment 1040592
+Patch to add manifest file to jffi
+
+Description of problem:
+
+jffi has no MANIFEST.MF so Eclipse plugins and their dependencies cannot import its packages.
+Pushed to rawhide.
+http://koji.fedoraproject.org/koji/buildinfo?buildID=663648

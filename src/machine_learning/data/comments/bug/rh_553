@@ -1,0 +1,46 @@
+Description of problem:
+stack@myhost ~]$ . overcloudrc 
+[stack@myhost ~]$ openstack overcloud postconfig 192.0.2.6
+/usr/lib/python2.7/site-packages/novaclient/v1_1/__init__.py:30: UserWarning: Module novaclient.v1_1 is deprecated (taken as a basis for novaclient.v2). The preferable way to get client class or object you can find in novaclient.client module.
+  warnings.warn("Module novaclient.v1_1 is deprecated (taken as a basis for "
+# Host 192.0.2.6 found: line 2 type ECDSA
+/home/stack/.ssh/known_hosts updated.
+Original contents retained as /home/stack/.ssh/known_hosts.old
+PKI initialization in init-keystone is deprecated and will be removed.
+Warning: Permanently added '192.0.2.6' (ECDSA) to the list of known hosts.
+The following cert files already exist, use --rebuild to remove the existing files before regenerating:
+/etc/keystone/ssl/certs/ca.pem already exists
+/etc/keystone/ssl/private/signing_key.pem already exists
+/etc/keystone/ssl/certs/signing_cert.pem already exists
+Connection to 192.0.2.ERROR: openstack Invalid input for operation: Requested subnet with cidr: 10.0.0.0/8 for network6 closed.
+ERROR: openstack Invalid input for operation: Requested subnet with cidr: 10.0.0.0/8 for network: 40d90c9b-bcdb-4537-b770-f5c38b827fd2 overlaps with another subnet.
+
+Version-Release number of selected component (if applicable):
+OSP director puddle 7.0 RC -2015-06-22.1
+
+How reproducible:
+always
+ 
+
+Steps to Reproduce:
+1.install according to the guide OSP director
+2.https://repos.fedorapeople.org/repos/openstack-m/jenkins/instack-undercloud-docs/234545-6/html/basic_deployment/basic_deployment.html
+3.run the command : openstack overcloud postconfig 192.0.2.6
+
+Actual results:
+ERROR: openstack Invalid input for operation: Requested subnet with cidr: 10.0.0.0/8 for network: 40d90c9b-bcdb-4537-b770-f5c38b827fd2 overlaps with another subnet.
+
+Expected results:
+
+
+Additional info:
+can you check what subnets already exist in the overcloud?:
+source overcloudrc
+neutron subnet-list
+
+It sounds like this might be trying to create the subnet when it already exists.
+
+Was that a 2nd run through after a previous failure or anything related to that?
+duplicate
+
+*** This bug has been marked as a duplicate of bug 1235382 ***

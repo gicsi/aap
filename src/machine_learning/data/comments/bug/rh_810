@@ -1,0 +1,49 @@
+Created attachment 1040405
+reproducer strdupprep.c
+
+Description of problem:
+When compiling return (s && ...)? foo : bar; the "s" check disappears when compiling with optimization.
+
+Version-Release number of selected component (if applicable):
+gcc-4.4.7-15.el6.x86_64
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. gcc -O2 -g -c ./strdupprep.c -S -masm=intel -fverbose-asm
+2. check the strdupprep.s for "(s && ..." test
+3.
+
+reproducer code (see attachment for better readability):
+typedef long unsigned int size_t;
+extern void *malloc (size_t __size) __attribute__ ((__nothrow__)) __attribute__ ((__malloc__)) __attribute__ ((__warn_unused_result__));
+extern void *realloc (void *__ptr, size_t __size) __attribute__ ((__nothrow__)) __attribute__ ((__warn_unused_result__));
+extern size_t strlen (__const char *__s) __attribute__ ((__nothrow__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+extern __inline __attribute__ ((__always_inline__)) __attribute__ ((__artificial__)) void * __attribute__ ((__nothrow__)) memcpy (void *__restrict __dest, __const void *__restrict __src, size_t __len)
+{
+  return __builtin___memcpy_chk (__dest, __src, __len, __builtin_object_size (__dest, 0));
+}
+extern char* strdup( const char* s)
+{
+ char* t;
+ int n;
+ return (s && (t = ((char*)malloc(sizeof(char)*(n = strlen(s) + 1)+(0))))) ? (char*)memcpy(t, s, n) : (char*)0;
+}
+
+
+Actual results:
+(s && ... check part is missing
+
+Expected results:
+(s && ... check part present
+
+
+Additional info:
+The reproducer code is simplified code returned be gcc -E 
+With -O0 the check is present
+That is correct.  strdup is a standard library function, with nonnull attribute, meaning that it must not be called with NULL argument and the compiler is optimizing based on this guarantee.
+"The strdup() function shall return a pointer to a new string, which is a duplicate of the string pointed to by s."
+The NULL pointer does not point to any object, so not even to a string.
+
+If you don't want this behavior, use -fno-builtin-strdup.
